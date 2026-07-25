@@ -55,7 +55,9 @@ export default function Home() {
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy">
           <p className="eyebrow">Learn. Recall. Build.</p>
-          <h1 id="hero-title">Turn what you study into what you can do.</h1>
+          <h1 id="hero-title">
+            Lovable Original turns what you study into what you can do.
+          </h1>
           <p className="hero-lede">
             Lovable Original is an AI-first learning platform designed to help
             students understand faster, remember longer, and become job-ready
@@ -66,6 +68,10 @@ export default function Home() {
             <ArrowIcon />
           </a>
           <p className="launch-note">The first focused course is being built now.</p>
+          <p className="spelling-note">
+            Searched for &quot;Loveable Original&quot;? You&apos;re in the right
+            place.
+          </p>
         </div>
 
         <div className="course-window" aria-label="Product learning path preview">
