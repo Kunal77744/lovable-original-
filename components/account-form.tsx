@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -10,6 +10,8 @@ import {
 } from "@/lib/account-validation";
 
 type Mode = "create" | "signin";
+
+const emptySubscribe = () => () => {};
 
 export function AccountForm() {
   const router = useRouter();
@@ -22,6 +24,11 @@ export function AccountForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isReady = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
@@ -102,7 +109,12 @@ export function AccountForm() {
         </button>
       </div>
 
-      <form className="account-form" onSubmit={handleSubmit} noValidate>
+      <form
+        className="account-form"
+        method="post"
+        onSubmit={handleSubmit}
+        noValidate
+      >
         {mode === "create" ? (
           <label>
             <span>Name</span>
@@ -153,8 +165,14 @@ export function AccountForm() {
           {error ? <p className="form-error">{error}</p> : null}
         </div>
 
-        <button className="account-submit" type="submit" disabled={isSubmitting}>
-          {isSubmitting
+        <button
+          className="account-submit"
+          type="submit"
+          disabled={!isReady || isSubmitting}
+        >
+          {!isReady
+            ? "Preparing secure sign in…"
+            : isSubmitting
             ? mode === "create"
               ? "Creating your account…"
               : "Signing you in…"

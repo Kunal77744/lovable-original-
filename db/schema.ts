@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -101,7 +102,7 @@ export const rateLimit = pgTable(
     id: text("id").primaryKey(),
     key: text("key").notNull(),
     count: integer("count").notNull(),
-    lastRequest: integer("last_request").notNull(),
+    lastRequest: bigint("last_request", { mode: "number" }).notNull(),
   },
   (table) => [uniqueIndex("rate_limit_key_unique").on(table.key)],
 );
