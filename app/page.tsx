@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { SiteFooter, SiteNav } from "./site-chrome";
 
 const learningLoop = [
   {
@@ -50,15 +50,7 @@ function CheckIcon() {
 export default function Home() {
   return (
     <main>
-      <nav className="site-nav" aria-label="Main navigation">
-        <Link className="brand" href="/" aria-label="Lovable Original home">
-          <span className="brand-mark" aria-hidden="true">
-            L
-          </span>
-          <span>Lovable Original</span>
-        </Link>
-        <span className="nav-note">AI-first learning</span>
-      </nav>
+      <SiteNav />
 
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy">
@@ -135,16 +127,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer>
-        <span>© 2026 Lovable Original</span>
-        <span className="footer-divider" aria-hidden="true">
-          ·
-        </span>
-        <a className="tin-credit" href="https://tin.computer">
-          <span className="tin-mark" aria-hidden="true" />
-          Growth by Tin
-        </a>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
