@@ -4,6 +4,14 @@ type SiteNavProps = {
   currentPage?: "home" | "about";
 };
 
+export function SkipLink() {
+  return (
+    <a className="skip-link" href="#main-content">
+      Skip to main content
+    </a>
+  );
+}
+
 export function SiteNav({ currentPage = "home" }: SiteNavProps) {
   return (
     <nav className="site-nav" aria-label="Main navigation">

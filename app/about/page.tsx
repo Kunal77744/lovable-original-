@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SiteFooter, SiteNav } from "../site-chrome";
+import { SiteFooter, SiteNav, SkipLink } from "../site-chrome";
 
 export const metadata: Metadata = {
   title: "About Lovable Original | Learn, recall, and build",
@@ -45,76 +45,81 @@ function ArrowIcon() {
 
 export default function AboutPage() {
   return (
-    <main>
+    <>
+      <SkipLink />
       <SiteNav currentPage="about" />
 
-      <section className="about-hero" aria-labelledby="about-title">
-        <div className="about-hero-copy">
-          <p className="eyebrow">About Lovable Original</p>
-          <h1 id="about-title">
-            Learning should end in something you can do.
-          </h1>
-          <p className="about-lede">
-            Lovable Original is an AI-first learning platform for students who
-            want to understand difficult material faster, remember it longer,
-            and turn knowledge into job-ready skill.
+      <main id="main-content" tabIndex={-1}>
+        <section className="about-hero" aria-labelledby="about-title">
+          <div className="about-hero-copy">
+            <p className="eyebrow">About Lovable Original</p>
+            <h1 id="about-title">
+              Learning should end in something you can do.
+            </h1>
+            <p className="about-lede">
+              Lovable Original is an AI-first learning platform for students who
+              want to understand difficult material faster, remember it longer,
+              and turn knowledge into job-ready skill.
+            </p>
+            <Link className="primary-action" href="/#learning-path">
+              Explore the learning path
+              <ArrowIcon />
+            </Link>
+          </div>
+
+          <aside
+            className="about-loop"
+            aria-label="The Lovable Original learning loop"
+          >
+            <p className="about-loop-label">One continuous learning loop</p>
+            <ol>
+              {learningLoop.map((step) => (
+                <li key={step.number}>
+                  <span className="about-loop-number">{step.number}</span>
+                  <div>
+                    <h2>{step.title}</h2>
+                    <p>{step.copy}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </aside>
+        </section>
+
+        <section className="about-story" aria-labelledby="story-title">
+          <div className="about-story-heading">
+            <p className="eyebrow">Why we&apos;re building it</p>
+            <h2 id="story-title">Passive study leaves too much behind.</h2>
+          </div>
+
+          <div className="about-story-copy">
+            <p>
+              Reading and watching can create the feeling of progress without
+              the recall or practical confidence that real work demands. Lovable
+              Original brings explanation, active practice, and building into
+              one connected path.
+            </p>
+            <p>
+              The first focused course is being built now. The goal is simple:
+              help a student move from &quot;I&apos;ve seen this before&quot; to
+              &quot;I can explain it, use it, and prove it.&quot;
+            </p>
+          </div>
+        </section>
+
+        <section className="about-standard" aria-labelledby="standard-title">
+          <div className="about-standard-heading">
+            <p className="eyebrow">The standard</p>
+            <h2 id="standard-title">Every lesson has somewhere to go.</h2>
+          </div>
+          <p className="about-standard-copy">
+            A clear explanation leads to recall. Recall leads to practice.
+            Practice leads to a project, an interview answer, or a skill you can
+            use outside the course.
           </p>
-          <Link className="primary-action" href="/#learning-path">
-            Explore the learning path
-            <ArrowIcon />
-          </Link>
-        </div>
-
-        <aside className="about-loop" aria-label="The Lovable Original learning loop">
-          <p className="about-loop-label">One continuous learning loop</p>
-          <ol>
-            {learningLoop.map((step) => (
-              <li key={step.number}>
-                <span className="about-loop-number">{step.number}</span>
-                <div>
-                  <h2>{step.title}</h2>
-                  <p>{step.copy}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      </section>
-
-      <section className="about-story" aria-labelledby="story-title">
-        <div className="about-story-heading">
-          <p className="eyebrow">Why we&apos;re building it</p>
-          <h2 id="story-title">Passive study leaves too much behind.</h2>
-        </div>
-
-        <div className="about-story-copy">
-          <p>
-            Reading and watching can create the feeling of progress without the
-            recall or practical confidence that real work demands. Lovable
-            Original brings explanation, active practice, and building into one
-            connected path.
-          </p>
-          <p>
-            The first focused course is being built now. The goal is simple:
-            help a student move from &quot;I&apos;ve seen this before&quot; to
-            &quot;I can explain it, use it, and prove it.&quot;
-          </p>
-        </div>
-      </section>
-
-      <section className="about-standard" aria-labelledby="standard-title">
-        <div className="about-standard-heading">
-          <p className="eyebrow">The standard</p>
-          <h2 id="standard-title">Every lesson has somewhere to go.</h2>
-        </div>
-        <p className="about-standard-copy">
-          A clear explanation leads to recall. Recall leads to practice.
-          Practice leads to a project, an interview answer, or a skill you can
-          use outside the course.
-        </p>
-      </section>
-
+        </section>
+      </main>
       <SiteFooter />
-    </main>
+    </>
   );
 }
