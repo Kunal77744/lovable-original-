@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
@@ -36,22 +37,54 @@ export default async function DashboardPage() {
           <div>
             <p className="eyebrow">Student dashboard</p>
             <h1 id="dashboard-title">Welcome, {firstName}.</h1>
-            <p>Your first learning path is ready to take shape.</p>
+            <p>
+              {firstCourse.lesson.completed
+                ? "You finished your first lesson. Keep the foundation close."
+                : "Your first job-ready learning path is ready."}
+            </p>
           </div>
           <SignOutButton />
         </div>
 
         <article className="dashboard-course">
           <div className="dashboard-course-copy">
-            <span className="course-status">Topic selection in progress</span>
+            <div className="course-status-row">
+              <span className="course-status">
+                {firstCourse.lesson.completed ? "Lesson completed" : "Course live"}
+              </span>
+              <span className="course-progress-value">
+                {firstCourse.completedLessons}/{firstCourse.totalLessons} lessons
+              </span>
+            </div>
             <p className="course-kicker">First course</p>
             <h2>{firstCourse.title}</h2>
             <p>{firstCourse.description}</p>
+            <div
+              className="course-progress-track"
+              role="progressbar"
+              aria-label="Course progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={firstCourse.progressPercent}
+            >
+              <span style={{ width: `${firstCourse.progressPercent}%` }} />
+            </div>
           </div>
           <div className="course-next-step">
-            <span>Next</span>
-            <strong>Course outline</strong>
-            <p>The first complete lesson and quiz loop is being built now.</p>
+            <span>
+              {firstCourse.lesson.completed
+                ? `Quiz score · ${firstCourse.lesson.quizScore}%`
+                : firstCourse.lesson.moduleTitle}
+            </span>
+            <strong>{firstCourse.lesson.title}</strong>
+            <p>{firstCourse.lesson.description}</p>
+            <Link
+              className="course-lesson-action"
+              href={`/learn/${firstCourse.slug}/${firstCourse.lesson.slug}`}
+            >
+              {firstCourse.lesson.completed ? "Review lesson" : "Start lesson"}
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </article>
 

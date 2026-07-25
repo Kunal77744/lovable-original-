@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 type SiteNavProps = {
-  currentPage?: "home" | "about" | "account" | "dashboard";
+  currentPage?: "home" | "about" | "account" | "dashboard" | "lesson";
 };
 
 export function SiteNav({ currentPage = "home" }: SiteNavProps) {
@@ -23,14 +23,20 @@ export function SiteNav({ currentPage = "home" }: SiteNavProps) {
         </Link>
         <Link
           className="nav-account-link"
-          href={currentPage === "dashboard" ? "/dashboard" : "/account"}
+          href={
+            currentPage === "dashboard" || currentPage === "lesson"
+              ? "/dashboard"
+              : "/account"
+          }
           aria-current={
             currentPage === "account" || currentPage === "dashboard"
               ? "page"
               : undefined
           }
         >
-          {currentPage === "dashboard" ? "Dashboard" : "Student sign in"}
+          {currentPage === "dashboard" || currentPage === "lesson"
+            ? "Dashboard"
+            : "Student sign in"}
         </Link>
       </div>
     </nav>

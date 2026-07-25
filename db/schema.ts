@@ -146,6 +146,58 @@ export const courseAssignment = pgTable(
   ],
 );
 
+export const lesson = pgTable(
+  "lesson",
+  {
+    id: text("id").primaryKey(),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => course.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    moduleTitle: text("module_title").notNull(),
+    position: integer("position").notNull(),
+    estimatedMinutes: integer("estimated_minutes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("lesson_course_slug_unique").on(table.courseId, table.slug),
+    uniqueIndex("lesson_course_position_unique").on(table.courseId, table.position),
+    index("lesson_course_id_idx").on(table.courseId),
+  ],
+);
+
+export const lessonProgress = pgTable(
+  "lesson_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lesson.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("in-progress"),
+    quizScore: integer("quiz_score").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("lesson_progress_user_lesson_unique").on(
+      table.userId,
+      table.lessonId,
+    ),
+    index("lesson_progress_user_id_idx").on(table.userId),
+  ],
+);
+
 export const earlyAccessSignup = pgTable(
   "early_access_signup",
   {
