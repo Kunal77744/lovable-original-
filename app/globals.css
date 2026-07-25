@@ -532,6 +532,78 @@ h1 {
   line-height: 1.7;
 }
 
+.not-found-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.not-found-shell {
+  width: min(1184px, calc(100% - 48px));
+  margin: auto;
+  padding: 80px 0 96px;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.78fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 96px;
+}
+
+.not-found-code {
+  min-height: 370px;
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.8vw, 24px);
+  overflow: hidden;
+  color: var(--ink);
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 19px;
+  background:
+    radial-gradient(circle at 78% 24%, var(--sage) 0 72px, transparent 73px),
+    var(--surface);
+  box-shadow: 0 28px 58px rgba(23, 35, 30, 0.1);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(88px, 10vw, 144px);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.075em;
+}
+
+.not-found-zero {
+  width: clamp(88px, 10vw, 136px);
+  height: clamp(112px, 12vw, 166px);
+  display: grid;
+  place-items: center;
+  color: var(--paper);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 16px 32px rgba(23, 35, 30, 0.18);
+}
+
+.not-found-zero span {
+  font-size: 0.45em;
+  font-style: italic;
+  letter-spacing: 0;
+  transform: translateX(-0.04em);
+}
+
+.not-found-copy {
+  max-width: 650px;
+}
+
+.not-found-copy h1 {
+  font-size: clamp(52px, 6vw, 78px);
+}
+
+.not-found-lede {
+  max-width: 48ch;
+  margin: 28px 0 32px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.62;
+}
+
 footer {
   padding: 30px max(24px, calc((100% - 1184px) / 2));
   display: flex;
@@ -581,6 +653,17 @@ footer {
     gap: 64px;
   }
 
+  .not-found-shell {
+    padding: 64px 0 80px;
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+
+  .not-found-code {
+    min-height: 290px;
+    max-width: 620px;
+  }
+
   .about-loop {
     max-width: 620px;
   }
@@ -615,6 +698,13 @@ footer {
 
   .path-step p {
     max-width: 52ch;
+  }
+}
+
+@media (max-width: 560px) {
+  .not-found-code {
+    min-height: 230px;
+    padding: 32px 20px;
   }
 }
 
