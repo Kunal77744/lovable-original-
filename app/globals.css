@@ -1,0 +1,503 @@
+:root {
+  --ink: #17231e;
+  --muted: #5e6b65;
+  --paper: #f6f7f2;
+  --surface: #ffffff;
+  --line: #dce2dc;
+  --accent: #287652;
+  --accent-deep: #175437;
+  --sage: #dfeadf;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(23, 35, 30, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 35, 30, 0.032) 1px, transparent 1px),
+    var(--paper);
+  background-size: 32px 32px;
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+main {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.site-nav {
+  width: min(1184px, calc(100% - 48px));
+  margin: 0 auto;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.14);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-mark,
+.window-logo {
+  display: inline-grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+
+.brand-mark {
+  width: 31px;
+  height: 31px;
+  border-radius: 9px 9px 9px 3px;
+}
+
+.nav-note {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.hero {
+  width: min(1184px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 96px 0 112px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 0.78fr);
+  align-items: center;
+  gap: 88px;
+}
+
+.hero-copy {
+  max-width: 660px;
+}
+
+.eyebrow {
+  margin: 0 0 19px;
+  color: var(--accent-deep);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  text-wrap: pretty;
+}
+
+h1 {
+  margin: 0;
+  max-width: 690px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(56px, 6.6vw, 88px);
+  line-height: 0.96;
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.hero-lede {
+  max-width: 590px;
+  margin: 32px 0;
+  color: var(--muted);
+  font-size: 19px;
+  line-height: 1.62;
+}
+
+.primary-action {
+  min-height: 52px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: white;
+  background: var(--accent-deep);
+  border: 1px solid var(--accent-deep);
+  border-radius: 9px;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 10px 25px rgba(23, 84, 55, 0.18);
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.primary-action:hover {
+  background: #0f432b;
+  box-shadow: 0 13px 28px rgba(23, 84, 55, 0.24);
+  transform: translateY(-1px);
+}
+
+.primary-action:active {
+  transform: translateY(1px);
+}
+
+.primary-action:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.34);
+  outline-offset: 4px;
+}
+
+.launch-note {
+  margin: 17px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.course-window {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 19px;
+  background: var(--surface);
+  box-shadow: 0 30px 60px rgba(23, 35, 30, 0.12);
+  transform: rotate(1.4deg);
+}
+
+.course-window::before {
+  content: "";
+  position: absolute;
+  right: -80px;
+  top: 82px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: var(--sage);
+  filter: blur(1px);
+}
+
+.window-topbar {
+  position: relative;
+  z-index: 1;
+  min-height: 74px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+
+.window-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.window-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px 7px 7px 2px;
+  font-size: 13px;
+}
+
+.progress-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.course-content {
+  position: relative;
+  z-index: 1;
+  padding: 46px 42px 54px;
+}
+
+.course-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lesson-label {
+  margin: 50px 0 9px;
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.course-content h2 {
+  max-width: 410px;
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 34px;
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.lesson-copy {
+  max-width: 420px;
+  margin: 18px 0 31px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.lesson-checklist {
+  display: grid;
+  gap: 13px;
+}
+
+.lesson-checklist > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #455149;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.lesson-checklist svg {
+  color: var(--accent);
+}
+
+.lesson-checklist .current-step {
+  color: var(--ink);
+}
+
+.step-dot {
+  width: 18px;
+  height: 18px;
+  border: 5px solid var(--sage);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.progress-track {
+  height: 5px;
+  background: #e9ede9;
+}
+
+.progress-track span {
+  display: block;
+  width: 32%;
+  height: 100%;
+  background: var(--accent);
+}
+
+.learning-path {
+  padding: 110px max(24px, calc((100% - 1184px) / 2)) 116px;
+  background: var(--ink);
+  color: white;
+}
+
+.section-heading {
+  max-width: 690px;
+}
+
+.learning-path .eyebrow {
+  color: #9fd9b8;
+}
+
+.learning-path h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(42px, 5vw, 64px);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.path-grid {
+  margin-top: 76px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.path-step {
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.step-number {
+  color: #9fd9b8;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.path-step h3 {
+  margin: 28px 0 12px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 29px;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.path-step p {
+  max-width: 31ch;
+  margin: 0;
+  color: #b8c2bd;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+footer {
+  padding: 30px max(24px, calc((100% - 1184px) / 2));
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+  background: var(--paper);
+  font-size: 12px;
+}
+
+.footer-divider {
+  margin: 0 8px;
+}
+
+.tin-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tin-credit:hover {
+  color: var(--ink);
+}
+
+.tin-credit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.tin-mark {
+  width: 1em;
+  height: 1em;
+  background: #66dc9d;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    padding: 72px 0 88px;
+    grid-template-columns: 1fr;
+    gap: 64px;
+  }
+
+  .hero-copy {
+    max-width: 720px;
+  }
+
+  h1 {
+    max-width: 800px;
+  }
+
+  .course-window {
+    max-width: 620px;
+    transform: none;
+  }
+
+  .path-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .path-step p {
+    max-width: 52ch;
+  }
+}
+
+@media (max-width: 560px) {
+  .site-nav,
+  .hero {
+    width: min(100% - 32px, 1184px);
+  }
+
+  .site-nav {
+    min-height: 76px;
+  }
+
+  .nav-note {
+    display: none;
+  }
+
+  .hero {
+    padding-top: 56px;
+    gap: 52px;
+  }
+
+  h1 {
+    font-size: clamp(48px, 15vw, 68px);
+  }
+
+  .hero-lede {
+    margin: 26px 0;
+    font-size: 17px;
+  }
+
+  .course-content {
+    padding: 34px 24px 40px;
+  }
+
+  .course-content h2 {
+    font-size: 30px;
+  }
+
+  .lesson-label {
+    margin-top: 36px;
+  }
+
+  .learning-path {
+    padding-top: 84px;
+    padding-bottom: 88px;
+  }
+
+  .path-grid {
+    margin-top: 58px;
+  }
+
+  footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-divider {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .primary-action {
+    transition: none;
+  }
+}
