@@ -145,3 +145,19 @@ export const courseAssignment = pgTable(
     index("course_assignment_user_id_idx").on(table.userId),
   ],
 );
+
+export const earlyAccessSignup = pgTable(
+  "early_access_signup",
+  {
+    id: text("id").primaryKey(),
+    email: text("email").notNull(),
+    courseSlug: text("course_slug").notNull().default("first-course"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("early_access_signup_email_course_unique").on(
+      table.email,
+      table.courseSlug,
+    ),
+  ],
+);

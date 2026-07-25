@@ -15,6 +15,13 @@
       "when": 1785004144295,
       "tag": "0001_oval_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785005124271,
+      "tag": "0002_green_kat_farrell",
+      "breakpoints": true
     }
   ]
 }

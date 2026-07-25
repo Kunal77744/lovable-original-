@@ -1,4 +1,5 @@
 import { SiteFooter, SiteNav } from "./site-chrome";
+import { EarlyAccessForm } from "@/components/early-access-form";
 
 const learningLoop = [
   {
@@ -17,20 +18,6 @@ const learningLoop = [
     copy: "Projects and interview practice connect what you know to the work you want to do.",
   },
 ];
-
-function ArrowIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      width="20"
-      height="20"
-      fill="none"
-    >
-      <path d="M4 10h11M11 6l4 4-4 4" stroke="currentColor" strokeWidth="1.7" />
-    </svg>
-  );
-}
 
 function CheckIcon() {
   return (
@@ -63,11 +50,11 @@ export default function Home() {
             students understand faster, remember longer, and become job-ready
             through real practice.
           </p>
-          <a className="primary-action" href="#learning-path">
-            See the learning path
-            <ArrowIcon />
-          </a>
-          <p className="launch-note">The first focused course is being built now.</p>
+          <EarlyAccessForm />
+          <p className="launch-note">
+            The first focused course is being built now. Early-access learners
+            will be the first invited in.
+          </p>
           <p className="spelling-note">
             Searched for &quot;Loveable Original&quot;? You&apos;re in the right
             place.
