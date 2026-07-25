@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 type SiteNavProps = {
-  currentPage?: "home" | "about";
+  currentPage?: "home" | "about" | "account" | "dashboard";
 };
 
 export function SiteNav({ currentPage = "home" }: SiteNavProps) {
@@ -13,13 +13,26 @@ export function SiteNav({ currentPage = "home" }: SiteNavProps) {
         </span>
         <span>Lovable Original</span>
       </Link>
-      <Link
-        className="nav-link"
-        href="/about"
-        aria-current={currentPage === "about" ? "page" : undefined}
-      >
-        About
-      </Link>
+      <div className="nav-actions">
+        <Link
+          className="nav-link"
+          href="/about"
+          aria-current={currentPage === "about" ? "page" : undefined}
+        >
+          About
+        </Link>
+        <Link
+          className="nav-account-link"
+          href={currentPage === "dashboard" ? "/dashboard" : "/account"}
+          aria-current={
+            currentPage === "account" || currentPage === "dashboard"
+              ? "page"
+              : undefined
+          }
+        >
+          {currentPage === "dashboard" ? "Dashboard" : "Student sign in"}
+        </Link>
+      </div>
     </nav>
   );
 }
