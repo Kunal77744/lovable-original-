@@ -14,5 +14,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${productionUrl}/courses/web-development-foundations`,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
   ];
 }

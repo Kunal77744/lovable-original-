@@ -1,7 +1,13 @@
 import Link from "next/link";
 
 type SiteNavProps = {
-  currentPage?: "home" | "about" | "account" | "dashboard" | "lesson";
+  currentPage?:
+    | "home"
+    | "course"
+    | "about"
+    | "account"
+    | "dashboard"
+    | "lesson";
 };
 
 export function SkipLink() {
@@ -22,6 +28,13 @@ export function SiteNav({ currentPage = "home" }: SiteNavProps) {
         <span>Lovable Original</span>
       </Link>
       <div className="nav-actions">
+        <Link
+          className="nav-link"
+          href="/courses/web-development-foundations"
+          aria-current={currentPage === "course" ? "page" : undefined}
+        >
+          Course
+        </Link>
         <Link
           className="nav-link"
           href="/about"
