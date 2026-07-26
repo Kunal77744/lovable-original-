@@ -35,6 +35,9 @@ describe("RevisionPack", () => {
         expect(
           screen.getByText(`Card ${cardNumber + 1} of 5`),
         ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: "Reveal answer" }),
+        ).toHaveFocus();
       }
     }
 
