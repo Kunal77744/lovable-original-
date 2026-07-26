@@ -18,6 +18,8 @@ export const FIRST_LESSON = {
   estimatedMinutes: 18,
 } as const;
 
+export const FIRST_COURSE_LESSONS = [FIRST_LESSON] as const;
+
 export type QuizChoice = {
   id: string;
   label: string;

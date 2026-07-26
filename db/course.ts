@@ -1,8 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import {
   FIRST_COURSE,
-  FIRST_LESSON,
+  FIRST_COURSE_LESSONS,
 } from "@/lib/first-course-content";
+import { buildCourseProgress } from "@/lib/course-progress";
 import { getDatabase } from "./index";
 import {
   course,
@@ -27,23 +28,25 @@ async function ensureFirstCourse() {
       },
     });
 
-  await database
-    .insert(lesson)
-    .values({
-      ...FIRST_LESSON,
-      courseId: FIRST_COURSE.id,
-    })
-    .onConflictDoUpdate({
-      target: lesson.id,
-      set: {
-        title: FIRST_LESSON.title,
-        description: FIRST_LESSON.description,
-        moduleTitle: FIRST_LESSON.moduleTitle,
-        position: FIRST_LESSON.position,
-        estimatedMinutes: FIRST_LESSON.estimatedMinutes,
-        updatedAt: new Date(),
-      },
-    });
+  for (const courseLesson of FIRST_COURSE_LESSONS) {
+    await database
+      .insert(lesson)
+      .values({
+        ...courseLesson,
+        courseId: FIRST_COURSE.id,
+      })
+      .onConflictDoUpdate({
+        target: lesson.id,
+        set: {
+          title: courseLesson.title,
+          description: courseLesson.description,
+          moduleTitle: courseLesson.moduleTitle,
+          position: courseLesson.position,
+          estimatedMinutes: courseLesson.estimatedMinutes,
+          updatedAt: new Date(),
+        },
+      });
+  }
 }
 
 async function ensureFirstCourseAssignment(userId: string) {
@@ -64,16 +67,18 @@ export async function getOrCreateFirstCourseAssignment(userId: string) {
   const database = getDatabase();
   await ensureFirstCourseAssignment(userId);
 
-  const [assignment] = await database
+  const assignmentRows = await database
     .select({
       slug: course.slug,
       title: course.title,
       description: course.description,
       status: course.status,
+      lessonId: lesson.id,
       lessonSlug: lesson.slug,
       lessonTitle: lesson.title,
       lessonDescription: lesson.description,
       lessonModuleTitle: lesson.moduleTitle,
+      lessonPosition: lesson.position,
       estimatedMinutes: lesson.estimatedMinutes,
       progressStatus: lessonProgress.status,
       quizScore: lessonProgress.quizScore,
@@ -94,31 +99,34 @@ export async function getOrCreateFirstCourseAssignment(userId: string) {
         eq(courseAssignment.courseId, FIRST_COURSE.id),
       ),
     )
-    .limit(1);
+    .orderBy(asc(lesson.position));
+
+  const assignment = assignmentRows[0];
 
   if (!assignment) {
     throw new Error("The first course could not be assigned.");
   }
 
-  const completed = assignment.progressStatus === "completed";
+  const progress = buildCourseProgress(
+    assignmentRows.map((row) => ({
+      id: row.lessonId,
+      slug: row.lessonSlug,
+      title: row.lessonTitle,
+      description: row.lessonDescription,
+      moduleTitle: row.lessonModuleTitle,
+      position: row.lessonPosition,
+      estimatedMinutes: row.estimatedMinutes,
+      progressStatus: row.progressStatus,
+      quizScore: row.quizScore,
+    })),
+  );
 
   return {
     slug: assignment.slug,
     title: assignment.title,
     description: assignment.description,
     status: assignment.status,
-    progressPercent: completed ? 100 : 0,
-    completedLessons: completed ? 1 : 0,
-    totalLessons: 1,
-    lesson: {
-      slug: assignment.lessonSlug,
-      title: assignment.lessonTitle,
-      description: assignment.lessonDescription,
-      moduleTitle: assignment.lessonModuleTitle,
-      estimatedMinutes: assignment.estimatedMinutes,
-      completed,
-      quizScore: assignment.quizScore ?? null,
-    },
+    ...progress,
   };
 }
 
@@ -130,7 +138,7 @@ export async function getFirstCourseLessonForStudent(
   const database = getDatabase();
   await ensureFirstCourseAssignment(userId);
 
-  const [studentLesson] = await database
+  const courseRows = await database
     .select({
       courseSlug: course.slug,
       courseTitle: course.title,
@@ -158,19 +166,50 @@ export async function getFirstCourseLessonForStudent(
       and(
         eq(courseAssignment.userId, userId),
         eq(course.slug, courseSlug),
-        eq(lesson.slug, lessonSlug),
       ),
     )
-    .limit(1);
+    .orderBy(asc(lesson.position));
+
+  const courseRow = courseRows[0];
+
+  if (!courseRow) {
+    return null;
+  }
+
+  const progress = buildCourseProgress(
+    courseRows.map((row) => ({
+      id: row.lessonId,
+      slug: row.lessonSlug,
+      title: row.lessonTitle,
+      description: row.lessonDescription,
+      moduleTitle: row.moduleTitle,
+      position: row.position,
+      estimatedMinutes: row.estimatedMinutes,
+      progressStatus: row.progressStatus,
+      quizScore: row.quizScore,
+    })),
+  );
+  const studentLesson = progress.lessons.find(
+    (courseLesson) => courseLesson.slug === lessonSlug,
+  );
 
   if (!studentLesson) {
     return null;
   }
 
   return {
-    ...studentLesson,
-    completed: studentLesson.progressStatus === "completed",
-    quizScore: studentLesson.quizScore ?? null,
+    courseSlug: courseRow.courseSlug,
+    courseTitle: courseRow.courseTitle,
+    lessonId: studentLesson.id,
+    lessonSlug: studentLesson.slug,
+    lessonTitle: studentLesson.title,
+    lessonDescription: studentLesson.description,
+    moduleTitle: studentLesson.moduleTitle,
+    position: studentLesson.position,
+    estimatedMinutes: studentLesson.estimatedMinutes,
+    completed: studentLesson.completed,
+    quizScore: studentLesson.quizScore,
+    ...progress,
   };
 }
 

@@ -27,7 +27,12 @@ export default async function DashboardPage() {
   }
 
   const firstCourse = await getOrCreateFirstCourseAssignment(session.user.id);
+  const nextLesson = firstCourse.nextLesson;
   const firstName = session.user.name.trim().split(/\s+/)[0];
+
+  if (!nextLesson) {
+    throw new Error("The assigned course has no lessons.");
+  }
 
   return (
     <main>
@@ -38,8 +43,8 @@ export default async function DashboardPage() {
             <p className="eyebrow">Student dashboard</p>
             <h1 id="dashboard-title">Welcome, {firstName}.</h1>
             <p>
-              {firstCourse.lesson.completed
-                ? "You finished your first lesson. Keep the foundation close."
+              {firstCourse.courseCompleted
+                ? "You finished this course. Keep the foundation close."
                 : "Your first job-ready learning path is ready."}
             </p>
           </div>
@@ -50,7 +55,7 @@ export default async function DashboardPage() {
           <div className="dashboard-course-copy">
             <div className="course-status-row">
               <span className="course-status">
-                {firstCourse.lesson.completed ? "Lesson completed" : "Course live"}
+                {firstCourse.courseCompleted ? "Course completed" : "Course live"}
               </span>
               <span className="course-progress-value">
                 {firstCourse.completedLessons}/{firstCourse.totalLessons} lessons
@@ -72,17 +77,21 @@ export default async function DashboardPage() {
           </div>
           <div className="course-next-step">
             <span>
-              {firstCourse.lesson.completed
-                ? `Quiz score · ${firstCourse.lesson.quizScore}%`
-                : firstCourse.lesson.moduleTitle}
+              {nextLesson.completed
+                ? `Quiz score · ${nextLesson.quizScore}%`
+                : nextLesson.moduleTitle}
             </span>
-            <strong>{firstCourse.lesson.title}</strong>
-            <p>{firstCourse.lesson.description}</p>
+            <strong>{nextLesson.title}</strong>
+            <p>{nextLesson.description}</p>
             <Link
               className="course-lesson-action"
-              href={`/learn/${firstCourse.slug}/${firstCourse.lesson.slug}`}
+              href={`/learn/${firstCourse.slug}/${nextLesson.slug}`}
             >
-              {firstCourse.lesson.completed ? "Review lesson" : "Start lesson"}
+              {nextLesson.completed
+                ? "Review lesson"
+                : firstCourse.completedLessons > 0
+                  ? "Continue course"
+                  : "Start lesson"}
               <span aria-hidden="true">→</span>
             </Link>
           </div>

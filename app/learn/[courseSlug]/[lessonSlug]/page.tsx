@@ -70,24 +70,45 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <p>{studentLesson.courseTitle}</p>
           <div className="lesson-rail-progress">
             <span
-              className={studentLesson.completed ? "is-complete" : ""}
+              className={studentLesson.courseCompleted ? "is-complete" : ""}
               aria-hidden="true"
             />
             <div>
               <strong>{studentLesson.moduleTitle}</strong>
               <small>
-                {studentLesson.completed ? "1 of 1 complete" : "0 of 1 complete"}
+                {studentLesson.completedLessons} of {studentLesson.totalLessons}{" "}
+                complete
               </small>
             </div>
           </div>
           <ol>
-            <li aria-current="step">
-              <span>{studentLesson.completed ? "✓" : "1"}</span>
-              <div>
-                <strong>{studentLesson.lessonTitle}</strong>
-                <small>{studentLesson.estimatedMinutes} min</small>
-              </div>
-            </li>
+            {studentLesson.lessons.map((courseLesson) => (
+              <li
+                key={courseLesson.id}
+                aria-current={
+                  courseLesson.slug === studentLesson.lessonSlug
+                    ? "step"
+                    : undefined
+                }
+              >
+                <span>
+                  {courseLesson.completed ? "✓" : courseLesson.position}
+                </span>
+                <div>
+                  <Link
+                    href={`/learn/${studentLesson.courseSlug}/${courseLesson.slug}`}
+                  >
+                    <strong>{courseLesson.title}</strong>
+                  </Link>
+                  <small>
+                    {courseLesson.estimatedMinutes} min
+                    {courseLesson.quizScore !== null
+                      ? ` · Best ${courseLesson.quizScore}%`
+                      : ""}
+                  </small>
+                </div>
+              </li>
+            ))}
           </ol>
         </aside>
 

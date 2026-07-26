@@ -1238,6 +1238,10 @@ h1 {
   gap: 12px;
 }
 
+.lesson-rail li + li {
+  margin-top: 18px;
+}
+
 .lesson-rail li > span {
   width: 28px;
   height: 28px;
@@ -1248,6 +1252,20 @@ h1 {
   background: var(--accent-deep);
   font-size: 11px;
   font-weight: 800;
+}
+
+.lesson-rail li a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.lesson-rail li a:hover {
+  color: var(--accent);
+}
+
+.lesson-rail li a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .lesson-content {
