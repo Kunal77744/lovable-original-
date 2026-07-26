@@ -7,6 +7,7 @@ type SiteNavProps = {
     | "about"
     | "account"
     | "dashboard"
+    | "profile"
     | "lesson"
     | "practice"
     | "settings"
@@ -28,6 +29,7 @@ export function SiteNav({
 }: SiteNavProps) {
   const inStudentSpace =
     currentPage === "dashboard" ||
+    currentPage === "profile" ||
     currentPage === "lesson" ||
     currentPage === "settings" ||
     currentPage === "certificate" ||
@@ -63,6 +65,15 @@ export function SiteNav({
         >
           About
         </Link>
+        {inStudentSpace ? (
+          <Link
+            className="nav-link"
+            href="/profile"
+            aria-current={currentPage === "profile" ? "page" : undefined}
+          >
+            Profile
+          </Link>
+        ) : null}
         <Link
           className="nav-account-link"
           href={inStudentSpace ? "/dashboard" : "/account"}
