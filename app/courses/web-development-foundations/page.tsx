@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  FIRST_COURSE,
+  FIRST_LESSON,
+  STUDENT_ACCESS_PROMISE,
+} from "@/lib/first-course-content";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
   description:
-    "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.",
+    "Read a free 18-minute semantic HTML lesson, then create a free account only when you want to build, grade, and save your page.",
   alternates: {
     canonical: "/courses/web-development-foundations",
   },
@@ -14,13 +19,13 @@ export const metadata: Metadata = {
     url: "/courses/web-development-foundations",
     title: "Web Development Foundations | Lovable Original",
     description:
-      "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.",
+      "Read a free 18-minute semantic HTML lesson, then create a free account only when you want to build, grade, and save your page.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Web Development Foundations | Lovable Original",
     description:
-      "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.",
+      "Read a free 18-minute semantic HTML lesson, then create a free account only when you want to build, grade, and save your page.",
   },
 };
 
@@ -88,16 +93,19 @@ export default function WebDevelopmentFoundationsPage() {
               Build a semantic article page in 18 minutes.
             </h1>
             <p className="course-overview-lede">
-              Learn how browsers read a page, build and save your own semantic
-              HTML, then check your choices with four questions. Pass at 75%
-              and keep your best result.
+              Read the complete lesson free, then create a free student account
+              only when you want to build, grade, and save your own semantic
+              HTML page.
             </p>
-            <Link className="primary-action" href="/account">
-              Start the course
+            <Link
+              className="primary-action"
+              href={`/learn/${FIRST_COURSE.slug}/${FIRST_LESSON.slug}`}
+            >
+              Read the lesson free
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              One lesson · Saved workspace · Four-question quiz
+              No payment · No account to read · Free account to save
             </p>
           </div>
 
@@ -144,12 +152,12 @@ export default function WebDevelopmentFoundationsPage() {
 
         <section className="course-proof-strip" aria-label="Course facts">
           <div>
-            <strong>18 minutes</strong>
-            <span>One focused lesson</span>
+            <strong>100% free</strong>
+            <span>No student course paywall</span>
           </div>
           <div>
-            <strong>1 saved page</strong>
-            <span>Your practical result</span>
+            <strong>18 minutes</strong>
+            <span>One focused lesson</span>
           </div>
           <div>
             <strong>75% to pass</strong>
@@ -162,8 +170,8 @@ export default function WebDevelopmentFoundationsPage() {
             <p className="eyebrow">The complete course</p>
             <h2 id="journey-title">Structure, practice, proof.</h2>
             <p>
-              Each step stays connected, so the lesson ends with something you
-              made and a result you can return to.
+              {STUDENT_ACCESS_PROMISE} Your free account protects the work you
+              choose to save.
             </p>
           </div>
 

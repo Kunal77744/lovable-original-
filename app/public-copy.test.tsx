@@ -4,10 +4,12 @@ import AboutPage, { metadata as aboutMetadata } from "./about/page";
 import CoursePage, {
   metadata as courseMetadata,
 } from "./courses/web-development-foundations/page";
+import CoursesPage, { metadata as coursesMetadata } from "./courses/page";
 import { metadata as rootMetadata } from "./layout";
 import { alt as socialImageAlt } from "./opengraph-image";
 import Home from "./page";
 import sitemap from "./sitemap";
+import { LEARNING_PATHS } from "@/lib/first-course-content";
 
 afterEach(cleanup);
 
@@ -17,11 +19,11 @@ describe("public product promise", () => {
 
     expect(
       screen.getByRole("link", {
-        name: /start web development foundations/i,
+        name: /explore the free learning path/i,
       }),
-    ).toHaveAttribute("href", "/account");
+    ).toHaveAttribute("href", "/courses");
     expect(
-      screen.getByText(/build and save an article page/i),
+      screen.getByText(/read every available course and lesson free/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/real projects|interview practice/i),
@@ -33,27 +35,62 @@ describe("public product promise", () => {
 
     expect(
       screen.getByRole("link", {
-        name: /start web development foundations/i,
+        name: /explore free learning paths/i,
       }),
-    ).toHaveAttribute("href", "/account");
+    ).toHaveAttribute("href", "/courses");
     expect(
       screen.getByText(/the first focused course is live now/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/are planned, not part of this first course/i),
+      screen.getByText(/projects, interview practice, certificates/i),
     ).toBeInTheDocument();
+  });
+
+  it("renders every shared learning path in the free public catalog", () => {
+    render(<CoursesPage />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: /every learning path here is free/i,
+      }),
+    ).toBeInTheDocument();
+
+    for (const path of LEARNING_PATHS) {
+      expect(
+        screen.getByRole("link", { name: path.title }),
+      ).toHaveAttribute("href", `/courses/${path.slug}`);
+
+      for (const lesson of path.lessons) {
+        expect(screen.getByText(lesson.title)).toBeInTheDocument();
+      }
+    }
+
+    expect(
+      screen
+        .getAllByRole("link", { name: /read the free lesson/i })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(
+      LEARNING_PATHS.flatMap((path) =>
+        path.lessons.map(
+          (lesson) => `/learn/${path.slug}/${lesson.slug}`,
+        ),
+      ),
+    );
   });
 
   it("describes only live capability in page and share metadata", () => {
     const publicMetadata = JSON.stringify({
       rootMetadata,
       aboutMetadata,
+      coursesMetadata,
       courseMetadata,
       socialImageAlt,
     });
 
     expect(publicMetadata).toContain("Web Development Foundations");
-    expect(publicMetadata).toContain("Build and save a semantic HTML page");
+    expect(publicMetadata).toContain(
+      "Read every available course and lesson free",
+    );
     expect(publicMetadata).not.toMatch(
       /real projects|interview practice|flashcards|certificates|AI tutor/i,
     );
@@ -68,11 +105,14 @@ describe("public product promise", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /start the course/i }),
-    ).toHaveAttribute("href", "/account");
+      screen.getByRole("link", { name: /read the lesson free/i }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
     expect(screen.getByText("75% to pass")).toBeInTheDocument();
     expect(screen.getByText("Four recall questions")).toBeInTheDocument();
-    expect(screen.getByText("1 saved page")).toBeInTheDocument();
+    expect(screen.getByText("100% free")).toBeInTheDocument();
     expect(screen.queryByText(/AI tutor|certificate/i)).not.toBeInTheDocument();
   });
 
@@ -80,6 +120,18 @@ describe("public product promise", () => {
     expect(sitemap()).toContainEqual(
       expect.objectContaining({
         url: expect.stringContaining("/courses/web-development-foundations"),
+      }),
+    );
+    expect(sitemap()).toContainEqual(
+      expect.objectContaining({
+        url: expect.stringMatching(/\/courses$/),
+      }),
+    );
+    expect(sitemap()).toContainEqual(
+      expect.objectContaining({
+        url: expect.stringContaining(
+          "/learn/web-development-foundations/semantic-html",
+        ),
       }),
     );
   });

@@ -4,6 +4,7 @@ export const FIRST_COURSE = {
   title: "Web Development Foundations",
   description:
     "Build the browser-first skills behind accessible, job-ready interfaces.",
+  outcome: "Build a semantic article page the browser understands.",
   status: "live",
 } as const;
 
@@ -19,6 +20,40 @@ export const FIRST_LESSON = {
 } as const;
 
 export const FIRST_COURSE_LESSONS = [FIRST_LESSON] as const;
+
+export const STUDENT_ACCESS_PROMISE =
+  "Every course path and learning feature currently available on Lovable Original is free for students.";
+
+export const LEARNING_PATHS = [
+  {
+    ...FIRST_COURSE,
+    lessons: FIRST_COURSE_LESSONS,
+  },
+] as const;
+
+export function getPublicLearningPath(courseSlug: string) {
+  return LEARNING_PATHS.find((path) => path.slug === courseSlug) ?? null;
+}
+
+export function getPublicLesson(courseSlug: string, lessonSlug: string) {
+  const path = getPublicLearningPath(courseSlug);
+
+  if (!path) {
+    return null;
+  }
+
+  const courseLesson =
+    path.lessons.find((lesson) => lesson.slug === lessonSlug) ?? null;
+
+  if (!courseLesson) {
+    return null;
+  }
+
+  return {
+    course: path,
+    lesson: courseLesson,
+  };
+}
 
 export type QuizChoice = {
   id: string;

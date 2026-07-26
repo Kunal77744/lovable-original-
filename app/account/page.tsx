@@ -14,9 +14,9 @@ import { SiteFooter, SiteNav } from "../site-chrome";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Create your student account | Lovable Original",
+  title: "Create your free student account | Lovable Original",
   description:
-    "Create your student account to complete the one-lesson Web Development Foundations course.",
+    "Create a free student account to save your private Web Development Foundations work, quiz result, and revision progress.",
   robots: {
     index: false,
     follow: false,
@@ -38,11 +38,11 @@ export default async function AccountPage() {
       <section className="account-shell" aria-labelledby="account-title">
         <div className="account-intro">
           <p className="eyebrow">{FIRST_COURSE.title}</p>
-          <h1 id="account-title">{FIRST_LESSON.title}.</h1>
+          <h1 id="account-title">Save your learning privately.</h1>
           <p>
-            Create your student account to complete this one-lesson course: an{" "}
-            {FIRST_LESSON.estimatedMinutes}-minute semantic HTML lesson with a
-            saved result.
+            The {FIRST_LESSON.estimatedMinutes}-minute lesson is free to read.
+            Create a free student account when you are ready to keep your notes,
+            graded semantic HTML page, quiz result, and revision progress.
           </p>
           <ul aria-label={`What ${FIRST_COURSE.title} includes`}>
             <li>Turn a blank document into an accessible article page</li>

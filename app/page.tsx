@@ -57,21 +57,21 @@ export default function Home() {
       <main id="main-content" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">Web Development Foundations</p>
+            <p className="eyebrow">Free student learning</p>
             <h1 id="hero-title">
               Lovable Original helps you build a page the browser understands.
             </h1>
             <p className="hero-lede">
-              In one 18-minute semantic HTML lesson, build and save an article
-              page, check your recall with four questions, and keep your course
-              result.
+              Read every available course and lesson free. Start with an
+              18-minute semantic HTML lesson, then create a free account only
+              when you want to save your work and result.
             </p>
-            <Link className="primary-action" href="/account">
-              Start Web Development Foundations
+            <Link className="primary-action" href="/courses">
+              Explore the free learning path
               <ArrowIcon />
             </Link>
             <p className="launch-note">
-              One focused lesson. One practical result. Your best quiz score
+              No course paywall. No account needed to read. Private progress
               stays with your free student account.
             </p>
             <p className="spelling-note">

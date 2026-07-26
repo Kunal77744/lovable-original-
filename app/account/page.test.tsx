@@ -28,11 +28,11 @@ describe("AccountPage", () => {
 
     expect(
       screen.getByRole("region", {
-        name: "Build a page the browser understands.",
+        name: "Save your learning privately.",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Web Development Foundations")).toBeInTheDocument();
-    expect(screen.getByText(/18-minute semantic HTML lesson/)).toBeInTheDocument();
+    expect(screen.getByText(/18-minute lesson is free to read/)).toBeInTheDocument();
     expect(
       screen.getByText("Pass the four-question recall check at 75%"),
     ).toBeInTheDocument();

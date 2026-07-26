@@ -58,11 +58,11 @@ export default function AboutPage() {
             </h1>
             <p className="about-lede">
               Lovable Original begins with Web Development Foundations: one
-              18-minute semantic HTML lesson, a saved coding workspace, four
-              recall questions, and progress you can return to.
+              free 18-minute semantic HTML lesson, a private saved workspace,
+              four recall questions, and progress you can return to.
             </p>
-            <Link className="primary-action" href="/account">
-              Start Web Development Foundations
+            <Link className="primary-action" href="/courses">
+              Explore free learning paths
               <ArrowIcon />
             </Link>
           </div>
@@ -101,8 +101,9 @@ export default function AboutPage() {
             </p>
             <p>
               The first focused course is live now. Web Development Foundations
-              takes one 18-minute lesson from explanation to a saved semantic
-              HTML page, then records your best quiz score and progress.
+              opens its lesson without a payment or account gate, then uses a
+              free student account to protect your saved page, best quiz score,
+              and progress.
             </p>
           </div>
         </section>
@@ -113,9 +114,9 @@ export default function AboutPage() {
             <h2 id="standard-title">Every lesson has somewhere to go.</h2>
           </div>
           <p className="about-standard-copy">
-            Today, a clear explanation leads to recall, then to a page you build
-            and save. Projects, interview practice, flashcards, certificates,
-            and an AI tutor are planned, not part of this first course.
+            Every student course path and learning feature available today is
+            free. Projects, interview practice, certificates, and an AI tutor
+            are planned, not part of this first course.
           </p>
         </section>
       </main>

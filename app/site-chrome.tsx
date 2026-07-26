@@ -8,6 +8,7 @@ type SiteNavProps = {
     | "account"
     | "dashboard"
     | "lesson";
+  signedIn?: boolean;
 };
 
 export function SkipLink() {
@@ -18,7 +19,12 @@ export function SkipLink() {
   );
 }
 
-export function SiteNav({ currentPage = "home" }: SiteNavProps) {
+export function SiteNav({
+  currentPage = "home",
+  signedIn = false,
+}: SiteNavProps) {
+  const studentArea = currentPage === "dashboard" || signedIn;
+
   return (
     <nav className="site-nav" aria-label="Main navigation">
       <Link className="brand" href="/" aria-label="Lovable Original home">
@@ -30,10 +36,10 @@ export function SiteNav({ currentPage = "home" }: SiteNavProps) {
       <div className="nav-actions">
         <Link
           className="nav-link"
-          href="/courses/web-development-foundations"
+          href="/courses"
           aria-current={currentPage === "course" ? "page" : undefined}
         >
-          Course
+          Learning paths
         </Link>
         <Link
           className="nav-link"
@@ -44,20 +50,14 @@ export function SiteNav({ currentPage = "home" }: SiteNavProps) {
         </Link>
         <Link
           className="nav-account-link"
-          href={
-            currentPage === "dashboard" || currentPage === "lesson"
-              ? "/dashboard"
-              : "/account"
-          }
+          href={studentArea ? "/dashboard" : "/account"}
           aria-current={
             currentPage === "account" || currentPage === "dashboard"
               ? "page"
               : undefined
           }
         >
-          {currentPage === "dashboard" || currentPage === "lesson"
-            ? "Dashboard"
-            : "Student sign in"}
+          {studentArea ? "Dashboard" : "Student sign in"}
         </Link>
       </div>
     </nav>

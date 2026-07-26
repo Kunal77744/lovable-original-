@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { LessonNotes } from "@/components/lesson-notes";
+import { PublicLessonPreview } from "@/components/public-lesson-preview";
 import { SemanticHtmlWorkspace } from "@/components/semantic-html-workspace";
 import {
   getFirstCourseLessonForStudent,
@@ -15,19 +16,23 @@ import {
 import {
   FIRST_LESSON_PASS_PERCENT,
   getPublicFirstLessonQuiz,
+  getPublicLesson,
 } from "@/lib/first-course-content";
 import { auth } from "@/lib/auth";
-import { SiteNav } from "../../../site-chrome";
+import {
+  SiteFooter,
+  SiteNav,
+  SkipLink,
+} from "../../../site-chrome";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Semantic HTML lesson | Lovable Original",
+  title: "Free semantic HTML lesson | Lovable Original",
   description:
-    "Learn to build an accessible page structure with semantic HTML, then check your understanding.",
-  robots: {
-    index: false,
-    follow: false,
+    "Read a free 18-minute lesson on semantic HTML, then create a free student account only when you want to save your work.",
+  alternates: {
+    canonical: "/learn/web-development-foundations/semantic-html",
   },
 };
 
@@ -39,15 +44,33 @@ type LessonPageProps = {
 };
 
 export default async function LessonPage({ params }: LessonPageProps) {
+  const { courseSlug, lessonSlug } = await params;
+  const publicLesson = getPublicLesson(courseSlug, lessonSlug);
+
+  if (!publicLesson) {
+    notFound();
+  }
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    return (
+      <>
+        <SkipLink />
+        <SiteNav currentPage="lesson" />
+        <main id="main-content" className="lesson-page" tabIndex={-1}>
+          <PublicLessonPreview
+            course={publicLesson.course}
+            lesson={publicLesson.lesson}
+          />
+        </main>
+        <SiteFooter />
+      </>
+    );
   }
 
-  const { courseSlug, lessonSlug } = await params;
   const studentLesson = await getFirstCourseLessonForStudent(
     session.user.id,
     courseSlug,
@@ -76,14 +99,16 @@ export default async function LessonPage({ params }: LessonPageProps) {
   );
 
   return (
-    <main className="lesson-page">
-      <LessonStartTracker
-        courseSlug={courseSlug}
-        lessonSlug={studentLesson.lessonSlug}
-        alreadyCompleted={studentLesson.completed}
-      />
-      <SiteNav currentPage="lesson" />
-      <div className="lesson-shell">
+    <>
+      <SkipLink />
+      <SiteNav currentPage="lesson" signedIn />
+      <main id="main-content" className="lesson-page" tabIndex={-1}>
+        <LessonStartTracker
+          courseSlug={courseSlug}
+          lessonSlug={studentLesson.lessonSlug}
+          alreadyCompleted={studentLesson.completed}
+        />
+        <div className="lesson-shell">
         <aside className="lesson-rail" aria-label="Course progress">
           <Link className="lesson-back-link" href="/dashboard">
             <span aria-hidden="true">←</span>
@@ -288,7 +313,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
             initialFeedback={courseFeedback?.feedback ?? null}
           />
         </article>
-      </div>
-    </main>
+        </div>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

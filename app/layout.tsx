@@ -4,9 +4,9 @@ import { PublicPageviews } from "./public-pageviews";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lovable-original-eight.vercel.app"),
-  title: "Lovable Original | Web Development Foundations",
+  title: "Lovable Original | Free student learning",
   description:
-    "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
+    "Read every available course and lesson free, then create a free student account only when you want to save private work and progress.",
   alternates: {
     canonical: "/",
   },
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "/",
     siteName: "Lovable Original",
-    title: "Lovable Original | Web Development Foundations",
+    title: "Lovable Original | Free student learning",
     description:
-      "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
+      "Read every available course and lesson free, then create a free student account only when you want to save private work and progress.",
     images: [
       {
         url: "/opengraph-image",
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lovable Original | Web Development Foundations",
+    title: "Lovable Original | Free student learning",
     description:
-      "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
+      "Read every available course and lesson free, then create a free student account only when you want to save private work and progress.",
     images: ["/opengraph-image"],
   },
 };
