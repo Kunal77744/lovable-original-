@@ -52,14 +52,28 @@ journal by hand.
 
 ## Post-migration release checks
 
-1. Confirm the migration command produced the required result above.
+Before merging or deploying, run the automated learner release gate against a
+loopback URL. Give it a PostgreSQL connection whose role may create and drop
+databases. The command creates a uniquely named database, migrates it, builds and
+starts the app, runs the complete journey, stops the app, and drops the database:
+
+```sh
+LEARNER_GATE_DATABASE_URL="$ISOLATED_POSTGRES_ADMIN_URL" \
+  npm run release:learner-gate -- --app-url http://127.0.0.1:3210
+```
+
+The command prints one `PASS` line for each of eight checks and succeeds only
+after account creation, lesson completion, saved `1/1` progress, sign-out,
+protected-route redirect, and restored progress after sign-in all pass. It never
+prints the database URL, generated account email, password, auth secret, session
+token, or database name. It accepts loopback HTTP URLs only, so it cannot point
+at production or a hosted preview.
+
+After the automated result reads `Learner release gate passed: 8/8 checks.`:
+
+1. Confirm the production migration command produced the required result above.
 2. Deploy the reviewed application release.
-3. Create one fresh production test account.
-4. Open the protected dashboard and start the Web Development Foundations
-   lesson.
-5. Complete the four-question quiz with at least 75%.
-6. Return to the dashboard and confirm progress remains `1/1` with the saved
-   best score after a page reload and a new sign-in.
-7. Confirm the ordered analytics path is readable as `$pageview`,
+3. Repeat the account-to-saved-result journey once in production.
+4. Confirm the ordered analytics path is readable as `$pageview`,
    `account_created`, `lesson_started`, and `quiz_completed`, with no private
    fields.
