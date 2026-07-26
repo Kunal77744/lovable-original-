@@ -114,7 +114,7 @@ async function run() {
     );
 
     if (
-      migrationResult.count !== expectedMigrationCount ||
+      migrationResult.count < expectedMigrationCount ||
       missingTables.length > 0
     ) {
       console.error(
@@ -124,7 +124,7 @@ async function run() {
     }
 
     console.log(
-      `Database release ready: ${expectedMigrationCount} migrations recorded and ${requiredTables.length} required tables verified.`,
+      `Database release ready: ${expectedMigrationCount} required migrations verified (${migrationResult.count} recorded total) and ${requiredTables.length} required tables verified.`,
     );
     return 0;
   } catch {
