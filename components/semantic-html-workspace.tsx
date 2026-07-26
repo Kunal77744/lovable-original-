@@ -18,6 +18,12 @@ type WorkspaceResponse = {
   checks: SemanticHtmlCheck[];
   saved: boolean;
   updatedAt: string | null;
+  submission: {
+    status: "completed" | "needs-revision";
+    passedChecks: number;
+    totalChecks: number;
+    submittedAt: string;
+  } | null;
   error?: string;
 };
 
@@ -29,13 +35,16 @@ export function SemanticHtmlWorkspace({
 }: SemanticHtmlWorkspaceProps) {
   const [html, setHtml] = useState(initialHtml);
   const [checks, setChecks] = useState(initialChecks);
+  const [hasSubmitted, setHasSubmitted] = useState(initiallySaved);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(initiallySaved ? "saved" : "unsaved");
   const [message, setMessage] = useState(
     initiallySaved
-      ? "Your last saved draft is restored."
-      : "Starter code is ready. Save when you want to keep your work.",
+      ? initialChecks.every((check) => check.passed)
+        ? "Saved result restored. All five rubric checks pass."
+        : "Saved submission restored. Revise the open rubric checks and resubmit."
+      : "Starter code is ready. Submit when your article structure is complete.",
   );
   const previewDocument = useMemo(
     () => buildSandboxedPreviewDocument(html),
@@ -43,9 +52,9 @@ export function SemanticHtmlWorkspace({
   );
   const passedCount = checks.filter((check) => check.passed).length;
 
-  async function saveWorkspace() {
+  async function submitAssignment() {
     setSaveState("saving");
-    setMessage("Saving and checking your structure…");
+    setMessage("Submitting and checking your structure…");
 
     try {
       const response = await fetch(`/api/lessons/${lessonSlug}/workspace`, {
@@ -62,12 +71,12 @@ export function SemanticHtmlWorkspace({
       }
 
       setChecks(payload.checks);
+      setHasSubmitted(true);
       setSaveState("saved");
-      const newPassedCount = payload.checks.filter((check) => check.passed).length;
       setMessage(
-        newPassedCount === payload.checks.length
-          ? "Saved to your account. All five structure checks pass."
-          : `Saved to your account. ${newPassedCount} of ${payload.checks.length} structure checks pass.`,
+        payload.submission?.status === "completed"
+          ? "Assignment complete. Your HTML and 5/5 result are saved."
+          : `Submission saved. ${payload.submission?.passedChecks ?? 0} of ${payload.submission?.totalChecks ?? payload.checks.length} rubric checks pass. Revise and resubmit.`,
       );
     } catch {
       setSaveState("error");
@@ -79,16 +88,44 @@ export function SemanticHtmlWorkspace({
     <section className="lesson-workspace" id="semantic-workspace">
       <header className="workspace-heading">
         <div>
-          <p className="quiz-kicker">Build inside the lesson</p>
-          <h2>Turn the outline into a real page.</h2>
+          <p className="quiz-kicker">Assignment · Semantic HTML</p>
+          <h2>Build an accessible article page.</h2>
           <p>
-            Write the semantic structure on the left. The preview updates as you
-            type, and your saved draft comes back after reload or sign-in.
+            Complete the starter file with the landmarks and headings taught in
+            this lesson. Your finished page should explain its structure to
+            browsers, assistive technology, and readers without relying on visual
+            styling.
           </p>
+          <div className="assignment-outcome">
+            <span>Expected outcome</span>
+            <strong>
+              One semantic article that passes all five rubric checks.
+            </strong>
+          </div>
         </div>
-        <div className="workspace-score" aria-label={`${passedCount} of 5 checks pass`}>
+        <div
+          className={`workspace-score ${
+            saveState === "saved" && passedCount === 5 ? "is-complete" : ""
+          }`}
+          aria-label={`${passedCount} of 5 checks pass`}
+        >
+          <span>
+            {saveState === "unsaved" && hasSubmitted
+              ? "Changes not submitted"
+              : hasSubmitted
+                ? "Saved result"
+                : "Not submitted"}
+          </span>
           <strong>{passedCount}/5</strong>
-          <span>checks pass</span>
+          <small>
+            {saveState === "unsaved" && hasSubmitted
+              ? "Previous result"
+              : hasSubmitted && passedCount === 5
+              ? "Assignment complete"
+              : hasSubmitted
+                ? "Needs revision"
+                : "rubric checks"}
+          </small>
         </div>
       </header>
 
@@ -96,7 +133,13 @@ export function SemanticHtmlWorkspace({
         <div className="workspace-editor">
           <div className="workspace-panel-label">
             <span>index.html</span>
-            <span>{saveState === "saved" ? "Saved" : "Draft"}</span>
+            <span>
+              {saveState === "saved"
+                ? "Submitted"
+                : saveState === "saving"
+                  ? "Submitting"
+                  : "Draft"}
+            </span>
           </div>
           <label htmlFor="semantic-html-editor">Semantic HTML</label>
           <textarea
@@ -126,28 +169,45 @@ export function SemanticHtmlWorkspace({
       </div>
 
       <div className="workspace-review">
-        <div className="workspace-checks">
-          {checks.map((check) => (
-            <div
-              className={check.passed ? "workspace-check is-passed" : "workspace-check"}
-              key={check.id}
-            >
-              <span aria-hidden="true">{check.passed ? "✓" : "○"}</span>
-              <div>
-                <strong>{check.label}</strong>
-                <p>{check.guidance}</p>
-              </div>
+        <div className="workspace-rubric">
+          <div className="workspace-rubric-heading">
+            <div>
+              <p className="quiz-kicker">Submission rubric</p>
+              <h3>Five checks, graded on the server.</h3>
             </div>
-          ))}
+            <span>{passedCount}/5 passing</span>
+          </div>
+          <div className="workspace-checks">
+            {checks.map((check) => (
+              <div
+                className={
+                  check.passed
+                    ? "workspace-check is-passed"
+                    : "workspace-check"
+                }
+                key={check.id}
+              >
+                <span aria-hidden="true">{check.passed ? "✓" : "○"}</span>
+                <div>
+                  <strong>{check.label}</strong>
+                  <p>{check.guidance}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="workspace-save">
           <button
             className="lesson-primary-action"
             type="button"
-            onClick={saveWorkspace}
+            onClick={submitAssignment}
             disabled={saveState === "saving"}
           >
-            {saveState === "saving" ? "Saving…" : "Save & check"}
+            {saveState === "saving"
+              ? "Submitting…"
+              : hasSubmitted
+                ? "Resubmit assignment"
+                : "Submit assignment"}
           </button>
           <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
             {message}

@@ -397,6 +397,11 @@ async function runJourney(baseUrl, databaseUrl) {
       "A fresh learner did not receive a fresh workspace.",
     );
     assertStep(
+      workspace.submission === null,
+      step,
+      "A fresh learner inherited an assignment submission.",
+    );
+    assertStep(
       typeof workspace.html === "string" && workspace.checks?.length === 5,
       step,
       "Starter code and five checks were not ready.",
@@ -418,9 +423,11 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(
       failingWorkspace.html === failingDraft &&
         failingWorkspace.saved === true &&
+        failingWorkspace.submission?.status === "needs-revision" &&
+        failingWorkspace.submission?.passedChecks < 5 &&
         failingWorkspace.checks.some((check) => check.passed === false),
       step,
-      "The failing draft or its guidance was not preserved.",
+      "The revision submission or its rubric guidance was not preserved.",
     );
 
     const passingDraft = `<!doctype html>
@@ -452,9 +459,11 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(
       passingWorkspace.html === passingDraft &&
         passingWorkspace.checks.length === 5 &&
+        passingWorkspace.submission?.status === "completed" &&
+        passingWorkspace.submission?.passedChecks === 5 &&
         passingWorkspace.checks.every((check) => check.passed === true),
       step,
-      "The saved draft did not pass all five server checks.",
+      "The assignment submission did not save a completed 5/5 result.",
     );
     savedWorkspaceHtml = passingDraft;
   });
@@ -539,9 +548,11 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(
       workspaceResponse.status === 200 &&
         workspace.saved === true &&
-        workspace.html === savedWorkspaceHtml,
+        workspace.html === savedWorkspaceHtml &&
+        workspace.submission?.status === "completed" &&
+        workspace.submission?.passedChecks === 5,
       step,
-      "The exact workspace draft was not restored after reload.",
+      "The exact assignment and completed result were not restored after reload.",
     );
 
     const feedbackResponse = await request(
@@ -626,9 +637,11 @@ async function runJourney(baseUrl, databaseUrl) {
     const workspace = await workspaceResponse.json();
     assertStep(
       workspaceResponse.status === 200 &&
-        workspace.html === savedWorkspaceHtml,
+        workspace.html === savedWorkspaceHtml &&
+        workspace.submission?.status === "completed" &&
+        workspace.submission?.passedChecks === 5,
       step,
-      "Saved workspace did not remain after sign in.",
+      "Saved assignment and result did not remain after sign in.",
     );
 
     const feedbackResponse = await request(
@@ -734,9 +747,9 @@ async function runJourney(baseUrl, databaseUrl) {
       "The isolation learner’s workspace did not load.",
     );
     assertStep(
-      workspace.saved === false,
+      workspace.saved === false && workspace.submission === null,
       step,
-      "The isolation learner inherited a saved-artifact state.",
+      "The isolation learner inherited another learner’s submission state.",
     );
     assertStep(
       workspace.html !== savedWorkspaceHtml,

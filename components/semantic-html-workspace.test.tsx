@@ -86,6 +86,12 @@ describe("SemanticHtmlWorkspace", () => {
         checks: savedChecks,
         saved: true,
         updatedAt: "2026-07-26T00:00:00.000Z",
+        submission: {
+          status: "completed",
+          passedChecks: 5,
+          totalChecks: 5,
+          submittedAt: "2026-07-26T00:00:00.000Z",
+        },
       }),
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -102,10 +108,12 @@ describe("SemanticHtmlWorkspace", () => {
     fireEvent.change(screen.getByLabelText("Semantic HTML"), {
       target: { value: "<main><article>My draft</article></main>" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save & check" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit assignment" }));
 
     await waitFor(() =>
-      expect(screen.getByText("Saved to your account. All five structure checks pass.")).toBeInTheDocument(),
+      expect(
+        screen.getByText("Assignment complete. Your HTML and 5/5 result are saved."),
+      ).toBeInTheDocument(),
     );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lessons/semantic-html/workspace",
@@ -117,5 +125,31 @@ describe("SemanticHtmlWorkspace", () => {
       }),
     );
     expect(screen.getByLabelText("5 of 5 checks pass")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Resubmit assignment" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Assignment complete")).toBeInTheDocument();
+  });
+
+  it("restores a saved submission and presents its revision state", () => {
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved
+      />,
+    );
+
+    expect(screen.getByText("Saved result")).toBeInTheDocument();
+    expect(screen.getByText("Needs revision")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Resubmit assignment" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Saved submission restored. Revise the open rubric checks and resubmit.",
+      ),
+    ).toBeInTheDocument();
   });
 });
