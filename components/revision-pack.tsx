@@ -23,6 +23,7 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
   const [checkedCardIds, setCheckedCardIds] = useState<string[]>([]);
   const [hasRestored, setHasRestored] = useState(false);
   const revealButtonRef = useRef<HTMLButtonElement>(null);
+  const shouldFocusCard = useRef(false);
   const currentCard = cards[cardIndex];
 
   useEffect(() => {
@@ -75,6 +76,15 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
     }
   }, [cardIndex, checkedCardIds, hasRestored, lessonSlug]);
 
+  useEffect(() => {
+    if (!shouldFocusCard.current) {
+      return;
+    }
+
+    revealButtonRef.current?.focus();
+    shouldFocusCard.current = false;
+  }, [cardIndex]);
+
   function revealAnswer() {
     setIsRevealed(true);
     setCheckedCardIds((current) =>
@@ -85,9 +95,9 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
   }
 
   function moveToCard(nextIndex: number) {
+    shouldFocusCard.current = true;
     setCardIndex(nextIndex);
     setIsRevealed(false);
-    window.requestAnimationFrame(() => revealButtonRef.current?.focus());
   }
 
   const roundComplete = checkedCardIds.length === cards.length;
