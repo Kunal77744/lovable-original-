@@ -29,6 +29,10 @@ export default async function DashboardPage() {
   const firstCourse = await getOrCreateFirstCourseAssignment(session.user.id);
   const nextLesson = firstCourse.nextLesson;
   const firstName = session.user.name.trim().split(/\s+/)[0];
+  const courseFormat =
+    firstCourse.totalLessons === 1
+      ? "One-lesson course"
+      : `${firstCourse.totalLessons}-lesson course`;
 
   if (!nextLesson) {
     throw new Error("The assigned course has no lessons.");
@@ -44,8 +48,8 @@ export default async function DashboardPage() {
             <h1 id="dashboard-title">Welcome, {firstName}.</h1>
             <p>
               {firstCourse.courseCompleted
-                ? "You finished this course. Keep the foundation close."
-                : "Your first job-ready learning path is ready."}
+                ? "You completed Web Development Foundations. Your result is saved."
+                : "Your one-lesson Web Development Foundations course is ready."}
             </p>
           </div>
           <SignOutButton />
@@ -61,7 +65,7 @@ export default async function DashboardPage() {
                 {firstCourse.completedLessons}/{firstCourse.totalLessons} lessons
               </span>
             </div>
-            <p className="course-kicker">First course</p>
+            <p className="course-kicker">{courseFormat}</p>
             <h2>{firstCourse.title}</h2>
             <p>{firstCourse.description}</p>
             <div

@@ -15,6 +15,9 @@ type QuizResult = {
 };
 
 type LessonQuizProps = {
+  courseTitle: string;
+  courseLessonCount: number;
+  completesCourse: boolean;
   courseSlug: string;
   lessonSlug: string;
   questions: readonly QuizQuestion[];
@@ -24,6 +27,9 @@ type LessonQuizProps = {
 };
 
 export function LessonQuiz({
+  courseTitle,
+  courseLessonCount,
+  completesCourse,
   courseSlug,
   lessonSlug,
   questions,
@@ -90,16 +96,26 @@ export function LessonQuiz({
   }
 
   if (result?.completed) {
+    const lessonCountLabel =
+      courseLessonCount === 1 ? "lesson" : "lessons";
+
     return (
       <section className="quiz-complete" aria-labelledby="quiz-complete-title">
         <span className="completion-mark" aria-hidden="true">
           ✓
         </span>
-        <p className="quiz-kicker">Lesson complete</p>
-        <h2 id="quiz-complete-title">You built the foundation.</h2>
+        <p className="quiz-kicker">
+          {completesCourse ? "Course complete" : "Lesson complete"}
+        </p>
+        <h2 id="quiz-complete-title">
+          {completesCourse
+            ? `You completed ${courseTitle}.`
+            : "You built the foundation."}
+        </h2>
         <p>
-          Your best score is <strong>{result.savedScore}%</strong>. Your progress
-          is saved and the dashboard now shows this lesson as complete.
+          Your best score is <strong>{result.savedScore}%</strong>. Your result
+          is saved and the dashboard now shows {courseLessonCount} of{" "}
+          {courseLessonCount} {lessonCountLabel} complete.
         </p>
         <Link className="lesson-primary-action" href="/dashboard">
           View my progress

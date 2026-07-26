@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Create your student account | Lovable Original",
   description:
-    "Create your student account to start Web Development Foundations with an 18-minute semantic HTML lesson.",
+    "Create your student account to complete the one-lesson Web Development Foundations course.",
   robots: {
     index: false,
     follow: false,
@@ -40,9 +40,9 @@ export default async function AccountPage() {
           <p className="eyebrow">{FIRST_COURSE.title}</p>
           <h1 id="account-title">{FIRST_LESSON.title}.</h1>
           <p>
-            Create your student account to start one{" "}
-            {FIRST_LESSON.estimatedMinutes}-minute semantic HTML lesson and
-            return to your saved result.
+            Create your student account to complete this one-lesson course: an{" "}
+            {FIRST_LESSON.estimatedMinutes}-minute semantic HTML lesson with a
+            saved result.
           </p>
           <ul aria-label={`What ${FIRST_COURSE.title} includes`}>
             <li>Turn a blank document into an accessible article page</li>
@@ -50,7 +50,7 @@ export default async function AccountPage() {
               Pass the four-question recall check at{" "}
               {FIRST_LESSON_PASS_PERCENT}%
             </li>
-            <li>Keep your lesson progress and best quiz score saved</li>
+            <li>Complete the course and keep your best quiz score saved</li>
           </ul>
         </div>
         <Suspense fallback={<div className="account-card account-card-loading" />}>

@@ -52,6 +52,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
   }
 
   const quiz = getPublicFirstLessonQuiz();
+  const completesCourse = studentLesson.lessons.every(
+    (courseLesson) =>
+      courseLesson.completed ||
+      courseLesson.slug === studentLesson.lessonSlug,
+  );
 
   return (
     <main className="lesson-page">
@@ -242,6 +247,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </section>
 
           <LessonQuiz
+            courseTitle={studentLesson.courseTitle}
+            courseLessonCount={studentLesson.totalLessons}
+            completesCourse={completesCourse}
             courseSlug={courseSlug}
             lessonSlug={studentLesson.lessonSlug}
             questions={quiz}

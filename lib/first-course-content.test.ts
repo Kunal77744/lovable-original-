@@ -1,11 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
+  FIRST_COURSE_LESSONS,
+  FIRST_LESSON,
   FIRST_LESSON_QUIZ,
   getPublicFirstLessonQuiz,
   gradeFirstLessonQuiz,
 } from "./first-course-content";
 
 describe("gradeFirstLessonQuiz", () => {
+  it("defines Version 1 as one usable 18-minute course lesson", () => {
+    expect(FIRST_COURSE_LESSONS).toEqual([FIRST_LESSON]);
+    expect(FIRST_COURSE_LESSONS).toHaveLength(1);
+    expect(FIRST_LESSON).toMatchObject({
+      slug: "semantic-html",
+      estimatedMinutes: 18,
+    });
+    expect(FIRST_LESSON_QUIZ).toHaveLength(4);
+  });
+
   it("passes an answer set at the 75 percent threshold", () => {
     const answers = Object.fromEntries(
       FIRST_LESSON_QUIZ.map((question, index) => [

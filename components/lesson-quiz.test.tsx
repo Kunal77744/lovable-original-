@@ -49,6 +49,9 @@ describe("LessonQuiz analytics", () => {
   it("captures quiz completion after the result is saved without quiz content", async () => {
     render(
       <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={1}
+        completesCourse
         courseSlug="web-development-foundations"
         lessonSlug="semantic-html"
         questions={questions}
@@ -73,5 +76,11 @@ describe("LessonQuiz analytics", () => {
     expect(JSON.stringify(captureLearnerEventOnce.mock.calls)).not.toMatch(
       /First question|First answer|q1/i,
     );
+    expect(
+      screen.getByRole("heading", {
+        name: "You completed Web Development Foundations.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/1 of 1 lesson complete/)).toBeInTheDocument();
   });
 });

@@ -37,7 +37,7 @@ describe("AccountPage", () => {
       screen.getByText("Pass the four-question recall check at 75%"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Keep your lesson progress and best quiz score saved"),
+      screen.getByText("Complete the course and keep your best quiz score saved"),
     ).toBeInTheDocument();
     expect(
       screen.getAllByRole("button", { name: "Create my account" }),
