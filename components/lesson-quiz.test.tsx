@@ -58,6 +58,7 @@ describe("LessonQuiz analytics", () => {
         passPercent={75}
         initialCompleted={false}
         initialScore={null}
+        initialFeedback={null}
       />,
     );
 

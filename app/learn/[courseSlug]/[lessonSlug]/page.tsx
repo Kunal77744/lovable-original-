@@ -7,6 +7,7 @@ import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { SemanticHtmlWorkspace } from "@/components/semantic-html-workspace";
 import {
   getFirstCourseLessonForStudent,
+  getCourseFeedbackForStudent,
   getFirstLessonArtifact,
 } from "@/db/course";
 import {
@@ -55,10 +56,10 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound();
   }
 
-  const workspace = await getFirstLessonArtifact(
-    session.user.id,
-    studentLesson.lessonSlug,
-  );
+  const [workspace, courseFeedback] = await Promise.all([
+    getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
+    getCourseFeedbackForStudent(session.user.id, courseSlug),
+  ]);
 
   if (!workspace) {
     notFound();
@@ -276,6 +277,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             passPercent={FIRST_LESSON_PASS_PERCENT}
             initialCompleted={studentLesson.completed}
             initialScore={studentLesson.quizScore}
+            initialFeedback={courseFeedback?.feedback ?? null}
           />
         </article>
       </div>

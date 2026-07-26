@@ -22,12 +22,12 @@ const steps = [
   "Initial dashboard",
   "Lesson workspace",
   "Workspace save and checks",
-  "Quiz completion",
-  "Saved progress and workspace after reload",
+  "Quiz completion and feedback",
+  "Saved progress, workspace, and feedback after reload",
   "Sign out",
   "Protected access",
-  "Sign in and restored progress",
-  "Artifact ownership",
+  "Sign in and restored learner state",
+  "Learner data ownership",
 ];
 
 class StepFailure extends Error {
@@ -296,6 +296,7 @@ async function runJourney(baseUrl, databaseUrl) {
   const password = `${randomBytes(24).toString("hex")}Aa1!`;
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
+  let savedFeedbackComment = "";
 
   async function request(path, options = {}, requestJar = jar) {
     const headers = new Headers(options.headers);
@@ -468,6 +469,46 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(payload.passed === true, step, "Quiz result did not pass.");
     assertStep(payload.completed === true, step, "Lesson was not completed.");
     assertStep(payload.savedScore === 100, step, "Best score was not saved.");
+
+    const firstFeedbackResponse = await jsonRequest(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+      {
+        usefulness: "somewhat",
+        comment: "The first response from the learner release gate.",
+      },
+    );
+    assertStep(
+      firstFeedbackResponse.status === 200,
+      step,
+      "Course feedback was not saved.",
+    );
+    const firstFeedback = await firstFeedbackResponse.json();
+    assertStep(
+      firstFeedback.feedback?.usefulness === "somewhat",
+      step,
+      "The first usefulness choice was not returned.",
+    );
+
+    savedFeedbackComment = `The revised learner release feedback ${runId}.`;
+    const revisedFeedbackResponse = await jsonRequest(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+      {
+        usefulness: "very",
+        comment: savedFeedbackComment,
+      },
+    );
+    assertStep(
+      revisedFeedbackResponse.status === 200,
+      step,
+      "Course feedback could not be revised.",
+    );
+    const revisedFeedback = await revisedFeedbackResponse.json();
+    assertStep(
+      revisedFeedback.feedback?.usefulness === "very" &&
+        revisedFeedback.feedback?.comment === savedFeedbackComment,
+      step,
+      "The revised course feedback was not returned exactly.",
+    );
   });
 
   await runStep(6, async (step) => {
@@ -501,6 +542,18 @@ async function runJourney(baseUrl, databaseUrl) {
         workspace.html === savedWorkspaceHtml,
       step,
       "The exact workspace draft was not restored after reload.",
+    );
+
+    const feedbackResponse = await request(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+    );
+    const feedback = await feedbackResponse.json();
+    assertStep(
+      feedbackResponse.status === 200 &&
+        feedback.feedback?.usefulness === "very" &&
+        feedback.feedback?.comment === savedFeedbackComment,
+      step,
+      "The revised feedback was not restored after reload.",
     );
   });
 
@@ -536,6 +589,14 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Signed-out workspace access was not rejected.",
     );
+    const feedbackResponse = await request(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+    );
+    assertStep(
+      feedbackResponse.status === 401,
+      step,
+      "Signed-out feedback access was not rejected.",
+    );
   });
 
   await runStep(9, async (step) => {
@@ -568,6 +629,18 @@ async function runJourney(baseUrl, databaseUrl) {
         workspace.html === savedWorkspaceHtml,
       step,
       "Saved workspace did not remain after sign in.",
+    );
+
+    const feedbackResponse = await request(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+    );
+    const feedback = await feedbackResponse.json();
+    assertStep(
+      feedbackResponse.status === 200 &&
+        feedback.feedback?.usefulness === "very" &&
+        feedback.feedback?.comment === savedFeedbackComment,
+      step,
+      "Saved feedback did not remain after sign in.",
     );
   });
 
@@ -674,6 +747,28 @@ async function runJourney(baseUrl, databaseUrl) {
       !workspace.html.includes(runId),
       step,
       "One learner could read another learner’s artifact.",
+    );
+
+    const feedbackResponse = await request(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+      {},
+      secondJar,
+    );
+    const feedback = await feedbackResponse.json();
+    assertStep(
+      feedbackResponse.status === 200 && feedback.feedback === null,
+      step,
+      "One learner could read another learner’s feedback.",
+    );
+    const feedbackSaveResponse = await jsonRequest(
+      `/api/courses/${COURSE_SLUG}/feedback`,
+      { usefulness: "very", comment: savedFeedbackComment },
+      secondJar,
+    );
+    assertStep(
+      feedbackSaveResponse.status === 403,
+      step,
+      "A learner without a saved quiz result could change course feedback.",
     );
   });
 }

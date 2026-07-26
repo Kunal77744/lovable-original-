@@ -45,12 +45,17 @@ describe("product analytics", () => {
       lesson_slug: "semantic-html",
       passed: true,
     });
+    captureLearnerEventOnce("feedback_submitted", {
+      course_slug: "web-development-foundations",
+      lesson_slug: "semantic-html",
+    });
 
     expect(posthogMocks.capture.mock.calls.map(([event]) => event)).toEqual([
       "$pageview",
       "account_created",
       "lesson_started",
       "quiz_completed",
+      "feedback_submitted",
     ]);
 
     const properties = posthogMocks.capture.mock.calls.map(
@@ -71,7 +76,7 @@ describe("product analytics", () => {
       ]),
     );
     expect(JSON.stringify(properties)).not.toMatch(
-      /email|password|answer|question|prompt/i,
+      /email|password|answer|question|prompt|comment|usefulness/i,
     );
   });
 

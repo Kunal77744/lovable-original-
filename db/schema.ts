@@ -146,6 +146,32 @@ export const courseAssignment = pgTable(
   ],
 );
 
+export const courseFeedback = pgTable(
+  "course_feedback",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => course.id, { onDelete: "cascade" }),
+    usefulness: text("usefulness").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("course_feedback_user_course_unique").on(
+      table.userId,
+      table.courseId,
+    ),
+    index("course_feedback_user_id_idx").on(table.userId),
+  ],
+);
+
 export const lesson = pgTable(
   "lesson",
   {
