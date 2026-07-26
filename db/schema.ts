@@ -198,6 +198,31 @@ export const lessonProgress = pgTable(
   ],
 );
 
+export const lessonArtifact = pgTable(
+  "lesson_artifact",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lesson.id, { onDelete: "cascade" }),
+    html: text("html").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("lesson_artifact_user_lesson_unique").on(
+      table.userId,
+      table.lessonId,
+    ),
+    index("lesson_artifact_user_id_idx").on(table.userId),
+  ],
+);
+
 export const earlyAccessSignup = pgTable(
   "early_access_signup",
   {

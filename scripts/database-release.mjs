@@ -13,6 +13,7 @@ const requiredTables = [
   "course_assignment",
   "early_access_signup",
   "lesson",
+  "lesson_artifact",
   "lesson_progress",
   "rate_limit",
   "session",

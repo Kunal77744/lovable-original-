@@ -4,7 +4,11 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
-import { getFirstCourseLessonForStudent } from "@/db/course";
+import { SemanticHtmlWorkspace } from "@/components/semantic-html-workspace";
+import {
+  getFirstCourseLessonForStudent,
+  getFirstLessonArtifact,
+} from "@/db/course";
 import {
   FIRST_LESSON_PASS_PERCENT,
   getPublicFirstLessonQuiz,
@@ -48,6 +52,15 @@ export default async function LessonPage({ params }: LessonPageProps) {
   );
 
   if (!studentLesson) {
+    notFound();
+  }
+
+  const workspace = await getFirstLessonArtifact(
+    session.user.id,
+    studentLesson.lessonSlug,
+  );
+
+  if (!workspace) {
     notFound();
   }
 
@@ -236,15 +249,22 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </pre>
               <div className="lesson-practice">
                 <p className="quiz-kicker">Two-minute build</p>
-                <h3>Explain the structure before you style it.</h3>
+                <h3>Build the structure before you style it.</h3>
                 <p>
-                  In a blank file, recreate the example without copying it. Then
-                  point to each element and say its job aloud. If you cannot name
-                  the job, reconsider the element.
+                  Use the workspace below to recreate the example without copying
+                  it. Then point to each element and say its job aloud. If you
+                  cannot name the job, reconsider the element.
                 </p>
               </div>
             </div>
           </section>
+
+          <SemanticHtmlWorkspace
+            lessonSlug={studentLesson.lessonSlug}
+            initialHtml={workspace.html}
+            initialChecks={workspace.checks}
+            initiallySaved={workspace.saved}
+          />
 
           <LessonQuiz
             courseTitle={studentLesson.courseTitle}

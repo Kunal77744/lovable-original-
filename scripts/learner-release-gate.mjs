@@ -20,12 +20,14 @@ const WAIT_TIMEOUT_MS = 60_000;
 const steps = [
   "Account creation",
   "Initial dashboard",
-  "Lesson start",
+  "Lesson workspace",
+  "Workspace save and checks",
   "Quiz completion",
-  "Saved progress after reload",
+  "Saved progress and workspace after reload",
   "Sign out",
   "Protected access",
   "Sign in and restored progress",
+  "Artifact ownership",
 ];
 
 class StepFailure extends Error {
@@ -287,16 +289,17 @@ async function stopApp(child) {
   }
 }
 
-async function runJourney(baseUrl) {
+async function runJourney(baseUrl, databaseUrl) {
   const jar = new CookieJar();
   const runId = randomBytes(8).toString("hex");
   const email = `release-gate-${runId}@example.test`;
   const password = `${randomBytes(24).toString("hex")}Aa1!`;
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
+  let savedWorkspaceHtml = "";
 
-  async function request(path, options = {}) {
+  async function request(path, options = {}, requestJar = jar) {
     const headers = new Headers(options.headers);
-    const cookie = jar.header();
+    const cookie = requestJar.header();
 
     headers.set("Origin", baseUrl.origin);
     if (cookie) {
@@ -309,16 +312,16 @@ async function runJourney(baseUrl) {
       redirect: options.redirect ?? "manual",
       signal: AbortSignal.timeout(15_000),
     });
-    jar.update(response);
+    requestJar.update(response);
     return response;
   }
 
-  async function jsonRequest(path, body) {
+  async function jsonRequest(path, body, requestJar = jar) {
     return request(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    });
+    }, requestJar);
   }
 
   async function runStep(number, action) {
@@ -331,7 +334,7 @@ async function runJourney(baseUrl) {
         step,
         "Deliberate assertion failure.",
       );
-      console.log(`PASS ${number}/8 ${step}`);
+      console.log(`PASS ${number}/${steps.length} ${step}`);
     } catch (error) {
       if (error instanceof StepFailure) {
         throw error;
@@ -377,9 +380,85 @@ async function runJourney(baseUrl) {
       step,
       "Lesson quiz was not ready.",
     );
+
+    const workspaceResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+    );
+    assertStep(
+      workspaceResponse.status === 200,
+      step,
+      "Lesson workspace did not load.",
+    );
+    const workspace = await workspaceResponse.json();
+    assertStep(
+      workspace.saved === false,
+      step,
+      "A fresh learner did not receive a fresh workspace.",
+    );
+    assertStep(
+      typeof workspace.html === "string" && workspace.checks?.length === 5,
+      step,
+      "Starter code and five checks were not ready.",
+    );
   });
 
   await runStep(4, async (step) => {
+    const failingDraft = "<main><article></article></main>";
+    const failingResponse = await jsonRequest(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+      { html: failingDraft },
+    );
+    assertStep(
+      failingResponse.status === 200,
+      step,
+      "A failing draft was not saved.",
+    );
+    const failingWorkspace = await failingResponse.json();
+    assertStep(
+      failingWorkspace.html === failingDraft &&
+        failingWorkspace.saved === true &&
+        failingWorkspace.checks.some((check) => check.passed === false),
+      step,
+      "The failing draft or its guidance was not preserved.",
+    );
+
+    const passingDraft = `<!doctype html>
+<html lang="en">
+  <body>
+    <header>Release gate field notes</header>
+    <main>
+      <article data-release-gate="${runId}">
+        <h1>How browsers read pages</h1>
+        <section>
+          <h2>Start with landmarks</h2>
+          <p>Landmarks explain each region.</p>
+        </section>
+      </article>
+    </main>
+    <footer>Saved by the learner release gate</footer>
+  </body>
+</html>`;
+    const passingResponse = await jsonRequest(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+      { html: passingDraft },
+    );
+    assertStep(
+      passingResponse.status === 200,
+      step,
+      "A passing draft was not saved.",
+    );
+    const passingWorkspace = await passingResponse.json();
+    assertStep(
+      passingWorkspace.html === passingDraft &&
+        passingWorkspace.checks.length === 5 &&
+        passingWorkspace.checks.every((check) => check.passed === true),
+      step,
+      "The saved draft did not pass all five server checks.",
+    );
+    savedWorkspaceHtml = passingDraft;
+  });
+
+  await runStep(5, async (step) => {
     const response = await jsonRequest(
       `/api/lessons/${LESSON_SLUG}/complete`,
       { answers: QUIZ_ANSWERS },
@@ -391,7 +470,7 @@ async function runJourney(baseUrl) {
     assertStep(payload.savedScore === 100, step, "Best score was not saved.");
   });
 
-  await runStep(5, async (step) => {
+  await runStep(6, async (step) => {
     const response = await request("/dashboard");
     const html = await response.text();
     const text = pageText(html);
@@ -411,9 +490,21 @@ async function runJourney(baseUrl) {
       step,
       "Progress percentage was not 100%.",
     );
+
+    const workspaceResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+    );
+    const workspace = await workspaceResponse.json();
+    assertStep(
+      workspaceResponse.status === 200 &&
+        workspace.saved === true &&
+        workspace.html === savedWorkspaceHtml,
+      step,
+      "The exact workspace draft was not restored after reload.",
+    );
   });
 
-  await runStep(6, async (step) => {
+  await runStep(7, async (step) => {
     const response = await request("/api/auth/sign-out", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -422,7 +513,7 @@ async function runJourney(baseUrl) {
     assertStep(response.status === 200, step, "Sign out did not succeed.");
   });
 
-  await runStep(7, async (step) => {
+  await runStep(8, async (step) => {
     const response = await request(
       `/learn/${COURSE_SLUG}/${LESSON_SLUG}`,
     );
@@ -437,9 +528,17 @@ async function runJourney(baseUrl) {
       step,
       "Protected lesson did not redirect to sign in.",
     );
+    const workspaceResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+    );
+    assertStep(
+      workspaceResponse.status === 401,
+      step,
+      "Signed-out workspace access was not rejected.",
+    );
   });
 
-  await runStep(8, async (step) => {
+  await runStep(9, async (step) => {
     const signInResponse = await jsonRequest("/api/auth/sign-in/email", {
       email,
       password,
@@ -458,6 +557,123 @@ async function runJourney(baseUrl) {
       /1\s*\/\s*1 lessons/.test(text) && /Quiz score\s*·\s*100%/.test(text),
       step,
       "Saved result did not remain after sign in.",
+    );
+
+    const workspaceResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+    );
+    const workspace = await workspaceResponse.json();
+    assertStep(
+      workspaceResponse.status === 200 &&
+        workspace.html === savedWorkspaceHtml,
+      step,
+      "Saved workspace did not remain after sign in.",
+    );
+  });
+
+  await runStep(10, async (step) => {
+    const secondJar = new CookieJar();
+    const secondEmail = `release-gate-isolation-${runId}@example.test`;
+    const accountResponse = await jsonRequest(
+      "/api/auth/sign-up/email",
+      {
+        name: "Isolated Release Gate Student",
+        email: secondEmail,
+        password,
+        callbackURL: "/dashboard",
+      },
+      secondJar,
+    );
+    assertStep(
+      accountResponse.status === 200,
+      step,
+      "The isolation account could not be created.",
+    );
+    const account = await accountResponse.json();
+    assertStep(
+      Boolean(account.user?.id),
+      step,
+      "The isolation account returned no learner.",
+    );
+
+    const journeySql = postgres(databaseUrl, {
+      connect_timeout: 5,
+      idle_timeout: 5,
+      max: 1,
+      onnotice: () => {},
+      prepare: false,
+    });
+    try {
+      await journeySql`
+        delete from course_assignment
+        where user_id = ${account.user.id}
+      `;
+    } finally {
+      await journeySql.end({ timeout: 5 });
+    }
+
+    const unassignedResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+      {},
+      secondJar,
+    );
+    assertStep(
+      unassignedResponse.status === 404,
+      step,
+      "An unassigned learner could open a workspace.",
+    );
+
+    const assignmentSql = postgres(databaseUrl, {
+      connect_timeout: 5,
+      idle_timeout: 5,
+      max: 1,
+      onnotice: () => {},
+      prepare: false,
+    });
+    try {
+      await assignmentSql`
+        insert into course_assignment (
+          id,
+          user_id,
+          course_id,
+          assigned_at
+        )
+        values (
+          ${`release-gate-assignment-${randomBytes(8).toString("hex")}`},
+          ${account.user.id},
+          ${COURSE_SLUG},
+          now()
+        )
+      `;
+    } finally {
+      await assignmentSql.end({ timeout: 5 });
+    }
+
+    const workspaceResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/workspace`,
+      {},
+      secondJar,
+    );
+    const workspace = await workspaceResponse.json();
+    assertStep(
+      workspaceResponse.status === 200,
+      step,
+      "The isolation learner’s workspace did not load.",
+    );
+    assertStep(
+      workspace.saved === false,
+      step,
+      "The isolation learner inherited a saved-artifact state.",
+    );
+    assertStep(
+      workspace.html !== savedWorkspaceHtml,
+      step,
+      "The isolation learner received another learner’s exact draft.",
+    );
+    assertStep(
+      !workspace.html.includes(runId),
+      step,
+      "One learner could read another learner’s artifact.",
     );
   });
 }
@@ -512,8 +728,8 @@ async function main() {
 
     appProcess = startApp(appUrl, appEnv);
     await waitForApp(appUrl, appProcess);
-    await runJourney(appUrl);
-    console.log("Learner release gate passed: 8/8 checks.");
+    await runJourney(appUrl, isolatedDatabaseUrl);
+    console.log(`Learner release gate passed: ${steps.length}/${steps.length} checks.`);
     result = 0;
   } catch (error) {
     const stage =
