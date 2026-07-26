@@ -88,6 +88,8 @@ export function LessonNotes({ lessonSlug, initialNote }: LessonNotesProps) {
       <label className="lesson-notes-field">
         <span id="lesson-note-label">What do you want to remember?</span>
         <textarea
+          id="lesson-note-content"
+          name="lessonNote"
           aria-labelledby="lesson-note-label"
           maxLength={MAX_LESSON_NOTE_LENGTH}
           value={content}
