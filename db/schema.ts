@@ -249,6 +249,31 @@ export const lessonArtifact = pgTable(
   ],
 );
 
+export const lessonNote = pgTable(
+  "lesson_note",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lesson.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("lesson_note_user_lesson_unique").on(
+      table.userId,
+      table.lessonId,
+    ),
+    index("lesson_note_user_id_idx").on(table.userId),
+  ],
+);
+
 export const earlyAccessSignup = pgTable(
   "early_access_signup",
   {

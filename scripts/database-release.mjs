@@ -15,6 +15,7 @@ const requiredTables = [
   "early_access_signup",
   "lesson",
   "lesson_artifact",
+  "lesson_note",
   "lesson_progress",
   "rate_limit",
   "session",

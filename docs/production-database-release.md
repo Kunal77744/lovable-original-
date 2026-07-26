@@ -6,13 +6,15 @@ below passes.
 
 ## Release boundary
 
-This release applies the five committed migrations in journal order:
+This release applies the seven committed migrations in journal order:
 
 1. `0000_stiff_invisible_woman.sql`
 2. `0001_oval_eddie_brock.sql`
 3. `0002_green_kat_farrell.sql`
 4. `0003_messy_abomination.sql`
 5. `0004_ancient_mattie_franklin.sql`
+6. `0005_fearless_the_hunter.sql`
+7. `0006_kind_scream.sql`
 
 Drizzle records each completed migration in
 `drizzle.__drizzle_migrations`. The migration statements run in a transaction,
@@ -35,7 +37,7 @@ so a failed migration does not authorize an application deployment.
 The command first validates the connection URL and runs `select 1`. A missing,
 malformed, unreachable, or rejected connection exits before any migration is
 attempted. It then applies the migration journal and exits successfully only
-after verifying five migration records and all eleven required application tables.
+after verifying seven migration records and all thirteen required application tables.
 The command never prints the connection string.
 
 ## Required result
@@ -43,7 +45,7 @@ The command never prints the connection string.
 The successful command ends with:
 
 ```text
-Database release ready: 5 migrations recorded and 11 required tables verified.
+Database release ready: 7 migrations recorded and 13 required tables verified.
 ```
 
 If any other result appears, keep deployment paused. The database owner should
