@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
+import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteFooter, SiteNav } from "../site-chrome";
@@ -26,7 +27,10 @@ export default async function DashboardPage() {
     redirect("/account?mode=signin");
   }
 
-  const firstCourse = await getOrCreateFirstCourseAssignment(session.user.id);
+  const [firstCourse, practiceProgress] = await Promise.all([
+    getOrCreateFirstCourseAssignment(session.user.id),
+    getCodingCatalogProgress(session.user.id),
+  ]);
   const nextLesson = firstCourse.nextLesson;
   const firstName = session.user.name.trim().split(/\s+/)[0];
   const courseFormat =
@@ -102,6 +106,49 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </article>
+
+        <section
+          className="dashboard-practice"
+          aria-labelledby="dashboard-practice-title"
+        >
+          <div>
+            <p className="course-kicker">JavaScript practice arena</p>
+            <h2 id="dashboard-practice-title">
+              Turn the next 20 minutes into a solved problem.
+            </h2>
+            <p>
+              Six beginner problems cover input, conditions, loops, arrays,
+              strings, and FizzBuzz. Every accepted verdict and saved solution
+              returns with your account.
+            </p>
+            <Link className="course-lesson-action" href="/practice">
+              {practiceProgress.completedCount > 0
+                ? "Continue practice"
+                : "Start problem 01"}
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+          <div className="dashboard-practice-score">
+            <span>Problems accepted</span>
+            <strong>
+              {practiceProgress.completedCount}/{practiceProgress.totalCount}
+            </strong>
+            <div
+              className="practice-progress-track"
+              role="progressbar"
+              aria-label="JavaScript problems completed"
+              aria-valuemin={0}
+              aria-valuemax={practiceProgress.totalCount}
+              aria-valuenow={practiceProgress.completedCount}
+            >
+              <span
+                style={{
+                  width: `${(practiceProgress.completedCount / practiceProgress.totalCount) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        </section>
 
         <p className="dashboard-note">
           You’re signed in as <strong>{session.user.email}</strong>.

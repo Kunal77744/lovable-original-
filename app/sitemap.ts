@@ -19,5 +19,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.9,
     },
+    {
+      url: `${productionUrl}/practice`,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
   ];
 }

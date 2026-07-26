@@ -289,3 +289,50 @@ export const earlyAccessSignup = pgTable(
     ),
   ],
 );
+
+export const codingProblemProgress = pgTable(
+  "coding_problem_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    code: text("code").notNull(),
+    bestVerdict: text("best_verdict"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_progress_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_progress_user_id_idx").on(table.userId),
+  ],
+);
+
+export const codingSubmission = pgTable(
+  "coding_submission",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    verdict: text("verdict").notNull(),
+    passedTests: integer("passed_tests").notNull(),
+    totalTests: integer("total_tests").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("coding_submission_user_problem_idx").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_submission_user_id_idx").on(table.userId),
+  ],
+);
