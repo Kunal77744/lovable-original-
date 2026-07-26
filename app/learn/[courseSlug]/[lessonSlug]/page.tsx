@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
+import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { getFirstCourseLessonForStudent } from "@/db/course";
 import {
   FIRST_LESSON_PASS_PERCENT,
@@ -54,6 +55,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   return (
     <main className="lesson-page">
+      <LessonStartTracker
+        courseSlug={courseSlug}
+        lessonSlug={studentLesson.lessonSlug}
+        alreadyCompleted={studentLesson.completed}
+      />
       <SiteNav currentPage="lesson" />
       <div className="lesson-shell">
         <aside className="lesson-rail" aria-label="Course progress">
@@ -215,6 +221,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </section>
 
           <LessonQuiz
+            courseSlug={courseSlug}
             lessonSlug={studentLesson.lessonSlug}
             questions={quiz}
             passPercent={FIRST_LESSON_PASS_PERCENT}

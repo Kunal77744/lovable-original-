@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import type { QuizQuestion } from "@/lib/first-course-content";
+import { captureLearnerEventOnce } from "@/lib/product-analytics";
 
 type QuizResult = {
   score: number;
@@ -14,6 +15,7 @@ type QuizResult = {
 };
 
 type LessonQuizProps = {
+  courseSlug: string;
   lessonSlug: string;
   questions: readonly QuizQuestion[];
   passPercent: number;
@@ -22,6 +24,7 @@ type LessonQuizProps = {
 };
 
 export function LessonQuiz({
+  courseSlug,
   lessonSlug,
   questions,
   passPercent,
@@ -71,6 +74,14 @@ export function LessonQuiz({
       }
 
       setResult(payload);
+
+      if (payload.completed) {
+        captureLearnerEventOnce("quiz_completed", {
+          course_slug: courseSlug,
+          lesson_slug: lessonSlug,
+          passed: true,
+        });
+      }
     } catch {
       setError("We couldn’t save your answers. Check your connection and try again.");
     } finally {

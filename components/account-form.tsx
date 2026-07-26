@@ -3,6 +3,7 @@
 import { FormEvent, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { captureAccountCreated } from "@/lib/product-analytics";
 import {
   validateEmail,
   validateName,
@@ -75,6 +76,10 @@ export function AccountForm() {
                 "We couldn’t create your account. Try signing in instead.",
         );
         return;
+      }
+
+      if (mode === "create") {
+        captureAccountCreated();
       }
 
       router.push("/dashboard");

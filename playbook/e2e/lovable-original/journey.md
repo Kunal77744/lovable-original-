@@ -25,11 +25,23 @@
 
 ## Expected analytics
 
-No auth analytics events are instrumented in this task. The scheduled learning-loop
-instrumentation task owns product event capture after the first lesson path exists.
+Use one run marker for the full journey and confirm the capture sink receives this
+ordered sequence:
+
+1. `$pageview` on the public homepage
+2. `account_created` after successful account creation
+3. `lesson_started` when the unfinished lesson opens
+4. `quiz_completed` after the passing score is saved
+
+All four events must share one anonymous journey ID. The payload may include route
+names, slugs, pass state, deployment environment, and the test run marker. It must
+not include an email address, password, quiz answer, question text, lesson content,
+or URL query string. Duplicate React renders must not create duplicate events.
 
 ## Pass condition
 
 All buttons complete their intended action, the server-backed session survives a
 reload, protected content redirects when signed out, and the quiz completion remains
 visible on both the lesson and dashboard without console or failed-network errors.
+The capture sink also contains exactly one ordered four-event sequence for the run
+marker and one anonymous journey ID, with no private content.
