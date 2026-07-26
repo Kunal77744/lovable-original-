@@ -337,12 +337,25 @@ export async function getFirstLessonArtifact(
     )
     .limit(1);
   const html = artifact?.html ?? SEMANTIC_HTML_STARTER;
+  const checks = gradeSemanticHtml(html);
+  const passedChecks = checks.filter((check) => check.passed).length;
 
   return {
     html,
-    checks: gradeSemanticHtml(html),
+    checks,
     saved: Boolean(artifact),
     updatedAt: artifact?.updatedAt.toISOString() ?? null,
+    submission: artifact
+      ? {
+          status:
+            passedChecks === checks.length
+              ? ("completed" as const)
+              : ("needs-revision" as const),
+          passedChecks,
+          totalChecks: checks.length,
+          submittedAt: artifact.updatedAt.toISOString(),
+        }
+      : null,
   };
 }
 
@@ -375,12 +388,23 @@ export async function saveFirstLessonArtifact(
         updatedAt: now,
       },
     });
+  const checks = gradeSemanticHtml(html);
+  const passedChecks = checks.filter((check) => check.passed).length;
 
   return {
     html,
-    checks: gradeSemanticHtml(html),
+    checks,
     saved: true,
     updatedAt: now.toISOString(),
+    submission: {
+      status:
+        passedChecks === checks.length
+          ? ("completed" as const)
+          : ("needs-revision" as const),
+      passedChecks,
+      totalChecks: checks.length,
+      submittedAt: now.toISOString(),
+    },
   };
 }
 

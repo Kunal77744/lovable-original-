@@ -1779,7 +1779,7 @@ h1 {
   text-wrap: balance;
 }
 
-.workspace-heading > div:first-child > p:last-child {
+.workspace-heading > div:first-child > p:not(.quiz-kicker) {
   max-width: 60ch;
   margin: 18px 0 0;
   color: #455149;
@@ -1787,11 +1787,35 @@ h1 {
   line-height: 1.65;
 }
 
-.workspace-score {
-  min-width: 106px;
-  padding: 15px 16px;
+.assignment-outcome {
+  max-width: 620px;
+  margin-top: 24px;
+  padding: 16px 18px;
   display: grid;
-  gap: 2px;
+  gap: 4px;
+  border-left: 2px solid var(--accent);
+  background: rgba(246, 248, 243, 0.72);
+}
+
+.assignment-outcome span {
+  color: #647168;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.assignment-outcome strong {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.workspace-score {
+  min-width: 142px;
+  padding: 16px 18px;
+  display: grid;
+  gap: 3px;
   color: var(--accent-deep);
   border: 1px solid #bfd1c1;
   border-radius: 11px;
@@ -1799,8 +1823,14 @@ h1 {
   text-align: right;
 }
 
+.workspace-score.is-complete {
+  border-color: #8fbd9c;
+  background: #e5f1e4;
+}
+
 .workspace-score strong {
-  font-size: 22px;
+  font-size: 28px;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1809,6 +1839,13 @@ h1 {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspace-score small {
+  color: #536159;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .workspace-panels {
@@ -1909,6 +1946,39 @@ h1 {
   gap: 32px;
 }
 
+.workspace-rubric {
+  min-width: 0;
+}
+
+.workspace-rubric-heading {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.workspace-rubric-heading .quiz-kicker {
+  margin-bottom: 5px;
+}
+
+.workspace-rubric-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.workspace-rubric-heading > span {
+  flex: none;
+  color: #5f6e66;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .workspace-checks {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1964,7 +2034,7 @@ h1 {
 }
 
 .workspace-save {
-  width: 184px;
+  width: 206px;
 }
 
 .workspace-save .lesson-primary-action {
