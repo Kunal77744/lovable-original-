@@ -111,6 +111,66 @@ export const FIRST_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
 
 export const FIRST_LESSON_PASS_PERCENT = 75;
 
+export const FIRST_LESSON_REVISION = {
+  title: "Semantic HTML, compressed",
+  introduction:
+    "A strong page has a readable outline before it has a visual design. Revisit the four decisions that make that outline useful.",
+  summary: [
+    {
+      label: "Document",
+      detail:
+        "Set the language, keep metadata in <head>, and place visible content in <body>.",
+    },
+    {
+      label: "Landmarks",
+      detail:
+        "Use <header>, <main>, and <footer> to name the page’s major regions.",
+    },
+    {
+      label: "Content",
+      detail:
+        "Choose <article> for standalone work, <section> for a themed group, and <div> only when no meaningful element fits.",
+    },
+    {
+      label: "Outline",
+      detail:
+        "Use one clear <h1>, then <h2> headings for its direct sections.",
+    },
+  ],
+  flashcards: [
+    {
+      id: "main-purpose",
+      prompt: "What belongs inside <main>?",
+      answer:
+        "The page’s unique primary content. Repeated navigation, site identity, and global footer content usually sit outside it.",
+    },
+    {
+      id: "article-section",
+      prompt: "How do <article> and <section> differ?",
+      answer:
+        "An <article> can stand on its own. A <section> groups one themed part of a larger page or article.",
+    },
+    {
+      id: "heading-level",
+      prompt: "Why should an <h2> follow the page’s <h1>?",
+      answer:
+        "It creates a logical child level in the document outline. Heading levels describe hierarchy, not font size.",
+    },
+    {
+      id: "semantic-test",
+      prompt: "What is the quickest test for choosing an HTML element?",
+      answer:
+        "Ask what job the content performs. If you can name that job, choose the element that communicates it before styling.",
+    },
+    {
+      id: "language",
+      prompt: "Why add lang=\"en\" to the <html> element?",
+      answer:
+        "It tells assistive technology which pronunciation rules to use, making the page easier to understand.",
+    },
+  ],
+} as const;
+
 export type QuizAnswers = Record<string, string>;
 
 export function gradeFirstLessonQuiz(answers: QuizAnswers) {

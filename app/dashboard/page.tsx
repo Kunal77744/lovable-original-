@@ -89,10 +89,12 @@ export default async function DashboardPage() {
             <p>{nextLesson.description}</p>
             <Link
               className="course-lesson-action"
-              href={`/learn/${firstCourse.slug}/${nextLesson.slug}`}
+              href={`/learn/${firstCourse.slug}/${nextLesson.slug}${
+                nextLesson.completed ? "#revision-pack" : ""
+              }`}
             >
               {nextLesson.completed
-                ? "Review lesson"
+                ? "Open revision pack"
                 : firstCourse.completedLessons > 0
                   ? "Continue course"
                   : "Start lesson"}

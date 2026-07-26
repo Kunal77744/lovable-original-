@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import type { QuizQuestion } from "@/lib/first-course-content";
 import { captureLearnerEventOnce } from "@/lib/product-analytics";
 import { CourseFeedback } from "@/components/course-feedback";
+import { RevisionPack } from "@/components/revision-pack";
 
 type QuizResult = {
   score: number;
@@ -124,10 +125,14 @@ export function LessonQuiz({
           is saved and the dashboard now shows {courseLessonCount} of{" "}
           {courseLessonCount} {lessonCountLabel} complete.
         </p>
-        <Link className="lesson-primary-action" href="/dashboard">
-          View my progress
+        <Link className="lesson-primary-action" href="#revision-pack">
+          Start revision
           <span aria-hidden="true">→</span>
         </Link>
+        <Link className="completion-dashboard-link" href="/dashboard">
+          View saved progress
+        </Link>
+        <RevisionPack lessonSlug={lessonSlug} />
         <CourseFeedback
           courseSlug={courseSlug}
           lessonSlug={lessonSlug}

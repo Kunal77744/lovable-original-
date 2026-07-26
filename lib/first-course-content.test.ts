@@ -3,11 +3,22 @@ import {
   FIRST_COURSE_LESSONS,
   FIRST_LESSON,
   FIRST_LESSON_QUIZ,
+  FIRST_LESSON_REVISION,
   getPublicFirstLessonQuiz,
   gradeFirstLessonQuiz,
 } from "./first-course-content";
 
 describe("gradeFirstLessonQuiz", () => {
+  it("ships a complete authored semantic HTML revision pack", () => {
+    expect(FIRST_LESSON_REVISION.summary).toHaveLength(4);
+    expect(FIRST_LESSON_REVISION.flashcards).toHaveLength(5);
+    expect(
+      FIRST_LESSON_REVISION.flashcards.every(
+        (card) => card.prompt.length > 0 && card.answer.length > 0,
+      ),
+    ).toBe(true);
+  });
+
   it("defines Version 1 as one usable 18-minute course lesson", () => {
     expect(FIRST_COURSE_LESSONS).toEqual([FIRST_LESSON]);
     expect(FIRST_COURSE_LESSONS).toHaveLength(1);
