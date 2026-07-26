@@ -88,7 +88,7 @@ export default function Home() {
                 <span className="window-logo">L</span>
                 <span>Web Development Foundations</span>
               </div>
-              <span className="progress-label">Course preview</span>
+              <span className="progress-label">Preview · 32% complete</span>
             </div>
 
             <div className="course-content">
