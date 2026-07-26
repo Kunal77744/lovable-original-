@@ -4,9 +4,9 @@ import { PublicPageviews } from "./public-pageviews";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lovable-original-eight.vercel.app"),
-  title: "Lovable Original | AI-first learning that sticks",
+  title: "Lovable Original | Web Development Foundations",
   description:
-    "Learn through focused lessons, active recall, real projects, and interview practice in one AI-first learning platform.",
+    "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
   alternates: {
     canonical: "/",
   },
@@ -15,24 +15,24 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "/",
     siteName: "Lovable Original",
-    title: "Lovable Original | AI-first learning that sticks",
+    title: "Lovable Original | Web Development Foundations",
     description:
-      "Learn through focused lessons, active recall, real projects, and interview practice in one AI-first learning platform.",
+      "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt:
-          "Lovable Original learning platform: learn concepts, practice recall, and build with what you know.",
+          "Lovable Original Web Development Foundations: learn semantic HTML, build and save a page, and check your recall.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lovable Original | AI-first learning that sticks",
+    title: "Lovable Original | Web Development Foundations",
     description:
-      "Learn through focused lessons, active recall, real projects, and interview practice in one AI-first learning platform.",
+      "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
     images: ["/opengraph-image"],
   },
 };

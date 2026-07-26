@@ -15,7 +15,7 @@ const learningLoop = [
   {
     number: "03",
     title: "Complete the course",
-    copy: "Pass at 75% to complete the one-lesson course, save your best score, and return from the dashboard.",
+    copy: "Build and save your page, pass at 75%, and return to your best score and progress from the dashboard.",
   },
 ];
 
@@ -62,8 +62,9 @@ export default function Home() {
               Lovable Original helps you build a page the browser understands.
             </h1>
             <p className="hero-lede">
-              Complete one 18-minute semantic HTML lesson, check your recall
-              with four questions, and keep your course result saved.
+              In one 18-minute semantic HTML lesson, build and save an article
+              page, check your recall with four questions, and keep your course
+              result.
             </p>
             <Link className="primary-action" href="/account">
               Start Web Development Foundations
