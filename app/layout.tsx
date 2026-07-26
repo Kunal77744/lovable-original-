@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PublicPageviews } from "./public-pageviews";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lovable-original-eight.vercel.app"),
@@ -43,7 +44,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PublicPageviews />
+      </body>
     </html>
   );
 }

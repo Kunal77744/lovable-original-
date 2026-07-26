@@ -1,20 +1,21 @@
+import Link from "next/link";
 import { SiteFooter, SiteNav, SkipLink } from "./site-chrome";
 
 const learningLoop = [
   {
     number: "01",
-    title: "Understand",
-    copy: "Short, structured lessons help you see the idea before the details blur together.",
+    title: "Learn the structure",
+    copy: "Three focused sections show how semantic HTML gives a page meaning before styling begins.",
   },
   {
     number: "02",
-    title: "Practice",
-    copy: "Quizzes, notes, flashcards, and coding exercises turn passive reading into recall.",
+    title: "Check your recall",
+    copy: "A four-question quiz tests the choices that make a page clearer for browsers and people.",
   },
   {
     number: "03",
-    title: "Build",
-    copy: "Projects and interview practice connect what you know to the work you want to do.",
+    title: "Complete the course",
+    copy: "Pass at 75% to complete the one-lesson course, save your best score, and return from the dashboard.",
   },
 ];
 
@@ -56,21 +57,21 @@ export default function Home() {
       <main id="main-content" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">Learn. Recall. Build.</p>
+            <p className="eyebrow">Web Development Foundations</p>
             <h1 id="hero-title">
-              Lovable Original turns what you study into what you can do.
+              Lovable Original helps you build a page the browser understands.
             </h1>
             <p className="hero-lede">
-              Lovable Original is an AI-first learning platform designed to help
-              students understand faster, remember longer, and become job-ready
-              through real practice.
+              Complete one 18-minute semantic HTML lesson, check your recall
+              with four questions, and keep your course result saved.
             </p>
-            <a className="primary-action" href="#learning-path">
-              See the learning path
+            <Link className="primary-action" href="/account">
+              Start Web Development Foundations
               <ArrowIcon />
-            </a>
+            </Link>
             <p className="launch-note">
-              The first focused course is being built now.
+              One focused lesson. One practical result. Your best quiz score
+              stays with your free student account.
             </p>
             <p className="spelling-note">
               Searched for &quot;Loveable Original&quot;? You&apos;re in the
@@ -80,40 +81,40 @@ export default function Home() {
 
           <div
             className="course-window"
-            aria-label="Product learning path preview"
+            aria-label="Web Development Foundations course preview"
           >
             <div className="window-topbar">
               <div className="window-brand">
                 <span className="window-logo">L</span>
-                <span>Learning workspace</span>
+                <span>Web Development Foundations</span>
               </div>
               <span className="progress-label">Preview · 32% complete</span>
             </div>
 
             <div className="course-content">
               <div className="course-meta">
-                <span>Module 03</span>
-                <span>12 min</span>
+                <span>Lesson 01</span>
+                <span>18 min</span>
               </div>
-              <p className="lesson-label">Foundations</p>
-              <h2>Turn a hard idea into a clear mental model.</h2>
+              <p className="lesson-label">Semantic HTML</p>
+              <h2>Build a page the browser understands.</h2>
               <p className="lesson-copy">
-                Learn the concept, explain it in your own words, then apply it
-                before moving on.
+                Turn a blank document into an accessible article page, then
+                check your choices with a short quiz.
               </p>
 
               <div className="lesson-checklist">
                 <div>
                   <CheckIcon />
-                  <span>Guided explanation</span>
+                  <span>Three focused lesson sections</span>
                 </div>
                 <div>
                   <CheckIcon />
-                  <span>Active recall prompt</span>
+                  <span>Four recall questions</span>
                 </div>
                 <div className="current-step">
                   <span className="step-dot" />
-                  <span>Build it yourself</span>
+                  <span>Saved best score and progress</span>
                 </div>
               </div>
             </div>
