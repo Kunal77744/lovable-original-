@@ -4,11 +4,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
+import { LessonNotes } from "@/components/lesson-notes";
 import { SemanticHtmlWorkspace } from "@/components/semantic-html-workspace";
 import {
   getFirstCourseLessonForStudent,
   getCourseFeedbackForStudent,
   getFirstLessonArtifact,
+  getFirstLessonNote,
 } from "@/db/course";
 import {
   FIRST_LESSON_PASS_PERCENT,
@@ -56,12 +58,13 @@ export default async function LessonPage({ params }: LessonPageProps) {
     notFound();
   }
 
-  const [workspace, courseFeedback] = await Promise.all([
+  const [workspace, lessonNote, courseFeedback] = await Promise.all([
     getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
+    getFirstLessonNote(session.user.id, studentLesson.lessonSlug),
     getCourseFeedbackForStudent(session.user.id, courseSlug),
   ]);
 
-  if (!workspace) {
+  if (!workspace || !lessonNote) {
     notFound();
   }
 
@@ -259,6 +262,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </div>
             </div>
           </section>
+
+          <LessonNotes
+            lessonSlug={studentLesson.lessonSlug}
+            initialNote={lessonNote.note}
+          />
 
           <SemanticHtmlWorkspace
             lessonSlug={studentLesson.lessonSlug}

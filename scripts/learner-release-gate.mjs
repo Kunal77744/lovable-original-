@@ -297,6 +297,7 @@ async function runJourney(baseUrl, databaseUrl) {
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
   let savedFeedbackComment = "";
+  let savedLessonNote = "";
 
   async function request(path, options = {}, requestJar = jar) {
     const headers = new Headers(options.headers);
@@ -406,6 +407,16 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Starter code and five checks were not ready.",
     );
+
+    const noteResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+    );
+    const note = await noteResponse.json();
+    assertStep(
+      noteResponse.status === 200 && note.note === null,
+      step,
+      "A fresh learner inherited another learner’s note.",
+    );
   });
 
   await runStep(4, async (step) => {
@@ -466,6 +477,29 @@ async function runJourney(baseUrl, databaseUrl) {
       "The assignment submission did not save a completed 5/5 result.",
     );
     savedWorkspaceHtml = passingDraft;
+
+    const firstNoteResponse = await jsonRequest(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+      { content: "Landmarks explain the purpose of each page region." },
+    );
+    assertStep(
+      firstNoteResponse.status === 200,
+      step,
+      "A lesson note was not saved.",
+    );
+
+    savedLessonNote = `  Revised private note ${runId}.\n`;
+    const revisedNoteResponse = await jsonRequest(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+      { content: savedLessonNote },
+    );
+    const revisedNote = await revisedNoteResponse.json();
+    assertStep(
+      revisedNoteResponse.status === 200 &&
+        revisedNote.note?.content === savedLessonNote,
+      step,
+      "The revised lesson note was not returned exactly.",
+    );
   });
 
   await runStep(5, async (step) => {
@@ -566,6 +600,17 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The revised feedback was not restored after reload.",
     );
+
+    const noteResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+    );
+    const note = await noteResponse.json();
+    assertStep(
+      noteResponse.status === 200 &&
+        note.note?.content === savedLessonNote,
+      step,
+      "The exact revised lesson note was not restored after reload.",
+    );
   });
 
   await runStep(7, async (step) => {
@@ -607,6 +652,14 @@ async function runJourney(baseUrl, databaseUrl) {
       feedbackResponse.status === 401,
       step,
       "Signed-out feedback access was not rejected.",
+    );
+    const noteResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+    );
+    assertStep(
+      noteResponse.status === 401,
+      step,
+      "Signed-out lesson note access was not rejected.",
     );
   });
 
@@ -654,6 +707,17 @@ async function runJourney(baseUrl, databaseUrl) {
         feedback.feedback?.comment === savedFeedbackComment,
       step,
       "Saved feedback did not remain after sign in.",
+    );
+
+    const noteResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+    );
+    const note = await noteResponse.json();
+    assertStep(
+      noteResponse.status === 200 &&
+        note.note?.content === savedLessonNote,
+      step,
+      "The exact lesson note did not remain after sign in.",
     );
   });
 
@@ -760,6 +824,43 @@ async function runJourney(baseUrl, databaseUrl) {
       !workspace.html.includes(runId),
       step,
       "One learner could read another learner’s artifact.",
+    );
+
+    const noteResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+      {},
+      secondJar,
+    );
+    const note = await noteResponse.json();
+    assertStep(
+      noteResponse.status === 200 && note.note === null,
+      step,
+      "One learner could read another learner’s note.",
+    );
+
+    const secondNote = "A separate note for the isolation learner.";
+    const noteSaveResponse = await jsonRequest(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+      { content: secondNote },
+      secondJar,
+    );
+    const savedSecondNote = await noteSaveResponse.json();
+    assertStep(
+      noteSaveResponse.status === 200 &&
+        savedSecondNote.note?.content === secondNote,
+      step,
+      "The isolation learner could not save a separate note.",
+    );
+
+    const originalNoteResponse = await request(
+      `/api/lessons/${LESSON_SLUG}/notes`,
+    );
+    const originalNote = await originalNoteResponse.json();
+    assertStep(
+      originalNoteResponse.status === 200 &&
+        originalNote.note?.content === savedLessonNote,
+      step,
+      "Another learner changed the original learner’s note.",
     );
 
     const feedbackResponse = await request(

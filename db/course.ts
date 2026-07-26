@@ -11,6 +11,7 @@ import {
   courseFeedback,
   lesson,
   lessonArtifact,
+  lessonNote,
   lessonProgress,
 } from "./schema";
 import {
@@ -405,6 +406,77 @@ export async function saveFirstLessonArtifact(
       totalChecks: checks.length,
       submittedAt: now.toISOString(),
     },
+  };
+}
+
+export async function getFirstLessonNote(
+  userId: string,
+  lessonSlug: string,
+) {
+  const database = getDatabase();
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const [note] = await database
+    .select({
+      content: lessonNote.content,
+      updatedAt: lessonNote.updatedAt,
+    })
+    .from(lessonNote)
+    .where(
+      and(
+        eq(lessonNote.userId, userId),
+        eq(lessonNote.lessonId, lessonId),
+      ),
+    )
+    .limit(1);
+
+  return {
+    note: note
+      ? {
+          content: note.content,
+          updatedAt: note.updatedAt.toISOString(),
+        }
+      : null,
+  };
+}
+
+export async function saveFirstLessonNote(
+  userId: string,
+  lessonSlug: string,
+  content: string,
+) {
+  const database = getDatabase();
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const now = new Date();
+  await database
+    .insert(lessonNote)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      lessonId,
+      content,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [lessonNote.userId, lessonNote.lessonId],
+      set: {
+        content,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    content,
+    updatedAt: now.toISOString(),
   };
 }
 

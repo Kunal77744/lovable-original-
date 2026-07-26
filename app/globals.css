@@ -1749,6 +1749,172 @@ h1 {
   color: #bdc8c2;
 }
 
+.lesson-notes {
+  margin-top: 80px;
+  padding: 44px;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 20px 20px 8px 20px;
+  background:
+    linear-gradient(135deg, rgba(223, 234, 223, 0.7), transparent 58%),
+    var(--surface);
+  box-shadow: 0 22px 48px rgba(23, 35, 30, 0.09);
+}
+
+.lesson-notes-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.lesson-notes-heading > div {
+  max-width: 590px;
+}
+
+.lesson-notes-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(36px, 4vw, 48px);
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.lesson-notes-heading > div > p:last-child {
+  max-width: 57ch;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.lesson-notes-heading > span {
+  padding: 8px 10px;
+  flex: none;
+  color: var(--accent-deep);
+  border: 1px solid #c6ddcb;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lesson-notes-field {
+  margin-top: 32px;
+  display: grid;
+}
+
+.lesson-notes-field > span {
+  margin-bottom: 10px;
+  color: #34413a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.lesson-notes-field textarea {
+  width: 100%;
+  min-height: 172px;
+  padding: 20px;
+  resize: vertical;
+  color: var(--ink);
+  border: 1px solid #bdc9bf;
+  border-radius: 12px;
+  background:
+    linear-gradient(#fbfcf9 31px, #e4e9e3 32px);
+  background-size: 100% 32px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 32px;
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.lesson-notes-field textarea::placeholder {
+  color: #7d8982;
+}
+
+.lesson-notes-field textarea:hover {
+  border-color: #91a197;
+}
+
+.lesson-notes-field textarea:focus {
+  border-color: var(--accent);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(40, 118, 82, 0.15);
+}
+
+.lesson-notes-field small {
+  margin-top: 8px;
+  color: #76837b;
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.lesson-notes-field small span {
+  font-variant-numeric: tabular-nums;
+}
+
+.lesson-notes-save {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 18px;
+}
+
+.lesson-notes-save button {
+  min-height: 46px;
+  padding: 0 18px;
+  color: white;
+  border: 1px solid var(--accent-deep);
+  border-radius: 9px;
+  background: var(--accent-deep);
+  box-shadow: 0 8px 18px rgba(23, 84, 55, 0.14);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.lesson-notes-save button:hover:not(:disabled) {
+  background: #0f432b;
+  transform: translateY(-1px);
+}
+
+.lesson-notes-save button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.lesson-notes-save button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.lesson-notes-save button:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.lesson-notes-save p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.lesson-notes-save p.is-error {
+  color: #8b2e2e;
+}
+
 .lesson-workspace {
   margin-top: 80px;
   padding: 44px;
@@ -3208,10 +3374,29 @@ footer {
 
   .lesson-quiz,
   .quiz-complete,
-  .lesson-workspace {
+  .lesson-workspace,
+  .lesson-notes {
     margin-inline: -8px;
     padding: 38px 24px;
     border-radius: 15px;
+  }
+
+  .lesson-notes-heading,
+  .lesson-notes-save {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-notes-heading > span {
+    width: fit-content;
+  }
+
+  .lesson-notes-field textarea {
+    min-height: 192px;
+  }
+
+  .lesson-notes-save button {
+    width: 100%;
   }
 
   .revision-pack {
