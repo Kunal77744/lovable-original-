@@ -5,7 +5,7 @@ import { SiteFooter, SiteNav, SkipLink } from "../site-chrome";
 export const metadata: Metadata = {
   title: "About Lovable Original | Learn, recall, and build",
   description:
-    "Lovable Original is an AI-first learning platform for students who want to understand faster, remember longer, and build job-ready skills.",
+    "See how Lovable Original turns one semantic HTML lesson into a saved page, a four-question recall check, and progress you can return to.",
   alternates: {
     canonical: "/about",
   },
@@ -15,17 +15,17 @@ const learningLoop = [
   {
     number: "01",
     title: "Learn it clearly",
-    copy: "Focused explanations turn difficult topics into ideas you can work with.",
+    copy: "Three focused sections explain how semantic HTML gives a page meaning.",
   },
   {
     number: "02",
     title: "Recall it actively",
-    copy: "Prompts, quizzes, and practice make memory part of the lesson.",
+    copy: "Four questions check the choices that make a page clearer.",
   },
   {
     number: "03",
     title: "Use it for real",
-    copy: "Projects and interview practice connect knowledge to practical ability.",
+    copy: "Build and save an accessible article page in your course workspace.",
   },
 ];
 
@@ -57,12 +57,12 @@ export default function AboutPage() {
               Learning should end in something you can do.
             </h1>
             <p className="about-lede">
-              Lovable Original is an AI-first learning platform for students who
-              want to understand difficult material faster, remember it longer,
-              and turn knowledge into job-ready skill.
+              Lovable Original begins with Web Development Foundations: one
+              18-minute semantic HTML lesson, a saved coding workspace, four
+              recall questions, and progress you can return to.
             </p>
-            <Link className="primary-action" href="/#learning-path">
-              Explore the learning path
+            <Link className="primary-action" href="/account">
+              Start Web Development Foundations
               <ArrowIcon />
             </Link>
           </div>
@@ -100,9 +100,9 @@ export default function AboutPage() {
               one connected path.
             </p>
             <p>
-              The first focused course is being built now. The goal is simple:
-              help a student move from &quot;I&apos;ve seen this before&quot; to
-              &quot;I can explain it, use it, and prove it.&quot;
+              The first focused course is live now. Web Development Foundations
+              takes one 18-minute lesson from explanation to a saved semantic
+              HTML page, then records your best quiz score and progress.
             </p>
           </div>
         </section>
@@ -113,9 +113,9 @@ export default function AboutPage() {
             <h2 id="standard-title">Every lesson has somewhere to go.</h2>
           </div>
           <p className="about-standard-copy">
-            A clear explanation leads to recall. Recall leads to practice.
-            Practice leads to a project, an interview answer, or a skill you can
-            use outside the course.
+            Today, a clear explanation leads to recall, then to a page you build
+            and save. Projects, interview practice, flashcards, certificates,
+            and an AI tutor are planned, not part of this first course.
           </p>
         </section>
       </main>

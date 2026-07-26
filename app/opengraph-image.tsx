@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const alt =
-  "Lovable Original learning platform: learn concepts, practice recall, and build with what you know.";
+  "Lovable Original Web Development Foundations: learn semantic HTML, build and save a page, and check your recall.";
 export const size = {
   width: 1200,
   height: 630,
@@ -102,7 +102,7 @@ export default async function OpenGraphImage() {
               fontWeight: 600,
             }}
           >
-            AI-first learning
+            One live course
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export default async function OpenGraphImage() {
                 textTransform: "uppercase",
               }}
             >
-              Learn. Recall. Build.
+              Web Development Foundations
             </div>
             <div
               style={{
@@ -142,7 +142,7 @@ export default async function OpenGraphImage() {
                 lineHeight: 0.98,
               }}
             >
-              Turn what you study into what you can do.
+              Build a page the browser understands.
             </div>
           </div>
 
