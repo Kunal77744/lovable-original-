@@ -11,6 +11,7 @@ const requiredTables = [
   "account",
   "course",
   "course_assignment",
+  "course_feedback",
   "early_access_signup",
   "lesson",
   "lesson_artifact",

@@ -177,7 +177,12 @@ function getCommonProperties(environment: AnalyticsEnvironment) {
 }
 
 function capture(
-  eventName: "$pageview" | "account_created" | "lesson_started" | "quiz_completed",
+  eventName:
+    | "$pageview"
+    | "account_created"
+    | "lesson_started"
+    | "quiz_completed"
+    | "feedback_submitted",
   properties: Record<string, string | boolean>,
 ) {
   const environment = initializePostHog();
@@ -223,7 +228,7 @@ export function captureAccountCreated() {
 }
 
 export function captureLearnerEventOnce(
-  eventName: "lesson_started" | "quiz_completed",
+  eventName: "lesson_started" | "quiz_completed" | "feedback_submitted",
   properties: LearnerEventProperties,
 ) {
   const dedupeKey = [

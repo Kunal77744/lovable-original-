@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import type { QuizQuestion } from "@/lib/first-course-content";
 import { captureLearnerEventOnce } from "@/lib/product-analytics";
+import { CourseFeedback } from "@/components/course-feedback";
 
 type QuizResult = {
   score: number;
@@ -24,6 +25,11 @@ type LessonQuizProps = {
   passPercent: number;
   initialCompleted: boolean;
   initialScore: number | null;
+  initialFeedback: {
+    usefulness: string;
+    comment: string;
+    updatedAt: string;
+  } | null;
 };
 
 export function LessonQuiz({
@@ -36,6 +42,7 @@ export function LessonQuiz({
   passPercent,
   initialCompleted,
   initialScore,
+  initialFeedback,
 }: LessonQuizProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(
@@ -121,6 +128,11 @@ export function LessonQuiz({
           View my progress
           <span aria-hidden="true">→</span>
         </Link>
+        <CourseFeedback
+          courseSlug={courseSlug}
+          lessonSlug={lessonSlug}
+          initialFeedback={initialFeedback}
+        />
       </section>
     );
   }

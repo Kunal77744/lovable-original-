@@ -8,6 +8,7 @@ import { getDatabase } from "./index";
 import {
   course,
   courseAssignment,
+  courseFeedback,
   lesson,
   lessonArtifact,
   lessonProgress,
@@ -379,6 +380,104 @@ export async function saveFirstLessonArtifact(
     html,
     checks: gradeSemanticHtml(html),
     saved: true,
+    updatedAt: now.toISOString(),
+  };
+}
+
+export async function getCourseFeedbackForStudent(
+  userId: string,
+  courseSlug: string,
+) {
+  const database = getDatabase();
+  const [row] = await database
+    .select({
+      courseId: course.id,
+      usefulness: courseFeedback.usefulness,
+      comment: courseFeedback.comment,
+      updatedAt: courseFeedback.updatedAt,
+    })
+    .from(courseAssignment)
+    .innerJoin(course, eq(courseAssignment.courseId, course.id))
+    .leftJoin(
+      courseFeedback,
+      and(
+        eq(courseFeedback.courseId, course.id),
+        eq(courseFeedback.userId, userId),
+      ),
+    )
+    .where(
+      and(eq(courseAssignment.userId, userId), eq(course.slug, courseSlug)),
+    )
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    feedback:
+      row.usefulness && row.updatedAt
+        ? {
+            usefulness: row.usefulness,
+            comment: row.comment ?? "",
+            updatedAt: row.updatedAt.toISOString(),
+          }
+        : null,
+  };
+}
+
+export async function saveCourseFeedbackForStudent(
+  userId: string,
+  courseSlug: string,
+  usefulness: string,
+  comment: string | null,
+) {
+  const database = getDatabase();
+  const [completedCourse] = await database
+    .select({ courseId: course.id })
+    .from(courseAssignment)
+    .innerJoin(course, eq(courseAssignment.courseId, course.id))
+    .innerJoin(lesson, eq(lesson.courseId, course.id))
+    .innerJoin(
+      lessonProgress,
+      and(
+        eq(lessonProgress.lessonId, lesson.id),
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.status, "completed"),
+      ),
+    )
+    .where(
+      and(eq(courseAssignment.userId, userId), eq(course.slug, courseSlug)),
+    )
+    .limit(1);
+
+  if (!completedCourse) {
+    return null;
+  }
+
+  const now = new Date();
+  await database
+    .insert(courseFeedback)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      courseId: completedCourse.courseId,
+      usefulness,
+      comment,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [courseFeedback.userId, courseFeedback.courseId],
+      set: {
+        usefulness,
+        comment,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    usefulness,
+    comment: comment ?? "",
     updatedAt: now.toISOString(),
   };
 }
