@@ -83,5 +83,11 @@ describe("LessonQuiz analytics", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText(/1 of 1 lesson complete/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Start revision" }),
+    ).toHaveAttribute("href", "#revision-pack");
+    expect(
+      screen.getByRole("heading", { name: "Semantic HTML, compressed" }),
+    ).toBeInTheDocument();
   });
 });

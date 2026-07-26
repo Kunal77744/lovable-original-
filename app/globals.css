@@ -2232,6 +2232,276 @@ h1 {
   margin-top: 28px;
 }
 
+.completion-dashboard-link {
+  width: fit-content;
+  margin: 16px auto 0;
+  display: block;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 750;
+  text-underline-offset: 4px;
+}
+
+.completion-dashboard-link:hover {
+  color: var(--ink);
+}
+
+.completion-dashboard-link:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 4px;
+}
+
+.revision-pack {
+  margin: 64px -56px -56px;
+  padding: 64px 56px 56px;
+  border-top: 1px solid var(--line);
+  background: #f1f4ee;
+  text-align: left;
+  scroll-margin-top: 24px;
+}
+
+.revision-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.revision-heading h3 {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 38px;
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.revision-heading > span {
+  padding: 8px 10px;
+  flex: 0 0 auto;
+  color: var(--accent-deep);
+  border: 1px solid #c6ddcb;
+  border-radius: 99px;
+  background: #fbfcf8;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.revision-intro {
+  max-width: 58ch;
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.revision-summary {
+  margin: 34px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+  list-style: none;
+  border-top: 1px solid #cdd5cd;
+}
+
+.revision-summary li {
+  padding: 22px 0;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 10px;
+  border-bottom: 1px solid #cdd5cd;
+}
+
+.revision-summary li > span {
+  padding-top: 3px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.revision-summary strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.revision-summary p {
+  margin: 5px 0 0;
+  color: #5a675f;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.flashcard-workbench {
+  margin-top: 40px;
+  overflow: hidden;
+  color: white;
+  border-radius: 14px 14px 5px 14px;
+  background: var(--ink);
+  box-shadow: 0 22px 42px rgba(23, 35, 30, 0.14);
+}
+
+.flashcard-progress {
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.flashcard-progress p,
+.flashcard-progress span {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flashcard-progress p {
+  color: #9fd9b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.flashcard-progress span {
+  color: #aeb9b2;
+}
+
+.flashcard {
+  min-height: 280px;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.flashcard-label {
+  margin: 0;
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.flashcard h4 {
+  max-width: 20ch;
+  margin: 14px 0 0;
+  color: white;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.flashcard-answer {
+  max-width: 52ch;
+  margin: 22px 0 0;
+  color: #d8e0da;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.flashcard-reveal,
+.flashcard-next {
+  min-height: 46px;
+  padding: 0 16px;
+  color: var(--ink);
+  border: 1px solid white;
+  border-radius: 8px;
+  background: white;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.flashcard-reveal {
+  margin-top: 28px;
+}
+
+.flashcard-reveal:hover,
+.flashcard-next:hover:not(:disabled) {
+  background: #eff7f1;
+}
+
+.flashcard-reveal:focus-visible,
+.flashcard-next:focus-visible,
+.flashcard-previous:focus-visible {
+  outline: 3px solid rgba(102, 220, 157, 0.6);
+  outline-offset: 3px;
+}
+
+.flashcard-controls {
+  min-height: 74px;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 112px 1fr 112px;
+  align-items: center;
+  gap: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.flashcard-previous {
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #c7d0ca;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.flashcard-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.flashcard-previous:disabled,
+.flashcard-next:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.flashcard-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.flashcard-dots span {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #738078;
+  border-radius: 50%;
+}
+
+.flashcard-dots span.is-checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.flashcard-dots span.is-current {
+  box-shadow: 0 0 0 3px rgba(102, 220, 157, 0.22);
+}
+
 .course-feedback {
   max-width: 650px;
   margin: 52px auto 0;
@@ -2944,6 +3214,55 @@ footer {
     border-radius: 15px;
   }
 
+  .revision-pack {
+    margin: 52px -24px -38px;
+    padding: 52px 24px 38px;
+  }
+
+  .revision-heading {
+    display: grid;
+    gap: 20px;
+  }
+
+  .revision-heading > span {
+    width: fit-content;
+  }
+
+  .revision-heading h3 {
+    font-size: 34px;
+  }
+
+  .revision-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .flashcard {
+    min-height: 310px;
+    padding: 38px 24px;
+  }
+
+  .flashcard h4 {
+    font-size: 27px;
+  }
+
+  .flashcard-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .flashcard-dots {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .flashcard-previous,
+  .flashcard-next {
+    grid-row: 2;
+  }
+
+  .flashcard-next {
+    justify-self: end;
+  }
+
   .workspace-heading {
     display: grid;
     gap: 22px;
@@ -3046,7 +3365,9 @@ footer {
 
   .early-access-fields button,
   .course-lesson-action,
-  .lesson-primary-action {
+  .lesson-primary-action,
+  .flashcard-reveal,
+  .flashcard-next {
     transition: none;
   }
 }
