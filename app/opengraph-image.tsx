@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const alt =
-  "Lovable Original: turn what you study into what you can do.";
+  "Lovable Original learning platform: learn concepts, practice recall, and build with what you know.";
 export const size = {
   width: 1200,
   height: 630,

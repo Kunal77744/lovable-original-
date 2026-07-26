@@ -22,7 +22,8 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Lovable Original: turn what you study into what you can do.",
+        alt:
+          "Lovable Original learning platform: learn concepts, practice recall, and build with what you know.",
       },
     ],
   },
