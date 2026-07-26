@@ -9,8 +9,13 @@ import {
   course,
   courseAssignment,
   lesson,
+  lessonArtifact,
   lessonProgress,
 } from "./schema";
+import {
+  gradeSemanticHtml,
+  SEMANTIC_HTML_STARTER,
+} from "@/lib/semantic-html-workspace";
 
 async function ensureFirstCourse() {
   const database = getDatabase();
@@ -284,5 +289,96 @@ export async function saveFirstLessonQuizResult(
   return {
     completed,
     quizScore: bestScore,
+  };
+}
+
+async function getAssignedLessonId(userId: string, lessonSlug: string) {
+  const database = getDatabase();
+  const [assignedLesson] = await database
+    .select({ id: lesson.id })
+    .from(courseAssignment)
+    .innerJoin(course, eq(courseAssignment.courseId, course.id))
+    .innerJoin(lesson, eq(lesson.courseId, course.id))
+    .where(
+      and(
+        eq(courseAssignment.userId, userId),
+        eq(course.id, FIRST_COURSE.id),
+        eq(lesson.slug, lessonSlug),
+      ),
+    )
+    .limit(1);
+
+  return assignedLesson?.id ?? null;
+}
+
+export async function getFirstLessonArtifact(
+  userId: string,
+  lessonSlug: string,
+) {
+  const database = getDatabase();
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const [artifact] = await database
+    .select({
+      html: lessonArtifact.html,
+      updatedAt: lessonArtifact.updatedAt,
+    })
+    .from(lessonArtifact)
+    .where(
+      and(
+        eq(lessonArtifact.userId, userId),
+        eq(lessonArtifact.lessonId, lessonId),
+      ),
+    )
+    .limit(1);
+  const html = artifact?.html ?? SEMANTIC_HTML_STARTER;
+
+  return {
+    html,
+    checks: gradeSemanticHtml(html),
+    saved: Boolean(artifact),
+    updatedAt: artifact?.updatedAt.toISOString() ?? null,
+  };
+}
+
+export async function saveFirstLessonArtifact(
+  userId: string,
+  lessonSlug: string,
+  html: string,
+) {
+  const database = getDatabase();
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const now = new Date();
+  await database
+    .insert(lessonArtifact)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      lessonId,
+      html,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [lessonArtifact.userId, lessonArtifact.lessonId],
+      set: {
+        html,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    html,
+    checks: gradeSemanticHtml(html),
+    saved: true,
+    updatedAt: now.toISOString(),
   };
 }

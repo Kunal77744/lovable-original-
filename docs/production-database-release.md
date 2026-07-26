@@ -69,7 +69,7 @@ prints the database URL, generated account email, password, auth secret, session
 token, or database name. It accepts loopback HTTP URLs only, so it cannot point
 at production or a hosted preview.
 
-After the automated result reads `Learner release gate passed: 8/8 checks.`:
+After the automated result reads `Learner release gate passed: 10/10 checks.`:
 
 1. Confirm the production migration command produced the required result above.
 2. Deploy the reviewed application release.
