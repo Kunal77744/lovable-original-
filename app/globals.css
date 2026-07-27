@@ -3476,6 +3476,14 @@ h1 {
   background: #1a2721;
 }
 
+.coding-keyboard-hint {
+  margin-right: auto;
+  color: #9eada5;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .secondary-code-action,
 .submit-code-action {
   min-height: 44px;
@@ -4079,6 +4087,11 @@ footer {
     padding: 16px;
     display: grid;
     grid-template-columns: 1fr 1.2fr;
+  }
+
+  .coding-keyboard-hint {
+    grid-column: 1 / -1;
+    margin-right: 0;
   }
 
   .coding-result {
