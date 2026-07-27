@@ -178,6 +178,24 @@ function pageText(html) {
     .trim();
 }
 
+function metaContent(html, name) {
+  const attributeValue = (tag, attribute) => {
+    const match = tag.match(
+      new RegExp(`\\b${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i"),
+    );
+
+    return match?.[2]?.trim() ?? null;
+  };
+
+  return [...html.matchAll(/<meta\b[^>]*>/gi)]
+    .map(([tag]) => ({
+      name: attributeValue(tag, "name"),
+      content: attributeValue(tag, "content"),
+    }))
+    .filter((meta) => meta.name?.toLowerCase() === name.toLowerCase())
+    .map((meta) => meta.content);
+}
+
 function childOutput(env, args) {
   return new Promise((resolve, reject) => {
     const processHandle = spawn(process.execPath, args, {
@@ -516,12 +534,19 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(payload.savedScore === 100, step, "Best score was not saved.");
 
     const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
-    const projectPageText = pageText(await projectPageResponse.text());
+    const projectPageHtml = await projectPageResponse.text();
+    const projectPageText = pageText(projectPageHtml);
     assertStep(
       projectPageResponse.status === 200 &&
         projectPageText.includes("Semantic HTML field guide"),
       step,
       "The guided project did not open after course completion.",
+    );
+    assertStep(
+      JSON.stringify(metaContent(projectPageHtml, "robots")) ===
+        JSON.stringify(["noindex, nofollow"]),
+      step,
+      "The authenticated guided project did not render exactly one noindex, nofollow robots tag.",
     );
 
     const failingProjectHtml =
