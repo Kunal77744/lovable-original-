@@ -44,6 +44,10 @@ export default async function AccountPage() {
             {FIRST_LESSON.estimatedMinutes}-minute semantic HTML lesson with a
             saved result.
           </p>
+          <p>
+            Sign back in anytime and your saved course work and JavaScript code
+            will return.
+          </p>
           <ul aria-label={`What ${FIRST_COURSE.title} includes`}>
             <li>Turn a blank document into an accessible article page</li>
             <li>
