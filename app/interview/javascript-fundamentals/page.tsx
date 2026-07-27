@@ -10,9 +10,9 @@ import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "JavaScript interview drill | Lovable Original",
+  title: "Private JavaScript interview practice | Lovable Original",
   description:
-    "A private five-question JavaScript fundamentals drill with saved answers and a concrete self-review rubric.",
+    "Your saved answers, self-ratings, and completion stay private in this five-question JavaScript fundamentals interview practice.",
   robots: {
     index: false,
     follow: false,
