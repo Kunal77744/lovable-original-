@@ -1,4 +1,11 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptPlayground } from "./javascript-playground";
 
@@ -16,11 +23,15 @@ describe("JavaScriptPlayground", () => {
     runPlaygroundCode.mockReset();
   });
 
-  it("runs the exact editor source and renders console output", async () => {
-    runPlaygroundCode.mockResolvedValue({
-      status: "finished",
-      output: ["answer 42"],
-    });
+  it("runs the exact editor source from the keyboard and announces the result", async () => {
+    let finishRun:
+      | ((result: { status: "finished"; output: string[] }) => void)
+      | undefined;
+    runPlaygroundCode.mockReturnValue(
+      new Promise((resolve) => {
+        finishRun = resolve;
+      }),
+    );
     render(
       <JavaScriptPlayground
         initialCode="console.log('answer', 42);"
@@ -28,12 +39,63 @@ describe("JavaScriptPlayground", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Run code" }));
+    const editor = screen.getByRole("textbox", { name: "JavaScript file" });
+    editor.focus();
+    fireEvent.keyDown(editor, { key: "Enter", ctrlKey: true });
 
-    expect(await screen.findByText("answer 42")).toBeInTheDocument();
     expect(runPlaygroundCode).toHaveBeenCalledWith(
       "console.log('answer', 42);",
     );
+    const status = screen.getByRole("status");
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveAttribute("aria-atomic", "true");
+    expect(status).toHaveTextContent("Running in an isolated browser worker");
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+
+    await act(async () => {
+      finishRun?.({ status: "finished", output: ["answer 42"] });
+    });
+
+    expect(status).toHaveTextContent("answer 42");
+    expect(status).toHaveTextContent("Finished without an uncaught error.");
+  });
+
+  it.each([
+    {
+      name: "an uncaught error",
+      result: {
+        status: "error",
+        output: ["before error"],
+        message: "ReferenceError: missingValue is not defined",
+      },
+      expected: "ReferenceError: missingValue is not defined",
+    },
+    {
+      name: "the one-second timeout",
+      result: {
+        status: "timeout",
+        output: [],
+        message: "Execution stopped after 1,000 ms.",
+      },
+      expected: "Execution stopped after 1,000 ms.",
+    },
+  ])("announces $name through the same status region", async ({
+    result,
+    expected,
+  }) => {
+    runPlaygroundCode.mockResolvedValue(result);
+    render(
+      <JavaScriptPlayground
+        initialCode="while (true) {}"
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Run code" }));
+
+    const status = await screen.findByRole("status");
+    await waitFor(() => expect(status).toHaveTextContent(expected));
+    expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 
   it("saves the exact file and reports account-backed state", async () => {
