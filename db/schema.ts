@@ -405,3 +405,22 @@ export const courseCertificate = pgTable(
     index("course_certificate_user_id_idx").on(table.userId),
   ],
 );
+
+export const playgroundFile = pgTable(
+  "playground_file",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("playground_file_user_unique").on(table.userId),
+    index("playground_file_user_id_idx").on(table.userId),
+  ],
+);

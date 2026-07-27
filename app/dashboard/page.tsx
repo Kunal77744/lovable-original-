@@ -205,6 +205,24 @@ export default async function DashboardPage() {
           </div>
         </section>
 
+        <section
+          className="dashboard-playground"
+          aria-labelledby="dashboard-playground-title"
+        >
+          <div>
+            <p className="course-kicker">Your JavaScript file</p>
+            <h2 id="dashboard-playground-title">
+              Take an idea outside the problem set.
+            </h2>
+            <p>
+              Write, run, save, and return to one private JavaScript file.
+            </p>
+          </div>
+          <Link className="dashboard-playground-action" href="/playground">
+            Open playground <span aria-hidden="true">→</span>
+          </Link>
+        </section>
+
         <p className="dashboard-note">
           You’re signed in as <strong>{session.user.email}</strong>.
         </p>

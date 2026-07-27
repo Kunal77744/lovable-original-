@@ -5024,6 +5024,405 @@ h1 {
   outline-offset: 4px;
 }
 
+.dashboard-playground {
+  margin-top: 16px;
+  padding: 25px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.dashboard-playground .course-kicker {
+  margin: 0 0 6px;
+}
+
+.dashboard-playground h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.dashboard-playground p:last-child {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-playground-action {
+  min-height: 46px;
+  padding: 0 18px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: white;
+  border-radius: 8px;
+  background: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-playground-action:hover {
+  background: var(--accent-deep);
+}
+
+.dashboard-playground-action:active {
+  transform: translateY(1px);
+}
+
+.dashboard-playground-action:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.playground-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 85% 9%, rgba(40, 118, 82, 0.09), transparent 25%),
+    var(--paper);
+}
+
+.playground-shell {
+  width: min(1184px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 64px 0 96px;
+}
+
+.playground-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.55fr);
+  align-items: end;
+  gap: 72px;
+}
+
+.playground-intro .eyebrow {
+  margin: 0 0 18px;
+}
+
+.playground-intro h1 {
+  max-width: 720px;
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(52px, 6vw, 82px);
+  font-weight: 600;
+  line-height: 0.97;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.playground-intro-copy {
+  padding-bottom: 5px;
+}
+
+.playground-intro-copy p {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.playground-intro-copy a {
+  margin-top: 17px;
+  display: inline-block;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
+.playground-intro-copy a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.playground-workbench {
+  margin-top: 52px;
+  overflow: hidden;
+  color: #eff6f1;
+  border: 1px solid #304239;
+  border-radius: 15px;
+  background: #111a16;
+  box-shadow: 0 28px 64px rgba(23, 35, 30, 0.17);
+}
+
+.playground-filebar {
+  min-height: 60px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #304239;
+  background: #18241e;
+  font-size: 12px;
+}
+
+.playground-filebar > div,
+.playground-console header > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.playground-filebar strong,
+.playground-console header strong {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.playground-file-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #83dda8;
+  box-shadow: 0 0 0 4px rgba(131, 221, 168, 0.09);
+}
+
+.playground-save-state {
+  color: #aab8b0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.playground-save-state.is-saved {
+  color: #91dfae;
+}
+
+.playground-save-state.is-error {
+  color: #efaaa2;
+}
+
+.playground-editor {
+  position: relative;
+}
+
+.playground-editor label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.playground-editor textarea {
+  width: 100%;
+  min-height: 410px;
+  padding: 30px 32px 54px 58px;
+  resize: vertical;
+  color: #eaf1ed;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background:
+    linear-gradient(90deg, #152019 0 43px, #24332b 43px 44px, transparent 44px),
+    #111a16;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.75;
+  tab-size: 2;
+}
+
+.playground-editor textarea:focus-visible {
+  box-shadow: inset 0 0 0 2px #7acb9a;
+}
+
+.playground-editor-meta {
+  position: absolute;
+  right: 22px;
+  bottom: 16px;
+  left: 58px;
+  display: flex;
+  justify-content: space-between;
+  color: #84958b;
+  font-size: 10px;
+}
+
+.playground-actions {
+  min-height: 76px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #304239;
+  border-bottom: 1px solid #304239;
+  background: #18241e;
+}
+
+.playground-run,
+.playground-save {
+  min-height: 46px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.playground-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #102018;
+  border: 1px solid #a3e5bd;
+  background: #91dfae;
+}
+
+.playground-run:hover {
+  background: #a3e5bd;
+}
+
+.playground-save {
+  color: #dbe5df;
+  border: 1px solid #43564c;
+  background: transparent;
+}
+
+.playground-save:hover {
+  border-color: #6f8277;
+  background: #223029;
+}
+
+.playground-run:active,
+.playground-save:active {
+  transform: translateY(1px);
+}
+
+.playground-run:focus-visible,
+.playground-save:focus-visible {
+  outline: 3px solid rgba(145, 223, 174, 0.35);
+  outline-offset: 3px;
+}
+
+.playground-run:disabled,
+.playground-save:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.playground-console {
+  min-height: 190px;
+}
+
+.playground-console header {
+  min-height: 49px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #28372f;
+  color: #b5c2ba;
+  background: #141f19;
+}
+
+.playground-console header > span {
+  color: #829188;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.console-status-dot {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #8da096;
+  border-radius: 50%;
+}
+
+.playground-console-output {
+  min-height: 141px;
+  padding: 20px 24px 25px;
+  color: #cdd8d1;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.playground-console-output ol {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.playground-console-output li {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 8px;
+}
+
+.playground-console-output li > span {
+  color: #70c691;
+}
+
+.playground-console-output code {
+  color: #f1f6f3;
+  white-space: pre-wrap;
+}
+
+.playground-console-output p {
+  margin: 0;
+  color: #84958b;
+}
+
+.playground-console-output.is-error p {
+  color: #efaaa2;
+}
+
+.playground-boundary {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(23, 35, 30, 0.16);
+  border-bottom: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.playground-boundary > div {
+  padding: 24px 26px 26px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 10px;
+}
+
+.playground-boundary > div + div {
+  border-left: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.playground-boundary span {
+  grid-row: span 2;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.playground-boundary strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.playground-boundary p {
+  max-width: 34ch;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 footer {
   padding: 30px max(24px, calc((100% - 1184px) / 2));
   display: flex;
@@ -5214,6 +5613,15 @@ footer {
     min-height: 320px;
   }
 
+  .playground-intro {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .playground-intro-copy {
+    padding: 0;
+  }
+
   .course-next-step {
     min-height: 220px;
   }
@@ -5256,6 +5664,10 @@ footer {
   .settings-shell,
   .certificate-shell,
   .certificate-locked-shell {
+    width: min(100% - 32px, 1184px);
+  }
+
+  .playground-shell {
     width: min(100% - 32px, 1184px);
   }
 
@@ -5690,6 +6102,16 @@ footer {
     height: 72px;
   }
 
+  .dashboard-playground {
+    padding: 24px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-playground-action {
+    width: 100%;
+  }
+
   .course-next-step {
     min-height: 190px;
     padding: 32px 24px;
@@ -5697,6 +6119,63 @@ footer {
 
   .lesson-shell {
     padding-top: 24px;
+  }
+
+  .playground-shell {
+    padding: 52px 0 72px;
+  }
+
+  .playground-intro h1 {
+    font-size: clamp(47px, 14vw, 62px);
+  }
+
+  .playground-workbench {
+    margin-top: 38px;
+    border-radius: 12px;
+  }
+
+  .playground-filebar {
+    min-height: 56px;
+    padding: 0 17px;
+  }
+
+  .playground-editor textarea {
+    min-height: 390px;
+    padding: 24px 17px 52px 40px;
+    background:
+      linear-gradient(90deg, #152019 0 29px, #24332b 29px 30px, transparent 30px),
+      #111a16;
+    font-size: 12px;
+  }
+
+  .playground-editor-meta {
+    right: 16px;
+    left: 40px;
+  }
+
+  .playground-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .playground-run,
+  .playground-save {
+    padding: 0 12px;
+    justify-content: center;
+  }
+
+  .playground-console header,
+  .playground-console-output {
+    padding-inline: 17px;
+  }
+
+  .playground-boundary {
+    grid-template-columns: 1fr;
+  }
+
+  .playground-boundary > div + div {
+    border-top: 1px solid rgba(23, 35, 30, 0.16);
+    border-left: 0;
   }
 
   .lesson-hero {
