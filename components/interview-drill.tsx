@@ -24,6 +24,15 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
   const [rating, setRating] = useState<InterviewSelfRating | "">("");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const totalQuestions = JAVASCRIPT_INTERVIEW_DRILL.questions.length;
+  const answeredCount = progress.answers.length;
+  const remainingQuestionCount = Math.max(
+    totalQuestions - answeredCount,
+    0,
+  );
+  const remainingQuestionLabel = `${remainingQuestionCount} ${
+    remainingQuestionCount === 1 ? "question" : "questions"
+  } remaining`;
   const question =
     JAVASCRIPT_INTERVIEW_DRILL.questions[progress.currentQuestion] ??
     JAVASCRIPT_INTERVIEW_DRILL.questions[0];
@@ -119,6 +128,9 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
           </p>
         </div>
         <div className="interview-start-action">
+          <p className="interview-remaining-count">
+            {remainingQuestionLabel}
+          </p>
           <button type="button" onClick={startDrill} disabled={isSaving}>
             {isSaving ? "Starting…" : "Start the drill"}
           </button>
@@ -165,6 +177,7 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
           <div className="interview-result" aria-label="Interview drill result">
             <strong>{readyCount}/5</strong>
             <span>ready to explain</span>
+            <small>{remainingQuestionLabel}</small>
           </div>
         </div>
 
@@ -215,9 +228,8 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
     );
   }
 
-  const answeredCount = progress.answers.length;
   const progressPercent =
-    (answeredCount / JAVASCRIPT_INTERVIEW_DRILL.questions.length) * 100;
+    (answeredCount / totalQuestions) * 100;
 
   return (
     <section className="interview-round" aria-labelledby="interview-question">
@@ -225,18 +237,20 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
         <div>
           <p className="quiz-kicker">
             Question {progress.currentQuestion + 1} of{" "}
-            {JAVASCRIPT_INTERVIEW_DRILL.questions.length}
+            {totalQuestions}
           </p>
           <span>{question.eyebrow}</span>
         </div>
-        <strong>{answeredCount}/5 saved</strong>
+        <strong className="interview-remaining-count">
+          {remainingQuestionLabel}
+        </strong>
       </div>
       <div
         className="interview-progress-track"
         role="progressbar"
         aria-label="Interview drill progress"
         aria-valuemin={0}
-        aria-valuemax={5}
+        aria-valuemax={totalQuestions}
         aria-valuenow={answeredCount}
       >
         <span style={{ width: `${progressPercent}%` }} />
