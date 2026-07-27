@@ -14,7 +14,9 @@ import { SiteFooter, SiteNav } from "../site-chrome";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Private learner profile | Lovable Original",
+  title: "Your private course and practice progress | Lovable Original",
+  description:
+    "Review your saved course progress, quiz result, accepted JavaScript problems, and recent attempts in one private account view.",
   robots: {
     index: false,
     follow: false,

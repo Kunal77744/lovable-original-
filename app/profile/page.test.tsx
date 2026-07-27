@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ProfilePage from "./page";
+import ProfilePage, { metadata } from "./page";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -61,6 +61,16 @@ describe("ProfilePage", () => {
       completedSlugs: [],
     });
     mocks.getAttempts.mockResolvedValue([]);
+  });
+
+  it("describes saved progress as private account activity", () => {
+    const preview = JSON.stringify(metadata);
+
+    expect(preview).toContain("Your private course and practice progress");
+    expect(preview).toContain("saved course progress");
+    expect(preview).toContain("accepted JavaScript problems");
+    expect(preview).toContain("private account view");
+    expect(preview).not.toMatch(/public profile|rankings?|social/i);
   });
 
   it("redirects a signed-out visitor before reading private progress", async () => {
