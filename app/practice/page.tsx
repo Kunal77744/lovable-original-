@@ -23,6 +23,9 @@ export default async function PracticePage() {
   });
   const progress = await getCodingCatalogProgress(session?.user.id ?? null);
   const completedSlugs = new Set(progress.completedSlugs);
+  const catalogProgressLabel = session
+    ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
+    : `${progress.totalCount} problems`;
 
   return (
     <main>
@@ -82,7 +85,9 @@ export default async function PracticePage() {
               <p className="eyebrow">Beginner set · JavaScript</p>
               <h2 id="catalog-title">Build the habit one problem at a time.</h2>
             </div>
-            <span>{progress.completedCount} accepted</span>
+            <span aria-label={catalogProgressLabel}>
+              {catalogProgressLabel}
+            </span>
           </div>
 
           <div className="problem-table" role="list">
@@ -116,6 +121,24 @@ export default async function PracticePage() {
               );
             })}
           </div>
+
+          {session ? (
+            <aside
+              className="practice-playground-entry"
+              aria-label="Continue in the private playground"
+            >
+              <div>
+                <p className="eyebrow">Free coding</p>
+                <p>
+                  Take an idea beyond the fixed checks in one saved JavaScript
+                  file.
+                </p>
+              </div>
+              <Link className="practice-playground-action" href="/playground">
+                Open the playground <span aria-hidden="true">→</span>
+              </Link>
+            </aside>
+          ) : null}
         </section>
       </div>
       <SiteFooter />

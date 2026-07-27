@@ -3116,6 +3116,64 @@ h1 {
   box-shadow: 0 20px 48px rgba(23, 35, 30, 0.08);
 }
 
+.practice-playground-entry {
+  margin-top: 20px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  border: 1px solid rgba(23, 35, 30, 0.12);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.practice-playground-entry .eyebrow {
+  margin-bottom: 6px;
+}
+
+.practice-playground-entry > div > p:last-child {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.practice-playground-action {
+  min-height: 44px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(23, 35, 30, 0.28);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 760;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.practice-playground-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.practice-playground-action:active {
+  background: rgba(40, 118, 82, 0.08);
+}
+
+.practice-playground-action:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 3px;
+}
+
 .problem-row {
   min-height: 84px;
   padding: 0 27px;
@@ -4453,6 +4511,17 @@ footer {
 
   .problem-catalog-heading h2 {
     font-size: 39px;
+  }
+
+  .practice-playground-entry {
+    padding: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .practice-playground-action {
+    width: 100%;
   }
 
   .problem-row {
