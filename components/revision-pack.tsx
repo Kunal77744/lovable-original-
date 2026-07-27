@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FIRST_LESSON_REVISION } from "@/lib/first-course-content";
 
 type RevisionPackProps = {
   lessonSlug: string;
+  practiceHref?: string;
 };
 
 type StoredRevisionState = {
@@ -16,7 +18,10 @@ function getStorageKey(lessonSlug: string) {
   return `lovable-original:revision:${lessonSlug}`;
 }
 
-export function RevisionPack({ lessonSlug }: RevisionPackProps) {
+export function RevisionPack({
+  lessonSlug,
+  practiceHref,
+}: RevisionPackProps) {
   const cards = FIRST_LESSON_REVISION.flashcards;
   const [cardIndex, setCardIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -194,6 +199,19 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
           </button>
         </div>
       </div>
+
+      {practiceHref ? (
+        <div className="revision-next-step">
+          <div>
+            <p className="quiz-kicker">Next step</p>
+            <p>Apply the habit across six beginner JavaScript problems.</p>
+          </div>
+          <Link className="revision-practice-link" href={practiceHref}>
+            Continue to JavaScript practice
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      ) : null}
     </section>
   );
 }
