@@ -10,9 +10,9 @@ import { SiteFooter, SiteNav } from "../site-chrome";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Saved JavaScript playground | Lovable Original",
+  title: "Private saved JavaScript playground | Lovable Original",
   description:
-    "Write, run, save, and restore one private JavaScript file in an isolated browser runner.",
+    "Write, run, save, and restore one private JavaScript file in your account-only workspace.",
   robots: {
     index: false,
     follow: false,
