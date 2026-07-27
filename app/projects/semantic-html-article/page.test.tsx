@@ -52,7 +52,12 @@ describe("SemanticHtmlProjectPage", () => {
       "learner-1",
       "semantic-html-article",
     );
-    expect(screen.getByText("Private guided project")).toBeInTheDocument();
+    expect(screen.getByText("Private project")).toBeVisible();
+    expect(
+      screen.getByText(
+        /Saved drafts and review results belong only to your signed-in account\./,
+      ),
+    ).toBeVisible();
     expect(
       screen.getByRole("heading", { name: "Semantic HTML field guide" }),
     ).toBeInTheDocument();
