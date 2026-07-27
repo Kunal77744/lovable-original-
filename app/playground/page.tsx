@@ -36,8 +36,17 @@ export default async function PlaygroundPage() {
       <div className="playground-shell" id="main-content" tabIndex={-1}>
         <header className="playground-intro">
           <div>
-            <p className="eyebrow">Private JavaScript playground</p>
-            <h1>Try one idea. Keep the file.</h1>
+            <p className="eyebrow">One-file JavaScript workspace</p>
+            <div className="playground-title-row">
+              <h1>Try one idea. Keep the file.</h1>
+              <span className="playground-private-badge">
+                <span aria-hidden="true">Private playground</span>
+                <span className="sr-only">
+                  Private playground. Saved code belongs only to your signed-in
+                  account.
+                </span>
+              </span>
+            </div>
           </div>
           <div className="playground-intro-copy">
             <p>
