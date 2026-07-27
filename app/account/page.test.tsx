@@ -17,7 +17,9 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/components/account-form", () => ({
   AccountForm: () => (
     <form aria-label="Create your student account">
-      <button type="submit">Create my account</button>
+      <button className="account-submit" type="submit">
+        Create my account
+      </button>
     </form>
   ),
 }));
@@ -39,6 +41,14 @@ describe("AccountPage", () => {
     expect(
       screen.getByText("Complete the course and keep your best quiz score saved"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Sign back in anytime and your saved course work and JavaScript code will return.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelectorAll(".primary-action, .account-submit"),
+    ).toHaveLength(1);
     expect(
       screen.getAllByRole("button", { name: "Create my account" }),
     ).toHaveLength(1);
