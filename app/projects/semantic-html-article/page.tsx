@@ -60,12 +60,12 @@ export default async function SemanticHtmlProjectPage() {
 
         <header className="project-hero">
           <div className="project-hero-copy">
-            <p className="project-private-cue">Private guided project</p>
+            <p className="project-private-cue">Private project</p>
             <p className="quiz-kicker">Project 01 · Semantic HTML</p>
             <h1 id="project-title">{GUIDED_PROJECT_TITLE}</h1>
             <p>
               Turn the lesson’s small article into a complete field guide.
-              Your exact HTML and latest review stay with your signed-in
+              Saved drafts and review results belong only to your signed-in
               account.
             </p>
           </div>
