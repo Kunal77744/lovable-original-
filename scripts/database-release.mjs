@@ -20,6 +20,7 @@ const requiredTables = [
   "lesson_artifact",
   "lesson_note",
   "lesson_progress",
+  "playground_file",
   "rate_limit",
   "session",
   "user",
