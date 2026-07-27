@@ -3596,6 +3596,31 @@ h1 {
   color: #efaaa2;
 }
 
+.practice-recovery-cue {
+  margin-top: 16px;
+  padding-top: 14px;
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  border-top: 1px solid #34443c;
+}
+
+.practice-recovery-cue > span {
+  width: 6px;
+  height: 6px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: #83dda8;
+}
+
+.practice-recovery-cue p {
+  margin: 0;
+  color: #94a39b;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
 .sample-output {
   margin-top: 15px;
   padding: 13px;

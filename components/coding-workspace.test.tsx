@@ -57,6 +57,11 @@ describe("CodingWorkspace", () => {
       "aria-describedby",
       "run-example-keyboard-hint",
     );
+    expect(
+      screen.getByText(
+        "Sign in to save this work. Your code, attempts, and Accepted progress return with your account.",
+      ),
+    ).toBeInTheDocument();
 
     fireEvent.click(runButton);
 
@@ -102,6 +107,11 @@ describe("CodingWorkspace", () => {
 
     expect((await screen.findAllByText("Accepted")).length).toBeGreaterThan(0);
     expect(screen.getByText("Practice progress · 1/6 accepted")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your saved code, attempts, and Accepted progress return after sign-in.",
+      ),
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "/api/practice/sum-two-numbers",
