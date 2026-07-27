@@ -82,7 +82,11 @@ export default async function PracticePage() {
               <p className="eyebrow">Beginner set · JavaScript</p>
               <h2 id="catalog-title">Build the habit one problem at a time.</h2>
             </div>
-            <span>{progress.completedCount} accepted</span>
+            <span>
+              {session
+                ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
+                : `${progress.totalCount} problems`}
+            </span>
           </div>
 
           <div className="problem-table" role="list">
