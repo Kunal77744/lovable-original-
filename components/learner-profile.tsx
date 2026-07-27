@@ -22,10 +22,15 @@ export function LearnerProfile({
       <header className="profile-heading">
         <div>
           <p className="eyebrow">Private learner profile</p>
-          <h1 id="profile-title">One record of what you’ve finished.</h1>
+          <h1 id="profile-title">
+            {profile.isFreshLearner
+              ? "Your learning record starts here."
+              : "One record of what you’ve finished."}
+          </h1>
           <p>
-            Course results and accepted JavaScript problems stay together here,
-            attached only to your account.
+            {profile.isFreshLearner
+              ? "Nothing is completed yet. Start with one focused lesson, and your course and JavaScript practice progress will build here."
+              : "Course results and accepted JavaScript problems stay together here, attached only to your account."}
           </p>
         </div>
         <div className="profile-privacy-note">
@@ -74,7 +79,12 @@ export function LearnerProfile({
             <div>
               <dt>Status</dt>
               <dd>
-                {profile.course.courseCompleted ? "Completed" : "In progress"}
+                {profile.course.courseCompleted
+                  ? "Completed"
+                  : profile.course.completedLessons === 0 &&
+                      profile.quizScore === null
+                    ? "Not started"
+                    : "In progress"}
               </dd>
             </div>
           </dl>
