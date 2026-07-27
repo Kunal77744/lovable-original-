@@ -1,21 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav } from "../site-chrome";
+import { PRACTICE_METADATA } from "./metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "JavaScript practice arena | Lovable Original",
-  description:
-    "Solve six free beginner JavaScript problems with instant browser-run verdicts and saved progress.",
-  alternates: {
-    canonical: "/practice",
-  },
-};
+export const metadata = PRACTICE_METADATA;
 
 export default async function PracticePage() {
   const session = await auth.api.getSession({
