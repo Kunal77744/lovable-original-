@@ -59,6 +59,29 @@ describe("public product promise", () => {
     );
   });
 
+  it("gives the course share image its own specific description", () => {
+    expect(courseMetadata.openGraph?.images).toEqual([
+      expect.objectContaining({
+        url: "/opengraph-image",
+        alt:
+          "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.",
+      }),
+    ]);
+    expect(courseMetadata.twitter?.images).toEqual([
+      expect.objectContaining({
+        url: "/opengraph-image",
+        alt:
+          "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.",
+      }),
+    ]);
+    expect(rootMetadata.openGraph?.images).toEqual([
+      expect.objectContaining({
+        alt:
+          "Lovable Original Web Development Foundations: learn semantic HTML, build and save a page, and check your recall.",
+      }),
+    ]);
+  });
+
   it("publishes a focused, factual course overview", () => {
     render(<CoursePage />);
 
