@@ -6100,14 +6100,19 @@ footer {
 
 .interview-hero aside {
   padding: 46px 36px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  display: grid;
+  align-content: space-between;
+  gap: 40px;
   border-left: 1px solid rgba(255, 255, 255, 0.11);
   background: #20362c;
 }
 
-.interview-hero aside span {
+.interview-private-cue {
+  display: grid;
+  gap: 14px;
+}
+
+.interview-private-cue span {
   color: #a8d8ba;
   font-size: 11px;
   font-weight: 800;
@@ -6115,15 +6120,28 @@ footer {
   text-transform: uppercase;
 }
 
-.interview-hero aside strong {
-  margin-top: 16px;
+.interview-private-cue p {
+  max-width: 24ch;
+  margin: 0;
+  color: #d8e2dc;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.interview-format {
+  display: grid;
+  gap: 8px;
+}
+
+.interview-format strong {
+  margin: 0;
   font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   font-size: 36px;
   font-weight: 600;
 }
 
-.interview-hero aside p {
-  margin: 8px 0 0;
+.interview-format p {
+  margin: 0;
   color: #b8c4be;
   font-size: 13px;
 }
