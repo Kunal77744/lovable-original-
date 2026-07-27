@@ -49,10 +49,19 @@ export default async function JavaScriptInterviewDrillPage() {
               <h1 id="interview-title">Can you explain it without the editor?</h1>
               <p>{JAVASCRIPT_INTERVIEW_DRILL.description}</p>
             </div>
-            <aside aria-label="Drill format">
-              <span>Private practice</span>
-              <strong>5 questions</strong>
-              <p>About {JAVASCRIPT_INTERVIEW_DRILL.estimatedMinutes} minutes</p>
+            <aside aria-label="Private interview practice">
+              <div className="interview-private-cue">
+                <span>Private interview practice</span>
+                <p>
+                  Saved answers belong only to your signed-in account.
+                </p>
+              </div>
+              <div className="interview-format">
+                <strong>5 questions</strong>
+                <p>
+                  About {JAVASCRIPT_INTERVIEW_DRILL.estimatedMinutes} minutes
+                </p>
+              </div>
             </aside>
           </header>
 
