@@ -22,11 +22,14 @@ export function LearnerProfile({
       <header className="profile-heading">
         <div>
           <p className="eyebrow">Private learner profile</p>
-          <h1 id="profile-title">
-            {profile.isFreshLearner
-              ? "Your learning record starts here."
-              : "One record of what you’ve finished."}
-          </h1>
+          <div className="profile-title-row">
+            <h1 id="profile-title">
+              {profile.isFreshLearner
+                ? "Your learning record starts here."
+                : "One record of what you’ve finished."}
+            </h1>
+            <span className="profile-private-badge">Private progress</span>
+          </div>
           <p>
             {profile.isFreshLearner
               ? "Nothing is completed yet. Start with one focused lesson, and your course and JavaScript practice progress will build here."
