@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
+  getCodingProblemPreview,
 } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
@@ -22,14 +23,14 @@ export async function generateMetadata({
 }: ProblemPageProps): Promise<Metadata> {
   const { problemSlug } = await params;
   const problem = getCodingProblem(problemSlug);
+  const preview = getCodingProblemPreview(problemSlug);
 
-  if (!problem) {
+  if (!problem || !preview) {
     return { title: "Problem not found | Lovable Original" };
   }
 
   return {
-    title: `${problem.title} | JavaScript practice`,
-    description: problem.statement,
+    ...preview,
     alternates: {
       canonical: `/practice/${problem.slug}`,
     },

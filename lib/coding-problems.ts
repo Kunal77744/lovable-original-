@@ -248,6 +248,17 @@ export function getCodingProblem(slug: string) {
   return CODING_PROBLEMS.find((problem) => problem.slug === slug) ?? null;
 }
 
+export function getCodingProblemPreview(slug: string) {
+  const problem = getCodingProblem(slug);
+
+  if (!problem) return null;
+
+  return {
+    title: `${problem.title} JavaScript problem | Lovable Original`,
+    description: `${problem.title}: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
+  };
+}
+
 export function normalizeCodingOutput(output: string) {
   return output.replace(/\r\n/g, "\n").trim();
 }

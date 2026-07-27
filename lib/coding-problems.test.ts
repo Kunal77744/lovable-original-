@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CODING_PROBLEMS,
   gradeCodingOutputs,
+  getCodingProblemPreview,
   hasValidCodingSolutionLength,
 } from "./coding-problems";
 
@@ -47,5 +48,70 @@ describe("coding problems", () => {
     expect(hasValidCodingSolutionLength("")).toBe(false);
     expect(hasValidCodingSolutionLength("function solve() {}")).toBe(true);
     expect(hasValidCodingSolutionLength("x".repeat(12_001))).toBe(false);
+  });
+
+  it("builds a distinct, accurate preview for every problem", () => {
+    const previews = CODING_PROBLEMS.map((problem) => ({
+      slug: problem.slug,
+      preview: getCodingProblemPreview(problem.slug),
+    }));
+
+    expect(previews).toEqual([
+      {
+        slug: "sum-two-numbers",
+        preview: {
+          title: "Sum two numbers JavaScript problem | Lovable Original",
+          description:
+            "Sum two numbers: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
+        },
+      },
+      {
+        slug: "even-or-odd",
+        preview: {
+          title: "Even or odd JavaScript problem | Lovable Original",
+          description:
+            "Even or odd: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
+        },
+      },
+      {
+        slug: "multiplication-table",
+        preview: {
+          title:
+            "Multiplication table JavaScript problem | Lovable Original",
+          description:
+            "Multiplication table: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
+        },
+      },
+      {
+        slug: "largest-value",
+        preview: {
+          title: "Largest value JavaScript problem | Lovable Original",
+          description:
+            "Largest value: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
+        },
+      },
+      {
+        slug: "reverse-a-word",
+        preview: {
+          title: "Reverse a word JavaScript problem | Lovable Original",
+          description:
+            "Reverse a word: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
+        },
+      },
+      {
+        slug: "fizz-buzz",
+        preview: {
+          title: "FizzBuzz sequence JavaScript problem | Lovable Original",
+          description:
+            "FizzBuzz sequence: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
+        },
+      },
+    ]);
+
+    expect(new Set(previews.map(({ preview }) => preview?.title)).size).toBe(6);
+    expect(new Set(previews.map(({ preview }) => preview?.description)).size).toBe(
+      6,
+    );
+    expect(getCodingProblemPreview("missing-problem")).toBeNull();
   });
 });
