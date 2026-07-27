@@ -107,6 +107,83 @@ describe("InterviewDrill", () => {
     expect(screen.getByText("1/5 saved")).toBeInTheDocument();
   });
 
+  it("announces saving and success through one atomic status region", async () => {
+    const answer = "const prevents reassignment.";
+    const nextProgress: InterviewDrillProgress = {
+      ...startedProgress,
+      currentQuestion: 1,
+      answers: [
+        {
+          questionSlug: "const-let-var",
+          answer,
+          rating: "ready",
+        },
+      ],
+      updatedAt: "2026-07-27T01:02:00.000Z",
+    };
+    let resolveFetch:
+      | ((value: {
+          ok: boolean;
+          json: () => Promise<{ progress: InterviewDrillProgress }>;
+        }) => void)
+      | undefined;
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<InterviewDrill initialProgress={startedProgress} />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: /Your answer/ }), {
+      target: { value: answer },
+    });
+    fireEvent.click(screen.getByLabelText("Ready to explain"));
+    fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+
+    const status = screen.getByRole("status");
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveAttribute("aria-atomic", "true");
+    expect(status).toHaveTextContent("Saving your answer…");
+
+    resolveFetch?.({
+      ok: true,
+      json: async () => ({ progress: nextProgress }),
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Answer saved. Next question.",
+      ),
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+
+  it("announces a failed save through the same status region", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "Your answer wasn’t saved. Try again." }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<InterviewDrill initialProgress={startedProgress} />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: /Your answer/ }), {
+      target: { value: "const prevents reassignment." },
+    });
+    fireEvent.click(screen.getByLabelText("Ready to explain"));
+    fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Your answer wasn’t saved. Try again.",
+      ),
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+
   it("restores the next unanswered question from saved account progress", () => {
     render(
       <InterviewDrill
