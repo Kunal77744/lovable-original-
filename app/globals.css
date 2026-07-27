@@ -1373,6 +1373,32 @@ h1 {
   transition: width 180ms ease-out;
 }
 
+.dashboard-progress-action {
+  min-height: 44px;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(40, 118, 82, 0.36);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.dashboard-progress-action:hover {
+  color: #0f432b;
+  text-decoration-color: currentColor;
+}
+
+.dashboard-progress-action:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
 .course-lesson-action,
 .lesson-primary-action {
   min-height: 50px;
