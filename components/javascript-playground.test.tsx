@@ -62,6 +62,23 @@ describe("JavaScriptPlayground", () => {
     expect(status).toHaveTextContent("Finished without an uncaught error.");
   });
 
+  it("shows the existing keyboard shortcut beside the Run control", () => {
+    render(
+      <JavaScriptPlayground
+        initialCode="console.log('shortcut');"
+        initialUpdatedAt={null}
+      />,
+    );
+
+    const actions = screen
+      .getByText("Keyboard: Ctrl/⌘ + Enter")
+      .closest(".playground-actions");
+    expect(actions).not.toBeNull();
+    expect(actions).toContainElement(
+      screen.getByRole("button", { name: "Run code" }),
+    );
+  });
+
   it.each([
     {
       name: "an uncaught error",
