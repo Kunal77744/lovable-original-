@@ -32,6 +32,7 @@ describe("buildLearnerProfile", () => {
     });
 
     expect(profile.quizScore).toBeNull();
+    expect(profile.isFreshLearner).toBe(true);
     expect(profile.nextAction).toEqual(
       expect.objectContaining({
         label: "Start the course",
@@ -55,6 +56,7 @@ describe("buildLearnerProfile", () => {
     });
 
     expect(profile.quizScore).toBe(50);
+    expect(profile.isFreshLearner).toBe(false);
     expect(profile.nextAction.label).toBe("Continue course");
     expect(profile.nextAction.description).toContain("75% pass mark");
   });

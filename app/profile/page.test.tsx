@@ -104,9 +104,14 @@ describe("ProfilePage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "One record of what you’ve finished.",
+        name: "Your learning record starts here.",
       }),
     ).toBeInTheDocument();
+    expect(screen.getByText("0/1")).toBeInTheDocument();
+    expect(
+      screen.getByText("problems accepted").parentElement,
+    ).toHaveTextContent("0/6");
+    expect(screen.getByText("Not started")).toBeInTheDocument();
     expect(mocks.getCourse).toHaveBeenCalledWith("learner-1");
     expect(mocks.getPractice).toHaveBeenCalledWith("learner-1");
     expect(mocks.getAttempts).toHaveBeenCalledWith("learner-1");
