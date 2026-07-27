@@ -171,6 +171,8 @@ export async function saveCodingSubmission(
       current?.bestVerdict === "Accepted" || result.verdict === "Accepted"
         ? "Accepted"
         : "Wrong Answer";
+    const isFirstAcceptedResult =
+      result.verdict === "Accepted" && current?.bestVerdict !== "Accepted";
 
     await transaction
       .insert(codingProblemProgress)
@@ -223,6 +225,7 @@ export async function saveCodingSubmission(
       id: submissionId,
       ...result,
       bestVerdict,
+      isFirstAcceptedResult,
       completedCount: completed?.value ?? 0,
       totalCount: CODING_PROBLEMS.length,
       createdAt: now.toISOString(),
