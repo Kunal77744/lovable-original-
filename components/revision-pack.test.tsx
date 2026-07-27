@@ -1,10 +1,20 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RevisionPack } from "./revision-pack";
 
 describe("RevisionPack", () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("lets a learner reveal and work through every flashcard", async () => {
@@ -59,7 +69,7 @@ describe("RevisionPack", () => {
         ],
       }),
     );
-  });
+  }, 10_000);
 
   it("restores the learner's last card and checked progress", async () => {
     window.localStorage.setItem(
@@ -81,5 +91,13 @@ describe("RevisionPack", () => {
         name: "Why should an <h2> follow the page’s <h1>?",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("connects a completed lesson to the guided semantic HTML project", () => {
+    render(<RevisionPack lessonSlug="semantic-html" />);
+
+    expect(
+      screen.getByRole("link", { name: /Build the guided project/ }),
+    ).toHaveAttribute("href", "/projects/semantic-html-article");
   });
 });

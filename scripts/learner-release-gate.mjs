@@ -6,6 +6,7 @@ import postgres from "postgres";
 const COURSE_TITLE = "Web Development Foundations";
 const COURSE_SLUG = "web-development-foundations";
 const LESSON_SLUG = "semantic-html";
+const PROJECT_SLUG = "semantic-html-article";
 const LESSON_TITLE = "Build a page the browser understands";
 const QUIZ_ANSWERS = {
   "main-landmark": "main",
@@ -22,8 +23,8 @@ const steps = [
   "Initial dashboard",
   "Lesson workspace",
   "Workspace save and checks",
-  "Quiz completion and feedback",
-  "Saved progress, workspace, and feedback after reload",
+  "Quiz completion, guided project, and feedback",
+  "Saved progress, project, workspace, and feedback after reload",
   "Sign out",
   "Protected access",
   "Sign in and restored learner state",
@@ -296,6 +297,7 @@ async function runJourney(baseUrl, databaseUrl) {
   const password = `${randomBytes(24).toString("hex")}Aa1!`;
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
+  let savedProjectHtml = "";
   let savedFeedbackComment = "";
   let savedLessonNote = "";
 
@@ -513,6 +515,85 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(payload.completed === true, step, "Lesson was not completed.");
     assertStep(payload.savedScore === 100, step, "Best score was not saved.");
 
+    const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
+    const projectPageText = pageText(await projectPageResponse.text());
+    assertStep(
+      projectPageResponse.status === 200 &&
+        projectPageText.includes("Semantic HTML field guide"),
+      step,
+      "The guided project did not open after course completion.",
+    );
+
+    const failingProjectHtml =
+      "<header></header><main><article><h1>Draft guide</h1></article></main><footer></footer>";
+    const failingProjectResponse = await jsonRequest(
+      `/api/projects/${PROJECT_SLUG}`,
+      { action: "submit", html: failingProjectHtml },
+    );
+    const failingProject = await failingProjectResponse.json();
+    assertStep(
+      failingProjectResponse.status === 200 &&
+        failingProject.html === failingProjectHtml &&
+        failingProject.submission?.status === "needs-revision" &&
+        failingProject.submission?.passedChecks < 6,
+      step,
+      "The first bounded project review did not return a revision result.",
+    );
+
+    savedProjectHtml = `<!doctype html>
+<html lang="en">
+  <body>
+    <header><p>Release gate field guide</p></header>
+    <main>
+      <article data-release-gate-project="${runId}">
+        <h1>How a semantic page works</h1>
+        <p>A field guide for structure before styling.</p>
+        <section>
+          <h2>Use landmarks</h2>
+          <p>Landmarks name the purpose of each page region.</p>
+        </section>
+        <section>
+          <h2>Keep a clear outline</h2>
+          <p>Headings make the article easier to scan and understand.</p>
+        </section>
+        <aside>Choose elements by purpose, not appearance.</aside>
+      </article>
+    </main>
+    <footer><p>Saved by the learner release gate.</p></footer>
+  </body>
+</html>`;
+    const projectDraftResponse = await jsonRequest(
+      `/api/projects/${PROJECT_SLUG}`,
+      { action: "save", html: savedProjectHtml },
+    );
+    const projectDraft = await projectDraftResponse.json();
+    assertStep(
+      projectDraftResponse.status === 200 &&
+        projectDraft.html === savedProjectHtml &&
+        projectDraft.hasUnreviewedChanges === true &&
+        projectDraft.submission?.status === "needs-revision",
+      step,
+      "Saving a revision did not preserve the prior review until resubmission.",
+    );
+
+    const completedProjectResponse = await jsonRequest(
+      `/api/projects/${PROJECT_SLUG}`,
+      { action: "submit", html: savedProjectHtml },
+    );
+    const completedProject = await completedProjectResponse.json();
+    assertStep(
+      completedProjectResponse.status === 200 &&
+        completedProject.html === savedProjectHtml &&
+        completedProject.hasUnreviewedChanges === false &&
+        completedProject.submission?.status === "completed" &&
+        completedProject.submission?.passedChecks === 6 &&
+        completedProject.submission?.checks.every(
+          (check) => check.passed === true,
+        ),
+      step,
+      "The revised project did not save a completed 6/6 review.",
+    );
+
     const firstFeedbackResponse = await jsonRequest(
       `/api/courses/${COURSE_SLUG}/feedback`,
       {
@@ -611,6 +692,21 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The exact revised lesson note was not restored after reload.",
     );
+
+    const projectResponse = await request(
+      `/api/projects/${PROJECT_SLUG}`,
+    );
+    const project = await projectResponse.json();
+    assertStep(
+      projectResponse.status === 200 &&
+        project.saved === true &&
+        project.html === savedProjectHtml &&
+        project.hasUnreviewedChanges === false &&
+        project.submission?.status === "completed" &&
+        project.submission?.passedChecks === 6,
+      step,
+      "The exact guided project and 6/6 review were not restored after reload.",
+    );
   });
 
   await runStep(7, async (step) => {
@@ -644,6 +740,20 @@ async function runJourney(baseUrl, databaseUrl) {
       workspaceResponse.status === 401,
       step,
       "Signed-out workspace access was not rejected.",
+    );
+    const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
+    const projectLocation = projectPageResponse.headers.get("location") ?? "";
+    assertStep(
+      [302, 303, 307, 308].includes(projectPageResponse.status) &&
+        projectLocation.includes("/account?mode=signin"),
+      step,
+      "Protected project did not redirect to sign in.",
+    );
+    const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
+    assertStep(
+      projectResponse.status === 401,
+      step,
+      "Signed-out guided project access was not rejected.",
     );
     const feedbackResponse = await request(
       `/api/courses/${COURSE_SLUG}/feedback`,
@@ -718,6 +828,17 @@ async function runJourney(baseUrl, databaseUrl) {
         note.note?.content === savedLessonNote,
       step,
       "The exact lesson note did not remain after sign in.",
+    );
+
+    const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
+    const project = await projectResponse.json();
+    assertStep(
+      projectResponse.status === 200 &&
+        project.html === savedProjectHtml &&
+        project.submission?.status === "completed" &&
+        project.submission?.passedChecks === 6,
+      step,
+      "The exact guided project and review did not remain after sign in.",
     );
   });
 
@@ -836,6 +957,34 @@ async function runJourney(baseUrl, databaseUrl) {
       noteResponse.status === 200 && note.note === null,
       step,
       "One learner could read another learner’s note.",
+    );
+
+    const secondProjectResponse = await request(
+      `/api/projects/${PROJECT_SLUG}`,
+      {},
+      secondJar,
+    );
+    const secondProject = await secondProjectResponse.json();
+    assertStep(
+      secondProjectResponse.status === 200 &&
+        secondProject.saved === false &&
+        secondProject.submission === null &&
+        secondProject.html !== savedProjectHtml &&
+        !secondProject.html.includes(runId),
+      step,
+      "One learner could read another learner’s guided project.",
+    );
+
+    const originalProjectResponse = await request(
+      `/api/projects/${PROJECT_SLUG}`,
+    );
+    const originalProject = await originalProjectResponse.json();
+    assertStep(
+      originalProjectResponse.status === 200 &&
+        originalProject.html === savedProjectHtml &&
+        originalProject.submission?.passedChecks === 6,
+      step,
+      "Another learner changed the original learner’s guided project.",
     );
 
     const secondNote = "A separate note for the isolation learner.";

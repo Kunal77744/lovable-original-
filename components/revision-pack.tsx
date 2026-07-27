@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FIRST_LESSON_REVISION } from "@/lib/first-course-content";
 
@@ -193,6 +194,21 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
             <span aria-hidden="true">→</span>
           </button>
         </div>
+      </div>
+
+      <div className="revision-project-bridge">
+        <div>
+          <p className="quiz-kicker">Guided project</p>
+          <h4>Turn the lesson into a complete field guide.</h4>
+          <p>
+            Build a longer semantic article, save the exact HTML to your
+            account, and revise it against a six-check review.
+          </p>
+        </div>
+        <Link href="/projects/semantic-html-article">
+          Build the guided project
+          <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </section>
   );

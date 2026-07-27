@@ -15,6 +15,7 @@ const requiredTables = [
   "coding_problem_progress",
   "coding_submission",
   "early_access_signup",
+  "guided_project",
   "lesson",
   "lesson_artifact",
   "lesson_note",

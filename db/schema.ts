@@ -3,11 +3,13 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import type { GuidedProjectCheck } from "@/lib/guided-project";
 
 export const user = pgTable(
   "user",
@@ -271,6 +273,33 @@ export const lessonNote = pgTable(
       table.lessonId,
     ),
     index("lesson_note_user_id_idx").on(table.userId),
+  ],
+);
+
+export const guidedProject = pgTable(
+  "guided_project",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectSlug: text("project_slug").notNull(),
+    html: text("html").notNull(),
+    reviewedHtml: text("reviewed_html"),
+    status: text("status").notNull().default("draft"),
+    reviewChecks: jsonb("review_checks").$type<GuidedProjectCheck[]>(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("guided_project_user_slug_unique").on(
+      table.userId,
+      table.projectSlug,
+    ),
+    index("guided_project_user_id_idx").on(table.userId),
   ],
 );
 
