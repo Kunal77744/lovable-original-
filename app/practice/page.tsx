@@ -23,6 +23,9 @@ export default async function PracticePage() {
   });
   const progress = await getCodingCatalogProgress(session?.user.id ?? null);
   const completedSlugs = new Set(progress.completedSlugs);
+  const catalogProgressLabel = session
+    ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
+    : `${progress.totalCount} problems`;
 
   return (
     <main>
@@ -82,10 +85,8 @@ export default async function PracticePage() {
               <p className="eyebrow">Beginner set · JavaScript</p>
               <h2 id="catalog-title">Build the habit one problem at a time.</h2>
             </div>
-            <span>
-              {session
-                ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
-                : `${progress.totalCount} problems`}
+            <span aria-label={catalogProgressLabel}>
+              {catalogProgressLabel}
             </span>
           </div>
 

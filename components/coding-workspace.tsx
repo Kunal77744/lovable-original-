@@ -318,6 +318,14 @@ export function CodingWorkspace({
             Practice progress · {runState.completedCount}/6 accepted
           </p>
         ) : null}
+        <div className="practice-recovery-cue">
+          <span aria-hidden="true" />
+          <p>
+            {isSignedIn
+              ? "Your saved code, attempts, and Accepted progress return after sign-in."
+              : "Sign in to save this work. Your code, attempts, and Accepted progress return with your account."}
+          </p>
+        </div>
       </div>
 
       <section className="attempt-history" aria-labelledby="attempt-history-title">

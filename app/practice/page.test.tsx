@@ -45,6 +45,9 @@ describe("PracticePage progress", () => {
     render(await PracticePage());
 
     expect(screen.getByText("Accepted 0 of 6")).toBeInTheDocument();
+    expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
+      "Accepted 0 of 6",
+    );
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
   });
 
@@ -61,6 +64,9 @@ describe("PracticePage progress", () => {
     render(await PracticePage());
 
     expect(screen.getByText("Accepted 2 of 6")).toBeInTheDocument();
+    expect(screen.getByLabelText("Accepted 2 of 6")).toHaveTextContent(
+      "Accepted 2 of 6",
+    );
     expect(
       document.querySelectorAll(".problem-row.is-complete"),
     ).toHaveLength(2);
@@ -78,6 +84,7 @@ describe("PracticePage progress", () => {
     render(await PracticePage());
 
     expect(screen.getByText("6 problems")).toBeInTheDocument();
+    expect(screen.getByLabelText("6 problems")).toHaveTextContent("6 problems");
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(getProgress).toHaveBeenCalledWith(null);
   });

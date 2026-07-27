@@ -1,6 +1,8 @@
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { getCodingProblemForStudent } from "@/db/coding-practice";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
-import { generateMetadata } from "./page";
+import ProblemPage, { generateMetadata } from "./page";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -15,7 +17,21 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/db/coding-practice", () => ({
-  getCodingProblemForStudent: vi.fn(),
+  getCodingProblemForStudent: vi.fn((_: string | null, problemSlug: string) => {
+    const problem = CODING_PROBLEMS.find(
+      (candidate) => candidate.slug === problemSlug,
+    );
+
+    return Promise.resolve(
+      problem
+        ? {
+            attempts: [],
+            bestVerdict: null,
+            code: problem.starterCode,
+          }
+        : null,
+    );
+  }),
 }));
 
 describe("practice problem metadata", () => {
@@ -57,5 +73,27 @@ describe("practice problem metadata", () => {
     ).toEqual({
       title: "Problem not found | Lovable Original",
     });
+  });
+
+  it("shows the signed-out recovery cue on all six problem routes", async () => {
+    for (const problem of CODING_PROBLEMS) {
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+        }),
+      );
+
+      expect(
+        screen.getByText(
+          "Sign in to save this work. Your code, attempts, and Accepted progress return with your account.",
+        ),
+      ).toBeInTheDocument();
+      expect(getCodingProblemForStudent).toHaveBeenCalledWith(
+        null,
+        problem.slug,
+      );
+
+      cleanup();
+    }
   });
 });
