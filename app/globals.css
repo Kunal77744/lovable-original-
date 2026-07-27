@@ -2966,6 +2966,60 @@ h1 {
   box-shadow: 0 0 0 3px rgba(102, 220, 157, 0.22);
 }
 
+.revision-next-step {
+  margin-top: 28px;
+  padding-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid #cdd5cd;
+}
+
+.revision-next-step p {
+  margin: 0;
+}
+
+.revision-next-step p:last-child {
+  max-width: 46ch;
+  margin-top: 7px;
+  color: #5a675f;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.revision-practice-link {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--accent-deep);
+  border: 1px solid #b8cfbe;
+  border-radius: 8px;
+  background: #fbfcf8;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.revision-practice-link:hover {
+  color: var(--ink);
+  border-color: #91b79c;
+  background: white;
+}
+
+.revision-practice-link:active {
+  transform: translateY(1px);
+}
+
+.revision-practice-link:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 3px;
+}
+
 .course-feedback {
   max-width: 650px;
   margin: 52px auto 0;
@@ -6543,6 +6597,16 @@ footer {
 
   .flashcard-next {
     justify-self: end;
+  }
+
+  .revision-next-step {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .revision-practice-link {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .workspace-heading {
