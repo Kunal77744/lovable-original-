@@ -28,9 +28,12 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
     JAVASCRIPT_INTERVIEW_DRILL.questions[progress.currentQuestion] ??
     JAVASCRIPT_INTERVIEW_DRILL.questions[0];
 
-  async function postProgress(payload: Record<string, unknown>) {
+  async function postProgress(
+    payload: Record<string, unknown>,
+    pendingMessage: string,
+  ) {
     setIsSaving(true);
-    setMessage("");
+    setMessage(pendingMessage);
 
     try {
       const response = await fetch(
@@ -59,7 +62,10 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
   }
 
   async function startDrill() {
-    const nextProgress = await postProgress({ action: "start" });
+    const nextProgress = await postProgress(
+      { action: "start" },
+      "Starting the drill…",
+    );
 
     if (nextProgress) {
       setMessage("Drill started. Each answer saves to your account.");
@@ -77,12 +83,15 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
       return;
     }
 
-    const nextProgress = await postProgress({
-      action: "save-answer",
-      questionSlug: question.slug,
-      answer,
-      rating,
-    });
+    const nextProgress = await postProgress(
+      {
+        action: "save-answer",
+        questionSlug: question.slug,
+        answer,
+        rating,
+      },
+      "Saving your answer…",
+    );
 
     if (nextProgress) {
       setAnswer("");
@@ -114,7 +123,12 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
             {isSaving ? "Starting…" : "Start the drill"}
           </button>
           <p>Your answers stay private and return with your account.</p>
-          <p className="interview-message" role="status" aria-live="polite">
+          <p
+            className="interview-message"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {message}
           </p>
         </div>
@@ -189,7 +203,12 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
           </Link>
           <p>Your answers are private. Only you can open this result.</p>
         </div>
-        <p className="interview-message" role="status" aria-live="polite">
+        <p
+          className="interview-message"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {message}
         </p>
       </section>
@@ -273,7 +292,12 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
               ? "Save and finish"
               : "Save and continue"}
         </button>
-        <p className="interview-message" role="status" aria-live="polite">
+        <p
+          className="interview-message"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {message}
         </p>
       </div>
