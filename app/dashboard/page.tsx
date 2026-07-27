@@ -82,6 +82,9 @@ export default async function DashboardPage() {
             >
               <span style={{ width: `${firstCourse.progressPercent}%` }} />
             </div>
+            <Link className="dashboard-progress-action" href="/profile">
+              View private progress <span aria-hidden="true">→</span>
+            </Link>
           </div>
           <div className="course-next-step">
             <span>
