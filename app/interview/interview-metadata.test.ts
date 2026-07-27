@@ -26,4 +26,11 @@ describe("JavaScript interview practice metadata", () => {
       /public answers|public profile|recruiter|hiring assessment|score|job placement/i,
     );
   });
+
+  it("keeps private interview answers out of search results and link discovery", () => {
+    expect(metadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
+  });
 });
