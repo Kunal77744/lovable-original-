@@ -9,7 +9,8 @@ type SiteNavProps = {
     | "dashboard"
     | "lesson"
     | "practice"
-    | "interview";
+    | "interview"
+    | "playground";
   studentSession?: boolean;
 };
 
@@ -46,6 +47,13 @@ export function SiteNav({
           aria-current={currentPage === "practice" ? "page" : undefined}
         >
           Practice
+        </Link>
+        <Link
+          className="nav-link"
+          href="/playground"
+          aria-current={currentPage === "playground" ? "page" : undefined}
+        >
+          Playground
         </Link>
         <Link
           className="nav-link"
