@@ -175,7 +175,9 @@ export function JavaScriptPlayground({
               ? "playground-console-output is-error"
               : "playground-console-output"
           }
+          role="status"
           aria-live="polite"
+          aria-atomic="true"
         >
           {runState.output.length > 0 ? (
             <ol>
