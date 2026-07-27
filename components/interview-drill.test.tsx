@@ -50,6 +50,7 @@ describe("InterviewDrill", () => {
         }),
       ).toBeInTheDocument(),
     );
+    expect(screen.getByText("Question 1 of 5")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/interview/javascript-fundamentals",
       expect.objectContaining({
@@ -95,6 +96,7 @@ describe("InterviewDrill", () => {
         }),
       ).toBeInTheDocument(),
     );
+    expect(screen.getByText("Question 2 of 5")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/interview/javascript-fundamentals",
       expect.objectContaining({
@@ -216,6 +218,7 @@ describe("InterviewDrill", () => {
         name: JAVASCRIPT_INTERVIEW_DRILL.questions[2].prompt,
       }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Question 3 of 5")).toBeInTheDocument();
     expect(screen.getByText("3 questions remaining")).toBeInTheDocument();
   });
 
@@ -249,6 +252,11 @@ describe("InterviewDrill", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Private answer 1")).toBeInTheDocument();
+    JAVASCRIPT_INTERVIEW_DRILL.questions.forEach((_, index) => {
+      expect(
+        screen.getByText(`Question ${index + 1} of 5`),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByRole("link", { name: "Return to dashboard" }),
     ).toHaveAttribute("href", "/dashboard");

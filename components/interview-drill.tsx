@@ -18,6 +18,14 @@ type ProgressResponse = {
   error?: string;
 };
 
+function getQuestionPositionLabel(questionSlug: string) {
+  const questionIndex = JAVASCRIPT_INTERVIEW_DRILL.questions.findIndex(
+    (question) => question.slug === questionSlug,
+  );
+
+  return `Question ${questionIndex + 1} of ${JAVASCRIPT_INTERVIEW_DRILL.questions.length}`;
+}
+
 export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
   const [progress, setProgress] = useState(initialProgress);
   const [answer, setAnswer] = useState("");
@@ -36,6 +44,7 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
   const question =
     JAVASCRIPT_INTERVIEW_DRILL.questions[progress.currentQuestion] ??
     JAVASCRIPT_INTERVIEW_DRILL.questions[0];
+  const currentQuestionPosition = getQuestionPositionLabel(question.slug);
 
   async function postProgress(
     payload: Record<string, unknown>,
@@ -183,7 +192,7 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
 
         <div className="interview-answer-review">
           <h3>Your private answer record</h3>
-          {JAVASCRIPT_INTERVIEW_DRILL.questions.map((savedQuestion, index) => {
+          {JAVASCRIPT_INTERVIEW_DRILL.questions.map((savedQuestion) => {
             const savedAnswer = progress.answers.find(
               (candidate) => candidate.questionSlug === savedQuestion.slug,
             );
@@ -194,8 +203,9 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
             return (
               <details key={savedQuestion.slug}>
                 <summary>
-                  <span>
-                    {index + 1}. {savedQuestion.eyebrow}
+                  <span className="interview-review-question">
+                    <small>{getQuestionPositionLabel(savedQuestion.slug)}</small>
+                    <span>{savedQuestion.eyebrow}</span>
                   </span>
                   <strong>{savedRating?.shortLabel ?? "Saved"}</strong>
                 </summary>
@@ -235,10 +245,7 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
     <section className="interview-round" aria-labelledby="interview-question">
       <div className="interview-round-heading">
         <div>
-          <p className="quiz-kicker">
-            Question {progress.currentQuestion + 1} of{" "}
-            {totalQuestions}
-          </p>
+          <p className="quiz-kicker">{currentQuestionPosition}</p>
           <span>{question.eyebrow}</span>
         </div>
         <strong className="interview-remaining-count">

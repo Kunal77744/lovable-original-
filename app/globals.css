@@ -4620,6 +4620,32 @@ h1 {
   font-size: clamp(52px, 6.4vw, 78px);
 }
 
+.profile-title-row {
+  margin-top: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.profile-title-row h1 {
+  margin: 0;
+}
+
+.profile-private-badge {
+  flex: none;
+  margin-bottom: 9px;
+  padding: 7px 10px;
+  color: var(--accent-deep);
+  border: 1px solid #a9c2b1;
+  border-radius: 999px;
+  background: #edf4ee;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .profile-heading > div:first-child > p:last-child {
   max-width: 59ch;
   margin: 25px 0 0;
@@ -5522,6 +5548,17 @@ footer {
 
   .profile-heading h1 {
     font-size: clamp(45px, 14vw, 62px);
+  }
+
+  .profile-title-row {
+    margin-top: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .profile-private-badge {
+    margin: 0;
   }
 
   .profile-heading > div:first-child > p:last-child {
@@ -6539,6 +6576,24 @@ footer {
 .interview-answer-review summary span {
   font-size: 13px;
   font-weight: 750;
+}
+
+.interview-answer-review .interview-review-question {
+  display: grid;
+  gap: 4px;
+}
+
+.interview-review-question small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.interview-review-question > span {
+  color: var(--ink);
 }
 
 .interview-answer-review summary strong {
