@@ -48,7 +48,17 @@ describe("CodingWorkspace", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Run example" }));
+    const runButton = screen.getByRole("button", { name: "Run example" });
+
+    expect(
+      screen.getByText("Keyboard: Tab to Run, then Enter"),
+    ).toBeInTheDocument();
+    expect(runButton).toHaveAttribute(
+      "aria-describedby",
+      "run-example-keyboard-hint",
+    );
+
+    fireEvent.click(runButton);
 
     expect(await screen.findByText("Example passed")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in to submit" })).toHaveAttribute(

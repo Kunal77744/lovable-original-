@@ -240,11 +240,18 @@ export function CodingWorkspace({
       </div>
 
       <div className="coding-actions">
+        <span
+          className="coding-keyboard-hint"
+          id="run-example-keyboard-hint"
+        >
+          Keyboard: Tab to Run, then Enter
+        </span>
         <button
           className="secondary-code-action"
           type="button"
           onClick={runExample}
           disabled={runState.kind === "running"}
+          aria-describedby="run-example-keyboard-hint"
         >
           Run example
         </button>
