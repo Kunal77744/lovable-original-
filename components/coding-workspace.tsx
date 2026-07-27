@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
+import { capturePracticeProblemAccepted } from "@/lib/product-analytics";
 import type { CodingAttempt } from "@/db/coding-practice";
 
 type CodingWorkspaceProps = {
@@ -30,6 +31,7 @@ type SubmissionResponse = {
   completedCount: number;
   totalCount: number;
   createdAt: string;
+  isFirstAcceptedResult: boolean;
   error?: string;
 };
 
@@ -189,6 +191,16 @@ export function CodingWorkspace({
             ? `${problem.title} is complete. Your code and result are saved.`
             : `${payload.passedTests} of ${payload.totalTests} checks passed. Your attempt is saved.`,
       });
+
+      if (
+        payload.verdict === "Accepted" &&
+        payload.isFirstAcceptedResult
+      ) {
+        capturePracticeProblemAccepted({
+          problemSlug: problem.slug,
+          passedCheckCount: payload.passedTests,
+        });
+      }
     } catch {
       setRunState({
         kind: "error",
