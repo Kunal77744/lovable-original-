@@ -38,6 +38,7 @@ export type LearnerProfileViewModel = {
   practice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   quizScore: number | null;
+  isFreshLearner: boolean;
   nextAction: LearnerProfileAction;
 };
 
@@ -51,6 +52,11 @@ export function buildLearnerProfile({
   attempts: RecentCodingAttempt[];
 }): LearnerProfileViewModel {
   const quizScore = course.nextLesson?.quizScore ?? null;
+  const isFreshLearner =
+    course.completedLessons === 0 &&
+    practice.completedCount === 0 &&
+    attempts.length === 0 &&
+    quizScore === null;
 
   if (!course.courseCompleted && course.nextLesson) {
     const hasQuizAttempt = quizScore !== null;
@@ -60,6 +66,7 @@ export function buildLearnerProfile({
       practice,
       attempts,
       quizScore,
+      isFreshLearner,
       nextAction: {
         label: hasQuizAttempt ? "Continue course" : "Start the course",
         href: `/learn/${course.slug}/${course.nextLesson.slug}`,
@@ -83,6 +90,7 @@ export function buildLearnerProfile({
       practice,
       attempts,
       quizScore,
+      isFreshLearner,
       nextAction: {
         label: `Solve problem ${String(nextProblem.number).padStart(2, "0")}`,
         href: `/practice/${nextProblem.slug}`,
@@ -101,6 +109,7 @@ export function buildLearnerProfile({
     practice,
     attempts,
     quizScore,
+    isFreshLearner,
     nextAction: {
       label: "Review the course",
       href: `/learn/${course.slug}/${course.nextLesson?.slug ?? ""}#revision-pack`,
