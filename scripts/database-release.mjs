@@ -12,6 +12,8 @@ const requiredTables = [
   "course",
   "course_assignment",
   "course_feedback",
+  "coding_problem_progress",
+  "coding_submission",
   "early_access_signup",
   "lesson",
   "lesson_artifact",

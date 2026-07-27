@@ -1,0 +1,231 @@
+import { and, count, desc, eq, inArray } from "drizzle-orm";
+import {
+  CODING_PROBLEMS,
+  getCodingProblem,
+  gradeCodingOutputs,
+} from "@/lib/coding-problems";
+import { getDatabase } from "./index";
+import { codingProblemProgress, codingSubmission } from "./schema";
+
+export type CodingAttempt = {
+  id: string;
+  verdict: string;
+  passedTests: number;
+  totalTests: number;
+  createdAt: string;
+};
+
+export async function getCodingCatalogProgress(userId: string | null) {
+  if (!userId) {
+    return {
+      completedCount: 0,
+      totalCount: CODING_PROBLEMS.length,
+      completedSlugs: [] as string[],
+    };
+  }
+
+  const rows = await getDatabase()
+    .select({ problemSlug: codingProblemProgress.problemSlug })
+    .from(codingProblemProgress)
+    .where(
+      and(
+        eq(codingProblemProgress.userId, userId),
+        inArray(
+          codingProblemProgress.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+        eq(codingProblemProgress.bestVerdict, "Accepted"),
+      ),
+    );
+
+  return {
+    completedCount: rows.length,
+    totalCount: CODING_PROBLEMS.length,
+    completedSlugs: rows.map((row) => row.problemSlug),
+  };
+}
+
+export async function getCodingProblemForStudent(
+  userId: string | null,
+  problemSlug: string,
+) {
+  const problem = getCodingProblem(problemSlug);
+
+  if (!problem) {
+    return null;
+  }
+
+  if (!userId) {
+    return {
+      code: problem.starterCode,
+      bestVerdict: null,
+      attempts: [] as CodingAttempt[],
+    };
+  }
+
+  const database = getDatabase();
+  const [progress, attempts] = await Promise.all([
+    database
+      .select({
+        code: codingProblemProgress.code,
+        bestVerdict: codingProblemProgress.bestVerdict,
+      })
+      .from(codingProblemProgress)
+      .where(
+        and(
+          eq(codingProblemProgress.userId, userId),
+          eq(codingProblemProgress.problemSlug, problemSlug),
+        ),
+      )
+      .limit(1),
+    database
+      .select({
+        id: codingSubmission.id,
+        verdict: codingSubmission.verdict,
+        passedTests: codingSubmission.passedTests,
+        totalTests: codingSubmission.totalTests,
+        createdAt: codingSubmission.createdAt,
+      })
+      .from(codingSubmission)
+      .where(
+        and(
+          eq(codingSubmission.userId, userId),
+          eq(codingSubmission.problemSlug, problemSlug),
+        ),
+      )
+      .orderBy(desc(codingSubmission.createdAt))
+      .limit(8),
+  ]);
+
+  return {
+    code: progress[0]?.code ?? problem.starterCode,
+    bestVerdict: progress[0]?.bestVerdict ?? null,
+    attempts: attempts.map((attempt) => ({
+      ...attempt,
+      createdAt: attempt.createdAt.toISOString(),
+    })),
+  };
+}
+
+export async function saveCodingDraft(
+  userId: string,
+  problemSlug: string,
+  code: string,
+) {
+  const problem = getCodingProblem(problemSlug);
+
+  if (!problem) return null;
+
+  const now = new Date();
+  await getDatabase()
+    .insert(codingProblemProgress)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      problemSlug,
+      code,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [
+        codingProblemProgress.userId,
+        codingProblemProgress.problemSlug,
+      ],
+      set: {
+        code,
+        updatedAt: now,
+      },
+    });
+
+  return { savedAt: now.toISOString() };
+}
+
+export async function saveCodingSubmission(
+  userId: string,
+  problemSlug: string,
+  code: string,
+  outputs: unknown,
+) {
+  const result = gradeCodingOutputs(problemSlug, outputs);
+
+  if (!result) return null;
+
+  const database = getDatabase();
+  const now = new Date();
+
+  return database.transaction(async (transaction) => {
+    const [current] = await transaction
+      .select({
+        bestVerdict: codingProblemProgress.bestVerdict,
+        completedAt: codingProblemProgress.completedAt,
+      })
+      .from(codingProblemProgress)
+      .where(
+        and(
+          eq(codingProblemProgress.userId, userId),
+          eq(codingProblemProgress.problemSlug, problemSlug),
+        ),
+      )
+      .limit(1);
+    const bestVerdict =
+      current?.bestVerdict === "Accepted" || result.verdict === "Accepted"
+        ? "Accepted"
+        : "Wrong Answer";
+
+    await transaction
+      .insert(codingProblemProgress)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        problemSlug,
+        code,
+        bestVerdict,
+        completedAt:
+          bestVerdict === "Accepted" ? (current?.completedAt ?? now) : null,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          codingProblemProgress.userId,
+          codingProblemProgress.problemSlug,
+        ],
+        set: {
+          code,
+          bestVerdict,
+          completedAt:
+            bestVerdict === "Accepted" ? (current?.completedAt ?? now) : null,
+          updatedAt: now,
+        },
+      });
+
+    const submissionId = crypto.randomUUID();
+    await transaction.insert(codingSubmission).values({
+      id: submissionId,
+      userId,
+      problemSlug,
+      verdict: result.verdict,
+      passedTests: result.passedTests,
+      totalTests: result.totalTests,
+      createdAt: now,
+    });
+
+    const [completed] = await transaction
+      .select({ value: count() })
+      .from(codingProblemProgress)
+      .where(
+        and(
+          eq(codingProblemProgress.userId, userId),
+          eq(codingProblemProgress.bestVerdict, "Accepted"),
+        ),
+      );
+
+    return {
+      id: submissionId,
+      ...result,
+      bestVerdict,
+      completedCount: completed?.value ?? 0,
+      totalCount: CODING_PROBLEMS.length,
+      createdAt: now.toISOString(),
+    };
+  });
+}
