@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CODING_PROBLEMS,
+  getNextUnfinishedCodingProblemSlug,
   gradeCodingOutputs,
   hasValidCodingSolutionLength,
 } from "./coding-problems";
@@ -47,5 +48,19 @@ describe("coding problems", () => {
     expect(hasValidCodingSolutionLength("")).toBe(false);
     expect(hasValidCodingSolutionLength("function solve() {}")).toBe(true);
     expect(hasValidCodingSolutionLength("x".repeat(12_001))).toBe(false);
+  });
+
+  it("selects the first unfinished problem and stops at a complete catalog", () => {
+    expect(
+      getNextUnfinishedCodingProblemSlug([
+        "sum-two-numbers",
+        "multiplication-table",
+      ]),
+    ).toBe("even-or-odd");
+    expect(
+      getNextUnfinishedCodingProblemSlug(
+        CODING_PROBLEMS.map((problem) => problem.slug),
+      ),
+    ).toBeNull();
   });
 });
