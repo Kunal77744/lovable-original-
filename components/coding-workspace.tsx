@@ -29,6 +29,7 @@ type SubmissionResponse = {
   totalTests: number;
   completedCount: number;
   totalCount: number;
+  nextProblemSlug: string | null;
   createdAt: string;
   error?: string;
 };
@@ -44,6 +45,8 @@ type RunState =
       passedTests: number;
       totalTests: number;
       completedCount: number;
+      totalCount: number;
+      nextProblemSlug: string | null;
     }
   | { kind: "error"; message: string };
 
@@ -184,6 +187,8 @@ export function CodingWorkspace({
         passedTests: payload.passedTests,
         totalTests: payload.totalTests,
         completedCount: payload.completedCount,
+        totalCount: payload.totalCount,
+        nextProblemSlug: payload.nextProblemSlug,
         message:
           payload.verdict === "Accepted"
             ? `${problem.title} is complete. Your code and result are saved.`
@@ -307,9 +312,23 @@ export function CodingWorkspace({
           </div>
         ) : null}
         {runState.kind === "verdict" && runState.verdict === "Accepted" ? (
-          <p className="accepted-progress">
-            Practice progress · {runState.completedCount}/6 accepted
-          </p>
+          <div className="accepted-continuation">
+            <p className="accepted-progress">
+              Practice progress · {runState.completedCount}/{runState.totalCount} accepted
+            </p>
+            <Link
+              className="accepted-next-action"
+              href={
+                runState.nextProblemSlug
+                  ? `/practice/${runState.nextProblemSlug}`
+                  : "/practice"
+              }
+            >
+              {runState.nextProblemSlug
+                ? "Try the next problem"
+                : "View completed set"}
+            </Link>
+          </div>
         ) : null}
       </div>
 

@@ -1,7 +1,8 @@
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
+  getNextUnfinishedCodingProblemSlug,
   gradeCodingOutputs,
 } from "@/lib/coding-problems";
 import { getDatabase } from "./index";
@@ -209,13 +210,17 @@ export async function saveCodingSubmission(
       createdAt: now,
     });
 
-    const [completed] = await transaction
-      .select({ value: count() })
+    const completed = await transaction
+      .select({ problemSlug: codingProblemProgress.problemSlug })
       .from(codingProblemProgress)
       .where(
         and(
           eq(codingProblemProgress.userId, userId),
           eq(codingProblemProgress.bestVerdict, "Accepted"),
+          inArray(
+            codingProblemProgress.problemSlug,
+            CODING_PROBLEMS.map((problem) => problem.slug),
+          ),
         ),
       );
 
@@ -223,8 +228,11 @@ export async function saveCodingSubmission(
       id: submissionId,
       ...result,
       bestVerdict,
-      completedCount: completed?.value ?? 0,
+      completedCount: completed.length,
       totalCount: CODING_PROBLEMS.length,
+      nextProblemSlug: getNextUnfinishedCodingProblemSlug(
+        completed.map((row) => row.problemSlug),
+      ),
       createdAt: now.toISOString(),
     };
   });
