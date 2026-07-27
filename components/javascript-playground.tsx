@@ -128,7 +128,6 @@ export function JavaScriptPlayground({
           spellCheck={false}
         />
         <div className="playground-editor-meta">
-          <span>Ctrl/⌘ + Enter to run</span>
           <span>
             {code.length.toLocaleString()}/{MAX_PLAYGROUND_CODE_LENGTH.toLocaleString()}
           </span>
@@ -145,6 +144,9 @@ export function JavaScriptPlayground({
           <span aria-hidden="true">▶</span>
           {runState.kind === "running" ? "Running…" : "Run code"}
         </button>
+        <span className="playground-run-hint">
+          Keyboard: Ctrl/⌘ + Enter
+        </span>
         <button
           className="playground-save"
           type="button"

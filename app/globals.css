@@ -3982,7 +3982,7 @@ h1 {
   bottom: 16px;
   left: 58px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   color: #84958b;
   font-size: 10px;
 }
@@ -3990,7 +3990,8 @@ h1 {
 .playground-actions {
   min-height: 76px;
   padding: 14px 18px;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   border-top: 1px solid #304239;
@@ -4016,6 +4017,13 @@ h1 {
   color: #102018;
   border: 1px solid #a3e5bd;
   background: #91dfae;
+}
+
+.playground-run-hint {
+  color: #84958b;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .playground-run:hover {
@@ -4717,6 +4725,22 @@ footer {
   .playground-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .playground-run {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .playground-save {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .playground-run-hint {
+    grid-column: 1;
+    grid-row: 2;
+    padding-inline: 2px;
   }
 
   .playground-run,
