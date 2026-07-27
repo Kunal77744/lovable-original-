@@ -97,7 +97,9 @@ export function JavaScriptPlayground({
                 ? "playground-save-state is-error"
                 : "playground-save-state"
           }
+          role="status"
           aria-live="polite"
+          aria-atomic="true"
         >
           {saveState === "saving"
             ? "Saving…"

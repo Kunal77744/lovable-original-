@@ -46,11 +46,13 @@ describe("JavaScriptPlayground", () => {
     expect(runPlaygroundCode).toHaveBeenCalledWith(
       "console.log('answer', 42);",
     );
-    const status = screen.getByRole("status");
+    const status = screen
+      .getByText("Running in an isolated browser worker…")
+      .closest('[role="status"]');
+    expect(status).not.toBeNull();
     expect(status).toHaveAttribute("aria-live", "polite");
     expect(status).toHaveAttribute("aria-atomic", "true");
     expect(status).toHaveTextContent("Running in an isolated browser worker");
-    expect(screen.getAllByRole("status")).toHaveLength(1);
 
     await act(async () => {
       finishRun?.({ status: "finished", output: ["answer 42"] });
@@ -93,23 +95,18 @@ describe("JavaScriptPlayground", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Run code" }));
 
-    const status = await screen.findByRole("status");
+    const status = (await screen.findByText(expected)).closest('[role="status"]');
+    expect(status).not.toBeNull();
     await waitFor(() => expect(status).toHaveTextContent(expected));
-    expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 
-  it("saves the exact file and reports account-backed state", async () => {
+  it("announces saving and the saved account-backed state", async () => {
     const exactCode = "  const exact = true;\nconsole.log(exact);  ";
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          file: {
-            code: exactCode,
-            updatedAt: "2026-07-27T03:02:00.000Z",
-          },
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+    let finishSave: ((response: Response) => void) | undefined;
+    vi.spyOn(globalThis, "fetch").mockReturnValue(
+      new Promise((resolve) => {
+        finishSave = resolve;
+      }),
     );
     render(
       <JavaScriptPlayground initialCode={exactCode} initialUpdatedAt={null} />,
@@ -117,9 +114,12 @@ describe("JavaScriptPlayground", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Save file" }));
 
-    expect(
-      await screen.findByText("Saved to your account"),
-    ).toBeInTheDocument();
+    const saveStatus = screen.getByText("Saving…").closest('[role="status"]');
+    expect(saveStatus).not.toBeNull();
+    expect(saveStatus).toHaveAttribute("aria-live", "polite");
+    expect(saveStatus).toHaveAttribute("aria-atomic", "true");
+    expect(screen.getByRole("button", { name: "Saving file…" })).toBeDisabled();
+
     await waitFor(() =>
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "/api/playground",
@@ -129,5 +129,57 @@ describe("JavaScriptPlayground", () => {
         }),
       ),
     );
+
+    await act(async () => {
+      finishSave?.(
+        new Response(
+          JSON.stringify({
+            file: {
+              code: exactCode,
+              updatedAt: "2026-07-27T03:02:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(saveStatus).toHaveTextContent("Saved to your account");
+  });
+
+  it.each([
+    {
+      name: "the server rejects the save",
+      save: () =>
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(JSON.stringify({ error: "Could not save." }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ),
+    },
+    {
+      name: "the network request fails",
+      save: () =>
+        vi
+          .spyOn(globalThis, "fetch")
+          .mockRejectedValue(new Error("Network unavailable")),
+    },
+  ])("announces a save failure when $name", async ({ save }) => {
+    save();
+    render(
+      <JavaScriptPlayground
+        initialCode="console.log('keep this exact code');"
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    const failure = await screen.findByText("Save failed");
+    const saveStatus = failure.closest('[role="status"]');
+    expect(saveStatus).not.toBeNull();
+    expect(saveStatus).toHaveAttribute("aria-atomic", "true");
+    expect(saveStatus).toHaveTextContent("Save failed");
   });
 });
