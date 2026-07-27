@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountForm } from "./account-form";
 
@@ -58,5 +58,17 @@ describe("AccountForm analytics", () => {
       }),
     );
     expect(mocks.push).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("reassures learners that account entry is free without adding another action", () => {
+    const { container } = render(<AccountForm />);
+    const accountForm = within(container);
+
+    expect(
+      accountForm.getByText("Free. No payment details required."),
+    ).toBeInTheDocument();
+    expect(
+      accountForm.getAllByRole("button", { name: "Create my account" }),
+    ).toHaveLength(1);
   });
 });

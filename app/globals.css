@@ -1178,6 +1178,15 @@ h1 {
   cursor: wait;
 }
 
+.account-free-access {
+  margin: -4px 0 0;
+  color: #455149;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .account-privacy {
   margin: 0;
   padding: 0 34px 30px;
