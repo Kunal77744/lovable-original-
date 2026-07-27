@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
+const courseDescription =
+  "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.";
+const courseShareImageAlt =
+  "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.";
+
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
-  description:
-    "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.",
+  description: courseDescription,
   alternates: {
     canonical: "/courses/web-development-foundations",
   },
@@ -13,14 +17,26 @@ export const metadata: Metadata = {
     type: "website",
     url: "/courses/web-development-foundations",
     title: "Web Development Foundations | Lovable Original",
-    description:
-      "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.",
+    description: courseDescription,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: courseShareImageAlt,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Web Development Foundations | Lovable Original",
-    description:
-      "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.",
+    description: courseDescription,
+    images: [
+      {
+        url: "/opengraph-image",
+        alt: courseShareImageAlt,
+      },
+    ],
   },
 };
 
