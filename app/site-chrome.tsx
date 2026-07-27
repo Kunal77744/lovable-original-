@@ -11,7 +11,8 @@ type SiteNavProps = {
     | "lesson"
     | "practice"
     | "settings"
-    | "certificate";
+    | "certificate"
+    | "interview";
   studentSession?: boolean;
 };
 
@@ -33,6 +34,7 @@ export function SiteNav({
     currentPage === "lesson" ||
     currentPage === "settings" ||
     currentPage === "certificate" ||
+    currentPage === "interview" ||
     studentSession;
 
   return (
