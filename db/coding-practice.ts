@@ -15,6 +15,12 @@ export type CodingAttempt = {
   createdAt: string;
 };
 
+export type RecentCodingAttempt = CodingAttempt & {
+  problemSlug: string;
+  problemNumber: number;
+  problemTitle: string;
+};
+
 export async function getCodingCatalogProgress(userId: string | null) {
   if (!userId) {
     return {
@@ -43,6 +49,48 @@ export async function getCodingCatalogProgress(userId: string | null) {
     totalCount: CODING_PROBLEMS.length,
     completedSlugs: rows.map((row) => row.problemSlug),
   };
+}
+
+export async function getRecentCodingAttempts(
+  userId: string,
+  limit = 5,
+): Promise<RecentCodingAttempt[]> {
+  const attempts = await getDatabase()
+    .select({
+      id: codingSubmission.id,
+      problemSlug: codingSubmission.problemSlug,
+      verdict: codingSubmission.verdict,
+      passedTests: codingSubmission.passedTests,
+      totalTests: codingSubmission.totalTests,
+      createdAt: codingSubmission.createdAt,
+    })
+    .from(codingSubmission)
+    .where(
+      and(
+        eq(codingSubmission.userId, userId),
+        inArray(
+          codingSubmission.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(desc(codingSubmission.createdAt))
+    .limit(Math.max(1, Math.min(limit, 8)));
+
+  return attempts.flatMap((attempt) => {
+    const problem = getCodingProblem(attempt.problemSlug);
+
+    return problem
+      ? [
+          {
+            ...attempt,
+            problemNumber: problem.number,
+            problemTitle: problem.title,
+            createdAt: attempt.createdAt.toISOString(),
+          },
+        ]
+      : [];
+  });
 }
 
 export async function getCodingProblemForStudent(
