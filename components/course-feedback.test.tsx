@@ -21,6 +21,39 @@ describe("CourseFeedback", () => {
     vi.clearAllMocks();
   });
 
+  it("shows the remaining comment space and reaches zero at the limit", () => {
+    render(
+      <CourseFeedback
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        initialFeedback={null}
+      />,
+    );
+
+    const comment = screen.getByPlaceholderText(
+      "One detail that felt clear, confusing, or missing",
+    );
+
+    expect(screen.getByText("500 characters remaining")).toBeInTheDocument();
+    expect(comment).toHaveAttribute("maxlength", "500");
+    expect(comment).toHaveAttribute(
+      "aria-describedby",
+      "course-feedback-comment-note",
+    );
+    expect(
+      screen.getByText("500 characters remaining"),
+    ).toHaveAttribute("aria-live", "polite");
+
+    fireEvent.change(comment, { target: { value: "Clear." } });
+    expect(screen.getByText("494 characters remaining")).toBeInTheDocument();
+
+    fireEvent.change(comment, { target: { value: "x".repeat(499) } });
+    expect(screen.getByText("1 character remaining")).toBeInTheDocument();
+
+    fireEvent.change(comment, { target: { value: "x".repeat(500) } });
+    expect(screen.getByText("0 characters remaining")).toBeInTheDocument();
+  });
+
   it("saves an optional response without sending its content to analytics", async () => {
     vi.stubGlobal(
       "fetch",
@@ -97,15 +130,18 @@ describe("CourseFeedback", () => {
 
     expect(screen.getByLabelText("Very useful")).toBeChecked();
     expect(screen.getByDisplayValue("Clear lesson.")).toBeInTheDocument();
+    expect(screen.getByText("487 characters remaining")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Somewhat"));
     fireEvent.change(screen.getByDisplayValue("Clear lesson."), {
       target: { value: "Add one more example." },
     });
+    expect(screen.getByText("479 characters remaining")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Update feedback" }));
 
     await waitFor(() =>
       expect(screen.getByDisplayValue("Add one more example.")).toBeInTheDocument(),
     );
+    expect(screen.getByText("479 characters remaining")).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith(
       "/api/courses/web-development-foundations/feedback",
       expect.objectContaining({

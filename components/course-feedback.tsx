@@ -43,6 +43,8 @@ export function CourseFeedback({
   );
   const [isError, setIsError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const remainingCommentCharacters =
+    MAX_COURSE_FEEDBACK_COMMENT_LENGTH - comment.length;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -121,15 +123,26 @@ export function CourseFeedback({
         <label className="course-feedback-comment">
           <span>What should we improve next? <small>Optional</small></span>
           <textarea
+            aria-describedby="course-feedback-comment-note"
             value={comment}
             maxLength={MAX_COURSE_FEEDBACK_COMMENT_LENGTH}
             rows={3}
             onChange={(event) => setComment(event.target.value)}
             placeholder="One detail that felt clear, confusing, or missing"
           />
-          <span className="course-feedback-note">
-            Don’t include passwords or personal information. {comment.length}/
-            {MAX_COURSE_FEEDBACK_COMMENT_LENGTH}
+          <span
+            id="course-feedback-comment-note"
+            className="course-feedback-note"
+          >
+            <span>Don’t include passwords or personal information.</span>
+            <span
+              className="course-feedback-remaining"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {remainingCommentCharacters}{" "}
+              {remainingCommentCharacters === 1 ? "character" : "characters"} remaining
+            </span>
           </span>
         </label>
 

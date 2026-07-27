@@ -2789,9 +2789,19 @@ h1 {
 
 .course-feedback-note {
   margin-top: 7px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   color: #78857d;
   font-size: 10px;
   line-height: 1.45;
+}
+
+.course-feedback-remaining {
+  flex: 0 0 auto;
+  color: #56645b;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 
 .course-feedback-submit {
@@ -4458,6 +4468,12 @@ footer {
 
   .course-feedback-choices {
     grid-template-columns: 1fr;
+  }
+
+  .course-feedback-note {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .course-feedback-submit button {
