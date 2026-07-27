@@ -150,6 +150,31 @@ export default async function DashboardPage() {
           </div>
         </section>
 
+        <section
+          className="dashboard-interview"
+          aria-labelledby="dashboard-interview-title"
+        >
+          <div>
+            <p className="course-kicker">Interview preparation</p>
+            <h2 id="dashboard-interview-title">
+              Explain JavaScript without the editor.
+            </h2>
+            <p>
+              Five fundamentals questions, a concrete answer rubric, and one
+              private readiness result you can return to.
+            </p>
+          </div>
+          <div>
+            <span>About 10 minutes</span>
+            <Link
+              className="dashboard-interview-action"
+              href="/interview/javascript-fundamentals"
+            >
+              Open interview drill <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </section>
+
         <p className="dashboard-note">
           You’re signed in as <strong>{session.user.email}</strong>.
         </p>

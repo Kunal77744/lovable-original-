@@ -8,7 +8,8 @@ type SiteNavProps = {
     | "account"
     | "dashboard"
     | "lesson"
-    | "practice";
+    | "practice"
+    | "interview";
   studentSession?: boolean;
 };
 
@@ -27,6 +28,7 @@ export function SiteNav({
   const inStudentSpace =
     currentPage === "dashboard" ||
     currentPage === "lesson" ||
+    currentPage === "interview" ||
     studentSession;
 
   return (

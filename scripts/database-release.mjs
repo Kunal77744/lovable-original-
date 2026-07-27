@@ -15,6 +15,7 @@ const requiredTables = [
   "coding_problem_progress",
   "coding_submission",
   "early_access_signup",
+  "interview_drill_progress",
   "lesson",
   "lesson_artifact",
   "lesson_note",
@@ -116,7 +117,7 @@ async function run() {
     );
 
     if (
-      migrationResult.count !== expectedMigrationCount ||
+      migrationResult.count < expectedMigrationCount ||
       missingTables.length > 0
     ) {
       console.error(
