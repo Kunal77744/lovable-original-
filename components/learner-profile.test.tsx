@@ -51,6 +51,7 @@ describe("LearnerProfile", () => {
   it("shows cumulative progress, safe attempt details, and one primary action", () => {
     render(<LearnerProfile profile={profile} />);
 
+    expect(screen.getByText("Private progress")).toBeInTheDocument();
     expect(screen.getAllByText("100%")).toHaveLength(2);
     expect(screen.getByText("problems accepted").parentElement).toHaveTextContent(
       "1/6",
@@ -109,6 +110,7 @@ describe("LearnerProfile", () => {
         name: "Your learning record starts here.",
       }),
     ).toBeInTheDocument();
+    expect(freshState.getByText("Private progress")).toBeInTheDocument();
     expect(freshState.getByText("0/1")).toBeInTheDocument();
     expect(
       freshState.getByText("problems accepted").parentElement,
