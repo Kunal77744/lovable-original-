@@ -6232,6 +6232,14 @@ footer {
   text-align: center;
 }
 
+.interview-start-action > p.interview-remaining-count,
+.interview-round-heading > .interview-remaining-count {
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
 .interview-message {
   min-height: 18px;
   margin: 0;
@@ -6466,6 +6474,14 @@ footer {
   color: #b5c4bc;
   font-size: 11px;
   font-weight: 700;
+}
+
+.interview-result small {
+  margin-top: 12px;
+  color: #a8d8ba;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .interview-answer-review {

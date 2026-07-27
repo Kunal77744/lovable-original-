@@ -40,6 +40,7 @@ describe("InterviewDrill", () => {
       <InterviewDrill initialProgress={EMPTY_INTERVIEW_DRILL_PROGRESS} />,
     );
 
+    expect(screen.getByText("5 questions remaining")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Start the drill" }));
 
     await waitFor(() =>
@@ -56,6 +57,7 @@ describe("InterviewDrill", () => {
         body: JSON.stringify({ action: "start" }),
       }),
     );
+    expect(screen.getByText("5 questions remaining")).toBeInTheDocument();
   });
 
   it("saves the exact answer and advances after self-rating", async () => {
@@ -104,7 +106,7 @@ describe("InterviewDrill", () => {
         }),
       }),
     );
-    expect(screen.getByText("1/5 saved")).toBeInTheDocument();
+    expect(screen.getByText("4 questions remaining")).toBeInTheDocument();
   });
 
   it("announces saving and success through one atomic status region", async () => {
@@ -147,6 +149,7 @@ describe("InterviewDrill", () => {
     expect(status).toHaveAttribute("aria-live", "polite");
     expect(status).toHaveAttribute("aria-atomic", "true");
     expect(status).toHaveTextContent("Saving your answer…");
+    expect(screen.getByText("5 questions remaining")).toBeInTheDocument();
 
     resolveFetch?.({
       ok: true,
@@ -159,6 +162,7 @@ describe("InterviewDrill", () => {
       ),
     );
     expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByText("4 questions remaining")).toBeInTheDocument();
   });
 
   it("announces a failed save through the same status region", async () => {
@@ -182,6 +186,7 @@ describe("InterviewDrill", () => {
       ),
     );
     expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.getByText("5 questions remaining")).toBeInTheDocument();
   });
 
   it("restores the next unanswered question from saved account progress", () => {
@@ -211,7 +216,7 @@ describe("InterviewDrill", () => {
         name: JAVASCRIPT_INTERVIEW_DRILL.questions[2].prompt,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("2/5 saved")).toBeInTheDocument();
+    expect(screen.getByText("3 questions remaining")).toBeInTheDocument();
   });
 
   it("shows a saved private result with one dashboard return path", () => {
@@ -237,6 +242,7 @@ describe("InterviewDrill", () => {
     );
 
     expect(screen.getByText("3/5")).toBeInTheDocument();
+    expect(screen.getByText("0 questions remaining")).toBeInTheDocument();
     expect(
       screen.getByText(
         "You marked 3 of 5 ready to explain and 2 for another pass.",
