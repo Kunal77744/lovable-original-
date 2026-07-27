@@ -73,6 +73,13 @@ describe("ProfilePage", () => {
     expect(preview).not.toMatch(/public profile|rankings?|social/i);
   });
 
+  it("keeps the private profile out of search results and link discovery", () => {
+    expect(metadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
+  });
+
   it("redirects a signed-out visitor before reading private progress", async () => {
     mocks.getSession.mockResolvedValue(null);
 
