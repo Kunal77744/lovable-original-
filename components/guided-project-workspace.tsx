@@ -6,6 +6,7 @@ import {
   getEmptyGuidedProjectChecks,
   type GuidedProjectRecord,
 } from "@/lib/guided-project";
+import { captureProjectCompleted } from "@/lib/product-analytics";
 import { buildSandboxedPreviewDocument } from "@/lib/semantic-html-workspace";
 
 type GuidedProjectWorkspaceProps = {
@@ -64,6 +65,7 @@ export function GuidedProjectWorkspace({
       });
       const payload = (await response.json()) as GuidedProjectRecord & {
         error?: string;
+        firstCompletedReview?: boolean;
       };
 
       if (!response.ok) {
@@ -84,6 +86,17 @@ export function GuidedProjectWorkspace({
             : "Draft saved to your account.",
         );
         return;
+      }
+
+      if (
+        payload.firstCompletedReview === true &&
+        payload.submission?.status === "completed" &&
+        payload.submission.passedChecks === payload.submission.totalChecks
+      ) {
+        captureProjectCompleted({
+          projectSlug,
+          passedCheckCount: payload.submission.passedChecks,
+        });
       }
 
       setMessage(

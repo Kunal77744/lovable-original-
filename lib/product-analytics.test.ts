@@ -13,6 +13,7 @@ vi.mock("posthog-js", () => ({
 import {
   captureAccountCreated,
   captureLearnerEventOnce,
+  captureProjectCompleted,
   capturePublicPageview,
   sanitizeAnalyticsEvent,
 } from "./product-analytics";
@@ -96,5 +97,45 @@ describe("product analytics", () => {
       $referrer: "https://search.example/",
       pathname: "/about",
     });
+  });
+
+  it("captures one privacy-safe completed project result", () => {
+    const completedProject = {
+      projectSlug: "semantic-html-article",
+      passedCheckCount: 6,
+      html: "<main>private learner HTML</main>",
+      email: "learner@example.com",
+      review: "private review message",
+      note: "private learner note",
+      certificate: "private certificate",
+      feedback: "private learner feedback",
+    };
+
+    captureProjectCompleted(completedProject);
+    captureProjectCompleted(completedProject);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "project_completed",
+      expect.objectContaining({
+        project_slug: "semantic-html-article",
+        passed_check_count: 6,
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "deployment_environment",
+        "is_test",
+        "journey_id",
+        "passed_check_count",
+        "project_slug",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private learner HTML|learner@example\.com|private review message|private learner note|private certificate|private learner feedback/i,
+    );
   });
 });

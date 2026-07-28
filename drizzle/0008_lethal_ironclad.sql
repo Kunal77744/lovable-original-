@@ -7,6 +7,8 @@ CREATE TABLE "guided_project" (
 	"status" text DEFAULT 'draft' NOT NULL,
 	"review_checks" jsonb,
 	"submitted_at" timestamp with time zone,
+	"completed_at" timestamp with time zone,
+	"completion_id" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
