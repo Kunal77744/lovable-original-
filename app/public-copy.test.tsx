@@ -46,9 +46,24 @@ describe("public product promise", () => {
       screen.getByText(/the first focused course is live now/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /guided project is still planned, not part of this first course/i,
-      ),
+      screen.getByText(/one complete 18-minute semantic HTML lesson/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/lesson-bound semantic HTML tutor/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/private course certificate/i)).toBeInTheDocument();
+    expect(screen.getByText(/private learner profile/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/five-question JavaScript fundamentals interview drill/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/private saved JavaScript playground/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/six beginner JavaScript problems/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/guided semantic HTML field-guide project/i),
     ).toBeInTheDocument();
   });
 

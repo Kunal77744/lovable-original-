@@ -714,12 +714,59 @@ h1 {
   gap: 96px;
 }
 
-.about-standard-copy {
+.about-standard-details {
   max-width: 46ch;
   margin: 0 0 5px;
   color: var(--muted);
   font-size: 17px;
   line-height: 1.7;
+}
+
+.about-standard-label,
+.about-standard-planned span {
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.about-standard-label {
+  margin: 0 0 14px;
+}
+
+.about-standard-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 11px;
+  list-style: none;
+}
+
+.about-standard-list li {
+  position: relative;
+  padding-left: 20px;
+}
+
+.about-standard-list li::before {
+  position: absolute;
+  top: 0.65em;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  content: "";
+}
+
+.about-standard-planned {
+  margin: 28px 0 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.about-standard-planned span {
+  margin-right: 10px;
 }
 
 .course-overview-hero {
