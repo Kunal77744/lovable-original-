@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import JavaScriptEntryPage, {
   metadata as javascriptMetadata,
 } from "./beginner-javascript-practice/page";
@@ -27,7 +28,7 @@ describe("focused public learner entry pages", () => {
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
   });
 
-  it("connects beginner JavaScript intent to the six-problem catalog", () => {
+  it("connects beginner JavaScript intent to the first runnable problem", () => {
     render(<JavaScriptEntryPage />);
 
     expect(
@@ -36,8 +37,8 @@ describe("focused public learner entry pages", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /open the six-problem set/i }),
-    ).toHaveAttribute("href", "/practice");
+      screen.getByRole("link", { name: /start problem 01/i }),
+    ).toHaveAttribute("href", `/practice/${CODING_PROBLEMS[0].slug}`);
     expect(screen.getByText("4 of 4 passed")).toBeInTheDocument();
     expect(screen.getAllByText("Beginner")).toHaveLength(6);
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
