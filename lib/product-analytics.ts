@@ -22,6 +22,11 @@ type LearnerEventProperties = {
   passed?: boolean;
 };
 
+type PracticeAcceptedProperties = {
+  problemSlug: string;
+  passedCheckCount: number;
+};
+
 let initialized = false;
 let fallbackJourneyId: string | null = null;
 const fallbackCapturedEvents = new Set<string>();
@@ -182,8 +187,9 @@ function capture(
     | "account_created"
     | "lesson_started"
     | "quiz_completed"
-    | "feedback_submitted",
-  properties: Record<string, string | boolean>,
+    | "feedback_submitted"
+    | "practice_problem_accepted",
+  properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
 
@@ -246,8 +252,31 @@ export function captureLearnerEventOnce(
 
   const didCapture = capture(
     eventName,
-    properties as Record<string, string | boolean>,
+    properties as Record<string, string | number | boolean>,
   );
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function capturePracticeProblemAccepted({
+  problemSlug,
+  passedCheckCount,
+}: PracticeAcceptedProperties) {
+  const dedupeKey = `practice_problem_accepted:${problemSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture("practice_problem_accepted", {
+    problem_slug: problemSlug,
+    passed_check_count: passedCheckCount,
+  });
 
   if (didCapture) {
     rememberCapturedEvent(dedupeKey, capturedEvents);

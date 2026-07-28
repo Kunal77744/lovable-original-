@@ -121,6 +121,24 @@ export default async function PracticePage() {
               );
             })}
           </div>
+
+          {session ? (
+            <aside
+              className="practice-playground-entry"
+              aria-label="Continue in the private playground"
+            >
+              <div>
+                <p className="eyebrow">Free coding</p>
+                <p>
+                  Take an idea beyond the fixed checks in one saved JavaScript
+                  file.
+                </p>
+              </div>
+              <Link className="practice-playground-action" href="/playground">
+                Open the playground <span aria-hidden="true">→</span>
+              </Link>
+            </aside>
+          ) : null}
         </section>
       </div>
       <SiteFooter />

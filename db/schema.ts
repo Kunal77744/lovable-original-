@@ -292,6 +292,35 @@ export const lessonNote = pgTable(
   ],
 );
 
+export const interviewDrillProgress = pgTable(
+  "interview_drill_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    drillSlug: text("drill_slug").notNull(),
+    answers: text("answers").notNull().default("{}"),
+    ratings: text("ratings").notNull().default("{}"),
+    status: text("status").notNull().default("in-progress"),
+    currentQuestion: integer("current_question").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("interview_drill_user_slug_unique").on(
+      table.userId,
+      table.drillSlug,
+    ),
+    index("interview_drill_user_id_idx").on(table.userId),
+  ],
+);
+
 export const earlyAccessSignup = pgTable(
   "early_access_signup",
   {
@@ -374,5 +403,24 @@ export const courseCertificate = pgTable(
       table.courseId,
     ),
     index("course_certificate_user_id_idx").on(table.userId),
+  ],
+);
+
+export const playgroundFile = pgTable(
+  "playground_file",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("playground_file_user_unique").on(table.userId),
+    index("playground_file_user_id_idx").on(table.userId),
   ],
 );
