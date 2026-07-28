@@ -50,6 +50,7 @@ type RunState =
       totalCount: number;
       nextProblemSlug: string | null;
     }
+  | { kind: "timeout"; message: string }
   | { kind: "error"; message: string };
 
 export function CodingWorkspace({
@@ -117,6 +118,11 @@ export function CodingWorkspace({
     setRunState({ kind: "running", message: "Running the example in your browser…" });
     const result = await runCodingSolution(code, [problem.example.input]);
 
+    if (result.status === "timeout") {
+      setRunState({ kind: "timeout", message: result.message });
+      return;
+    }
+
     if (result.status !== "finished") {
       setRunState({ kind: "error", message: result.message });
       return;
@@ -145,6 +151,11 @@ export function CodingWorkspace({
       code,
       problem.tests.map((test) => test.input),
     );
+
+    if (result.status === "timeout") {
+      setRunState({ kind: "timeout", message: result.message });
+      return;
+    }
 
     if (result.status !== "finished") {
       setRunState({ kind: "error", message: result.message });
@@ -301,7 +312,9 @@ export function CodingWorkspace({
               ? " is-accepted"
               : ""
         }`}
+        role="status"
         aria-live="polite"
+        aria-atomic="true"
       >
         <div>
           <span>
@@ -313,6 +326,8 @@ export function CodingWorkspace({
                   : "Example differs"
                 : runState.kind === "error"
                   ? "Runner stopped"
+                  : runState.kind === "timeout"
+                    ? "Time limit exceeded"
                   : runState.kind === "running"
                     ? "Judging"
                     : "Ready"}

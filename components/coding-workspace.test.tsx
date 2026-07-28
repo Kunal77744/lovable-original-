@@ -30,6 +30,43 @@ const problem = {
   },
 };
 
+function renderWorkspace({
+  isSignedIn = true,
+}: {
+  isSignedIn?: boolean;
+} = {}) {
+  return render(
+    <CodingWorkspace
+      attempts={[]}
+      bestVerdict={null}
+      initialCode="function solve(input) { return input; }"
+      isSignedIn={isSignedIn}
+      problem={problem}
+    />,
+  );
+}
+
+function submissionResponse(
+  verdict: "Accepted" | "Wrong Answer",
+  passedTests: number,
+) {
+  return new Response(
+    JSON.stringify({
+      id: `attempt-${verdict}`,
+      verdict,
+      bestVerdict: verdict,
+      passedTests,
+      totalTests: 4,
+      completedCount: verdict === "Accepted" ? 1 : 0,
+      totalCount: 6,
+      nextProblemSlug: verdict === "Accepted" ? "even-or-odd" : null,
+      createdAt: "2026-07-26T22:30:00.000Z",
+      isFirstAcceptedResult: verdict === "Accepted",
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
+
 describe("CodingWorkspace", () => {
   afterEach(cleanup);
 
@@ -45,15 +82,7 @@ describe("CodingWorkspace", () => {
       outputs: ["13"],
     });
 
-    render(
-      <CodingWorkspace
-        attempts={[]}
-        bestVerdict={null}
-        initialCode="function solve() { return '13'; }"
-        isSignedIn={false}
-        problem={problem}
-      />,
-    );
+    renderWorkspace({ isSignedIn: false });
 
     const runButton = screen.getByRole("button", { name: "Run example" });
 
@@ -70,9 +99,16 @@ describe("CodingWorkspace", () => {
       ),
     ).toBeInTheDocument();
 
+    runButton.focus();
     fireEvent.click(runButton);
 
+    const status = screen.getByRole("status");
     expect(await screen.findByText("Example passed")).toBeInTheDocument();
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveAttribute("aria-atomic", "true");
+    expect(status).toHaveTextContent(
+      "Example passedExample passed. Submit when you’re ready for all four checks.",
+    );
     expect(screen.getByRole("link", { name: "Sign in to submit" })).toHaveAttribute(
       "href",
       expect.stringContaining("/account?mode=signin"),
@@ -85,36 +121,21 @@ describe("CodingWorkspace", () => {
       outputs: ["13", "-5", "0", "1000"],
     });
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          id: "attempt-1",
-          verdict: "Accepted",
-          bestVerdict: "Accepted",
-          passedTests: 4,
-          totalTests: 4,
-          completedCount: 1,
-          totalCount: 6,
-          nextProblemSlug: "even-or-odd",
-          createdAt: "2026-07-26T22:30:00.000Z",
-          isFirstAcceptedResult: true,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
+      submissionResponse("Accepted", 4),
+    );
+
+    renderWorkspace();
+
+    const submitButton = screen.getByRole("button", { name: "Submit solution" });
+    submitButton.focus();
+    fireEvent.click(submitButton);
+
+    const status = await screen.findByRole("status");
+    await waitFor(() =>
+      expect(status).toHaveTextContent(
+        "Accepted4/4 checksSum two numbers is complete. Your code and result are saved.",
       ),
     );
-
-    render(
-      <CodingWorkspace
-        attempts={[]}
-        bestVerdict={null}
-        initialCode="function solve(input) { return input; }"
-        isSignedIn
-        problem={problem}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
-
-    expect((await screen.findAllByText("Accepted")).length).toBeGreaterThan(0);
     expect(
       screen.getByRole("link", { name: "Try the next problem" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
@@ -217,5 +238,74 @@ describe("CodingWorkspace", () => {
     expect(
       screen.queryByRole("link", { name: "Try the next problem" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("announces a saved Wrong Answer verdict in the same status region", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["12", "-5", "0", "1000"],
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      submissionResponse("Wrong Answer", 3),
+    );
+
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    const status = screen.getByRole("status");
+    await waitFor(() =>
+      expect(status).toHaveTextContent(
+        "Wrong Answer3/4 checks3 of 4 checks passed. Your attempt is saved.",
+      ),
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+  });
+
+  it.each([
+    {
+      runnerStatus: "error",
+      message: "Define a function named solve(input).",
+      label: "Runner stopped",
+    },
+    {
+      runnerStatus: "timeout",
+      message: "Time limit exceeded after 1,000 ms.",
+      label: "Time limit exceeded",
+    },
+  ])("announces a $runnerStatus result", async ({ runnerStatus, message, label }) => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    runCodingSolution.mockResolvedValue({
+      status: runnerStatus,
+      message,
+    });
+
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    const status = screen.getByRole("status");
+    await waitFor(() => expect(status).toHaveTextContent(`${label}${message}`));
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("announces judging while the browser runner is still working", async () => {
+    let finishRun:
+      | ((result: { status: "finished"; outputs: string[] }) => void)
+      | undefined;
+    runCodingSolution.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishRun = resolve;
+        }),
+    );
+
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "JudgingRunning four deterministic checks in your browser…",
+    );
+    expect(screen.getByRole("button", { name: "Running checks…" })).toBeDisabled();
+
+    finishRun?.({ status: "finished", outputs: ["13", "-5", "0", "1000"] });
   });
 });
