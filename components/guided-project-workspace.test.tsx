@@ -38,13 +38,64 @@ describe("GuidedProjectWorkspace", () => {
 
   it("saves an exact draft separately from project review", async () => {
     const revisedHtml = "<main><article><h1>My guide</h1></article></main>";
-    const fetchMock = vi.fn().mockResolvedValue({
+    let resolveSave: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <GuidedProjectWorkspace
+        projectSlug="semantic-html-article"
+        initialProject={starterProject}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML project"), {
+      target: { value: revisedHtml },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+
+    expect(screen.getByText("Saving your project draft…")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Saving…" }),
+    ).toBeDisabled();
+
+    resolveSave?.({
       ok: true,
       json: async () => ({
         ...starterProject,
         html: revisedHtml,
         saved: true,
         updatedAt: "2026-07-27T18:00:00.000Z",
+      }),
+    } as Response);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Saved privately to your account."),
+      ).toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/semantic-html-article",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ action: "save", html: revisedHtml }),
+      }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Submit for review" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a failed draft save recoverable", async () => {
+    const revisedHtml = "<main><article><h1>Try again</h1></article></main>";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      json: async () => ({
+        error: "The project could not be saved. Try again.",
       }),
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -63,19 +114,11 @@ describe("GuidedProjectWorkspace", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Draft saved to your account."),
+        screen.getByText("The project could not be saved. Try again."),
       ).toBeInTheDocument(),
     );
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/projects/semantic-html-article",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ action: "save", html: revisedHtml }),
-      }),
-    );
-    expect(
-      screen.getByRole("button", { name: "Submit for review" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save draft" })).toBeEnabled();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
   });
 
   it("shows a completed review and preserves a revision path", async () => {

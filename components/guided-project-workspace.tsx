@@ -80,11 +80,7 @@ export function GuidedProjectWorkspace({
       setRequestState("idle");
 
       if (action === "save") {
-        setMessage(
-          payload.hasUnreviewedChanges
-            ? "Draft saved. Submit again for an updated review."
-            : "Draft saved to your account.",
-        );
+        setMessage("Saved privately to your account.");
         return;
       }
 
