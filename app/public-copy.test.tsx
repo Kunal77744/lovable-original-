@@ -17,7 +17,7 @@ describe("public product promise", () => {
 
     expect(
       screen.getByRole("link", {
-        name: /start web development foundations/i,
+        name: /build your semantic html page/i,
       }),
     ).toHaveAttribute("href", "/account");
     expect(
@@ -54,6 +54,15 @@ describe("public product promise", () => {
 
     expect(publicMetadata).toContain("Web Development Foundations");
     expect(publicMetadata).toContain("Build and save a semantic HTML page");
+    expect(courseMetadata.description).toContain(
+      "pass a four-question quiz at 75%",
+    );
+    expect(courseMetadata.openGraph?.description).toBe(
+      courseMetadata.description,
+    );
+    expect(courseMetadata.twitter?.description).toBe(
+      courseMetadata.description,
+    );
     expect(publicMetadata).not.toMatch(
       /real projects|interview practice|flashcards|certificates|AI tutor/i,
     );

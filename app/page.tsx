@@ -67,7 +67,7 @@ export default function Home() {
               result.
             </p>
             <Link className="primary-action" href="/account">
-              Start Web Development Foundations
+              Build your semantic HTML page
               <ArrowIcon />
             </Link>
             <p className="launch-note">
