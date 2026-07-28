@@ -1,5 +1,12 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountForm } from "./account-form";
 
 const mocks = vi.hoisted(() => ({
@@ -30,6 +37,10 @@ vi.mock("@/lib/product-analytics", () => ({
 }));
 
 describe("AccountForm analytics", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.signUp.mockResolvedValue({ error: null });
@@ -70,5 +81,23 @@ describe("AccountForm analytics", () => {
     expect(
       accountForm.getAllByRole("button", { name: "Create my account" }),
     ).toHaveLength(1);
+  });
+
+  it("gives every account field an explicit autofill identifier", () => {
+    const { container } = render(<AccountForm />);
+    const accountForm = within(container);
+
+    expect(accountForm.getByLabelText("Name")).toHaveAttribute(
+      "id",
+      "account-name",
+    );
+    expect(accountForm.getByLabelText("Email")).toHaveAttribute(
+      "id",
+      "account-email",
+    );
+    expect(accountForm.getByLabelText(/^Password/)).toHaveAttribute(
+      "id",
+      "account-password",
+    );
   });
 });
