@@ -7,10 +7,13 @@ type SiteNavProps = {
     | "about"
     | "account"
     | "dashboard"
+    | "profile"
     | "lesson"
     | "practice"
     | "settings"
-    | "certificate";
+    | "certificate"
+    | "interview"
+    | "playground";
   studentSession?: boolean;
 };
 
@@ -28,8 +31,10 @@ export function SiteNav({
 }: SiteNavProps) {
   const inStudentSpace =
     currentPage === "dashboard" ||
+    currentPage === "profile" ||
     currentPage === "settings" ||
     currentPage === "certificate" ||
+    currentPage === "interview" ||
     studentSession;
 
   return (
@@ -50,6 +55,13 @@ export function SiteNav({
         </Link>
         <Link
           className="nav-link"
+          href="/playground"
+          aria-current={currentPage === "playground" ? "page" : undefined}
+        >
+          Playground
+        </Link>
+        <Link
+          className="nav-link"
           href="/courses/web-development-foundations"
           aria-current={currentPage === "course" ? "page" : undefined}
         >
@@ -62,6 +74,15 @@ export function SiteNav({
         >
           About
         </Link>
+        {inStudentSpace ? (
+          <Link
+            className="nav-link"
+            href="/profile"
+            aria-current={currentPage === "profile" ? "page" : undefined}
+          >
+            Profile
+          </Link>
+        ) : null}
         <Link
           className="nav-account-link"
           href={inStudentSpace ? "/dashboard" : "/account"}

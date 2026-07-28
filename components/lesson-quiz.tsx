@@ -141,7 +141,10 @@ export function LessonQuiz({
         <Link className="completion-dashboard-link" href="/dashboard">
           View saved progress
         </Link>
-        <RevisionPack lessonSlug={lessonSlug} />
+        <RevisionPack
+          lessonSlug={lessonSlug}
+          practiceHref={completesCourse ? "/practice" : undefined}
+        />
         <CourseFeedback
           courseSlug={courseSlug}
           lessonSlug={lessonSlug}

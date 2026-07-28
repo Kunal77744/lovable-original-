@@ -82,6 +82,9 @@ export default async function DashboardPage() {
             >
               <span style={{ width: `${firstCourse.progressPercent}%` }} />
             </div>
+            <Link className="dashboard-progress-action" href="/profile">
+              View private progress <span aria-hidden="true">→</span>
+            </Link>
           </div>
           <div className="course-next-step">
             <span>
@@ -178,6 +181,49 @@ export default async function DashboardPage() {
               />
             </div>
           </div>
+        </section>
+
+        <section
+          className="dashboard-interview"
+          aria-labelledby="dashboard-interview-title"
+        >
+          <div>
+            <p className="course-kicker">Interview preparation</p>
+            <h2 id="dashboard-interview-title">
+              Explain JavaScript without the editor.
+            </h2>
+            <p>
+              Five fundamentals questions, a concrete answer rubric, and one
+              private readiness result you can return to.
+            </p>
+          </div>
+          <div>
+            <span>About 10 minutes</span>
+            <Link
+              className="dashboard-interview-action"
+              href="/interview/javascript-fundamentals"
+            >
+              Open interview drill <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </section>
+
+        <section
+          className="dashboard-playground"
+          aria-labelledby="dashboard-playground-title"
+        >
+          <div>
+            <p className="course-kicker">Your JavaScript file</p>
+            <h2 id="dashboard-playground-title">
+              Take an idea outside the problem set.
+            </h2>
+            <p>
+              Write, run, save, and return to one private JavaScript file.
+            </p>
+          </div>
+          <Link className="dashboard-playground-action" href="/playground">
+            Open playground <span aria-hidden="true">→</span>
+          </Link>
         </section>
 
         <p className="dashboard-note">
