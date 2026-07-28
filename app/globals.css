@@ -2465,6 +2465,278 @@ h1 {
   line-height: 1.65;
 }
 
+.revision-mind-map {
+  margin-top: 40px;
+  padding: 34px;
+  border: 1px solid #cdd5cd;
+  border-radius: 16px 16px 6px 16px;
+  background: #fbfcf8;
+}
+
+.mind-map-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(260px, 1fr);
+  align-items: end;
+  gap: 40px;
+}
+
+.mind-map-heading h4 {
+  max-width: 17ch;
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 28px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.mind-map-heading > p {
+  max-width: 52ch;
+  margin: 0;
+  color: #5a675f;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.mind-map-canvas {
+  margin-top: 30px;
+  padding: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.78fr) minmax(0, 1fr);
+  grid-template-areas:
+    "node-1 center node-2"
+    "node-3 center node-4";
+  align-items: stretch;
+  gap: 18px 32px;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(23, 35, 30, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 35, 30, 0.035) 1px, transparent 1px),
+    #f3f6f1;
+  background-size: 24px 24px;
+}
+
+.mind-map-center {
+  grid-area: center;
+  min-height: 196px;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  color: white;
+  border-radius: 12px 12px 4px 12px;
+  background: var(--ink);
+  box-shadow: 0 16px 30px rgba(23, 35, 30, 0.16);
+}
+
+.mind-map-center span {
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.mind-map-center strong {
+  margin-top: 10px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.mind-map-node {
+  position: relative;
+  min-height: 112px;
+  padding: 17px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #c9d7cb;
+  border-radius: 10px 10px 3px 10px;
+  background: rgba(251, 252, 248, 0.96);
+}
+
+.mind-map-node::after {
+  position: absolute;
+  top: 50%;
+  width: 33px;
+  height: 1px;
+  background: #8fb39b;
+  content: "";
+}
+
+.mind-map-node-1 {
+  grid-area: node-1;
+}
+
+.mind-map-node-2 {
+  grid-area: node-2;
+}
+
+.mind-map-node-3 {
+  grid-area: node-3;
+}
+
+.mind-map-node-4 {
+  grid-area: node-4;
+}
+
+.mind-map-node-1::after,
+.mind-map-node-3::after {
+  right: -33px;
+}
+
+.mind-map-node-2::after,
+.mind-map-node-4::after {
+  left: -33px;
+}
+
+.mind-map-node > span {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.mind-map-node strong {
+  margin-top: 6px;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+.mind-map-node small {
+  margin-top: 7px;
+  color: #5a675f;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.mind-map-outline {
+  margin-top: 28px;
+  padding-top: 26px;
+  border-top: 1px solid #d7ded7;
+}
+
+.mind-map-outline-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.mind-map-outline-heading h5 {
+  max-width: 26ch;
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.mind-map-outline-heading a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
+.mind-map-outline-heading a:hover {
+  color: var(--ink);
+}
+
+.mind-map-outline-heading a:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 4px;
+}
+
+.mind-map-outline > ol {
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  list-style: none;
+  border-top: 1px solid #d7ded7;
+}
+
+.mind-map-outline > ol > li {
+  padding: 20px 0 22px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  border-bottom: 1px solid #d7ded7;
+}
+
+.mind-map-outline > ol > li > span {
+  padding-top: 2px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+}
+
+.mind-map-outline strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.mind-map-outline p {
+  margin: 5px 0 0;
+  color: #5a675f;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.mind-map-outline ul {
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  list-style: none;
+}
+
+.mind-map-outline ul code {
+  padding: 3px 6px;
+  color: #305e48;
+  border-radius: 4px;
+  background: #eaf1e9;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 9px;
+}
+
+.mind-map-outline .mind-map-self-check {
+  margin-top: 12px;
+  color: var(--ink);
+}
+
+.mind-map-self-check > span {
+  margin-right: 7px;
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
 .revision-summary {
   margin: 34px 0 0;
   padding: 0;
@@ -4391,6 +4663,59 @@ footer {
 
   .revision-heading h3 {
     font-size: 34px;
+  }
+
+  .revision-mind-map {
+    margin-inline: -8px;
+    padding: 28px 20px;
+  }
+
+  .mind-map-heading {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .mind-map-heading h4 {
+    font-size: 26px;
+  }
+
+  .mind-map-canvas {
+    margin-inline: -4px;
+    padding: 20px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "center"
+      "node-1"
+      "node-2"
+      "node-3"
+      "node-4";
+    gap: 10px;
+  }
+
+  .mind-map-center {
+    min-height: 142px;
+  }
+
+  .mind-map-node {
+    min-height: 96px;
+  }
+
+  .mind-map-node::after {
+    display: none;
+  }
+
+  .mind-map-outline-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .mind-map-outline-heading a {
+    align-self: flex-start;
+  }
+
+  .mind-map-outline > ol {
+    grid-template-columns: 1fr;
   }
 
   .revision-summary {

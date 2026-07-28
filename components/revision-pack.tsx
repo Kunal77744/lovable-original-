@@ -18,6 +18,7 @@ function getStorageKey(lessonSlug: string) {
 
 export function RevisionPack({ lessonSlug }: RevisionPackProps) {
   const cards = FIRST_LESSON_REVISION.flashcards;
+  const mindMap = FIRST_LESSON_REVISION.mindMap;
   const [cardIndex, setCardIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [checkedCardIds, setCheckedCardIds] = useState<string[]>([]);
@@ -116,6 +117,76 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
         <span>{cards.length} self-check cards</span>
       </header>
       <p className="revision-intro">{FIRST_LESSON_REVISION.introduction}</p>
+
+      <section
+        className="revision-mind-map"
+        aria-labelledby="revision-mind-map-title"
+      >
+        <header className="mind-map-heading">
+          <div>
+            <p className="quiz-kicker">Concept map</p>
+            <h4 id="revision-mind-map-title">{mindMap.title}</h4>
+          </div>
+          <p>{mindMap.introduction}</p>
+        </header>
+
+        <div className="mind-map-canvas" aria-hidden="true">
+          <div className="mind-map-center">
+            <span>{mindMap.center.label}</span>
+            <strong>{mindMap.center.detail}</strong>
+          </div>
+          {mindMap.branches.map((branch, index) => (
+            <article
+              className={`mind-map-node mind-map-node-${index + 1}`}
+              key={branch.id}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{branch.label}</strong>
+              <small>{branch.concepts.join(" · ")}</small>
+            </article>
+          ))}
+        </div>
+
+        <section
+          className="mind-map-outline"
+          aria-labelledby="mind-map-outline-title"
+        >
+          <div className="mind-map-outline-heading">
+            <div>
+              <p className="quiz-kicker">Keyboard-readable outline</p>
+              <h5 id="mind-map-outline-title">
+                Trace the page from structure to self-check.
+              </h5>
+            </div>
+            <a href="#semantic-workspace">
+              Return to your article
+              <span aria-hidden="true">↑</span>
+            </a>
+          </div>
+          <ol>
+            {mindMap.branches.map((branch, index) => (
+              <li key={branch.id}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <strong>{branch.label}</strong>
+                  <p>{branch.detail}</p>
+                  <ul>
+                    {branch.concepts.map((concept) => (
+                      <li key={concept}>
+                        <code>{concept}</code>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mind-map-self-check">
+                    <span>Self-check</span>
+                    {branch.selfCheck}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </section>
 
       <ol className="revision-summary" aria-label="Lesson summary">
         {FIRST_LESSON_REVISION.summary.map((item, index) => (
