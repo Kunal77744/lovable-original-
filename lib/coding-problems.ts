@@ -259,6 +259,14 @@ export function getCodingProblemPreview(slug: string) {
   };
 }
 
+export function getNextUnfinishedCodingProblemSlug(completedSlugs: string[]) {
+  const completed = new Set(completedSlugs);
+
+  return (
+    CODING_PROBLEMS.find((problem) => !completed.has(problem.slug))?.slug ?? null
+  );
+}
+
 export function normalizeCodingOutput(output: string) {
   return output.replace(/\r\n/g, "\n").trim();
 }

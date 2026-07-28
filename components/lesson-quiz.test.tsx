@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LessonQuiz } from "./lesson-quiz";
 
 const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
@@ -28,6 +34,10 @@ const questions = [
 ] as const;
 
 describe("LessonQuiz analytics", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal(
@@ -89,5 +99,117 @@ describe("LessonQuiz analytics", () => {
     expect(
       screen.getByRole("heading", { name: "Semantic HTML, compressed" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the structure connects" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to JavaScript practice",
+      }),
+    ).toHaveAttribute("href", "/practice");
+  });
+
+  it("shows the concept map when a saved completion is restored", () => {
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={1}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "You completed Web Development Foundations.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the structure connects" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Return to your article" }),
+    ).toHaveAttribute("href", "#semantic-workspace");
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to JavaScript practice",
+      }),
+    ).toHaveAttribute("href", "/practice");
+  });
+
+  it("keeps practice hidden when another course lesson remains", async () => {
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={2}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "You built the foundation." }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole("link", {
+        name: "Continue to JavaScript practice",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps signed-out answers local until the learner requests grading", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={1}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        isSignedIn={false}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: "Create account" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/create a free account to check your answers/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+      "href",
+      "/account",
+    );
   });
 });

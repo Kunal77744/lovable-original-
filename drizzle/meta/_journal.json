@@ -61,8 +61,22 @@
     {
       "idx": 8,
       "version": "7",
-      "when": 1785172807932,
-      "tag": "0008_lethal_ironclad",
+      "when": 1785200853905,
+      "tag": "0008_panoramic_mysterio",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785204783383,
+      "tag": "0009_harsh_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785231863486,
+      "tag": "0010_odd_susan_delgado",
       "breakpoints": true
     }
   ]

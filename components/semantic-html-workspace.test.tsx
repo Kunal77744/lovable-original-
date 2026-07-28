@@ -152,4 +152,38 @@ describe("SemanticHtmlWorkspace", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("keeps signed-out code local until the learner tries to submit", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    expect(screen.getByText("Local draft")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Create account" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: "<main><article>Local work</article></main>" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit assignment" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/your draft has not left this browser/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+      "href",
+      "/account",
+    );
+  });
 });

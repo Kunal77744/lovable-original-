@@ -115,6 +115,45 @@ export const FIRST_LESSON_REVISION = {
   title: "Semantic HTML, compressed",
   introduction:
     "A strong page has a readable outline before it has a visual design. Revisit the four decisions that make that outline useful.",
+  mindMap: {
+    title: "How the structure connects",
+    introduction:
+      "Start with a page the browser understands, then trace each decision back to the article you built.",
+    center: {
+      label: "Semantic HTML",
+      detail: "A page the browser understands",
+    },
+    branches: [
+      {
+        id: "document-structure",
+        label: "Document structure",
+        detail: "The page establishes its language and separates metadata from visible content.",
+        concepts: ["<html lang=\"en\">", "<head> metadata", "<body> content"],
+        selfCheck: "Can a browser identify the language and visible document?",
+      },
+      {
+        id: "semantic-landmarks",
+        label: "Semantic landmarks",
+        detail: "Major regions name their purpose before styling is applied.",
+        concepts: ["<header> introduces", "<main> focuses", "<footer> supports"],
+        selfCheck: "Is the article inside one clear <main> landmark?",
+      },
+      {
+        id: "heading-outline",
+        label: "Heading outline",
+        detail: "Headings turn the page topic and its direct sections into a readable hierarchy.",
+        concepts: ["One page <h1>", "Direct sections use <h2>", "Levels show hierarchy"],
+        selfCheck: "Can someone scan the headings and understand the article?",
+      },
+      {
+        id: "article-assignment",
+        label: "Article assignment",
+        detail: "The saved build combines standalone content with themed sections.",
+        concepts: ["<article> stands alone", "<section> groups a theme", "Each element has a job"],
+        selfCheck: "Can you explain why every structural element is there?",
+      },
+    ],
+  },
   summary: [
     {
       label: "Document",

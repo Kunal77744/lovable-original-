@@ -10,6 +10,8 @@ describe("public sitemap", () => {
       `${productionUrl}/about`,
       `${productionUrl}/courses/web-development-foundations`,
       `${productionUrl}/practice`,
+      `${productionUrl}/learn/semantic-html`,
+      `${productionUrl}/learn/beginner-javascript-practice`,
     ]);
   });
 
@@ -19,6 +21,8 @@ describe("public sitemap", () => {
     "/interview/javascript-fundamentals",
     "/playground",
     "/projects/semantic-html-article",
+    "/settings",
+    "/certificate",
   ])("excludes the private route %s", (privateRoute) => {
     expect(sitemap().map(({ url }) => url)).not.toContain(
       `${productionUrl}${privateRoute}`,

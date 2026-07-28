@@ -27,6 +27,11 @@ type ProjectCompletedProperties = {
   passedCheckCount: number;
 };
 
+type PracticeAcceptedProperties = {
+  problemSlug: string;
+  passedCheckCount: number;
+};
+
 let initialized = false;
 let fallbackJourneyId: string | null = null;
 const fallbackCapturedEvents = new Set<string>();
@@ -188,7 +193,8 @@ function capture(
     | "lesson_started"
     | "quiz_completed"
     | "feedback_submitted"
-    | "project_completed",
+    | "project_completed"
+    | "practice_problem_accepted",
   properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
@@ -275,6 +281,29 @@ export function captureProjectCompleted({
 
   const didCapture = capture("project_completed", {
     project_slug: projectSlug,
+    passed_check_count: passedCheckCount,
+  });
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function capturePracticeProblemAccepted({
+  problemSlug,
+  passedCheckCount,
+}: PracticeAcceptedProperties) {
+  const dedupeKey = `practice_problem_accepted:${problemSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture("practice_problem_accepted", {
+    problem_slug: problemSlug,
     passed_check_count: passedCheckCount,
   });
 

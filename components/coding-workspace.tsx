@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
+import { capturePracticeProblemAccepted } from "@/lib/product-analytics";
 import type { CodingAttempt } from "@/db/coding-practice";
 
 type CodingWorkspaceProps = {
@@ -29,7 +30,9 @@ type SubmissionResponse = {
   totalTests: number;
   completedCount: number;
   totalCount: number;
+  nextProblemSlug: string | null;
   createdAt: string;
+  isFirstAcceptedResult: boolean;
   error?: string;
 };
 
@@ -44,7 +47,10 @@ type RunState =
       passedTests: number;
       totalTests: number;
       completedCount: number;
+      totalCount: number;
+      nextProblemSlug: string | null;
     }
+  | { kind: "timeout"; message: string }
   | { kind: "error"; message: string };
 
 export function CodingWorkspace({
@@ -112,6 +118,11 @@ export function CodingWorkspace({
     setRunState({ kind: "running", message: "Running the example in your browser…" });
     const result = await runCodingSolution(code, [problem.example.input]);
 
+    if (result.status === "timeout") {
+      setRunState({ kind: "timeout", message: result.message });
+      return;
+    }
+
     if (result.status !== "finished") {
       setRunState({ kind: "error", message: result.message });
       return;
@@ -140,6 +151,11 @@ export function CodingWorkspace({
       code,
       problem.tests.map((test) => test.input),
     );
+
+    if (result.status === "timeout") {
+      setRunState({ kind: "timeout", message: result.message });
+      return;
+    }
 
     if (result.status !== "finished") {
       setRunState({ kind: "error", message: result.message });
@@ -184,11 +200,23 @@ export function CodingWorkspace({
         passedTests: payload.passedTests,
         totalTests: payload.totalTests,
         completedCount: payload.completedCount,
+        totalCount: payload.totalCount,
+        nextProblemSlug: payload.nextProblemSlug,
         message:
           payload.verdict === "Accepted"
             ? `${problem.title} is complete. Your code and result are saved.`
             : `${payload.passedTests} of ${payload.totalTests} checks passed. Your attempt is saved.`,
       });
+
+      if (
+        payload.verdict === "Accepted" &&
+        payload.isFirstAcceptedResult
+      ) {
+        capturePracticeProblemAccepted({
+          problemSlug: problem.slug,
+          passedCheckCount: payload.passedTests,
+        });
+      }
     } catch {
       setRunState({
         kind: "error",
@@ -284,7 +312,9 @@ export function CodingWorkspace({
               ? " is-accepted"
               : ""
         }`}
+        role="status"
         aria-live="polite"
+        aria-atomic="true"
       >
         <div>
           <span>
@@ -296,6 +326,8 @@ export function CodingWorkspace({
                   : "Example differs"
                 : runState.kind === "error"
                   ? "Runner stopped"
+                  : runState.kind === "timeout"
+                    ? "Time limit exceeded"
                   : runState.kind === "running"
                     ? "Judging"
                     : "Ready"}
@@ -314,10 +346,32 @@ export function CodingWorkspace({
           </div>
         ) : null}
         {runState.kind === "verdict" && runState.verdict === "Accepted" ? (
-          <p className="accepted-progress">
-            Practice progress · {runState.completedCount}/6 accepted
-          </p>
+          <div className="accepted-continuation">
+            <p className="accepted-progress">
+              Practice progress · {runState.completedCount}/{runState.totalCount} accepted
+            </p>
+            <Link
+              className="accepted-next-action"
+              href={
+                runState.nextProblemSlug
+                  ? `/practice/${runState.nextProblemSlug}`
+                  : "/practice"
+              }
+            >
+              {runState.nextProblemSlug
+                ? "Try the next problem"
+                : "View completed set"}
+            </Link>
+          </div>
         ) : null}
+        <div className="practice-recovery-cue">
+          <span aria-hidden="true" />
+          <p>
+            {isSignedIn
+              ? "Your saved code, attempts, and Accepted progress return after sign-in."
+              : "Sign in to save this work. Your code, attempts, and Accepted progress return with your account."}
+          </p>
+        </div>
       </div>
 
       <section className="attempt-history" aria-labelledby="attempt-history-title">

@@ -185,6 +185,10 @@ export function AccountForm() {
               ? "Create my account"
               : "Sign in"}
         </button>
+
+        <p className="account-free-access">
+          Free. No payment details required.
+        </p>
       </form>
 
       <p className="account-privacy">
