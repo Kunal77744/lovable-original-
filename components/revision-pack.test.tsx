@@ -93,11 +93,16 @@ describe("RevisionPack", () => {
     ).toBeInTheDocument();
   });
 
-  it("connects a completed lesson to the guided semantic HTML project", () => {
+  it("connects course completion to the project and interview drill", () => {
     render(<RevisionPack lessonSlug="semantic-html" />);
 
     expect(
       screen.getByRole("link", { name: /Build the guided project/ }),
     ).toHaveAttribute("href", "/projects/semantic-html-article");
+    expect(
+      screen.getByRole("link", {
+        name: /Practice JavaScript interview questions/,
+      }),
+    ).toHaveAttribute("href", "/interview/javascript-fundamentals");
   });
 });

@@ -205,10 +205,25 @@ export function RevisionPack({ lessonSlug }: RevisionPackProps) {
             account, and revise it against a six-check review.
           </p>
         </div>
-        <Link href="/projects/semantic-html-article">
-          Build the guided project
-          <span aria-hidden="true">→</span>
-        </Link>
+        <nav
+          className="revision-project-actions"
+          aria-label="Continue after Web Development Foundations"
+        >
+          <Link
+            className="revision-project-primary"
+            href="/projects/semantic-html-article"
+          >
+            Build the guided project
+            <span aria-hidden="true">→</span>
+          </Link>
+          <Link
+            className="revision-interview-link"
+            href="/interview/javascript-fundamentals"
+          >
+            Practice JavaScript interview questions
+            <span aria-hidden="true">→</span>
+          </Link>
+        </nav>
       </div>
     </section>
   );
