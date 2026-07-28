@@ -115,12 +115,38 @@ export default function AboutPage() {
             <p className="eyebrow">The standard</p>
             <h2 id="standard-title">Every lesson has somewhere to go.</h2>
           </div>
-          <p className="about-standard-copy">
-            Today, a clear explanation leads to a lesson-bound semantic HTML
-            tutor, private notes, a page you build and save, recall, flashcards,
-            and a certificate after passing. The guided project is still
-            planned, not part of this first course.
-          </p>
+          <div className="about-standard-details">
+            <p className="about-standard-label">Live now</p>
+            <ul className="about-standard-list">
+              <li>
+                One complete 18-minute semantic HTML lesson with a saved
+                workspace, assignment, quiz, notes, and revision.
+              </li>
+              <li>
+                A lesson-bound semantic HTML tutor that answers from the course
+                and cites the relevant section.
+              </li>
+              <li>A private course certificate after passing at 75%.</li>
+              <li>
+                A private learner profile for saved course and JavaScript
+                progress.
+              </li>
+              <li>
+                A private five-question JavaScript fundamentals interview
+                drill.
+              </li>
+              <li>A private saved JavaScript playground.</li>
+              <li>
+                Six beginner JavaScript problems with browser-run verdicts and
+                saved Accepted progress.
+              </li>
+            </ul>
+            <p className="about-standard-planned">
+              <span>Planned next</span>
+              The guided semantic HTML field-guide project and its six-check
+              review are not live yet.
+            </p>
+          </div>
         </section>
       </main>
       <SiteFooter />
