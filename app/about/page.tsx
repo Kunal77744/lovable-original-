@@ -116,9 +116,10 @@ export default function AboutPage() {
             <h2 id="standard-title">Every lesson has somewhere to go.</h2>
           </div>
           <p className="about-standard-copy">
-            Today, a clear explanation leads to recall, then to a page you build
-            and save. Projects, interview practice, flashcards, certificates,
-            and an AI tutor are planned, not part of this first course.
+            Today, a clear explanation leads to a lesson-bound semantic HTML
+            tutor, private notes, a page you build and save, recall, flashcards,
+            and a certificate after passing. The guided project is still
+            planned, not part of this first course.
           </p>
         </section>
       </main>

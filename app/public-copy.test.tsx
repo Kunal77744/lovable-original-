@@ -46,7 +46,9 @@ describe("public product promise", () => {
       screen.getByText(/the first focused course is live now/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/are planned, not part of this first course/i),
+      screen.getByText(
+        /guided project is still planned, not part of this first course/i,
+      ),
     ).toBeInTheDocument();
   });
 
