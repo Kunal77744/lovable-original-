@@ -66,7 +66,10 @@ export default function Home() {
               page, check your recall with four questions, and keep your course
               result.
             </p>
-            <Link className="primary-action" href="/account">
+            <Link
+              className="primary-action"
+              href="/learn/web-development-foundations/semantic-html"
+            >
               Start Web Development Foundations
               <ArrowIcon />
             </Link>

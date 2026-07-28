@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { LessonNotes } from "@/components/lesson-notes";
@@ -13,9 +13,16 @@ import {
   getFirstLessonNote,
 } from "@/db/course";
 import {
+  FIRST_COURSE,
+  FIRST_COURSE_LESSONS,
+  FIRST_LESSON,
   FIRST_LESSON_PASS_PERCENT,
   getPublicFirstLessonQuiz,
 } from "@/lib/first-course-content";
+import {
+  gradeSemanticHtml,
+  SEMANTIC_HTML_STARTER,
+} from "@/lib/semantic-html-workspace";
 import { auth } from "@/lib/auth";
 import { SiteNav } from "../../../site-chrome";
 
@@ -39,30 +46,69 @@ type LessonPageProps = {
 };
 
 export default async function LessonPage({ params }: LessonPageProps) {
+  const { courseSlug, lessonSlug } = await params;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (!session) {
-    redirect("/account?mode=signin");
-  }
+  const publicLesson =
+    courseSlug === FIRST_COURSE.slug && lessonSlug === FIRST_LESSON.slug
+      ? {
+          courseSlug: FIRST_COURSE.slug,
+          courseTitle: FIRST_COURSE.title,
+          lessonId: FIRST_LESSON.id,
+          lessonSlug: FIRST_LESSON.slug,
+          lessonTitle: FIRST_LESSON.title,
+          lessonDescription: FIRST_LESSON.description,
+          moduleTitle: FIRST_LESSON.moduleTitle,
+          position: FIRST_LESSON.position,
+          estimatedMinutes: FIRST_LESSON.estimatedMinutes,
+          completed: false,
+          quizScore: null,
+          completedLessons: 0,
+          totalLessons: FIRST_COURSE_LESSONS.length,
+          courseCompleted: false,
+          lessons: FIRST_COURSE_LESSONS.map((courseLesson) => ({
+            id: courseLesson.id,
+            slug: courseLesson.slug,
+            title: courseLesson.title,
+            description: courseLesson.description,
+            moduleTitle: courseLesson.moduleTitle,
+            position: courseLesson.position,
+            estimatedMinutes: courseLesson.estimatedMinutes,
+            completed: false,
+            quizScore: null,
+          })),
+        }
+      : null;
 
-  const { courseSlug, lessonSlug } = await params;
-  const studentLesson = await getFirstCourseLessonForStudent(
-    session.user.id,
-    courseSlug,
-    lessonSlug,
-  );
+  const studentLesson = session
+    ? await getFirstCourseLessonForStudent(
+        session.user.id,
+        courseSlug,
+        lessonSlug,
+      )
+    : publicLesson;
 
   if (!studentLesson) {
     notFound();
   }
 
-  const [workspace, lessonNote, courseFeedback] = await Promise.all([
-    getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
-    getFirstLessonNote(session.user.id, studentLesson.lessonSlug),
-    getCourseFeedbackForStudent(session.user.id, courseSlug),
-  ]);
+  const [workspace, lessonNote, courseFeedback] = session
+    ? await Promise.all([
+        getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
+        getFirstLessonNote(session.user.id, studentLesson.lessonSlug),
+        getCourseFeedbackForStudent(session.user.id, courseSlug),
+      ])
+    : [
+        {
+          html: SEMANTIC_HTML_STARTER,
+          checks: gradeSemanticHtml(SEMANTIC_HTML_STARTER),
+          saved: false,
+        },
+        { note: null },
+        null,
+      ];
 
   if (!workspace || !lessonNote) {
     notFound();
@@ -77,17 +123,22 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   return (
     <main className="lesson-page">
-      <LessonStartTracker
-        courseSlug={courseSlug}
-        lessonSlug={studentLesson.lessonSlug}
-        alreadyCompleted={studentLesson.completed}
-      />
-      <SiteNav currentPage="lesson" />
+      {session ? (
+        <LessonStartTracker
+          courseSlug={courseSlug}
+          lessonSlug={studentLesson.lessonSlug}
+          alreadyCompleted={studentLesson.completed}
+        />
+      ) : null}
+      <SiteNav currentPage="lesson" studentSession={Boolean(session)} />
       <div className="lesson-shell">
         <aside className="lesson-rail" aria-label="Course progress">
-          <Link className="lesson-back-link" href="/dashboard">
+          <Link
+            className="lesson-back-link"
+            href={session ? "/dashboard" : "/courses/web-development-foundations"}
+          >
             <span aria-hidden="true">←</span>
-            Dashboard
+            {session ? "Dashboard" : "Course overview"}
           </Link>
           <p>{studentLesson.courseTitle}</p>
           <div className="lesson-rail-progress">
@@ -98,8 +149,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <div>
               <strong>{studentLesson.moduleTitle}</strong>
               <small>
-                {studentLesson.completedLessons} of {studentLesson.totalLessons}{" "}
-                complete
+                {session
+                  ? `${studentLesson.completedLessons} of ${studentLesson.totalLessons} complete`
+                  : "Full lesson · Free to read"}
               </small>
             </div>
           </div>
@@ -266,6 +318,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <LessonNotes
             lessonSlug={studentLesson.lessonSlug}
             initialNote={lessonNote.note}
+            isSignedIn={Boolean(session)}
           />
 
           <SemanticHtmlWorkspace
@@ -273,6 +326,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             initialHtml={workspace.html}
             initialChecks={workspace.checks}
             initiallySaved={workspace.saved}
+            isSignedIn={Boolean(session)}
           />
 
           <LessonQuiz
@@ -286,6 +340,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             initialCompleted={studentLesson.completed}
             initialScore={studentLesson.quizScore}
             initialFeedback={courseFeedback?.feedback ?? null}
+            isSignedIn={Boolean(session)}
           />
         </article>
       </div>

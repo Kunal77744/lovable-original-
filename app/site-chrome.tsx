@@ -28,7 +28,6 @@ export function SiteNav({
 }: SiteNavProps) {
   const inStudentSpace =
     currentPage === "dashboard" ||
-    currentPage === "lesson" ||
     currentPage === "settings" ||
     currentPage === "certificate" ||
     studentSession;

@@ -61,7 +61,10 @@ export default function AboutPage() {
               18-minute semantic HTML lesson, a saved coding workspace, four
               recall questions, and progress you can return to.
             </p>
-            <Link className="primary-action" href="/account">
+            <Link
+              className="primary-action"
+              href="/learn/web-development-foundations/semantic-html"
+            >
               Start Web Development Foundations
               <ArrowIcon />
             </Link>

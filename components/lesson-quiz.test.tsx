@@ -132,4 +132,42 @@ describe("LessonQuiz analytics", () => {
       screen.getByRole("link", { name: "Return to your article" }),
     ).toHaveAttribute("href", "#semantic-workspace");
   });
+
+  it("keeps signed-out answers local until the learner requests grading", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={1}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        isSignedIn={false}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: "Create account" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/create a free account to check your answers/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+      "href",
+      "/account",
+    );
+  });
 });
