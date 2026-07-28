@@ -1,0 +1,102 @@
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getCourseFeedbackForStudent,
+  getFirstCourseLessonForStudent,
+  getFirstLessonArtifact,
+  getFirstLessonNote,
+} from "@/db/course";
+import { auth } from "@/lib/auth";
+import LessonPage from "./page";
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn().mockResolvedValue(new Headers()),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  auth: {
+    api: {
+      getSession: vi.fn(),
+    },
+  },
+}));
+
+vi.mock("@/db/course", () => ({
+  getCourseFeedbackForStudent: vi.fn(),
+  getFirstCourseLessonForStudent: vi.fn(),
+  getFirstLessonArtifact: vi.fn(),
+  getFirstLessonNote: vi.fn(),
+}));
+
+const getSession = vi.mocked(auth.api.getSession);
+const getStudentLesson = vi.mocked(getFirstCourseLessonForStudent);
+const getArtifact = vi.mocked(getFirstLessonArtifact);
+const getNote = vi.mocked(getFirstLessonNote);
+const getFeedback = vi.mocked(getCourseFeedbackForStudent);
+
+describe("public lesson access", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSession.mockResolvedValue(null);
+  });
+
+  it("renders the complete authored lesson without loading private learner data", async () => {
+    render(
+      await LessonPage({
+        params: Promise.resolve({
+          courseSlug: "web-development-foundations",
+          lessonSlug: "semantic-html",
+        }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Build a page the browser understands",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Structure is meaning before it is styling.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Choose elements by purpose, not appearance.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Build a heading outline someone can scan.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Build an accessible article page.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Check your mental model." }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Full lesson · Free to read")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Answer from memory. You can choose all four answers before deciding whether to check them.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/wrong attempt is saved as progress/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Student sign in" }),
+    ).toHaveAttribute("href", "/account");
+    expect(
+      screen.queryByRole("link", { name: "Create account" }),
+    ).not.toBeInTheDocument();
+
+    expect(getStudentLesson).not.toHaveBeenCalled();
+    expect(getArtifact).not.toHaveBeenCalled();
+    expect(getNote).not.toHaveBeenCalled();
+    expect(getFeedback).not.toHaveBeenCalled();
+  });
+});

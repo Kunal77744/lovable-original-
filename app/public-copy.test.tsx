@@ -19,7 +19,10 @@ describe("public product promise", () => {
       screen.getByRole("link", {
         name: /start web development foundations/i,
       }),
-    ).toHaveAttribute("href", "/account");
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
     expect(
       screen.getByText(/build and save an article page/i),
     ).toBeInTheDocument();
@@ -35,7 +38,10 @@ describe("public product promise", () => {
       screen.getByRole("link", {
         name: /start web development foundations/i,
       }),
-    ).toHaveAttribute("href", "/account");
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
     expect(
       screen.getByText(/the first focused course is live now/i),
     ).toBeInTheDocument();
@@ -91,8 +97,11 @@ describe("public product promise", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /start the course/i }),
-    ).toHaveAttribute("href", "/account");
+      screen.getByRole("link", { name: /read the full lesson/i }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
     expect(screen.getByText("75% to pass")).toBeInTheDocument();
     expect(screen.getByText("Four recall questions")).toBeInTheDocument();
     expect(screen.getByText("1 saved page")).toBeInTheDocument();

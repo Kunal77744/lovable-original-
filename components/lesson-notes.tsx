@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   MAX_LESSON_NOTE_LENGTH,
@@ -9,9 +10,14 @@ import {
 type LessonNotesProps = {
   lessonSlug: string;
   initialNote: SavedLessonNote | null;
+  isSignedIn?: boolean;
 };
 
-export function LessonNotes({ lessonSlug, initialNote }: LessonNotesProps) {
+export function LessonNotes({
+  lessonSlug,
+  initialNote,
+  isSignedIn = true,
+}: LessonNotesProps) {
   const [content, setContent] = useState(initialNote?.content ?? "");
   const [savedContent, setSavedContent] = useState(initialNote?.content ?? "");
   const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +34,14 @@ export function LessonNotes({ lessonSlug, initialNote }: LessonNotesProps) {
     if (content.trim().length === 0) {
       setIsError(true);
       setMessage("Write a note before saving.");
+      return;
+    }
+
+    if (!isSignedIn) {
+      setIsError(false);
+      setMessage(
+        "Create a free account to save this note. Your draft has not left this browser.",
+      );
       return;
     }
 
@@ -121,6 +135,12 @@ export function LessonNotes({ lessonSlug, initialNote }: LessonNotesProps) {
         </button>
         <p className={isError ? "is-error" : ""} aria-live="polite">
           {message}
+          {!isSignedIn && message.startsWith("Create a free account") ? (
+            <>
+              {" "}
+              <Link href="/account">Create account</Link>
+            </>
+          ) : null}
         </p>
       </div>
     </section>

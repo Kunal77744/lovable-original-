@@ -31,6 +31,7 @@ type LessonQuizProps = {
     comment: string;
     updatedAt: string;
   } | null;
+  isSignedIn?: boolean;
 };
 
 export function LessonQuiz({
@@ -44,6 +45,7 @@ export function LessonQuiz({
   initialCompleted,
   initialScore,
   initialFeedback,
+  isSignedIn = true,
 }: LessonQuizProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(
@@ -67,6 +69,13 @@ export function LessonQuiz({
 
     if (Object.keys(answers).length !== questions.length) {
       setError("Answer every question before checking your work.");
+      return;
+    }
+
+    if (!isSignedIn) {
+      setError(
+        "Create a free account to check your answers and save your best score.",
+      );
       return;
     }
 
@@ -155,8 +164,9 @@ export function LessonQuiz({
         <span>{passPercent}% to complete</span>
       </div>
       <p className="quiz-intro">
-        Answer from memory. A wrong attempt is saved as progress, and you can
-        retry immediately.
+        {isSignedIn
+          ? "Answer from memory. A wrong attempt is saved as progress, and you can retry immediately."
+          : "Answer from memory. You can choose all four answers before deciding whether to check them."}
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -201,7 +211,15 @@ export function LessonQuiz({
               ? error
               : result && !result.passed
                 ? `${result.score}% is saved. Review the lesson and try again.`
-                : "Your score is saved to your account."}
+                : isSignedIn
+                  ? "Your score is saved to your account."
+                  : "Choose answers from memory, then check your work."}
+            {!isSignedIn && error?.startsWith("Create a free account") ? (
+              <>
+                {" "}
+                <Link href="/account">Create account</Link>
+              </>
+            ) : null}
           </p>
         </div>
       </form>

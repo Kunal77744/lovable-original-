@@ -108,8 +108,11 @@ export default function WebDevelopmentFoundationsPage() {
               HTML, then check your choices with four questions. Pass at 75%
               and keep your best result.
             </p>
-            <Link className="primary-action" href="/account">
-              Start the course
+            <Link
+              className="primary-action"
+              href="/learn/web-development-foundations/semantic-html"
+            >
+              Read the full lesson
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
