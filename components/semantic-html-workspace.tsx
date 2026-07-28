@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   buildSandboxedPreviewDocument,
@@ -11,6 +12,7 @@ type SemanticHtmlWorkspaceProps = {
   initialHtml: string;
   initialChecks: SemanticHtmlCheck[];
   initiallySaved: boolean;
+  isSignedIn?: boolean;
 };
 
 type WorkspaceResponse = {
@@ -32,6 +34,7 @@ export function SemanticHtmlWorkspace({
   initialHtml,
   initialChecks,
   initiallySaved,
+  isSignedIn = true,
 }: SemanticHtmlWorkspaceProps) {
   const [html, setHtml] = useState(initialHtml);
   const [checks, setChecks] = useState(initialChecks);
@@ -53,6 +56,14 @@ export function SemanticHtmlWorkspace({
   const passedCount = checks.filter((check) => check.passed).length;
 
   async function submitAssignment() {
+    if (!isSignedIn) {
+      setSaveState("unsaved");
+      setMessage(
+        "Create a free account to grade and save this assignment. Your draft has not left this browser.",
+      );
+      return;
+    }
+
     setSaveState("saving");
     setMessage("Submitting and checking your structure…");
 
@@ -138,7 +149,9 @@ export function SemanticHtmlWorkspace({
                 ? "Submitted"
                 : saveState === "saving"
                   ? "Submitting"
-                  : "Draft"}
+                  : isSignedIn
+                    ? "Draft"
+                    : "Local draft"}
             </span>
           </div>
           <label htmlFor="semantic-html-editor">Semantic HTML</label>
@@ -211,6 +224,12 @@ export function SemanticHtmlWorkspace({
           </button>
           <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
             {message}
+            {!isSignedIn && message.startsWith("Create a free account") ? (
+              <>
+                {" "}
+                <Link href="/account">Create account</Link>
+              </>
+            ) : null}
           </p>
         </div>
       </div>

@@ -99,4 +99,35 @@ describe("LessonNotes", () => {
       }),
     );
   });
+
+  it("keeps a signed-out note local until the learner tries to save", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LessonNotes
+        lessonSlug="semantic-html"
+        initialNote={null}
+        isSignedIn={false}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: "Create account" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("What do you want to remember?"), {
+      target: { value: "A landmark names a region's purpose." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/your draft has not left this browser/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+      "href",
+      "/account",
+    );
+  });
 });
