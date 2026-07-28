@@ -73,9 +73,7 @@ export default function BeginnerJavaScriptPracticeEntryPage() {
               Make your first six problems count.
             </h1>
             <p className="learn-entry-lede">
-              Solve a focused set from input handling to FizzBuzz. Run code in
-              your browser, submit against fixed checks, and build an Accepted
-              streak you can save.
+              Six problems, one beginner path
             </p>
             <Link
               className="primary-action"

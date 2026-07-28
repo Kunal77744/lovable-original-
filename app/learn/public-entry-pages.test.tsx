@@ -37,6 +37,9 @@ describe("focused public learner entry pages", () => {
       }),
     ).toBeInTheDocument();
     expect(
+      screen.getByText("Six problems, one beginner path"),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("link", { name: /start problem 01/i }),
     ).toHaveAttribute("href", `/practice/${CODING_PROBLEMS[0].slug}`);
     expect(screen.getByText("4 of 4 passed")).toBeInTheDocument();
