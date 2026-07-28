@@ -10,6 +10,8 @@ describe("public sitemap", () => {
       `${productionUrl}/about`,
       `${productionUrl}/courses/web-development-foundations`,
       `${productionUrl}/practice`,
+      `${productionUrl}/learn/semantic-html`,
+      `${productionUrl}/learn/beginner-javascript-practice`,
     ]);
   });
 
