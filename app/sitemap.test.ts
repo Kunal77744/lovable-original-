@@ -18,6 +18,8 @@ describe("public sitemap", () => {
     "/profile",
     "/interview/javascript-fundamentals",
     "/playground",
+    "/settings",
+    "/certificate",
   ])("excludes the private route %s", (privateRoute) => {
     expect(sitemap().map(({ url }) => url)).not.toContain(
       `${productionUrl}${privateRoute}`,
