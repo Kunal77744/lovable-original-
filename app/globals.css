@@ -1408,6 +1408,52 @@ h1 {
   outline-offset: 3px;
 }
 
+.dashboard-project-ready {
+  max-width: 34rem;
+  margin-top: 18px;
+  padding-top: 16px;
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid #d6ddd5;
+}
+
+.dashboard-project-ready > span {
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dashboard-project-ready p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.dashboard-project-ready a {
+  min-height: 44px;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-project-ready a:hover {
+  color: #0f432b;
+}
+
+.dashboard-project-ready a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
 .course-lesson-action,
 .lesson-primary-action {
   min-height: 50px;
@@ -3099,7 +3145,13 @@ h1 {
   line-height: 1.55;
 }
 
-.revision-project-bridge a {
+.revision-project-actions {
+  min-width: min(100%, 292px);
+  display: grid;
+  gap: 7px;
+}
+
+.revision-project-primary {
   min-height: 44px;
   padding: 0 16px;
   display: inline-flex;
@@ -3113,13 +3165,31 @@ h1 {
   text-decoration: none;
 }
 
-.revision-project-bridge a:hover {
+.revision-project-primary:hover {
   background: #0f432b;
 }
 
-.revision-project-bridge a:focus-visible {
+.revision-project-primary:focus-visible,
+.revision-practice-secondary:focus-visible {
   outline: 3px solid rgba(40, 118, 82, 0.3);
   outline-offset: 3px;
+}
+
+.revision-practice-secondary {
+  min-height: 40px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.revision-practice-secondary:hover {
+  color: #0f432b;
 }
 
 .project-page {
@@ -7110,8 +7180,14 @@ footer {
     gap: 20px;
   }
 
-  .revision-project-bridge a {
+  .revision-project-actions,
+  .revision-project-primary,
+  .revision-practice-secondary {
     width: 100%;
+  }
+
+  .revision-project-primary,
+  .revision-practice-secondary {
     justify-content: space-between;
   }
 

@@ -29,6 +29,7 @@ describe("buildLearnerProfile", () => {
       course: baseCourse,
       practice: emptyPractice,
       attempts: [],
+      projectCompleted: false,
     });
 
     expect(profile.quizScore).toBeNull();
@@ -53,6 +54,7 @@ describe("buildLearnerProfile", () => {
         completedSlugs: ["sum-two-numbers"],
       },
       attempts: [],
+      projectCompleted: false,
     });
 
     expect(profile.quizScore).toBe(50);
@@ -61,7 +63,7 @@ describe("buildLearnerProfile", () => {
     expect(profile.nextAction.description).toContain("75% pass mark");
   });
 
-  it("recommends the first unaccepted problem after course completion", () => {
+  it("routes a completed course into the unfinished guided project", () => {
     const profile = buildLearnerProfile({
       course: {
         ...baseCourse,
@@ -80,6 +82,38 @@ describe("buildLearnerProfile", () => {
         completedSlugs: ["sum-two-numbers"],
       },
       attempts: [],
+      projectCompleted: false,
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Build the field guide",
+        href: "/projects/semantic-html-article",
+        title: "Semantic HTML field guide",
+      }),
+    );
+  });
+
+  it("recommends the first unaccepted problem after project completion", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: {
+        completedCount: 1,
+        totalCount: 6,
+        completedSlugs: ["sum-two-numbers"],
+      },
+      attempts: [],
+      projectCompleted: true,
     });
 
     expect(profile.nextAction).toEqual(
@@ -116,6 +150,7 @@ describe("buildLearnerProfile", () => {
         ],
       },
       attempts: [],
+      projectCompleted: true,
     });
 
     expect(profile.nextAction).toEqual(

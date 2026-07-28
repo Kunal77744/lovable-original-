@@ -33,7 +33,7 @@ export function SiteNav({
   const inStudentSpace =
     currentPage === "dashboard" ||
     currentPage === "profile" ||
-    currentPage === "lesson" ||
+    (currentPage === "lesson" && studentSession) ||
     currentPage === "project" ||
     currentPage === "settings" ||
     currentPage === "certificate" ||
