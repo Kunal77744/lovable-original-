@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LessonQuiz } from "./lesson-quiz";
 
 const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
@@ -28,6 +34,10 @@ const questions = [
 ] as const;
 
 describe("LessonQuiz analytics", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal(
@@ -89,5 +99,37 @@ describe("LessonQuiz analytics", () => {
     expect(
       screen.getByRole("heading", { name: "Semantic HTML, compressed" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the structure connects" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the concept map when a saved completion is restored", () => {
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={1}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "You completed Web Development Foundations.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the structure connects" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Return to your article" }),
+    ).toHaveAttribute("href", "#semantic-workspace");
   });
 });

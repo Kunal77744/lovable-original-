@@ -1,8 +1,19 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RevisionPack } from "./revision-pack";
 
 describe("RevisionPack", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     window.localStorage.clear();
   });
@@ -10,6 +21,22 @@ describe("RevisionPack", () => {
   it("lets a learner reveal and work through every flashcard", async () => {
     render(<RevisionPack lessonSlug="semantic-html" />);
 
+    expect(
+      screen.getByRole("heading", { name: "How the structure connects" }),
+    ).toBeInTheDocument();
+    const outline = screen.getByRole("region", {
+      name: "Trace the page from structure to self-check.",
+    });
+    expect(outline).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Return to your article" }),
+    ).toHaveAttribute("href", "#semantic-workspace");
+    expect(within(outline).getByText("Semantic landmarks")).toBeInTheDocument();
+    expect(
+      within(outline).getByText(
+        "Is the article inside one clear <main> landmark?",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Card 1 of 5")).toBeInTheDocument();
     expect(screen.getByText("0 checked")).toBeInTheDocument();
     await waitFor(() =>
@@ -80,6 +107,9 @@ describe("RevisionPack", () => {
       screen.getByRole("heading", {
         name: "Why should an <h2> follow the page’s <h1>?",
       }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the structure connects" }),
     ).toBeInTheDocument();
   });
 });
