@@ -50,6 +50,7 @@ describe("GuidedProjectWorkspace", () => {
       <GuidedProjectWorkspace
         projectSlug="semantic-html-article"
         initialProject={starterProject}
+        initialFeedback={null}
       />,
     );
 
@@ -104,6 +105,7 @@ describe("GuidedProjectWorkspace", () => {
       <GuidedProjectWorkspace
         projectSlug="semantic-html-article"
         initialProject={starterProject}
+        initialFeedback={null}
       />,
     );
 
@@ -163,6 +165,7 @@ describe("GuidedProjectWorkspace", () => {
       <GuidedProjectWorkspace
         projectSlug="semantic-html-article"
         initialProject={{ ...starterProject, html: completeHtml }}
+        initialFeedback={null}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Submit for review" }));
@@ -182,6 +185,11 @@ describe("GuidedProjectWorkspace", () => {
     expect(
       screen.getByRole("link", { name: /View saved progress/ }),
     ).toHaveAttribute("href", "/dashboard");
+    expect(
+      screen.getByRole("heading", {
+        name: "What felt confusing while you built this?",
+      }),
+    ).toBeInTheDocument();
     expect(analyticsMocks.captureProjectCompleted).toHaveBeenCalledOnce();
     expect(analyticsMocks.captureProjectCompleted).toHaveBeenCalledWith({
       projectSlug: "semantic-html-article",
@@ -203,6 +211,7 @@ describe("GuidedProjectWorkspace", () => {
           ...starterProject,
           html: '<img src="https://example.com/track.png"><script>alert(1)</script>',
         }}
+        initialFeedback={null}
       />,
     );
 

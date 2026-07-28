@@ -3,7 +3,10 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { GuidedProjectWorkspace } from "@/components/guided-project-workspace";
-import { getGuidedProjectForStudent } from "@/db/guided-project";
+import {
+  getGuidedProjectFeedbackForStudent,
+  getGuidedProjectForStudent,
+} from "@/db/guided-project";
 import {
   GUIDED_PROJECT_SLUG,
   GUIDED_PROJECT_TITLE,
@@ -32,10 +35,13 @@ export default async function SemanticHtmlProjectPage() {
     redirect("/account?mode=signin");
   }
 
-  const project = await getGuidedProjectForStudent(
-    session.user.id,
-    GUIDED_PROJECT_SLUG,
-  );
+  const [project, projectFeedback] = await Promise.all([
+    getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
+    getGuidedProjectFeedbackForStudent(
+      session.user.id,
+      GUIDED_PROJECT_SLUG,
+    ),
+  ]);
 
   if (!project) {
     redirect("/dashboard");
@@ -96,6 +102,7 @@ export default async function SemanticHtmlProjectPage() {
         <GuidedProjectWorkspace
           projectSlug={GUIDED_PROJECT_SLUG}
           initialProject={project}
+          initialFeedback={projectFeedback?.feedback ?? null}
         />
       </section>
       <SiteFooter />
