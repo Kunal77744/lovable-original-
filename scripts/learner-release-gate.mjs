@@ -7,6 +7,7 @@ const COURSE_TITLE = "Web Development Foundations";
 const COURSE_SLUG = "web-development-foundations";
 const LESSON_SLUG = "semantic-html";
 const LESSON_TITLE = "Build a page the browser understands";
+const CERTIFICATE_TITLE = "Private course certificate";
 const QUIZ_ANSWERS = {
   "main-landmark": "main",
   "heading-order": "h2",
@@ -298,6 +299,9 @@ async function runJourney(baseUrl, databaseUrl) {
   let savedWorkspaceHtml = "";
   let savedFeedbackComment = "";
   let savedLessonNote = "";
+  let savedCertificateName = "";
+  let savedCertificateId = "";
+  let savedCertificateAwardedAt = "";
 
   async function request(path, options = {}, requestJar = jar) {
     const headers = new Headers(options.headers);
@@ -368,6 +372,12 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Initial progress was not 0/1.",
     );
+    assertStep(
+      text.includes("Certificate settings") &&
+        text.includes("Certificate requirements"),
+      step,
+      "Private certificate entry points were not visible.",
+    );
   });
 
   await runStep(3, async (step) => {
@@ -416,6 +426,35 @@ async function runJourney(baseUrl, databaseUrl) {
       noteResponse.status === 200 && note.note === null,
       step,
       "A fresh learner inherited another learner’s note.",
+    );
+
+    const settingsResponse = await request("/settings");
+    const settingsText = pageText(await settingsResponse.text());
+    assertStep(
+      settingsResponse.status === 200 &&
+        settingsText.includes("Private learner settings") &&
+        settingsText.includes("Certificate display name"),
+      step,
+      "Private learner settings did not load.",
+    );
+
+    const certificateResponse = await request("/certificate");
+    const certificateText = pageText(await certificateResponse.text());
+    assertStep(
+      certificateResponse.status === 200 &&
+        certificateText.includes(CERTIFICATE_TITLE) &&
+        certificateText.includes("Finish the recall check first."),
+      step,
+      "The certificate was not locked before course completion.",
+    );
+    const certificateApiResponse = await request("/api/certificate");
+    const certificateState = await certificateApiResponse.json();
+    assertStep(
+      certificateApiResponse.status === 200 &&
+        certificateState.eligible === false &&
+        certificateState.certificate === null,
+      step,
+      "A fresh learner inherited an earned certificate.",
     );
   });
 
@@ -500,6 +539,28 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The revised lesson note was not returned exactly.",
     );
+
+    const firstSettingsResponse = await jsonRequest("/api/settings", {
+      certificateDisplayName: "Release Gate Student",
+    });
+    assertStep(
+      firstSettingsResponse.status === 200,
+      step,
+      "A certificate name was not saved.",
+    );
+
+    savedCertificateName = `Release Gate ${runId}`;
+    const revisedSettingsResponse = await jsonRequest("/api/settings", {
+      certificateDisplayName: savedCertificateName,
+    });
+    const revisedSettings = await revisedSettingsResponse.json();
+    assertStep(
+      revisedSettingsResponse.status === 200 &&
+        revisedSettings.settings?.certificateDisplayName ===
+          savedCertificateName,
+      step,
+      "The revised certificate name was not returned exactly.",
+    );
   });
 
   await runStep(5, async (step) => {
@@ -552,6 +613,19 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The revised course feedback was not returned exactly.",
     );
+
+    const certificateResponse = await request("/api/certificate");
+    const certificateState = await certificateResponse.json();
+    assertStep(
+      certificateResponse.status === 200 &&
+        certificateState.eligible === true &&
+        certificateState.certificate?.displayName === savedCertificateName &&
+        certificateState.certificate?.courseTitle === COURSE_TITLE,
+      step,
+      "The saved 75% course rule did not award the private certificate.",
+    );
+    savedCertificateId = certificateState.certificate.id;
+    savedCertificateAwardedAt = certificateState.certificate.awardedAt;
   });
 
   await runStep(6, async (step) => {
@@ -611,6 +685,26 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The exact revised lesson note was not restored after reload.",
     );
+
+    const settingsResponse = await request("/api/settings");
+    const settings = await settingsResponse.json();
+    assertStep(
+      settingsResponse.status === 200 &&
+        settings.settings?.certificateDisplayName === savedCertificateName,
+      step,
+      "The revised certificate name was not restored after reload.",
+    );
+
+    const certificateResponse = await request("/api/certificate");
+    const certificateState = await certificateResponse.json();
+    assertStep(
+      certificateResponse.status === 200 &&
+        certificateState.certificate?.id === savedCertificateId &&
+        certificateState.certificate?.awardedAt === savedCertificateAwardedAt &&
+        certificateState.certificate?.displayName === savedCertificateName,
+      step,
+      "The stable certificate award was not restored after reload.",
+    );
   });
 
   await runStep(7, async (step) => {
@@ -660,6 +754,27 @@ async function runJourney(baseUrl, databaseUrl) {
       noteResponse.status === 401,
       step,
       "Signed-out lesson note access was not rejected.",
+    );
+    const settingsResponse = await request("/api/settings");
+    assertStep(
+      settingsResponse.status === 401,
+      step,
+      "Signed-out settings access was not rejected.",
+    );
+    const certificateApiResponse = await request("/api/certificate");
+    assertStep(
+      certificateApiResponse.status === 401,
+      step,
+      "Signed-out certificate access was not rejected.",
+    );
+    const certificatePageResponse = await request("/certificate");
+    assertStep(
+      [302, 303, 307, 308].includes(certificatePageResponse.status) &&
+        (certificatePageResponse.headers.get("location") ?? "").includes(
+          "/account?mode=signin",
+        ),
+      step,
+      "The signed-out certificate page did not redirect to sign in.",
     );
   });
 
@@ -718,6 +833,26 @@ async function runJourney(baseUrl, databaseUrl) {
         note.note?.content === savedLessonNote,
       step,
       "The exact lesson note did not remain after sign in.",
+    );
+
+    const settingsResponse = await request("/api/settings");
+    const settings = await settingsResponse.json();
+    assertStep(
+      settingsResponse.status === 200 &&
+        settings.settings?.certificateDisplayName === savedCertificateName,
+      step,
+      "The certificate name did not remain after sign in.",
+    );
+
+    const certificateResponse = await request("/api/certificate");
+    const certificateState = await certificateResponse.json();
+    assertStep(
+      certificateResponse.status === 200 &&
+        certificateState.certificate?.id === savedCertificateId &&
+        certificateState.certificate?.awardedAt === savedCertificateAwardedAt &&
+        certificateState.certificate?.displayName === savedCertificateName,
+      step,
+      "The earned certificate did not remain after sign in.",
     );
   });
 
@@ -883,6 +1018,58 @@ async function runJourney(baseUrl, databaseUrl) {
       feedbackSaveResponse.status === 403,
       step,
       "A learner without a saved quiz result could change course feedback.",
+    );
+
+    const secondSettingsResponse = await request(
+      "/api/settings",
+      {},
+      secondJar,
+    );
+    const secondSettings = await secondSettingsResponse.json();
+    assertStep(
+      secondSettingsResponse.status === 200 &&
+        secondSettings.settings?.certificateDisplayName !==
+          savedCertificateName,
+      step,
+      "One learner could read another learner’s certificate name.",
+    );
+
+    const secondCertificateResponse = await request(
+      "/api/certificate",
+      {},
+      secondJar,
+    );
+    const secondCertificate = await secondCertificateResponse.json();
+    assertStep(
+      secondCertificateResponse.status === 200 &&
+        secondCertificate.eligible === false &&
+        secondCertificate.certificate === null,
+      step,
+      "One learner inherited another learner’s certificate.",
+    );
+
+    const secondName = "Isolated Release Student";
+    const secondSettingsSaveResponse = await jsonRequest(
+      "/api/settings",
+      { certificateDisplayName: secondName },
+      secondJar,
+    );
+    const secondSavedSettings = await secondSettingsSaveResponse.json();
+    assertStep(
+      secondSettingsSaveResponse.status === 200 &&
+        secondSavedSettings.settings?.certificateDisplayName === secondName,
+      step,
+      "The isolation learner could not save separate settings.",
+    );
+
+    const originalSettingsResponse = await request("/api/settings");
+    const originalSettings = await originalSettingsResponse.json();
+    assertStep(
+      originalSettingsResponse.status === 200 &&
+        originalSettings.settings?.certificateDisplayName ===
+          savedCertificateName,
+      step,
+      "Another learner changed the original learner’s settings.",
     );
   });
 }

@@ -108,6 +108,36 @@ export default async function DashboardPage() {
         </article>
 
         <section
+          className="dashboard-account-tools"
+          aria-labelledby="dashboard-account-tools-title"
+        >
+          <div>
+            <p className="course-kicker">Private learner record</p>
+            <h2 id="dashboard-account-tools-title">
+              Keep the finish line attached to your account.
+            </h2>
+            <p>
+              Choose your certificate name now. Your private course certificate
+              becomes available after you pass the saved quiz at 75% or higher.
+            </p>
+          </div>
+          <div className="dashboard-account-actions">
+            <Link href="/settings">
+              Certificate settings <span aria-hidden="true">→</span>
+            </Link>
+            <Link
+              className={firstCourse.courseCompleted ? "is-earned" : ""}
+              href="/certificate"
+            >
+              {firstCourse.courseCompleted
+                ? "View earned certificate"
+                : "Certificate requirements"}
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </section>
+
+        <section
           className="dashboard-practice"
           aria-labelledby="dashboard-practice-title"
         >
