@@ -22,6 +22,11 @@ type LearnerEventProperties = {
   passed?: boolean;
 };
 
+type ProjectCompletedProperties = {
+  projectSlug: string;
+  passedCheckCount: number;
+};
+
 let initialized = false;
 let fallbackJourneyId: string | null = null;
 const fallbackCapturedEvents = new Set<string>();
@@ -182,8 +187,9 @@ function capture(
     | "account_created"
     | "lesson_started"
     | "quiz_completed"
-    | "feedback_submitted",
-  properties: Record<string, string | boolean>,
+    | "feedback_submitted"
+    | "project_completed",
+  properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
 
@@ -246,8 +252,31 @@ export function captureLearnerEventOnce(
 
   const didCapture = capture(
     eventName,
-    properties as Record<string, string | boolean>,
+    properties as Record<string, string | number | boolean>,
   );
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function captureProjectCompleted({
+  projectSlug,
+  passedCheckCount,
+}: ProjectCompletedProperties) {
+  const dedupeKey = `project_completed:${projectSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture("project_completed", {
+    project_slug: projectSlug,
+    passed_check_count: passedCheckCount,
+  });
 
   if (didCapture) {
     rememberCapturedEvent(dedupeKey, capturedEvents);

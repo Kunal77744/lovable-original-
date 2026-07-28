@@ -102,10 +102,26 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
-  const project =
-    action === "submit"
-      ? await submitGuidedProjectForReview(userId, projectSlug, html)
-      : await saveGuidedProjectDraft(userId, projectSlug, html);
+  if (action === "submit") {
+    const result = await submitGuidedProjectForReview(
+      userId,
+      projectSlug,
+      html,
+    );
 
-  return NextResponse.json(project);
+    if (!result) {
+      return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      ...result.project,
+      firstCompletedReview: result.completedForFirstTime,
+    });
+  }
+
+  const project = await saveGuidedProjectDraft(userId, projectSlug, html);
+
+  return project
+    ? NextResponse.json(project)
+    : NextResponse.json({ error: "Project not found." }, { status: 404 });
 }

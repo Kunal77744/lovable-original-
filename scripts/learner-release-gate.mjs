@@ -612,11 +612,25 @@ async function runJourney(baseUrl, databaseUrl) {
         completedProject.hasUnreviewedChanges === false &&
         completedProject.submission?.status === "completed" &&
         completedProject.submission?.passedChecks === 6 &&
+        completedProject.firstCompletedReview === true &&
         completedProject.submission?.checks.every(
           (check) => check.passed === true,
         ),
       step,
       "The revised project did not save a completed 6/6 review.",
+    );
+    const repeatedCompletedProjectResponse = await jsonRequest(
+      `/api/projects/${PROJECT_SLUG}`,
+      { action: "submit", html: savedProjectHtml },
+    );
+    const repeatedCompletedProject =
+      await repeatedCompletedProjectResponse.json();
+    assertStep(
+      repeatedCompletedProjectResponse.status === 200 &&
+        repeatedCompletedProject.submission?.passedChecks === 6 &&
+        repeatedCompletedProject.firstCompletedReview === false,
+      step,
+      "A repeated completed project review was not suppressed.",
     );
 
     const firstFeedbackResponse = await jsonRequest(

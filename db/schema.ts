@@ -289,6 +289,8 @@ export const guidedProject = pgTable(
     status: text("status").notNull().default("draft"),
     reviewChecks: jsonb("review_checks").$type<GuidedProjectCheck[]>(),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    completionId: text("completion_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

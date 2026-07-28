@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   gradeGuidedProject,
   GUIDED_PROJECT_STARTER,
@@ -16,6 +16,8 @@ type StoredProject = {
   status: string;
   reviewChecks: GuidedProjectCheck[] | null;
   submittedAt: Date | null;
+  completedAt: Date | null;
+  completionId: string | null;
   updatedAt: Date;
 };
 
@@ -55,6 +57,8 @@ async function findGuidedProject(userId: string, projectSlug: string) {
       status: guidedProject.status,
       reviewChecks: guidedProject.reviewChecks,
       submittedAt: guidedProject.submittedAt,
+      completedAt: guidedProject.completedAt,
+      completionId: guidedProject.completionId,
       updatedAt: guidedProject.updatedAt,
     })
     .from(guidedProject)
@@ -137,8 +141,9 @@ export async function submitGuidedProjectForReview(
   const checks = gradeGuidedProject(html);
   const completed = checks.every((check) => check.passed);
   const now = new Date();
+  const completionId = completed ? crypto.randomUUID() : null;
 
-  await database
+  const [project] = await database
     .insert(guidedProject)
     .values({
       id: crypto.randomUUID(),
@@ -149,6 +154,8 @@ export async function submitGuidedProjectForReview(
       status: completed ? "completed" : "needs-revision",
       reviewChecks: checks,
       submittedAt: now,
+      completedAt: completed ? now : null,
+      completionId,
       updatedAt: now,
     })
     .onConflictDoUpdate({
@@ -159,11 +166,33 @@ export async function submitGuidedProjectForReview(
         status: completed ? "completed" : "needs-revision",
         reviewChecks: checks,
         submittedAt: now,
+        ...(completed
+          ? {
+              completedAt: sql`coalesce(${guidedProject.completedAt}, ${now.toISOString()}::timestamptz)`,
+              completionId: sql`coalesce(${guidedProject.completionId}, ${completionId})`,
+            }
+          : {}),
         updatedAt: now,
       },
+    })
+    .returning({
+      html: guidedProject.html,
+      reviewedHtml: guidedProject.reviewedHtml,
+      status: guidedProject.status,
+      reviewChecks: guidedProject.reviewChecks,
+      submittedAt: guidedProject.submittedAt,
+      completedAt: guidedProject.completedAt,
+      completionId: guidedProject.completionId,
+      updatedAt: guidedProject.updatedAt,
     });
 
-  const project = await findGuidedProject(userId, projectSlug);
+  if (!project) {
+    return null;
+  }
 
-  return project ? projectResponse(project) : null;
+  return {
+    project: projectResponse(project),
+    completedForFirstTime:
+      completed && project.completionId === completionId,
+  };
 }

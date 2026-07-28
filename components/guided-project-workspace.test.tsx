@@ -12,6 +12,12 @@ import {
 } from "@/lib/guided-project";
 import { GuidedProjectWorkspace } from "./guided-project-workspace";
 
+const analyticsMocks = vi.hoisted(() => ({
+  captureProjectCompleted: vi.fn(),
+}));
+
+vi.mock("@/lib/product-analytics", () => analyticsMocks);
+
 const starterProject: GuidedProjectRecord = {
   html: "<main><article></article></main>",
   saved: false,
@@ -23,6 +29,7 @@ const starterProject: GuidedProjectRecord = {
 describe("GuidedProjectWorkspace", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    analyticsMocks.captureProjectCompleted.mockReset();
   });
 
   afterEach(() => {
@@ -78,22 +85,35 @@ describe("GuidedProjectWorkspace", () => {
       ...check,
       passed: true,
     }));
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        html: completeHtml,
-        saved: true,
-        updatedAt: "2026-07-27T18:00:00.000Z",
-        hasUnreviewedChanges: false,
-        submission: {
-          status: "completed",
-          checks,
-          passedChecks: 6,
-          totalChecks: 6,
-          submittedAt: "2026-07-27T18:00:00.000Z",
-        },
-      }),
-    });
+    const completedProject = {
+      html: completeHtml,
+      saved: true,
+      updatedAt: "2026-07-27T18:00:00.000Z",
+      hasUnreviewedChanges: false,
+      submission: {
+        status: "completed" as const,
+        checks,
+        passedChecks: 6,
+        totalChecks: 6,
+        submittedAt: "2026-07-27T18:00:00.000Z",
+      },
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...completedProject,
+          firstCompletedReview: true,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...completedProject,
+          firstCompletedReview: false,
+        }),
+      });
     vi.stubGlobal("fetch", fetchMock);
 
     render(
@@ -119,6 +139,17 @@ describe("GuidedProjectWorkspace", () => {
     expect(
       screen.getByRole("link", { name: /View saved progress/ }),
     ).toHaveAttribute("href", "/dashboard");
+    expect(analyticsMocks.captureProjectCompleted).toHaveBeenCalledOnce();
+    expect(analyticsMocks.captureProjectCompleted).toHaveBeenCalledWith({
+      projectSlug: "semantic-html-article",
+      passedCheckCount: 6,
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Submit updated project" }),
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(analyticsMocks.captureProjectCompleted).toHaveBeenCalledOnce();
   });
 
   it("keeps the live preview in an empty sandbox", () => {
