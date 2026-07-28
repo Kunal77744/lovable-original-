@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CodingWorkspace } from "@/components/coding-workspace";
+import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
 import { getCodingProblemForStudent } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import {
@@ -59,6 +60,9 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
 
   return (
     <main>
+      {problem.number === 1 ? (
+        <PracticeProblemStartTracker problemSlug={problem.slug} />
+      ) : null}
       <SiteNav currentPage="practice" studentSession={Boolean(session)} />
       <div
         className="coding-problem-shell"

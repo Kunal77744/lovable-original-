@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { getCodingProblemForStudent } from "@/db/coding-practice";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { capturePracticeProblemStarted } from "@/lib/product-analytics";
 import ProblemPage, { generateMetadata } from "./page";
 
 vi.mock("next/headers", () => ({
@@ -14,6 +15,11 @@ vi.mock("@/lib/auth", () => ({
       getSession: vi.fn().mockResolvedValue(null),
     },
   },
+}));
+
+vi.mock("@/lib/product-analytics", () => ({
+  capturePracticeProblemAccepted: vi.fn(),
+  capturePracticeProblemStarted: vi.fn(),
 }));
 
 vi.mock("@/db/coding-practice", () => ({
@@ -101,5 +107,10 @@ describe("practice problem metadata", () => {
 
       cleanup();
     }
+
+    expect(capturePracticeProblemStarted).toHaveBeenCalledOnce();
+    expect(capturePracticeProblemStarted).toHaveBeenCalledWith({
+      problemSlug: CODING_PROBLEMS[0].slug,
+    });
   });
 });

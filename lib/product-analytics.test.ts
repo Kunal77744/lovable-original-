@@ -15,6 +15,7 @@ import {
   captureLearnerEventOnce,
   captureProjectCompleted,
   capturePracticeProblemAccepted,
+  capturePracticeProblemStarted,
   capturePublicPageview,
   sanitizeAnalyticsEvent,
 } from "./product-analytics";
@@ -176,6 +177,41 @@ describe("product analytics", () => {
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /private learner code|private input|private output|learner@example\.com|private account note/i,
+    );
+  });
+
+  it("captures one privacy-safe first start for problem 01", () => {
+    const firstStart = {
+      problemSlug: "sum-two-numbers",
+      code: "private learner code",
+      output: "private output",
+      email: "learner@example.com",
+      accountId: "private-account-id",
+    };
+
+    expect(capturePracticeProblemStarted(firstStart)).toBe(true);
+    expect(capturePracticeProblemStarted(firstStart)).toBe(false);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "practice_problem_started",
+      expect.objectContaining({
+        problem_slug: "sum-two-numbers",
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "deployment_environment",
+        "is_test",
+        "journey_id",
+        "problem_slug",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private learner code|private output|learner@example\.com|private-account-id/i,
     );
   });
 });
