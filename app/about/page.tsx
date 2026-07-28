@@ -118,8 +118,8 @@ export default function AboutPage() {
           <p className="about-standard-copy">
             Today, a clear explanation leads to a lesson-bound semantic HTML
             tutor, private notes, a page you build and save, recall, flashcards,
-            and a certificate after passing. Guided projects and interview
-            practice are planned, not part of this first course.
+            and a certificate after passing. The guided project is still
+            planned, not part of this first course.
           </p>
         </section>
       </main>
