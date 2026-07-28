@@ -6,7 +6,7 @@ below passes.
 
 ## Release boundary
 
-This release applies the seven committed migrations in journal order:
+This release applies the nine committed migrations in journal order:
 
 1. `0000_stiff_invisible_woman.sql`
 2. `0001_oval_eddie_brock.sql`
@@ -15,6 +15,8 @@ This release applies the seven committed migrations in journal order:
 5. `0004_ancient_mattie_franklin.sql`
 6. `0005_fearless_the_hunter.sql`
 7. `0006_kind_scream.sql`
+8. `0007_tense_colleen_wing.sql`
+9. `0008_panoramic_mysterio.sql`
 
 Drizzle records each completed migration in
 `drizzle.__drizzle_migrations`. The migration statements run in a transaction,
@@ -37,7 +39,7 @@ so a failed migration does not authorize an application deployment.
 The command first validates the connection URL and runs `select 1`. A missing,
 malformed, unreachable, or rejected connection exits before any migration is
 attempted. It then applies the migration journal and exits successfully only
-after verifying seven migration records and all thirteen required application tables.
+after verifying nine migration records and all seventeen required application tables.
 The command never prints the connection string.
 
 ## Required result
@@ -45,7 +47,7 @@ The command never prints the connection string.
 The successful command ends with:
 
 ```text
-Database release ready: 7 migrations recorded and 13 required tables verified.
+Database release ready: 9 required migrations verified (9 recorded total) and 17 required tables verified.
 ```
 
 If any other result appears, keep deployment paused. The database owner should
@@ -65,12 +67,13 @@ LEARNER_GATE_DATABASE_URL="$ISOLATED_POSTGRES_ADMIN_URL" \
   npm run release:learner-gate -- --app-url http://127.0.0.1:3210
 ```
 
-The command prints one `PASS` line for each of eight checks and succeeds only
+The command prints one `PASS` line for each of ten checks and succeeds only
 after account creation, lesson completion, saved `1/1` progress, sign-out,
-protected-route redirect, and restored progress after sign-in all pass. It never
-prints the database URL, generated account email, password, auth secret, session
-token, or database name. It accepts loopback HTTP URLs only, so it cannot point
-at production or a hosted preview.
+protected-route redirect, restored progress after sign-in, certificate recovery,
+and cross-account isolation all pass. It never prints the database URL,
+generated account email, password, auth secret, session token, or database name.
+It accepts loopback HTTP URLs only, so it cannot point at production or a hosted
+preview.
 
 After the automated result reads `Learner release gate passed: 10/10 checks.`:
 
