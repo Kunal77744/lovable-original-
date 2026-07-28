@@ -1749,6 +1749,266 @@ h1 {
   color: #bdc8c2;
 }
 
+.semantic-tutor {
+  margin-top: 72px;
+  padding: 40px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 16px;
+  background:
+    radial-gradient(
+      circle at 92% 12%,
+      rgba(102, 220, 157, 0.13) 0 78px,
+      transparent 79px
+    ),
+    white;
+  box-shadow: 0 18px 44px rgba(23, 35, 30, 0.08);
+}
+
+.semantic-tutor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.semantic-tutor-heading > div {
+  max-width: 570px;
+}
+
+.semantic-tutor-heading .quiz-kicker {
+  margin: 0 0 12px;
+}
+
+.semantic-tutor-heading h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.semantic-tutor-heading > div > p:last-child {
+  max-width: 58ch;
+  margin: 17px 0 0;
+  color: #526058;
+  font-size: 14px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.semantic-tutor-heading > span {
+  min-height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: #245f43;
+  border: 1px solid #c4dcca;
+  border-radius: 999px;
+  background: #edf4ec;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.semantic-tutor-form {
+  margin-top: 32px;
+}
+
+.semantic-tutor-form > label {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.semantic-tutor-field {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.semantic-tutor-field input {
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 16px;
+  color: var(--ink);
+  border: 1px solid #b9c5bc;
+  border-radius: 9px;
+  background: #fbfcf9;
+  font: inherit;
+  font-size: 14px;
+}
+
+.semantic-tutor-field input::placeholder {
+  color: #738078;
+}
+
+.semantic-tutor-field input:hover {
+  border-color: #7f9185;
+}
+
+.semantic-tutor-field input:focus {
+  border-color: var(--accent);
+  outline: 3px solid rgba(40, 118, 82, 0.16);
+  outline-offset: 1px;
+}
+
+.semantic-tutor-field > button {
+  min-height: 52px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  color: white;
+  border: 1px solid var(--ink);
+  border-radius: 9px;
+  background: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.semantic-tutor-field > button:hover:not(:disabled) {
+  background: var(--accent-deep);
+  transform: translateY(-1px);
+}
+
+.semantic-tutor-field > button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.semantic-tutor-field > button:focus-visible,
+.semantic-tutor-suggestions button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.semantic-tutor-field > button:disabled {
+  color: #8b9690;
+  border-color: #d8ded9;
+  background: #e9ede9;
+  cursor: not-allowed;
+}
+
+.semantic-tutor-suggestions {
+  margin-top: 18px;
+  display: grid;
+  gap: 9px;
+}
+
+.semantic-tutor-suggestions > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.semantic-tutor-suggestions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.semantic-tutor-suggestions button {
+  min-height: 38px;
+  padding: 0 12px;
+  color: #385247;
+  border: 1px solid #d3ddd5;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 160ms ease-out,
+    border-color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.semantic-tutor-suggestions button:hover {
+  color: var(--ink);
+  border-color: #9db4a5;
+  background: #f1f6f0;
+}
+
+.semantic-tutor-response {
+  min-height: 128px;
+  margin-top: 28px;
+  padding: 24px 26px;
+  border: 1px solid #c9daca;
+  border-radius: 11px;
+  background: #edf4ec;
+}
+
+.semantic-tutor-response.is-empty {
+  border-color: #d9ded8;
+  background: #f7f8f5;
+}
+
+.semantic-tutor-response.is-unsupported,
+.semantic-tutor-response.is-unsafe {
+  border-color: #e0d1b8;
+  background: #f8f2e8;
+}
+
+.semantic-tutor-response-label {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.semantic-tutor-response.is-unsupported .semantic-tutor-response-label,
+.semantic-tutor-response.is-unsafe .semantic-tutor-response-label {
+  color: #805a28;
+}
+
+.semantic-tutor-response > p:last-child,
+.semantic-tutor-answer {
+  max-width: 62ch;
+  margin: 9px 0 0;
+  color: #35443c;
+  font-size: 14px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.semantic-tutor-source {
+  margin-top: 18px;
+  padding-top: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.4fr);
+  gap: 22px;
+  border-top: 1px solid rgba(40, 118, 82, 0.2);
+}
+
+.semantic-tutor-source > span {
+  color: #37634d;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.semantic-tutor-source p {
+  margin: 0;
+  color: #536259;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.semantic-tutor-source strong {
+  color: var(--ink);
+}
+
 .lesson-notes {
   margin-top: 80px;
   padding: 44px;
@@ -5206,10 +5466,37 @@ footer {
   .lesson-quiz,
   .quiz-complete,
   .lesson-workspace,
-  .lesson-notes {
+  .lesson-notes,
+  .semantic-tutor {
     margin-inline: -8px;
     padding: 38px 24px;
     border-radius: 15px;
+  }
+
+  .semantic-tutor {
+    margin-top: 52px;
+  }
+
+  .semantic-tutor-heading,
+  .semantic-tutor-source {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .semantic-tutor-heading {
+    gap: 16px;
+  }
+
+  .semantic-tutor-heading > span {
+    justify-self: start;
+  }
+
+  .semantic-tutor-field {
+    grid-template-columns: 1fr;
+  }
+
+  .semantic-tutor-field > button {
+    width: 100%;
   }
 
   .lesson-notes-heading,

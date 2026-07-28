@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { LessonNotes } from "@/components/lesson-notes";
+import { SemanticHtmlTutor } from "@/components/semantic-html-tutor";
 import { SemanticHtmlWorkspace } from "@/components/semantic-html-workspace";
 import {
   getFirstCourseLessonForStudent,
@@ -262,6 +263,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
               </div>
             </div>
           </section>
+
+          <SemanticHtmlTutor />
 
           <LessonNotes
             lessonSlug={studentLesson.lessonSlug}
