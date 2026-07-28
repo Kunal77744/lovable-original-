@@ -13,6 +13,7 @@ vi.mock("posthog-js", () => ({
 import {
   captureAccountCreated,
   captureLearnerEventOnce,
+  capturePracticeProblemAccepted,
   capturePublicPageview,
   sanitizeAnalyticsEvent,
 } from "./product-analytics";
@@ -96,5 +97,44 @@ describe("product analytics", () => {
       $referrer: "https://search.example/",
       pathname: "/about",
     });
+  });
+
+  it("captures one privacy-safe Accepted result for each problem", () => {
+    const acceptedResult = {
+      problemSlug: "sum-two-numbers",
+      passedCheckCount: 4,
+      code: "private learner code",
+      input: "private input",
+      output: "private output",
+      email: "learner@example.com",
+      note: "private account note",
+    };
+
+    capturePracticeProblemAccepted(acceptedResult);
+    capturePracticeProblemAccepted(acceptedResult);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "practice_problem_accepted",
+      expect.objectContaining({
+        problem_slug: "sum-two-numbers",
+        passed_check_count: 4,
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "deployment_environment",
+        "is_test",
+        "journey_id",
+        "passed_check_count",
+        "problem_slug",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private learner code|private input|private output|learner@example\.com|private account note/i,
+    );
   });
 });

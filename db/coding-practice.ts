@@ -1,7 +1,8 @@
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
+  getNextUnfinishedCodingProblemSlug,
   gradeCodingOutputs,
 } from "@/lib/coding-problems";
 import { getDatabase } from "./index";
@@ -13,6 +14,12 @@ export type CodingAttempt = {
   passedTests: number;
   totalTests: number;
   createdAt: string;
+};
+
+export type RecentCodingAttempt = CodingAttempt & {
+  problemSlug: string;
+  problemNumber: number;
+  problemTitle: string;
 };
 
 export async function getCodingCatalogProgress(userId: string | null) {
@@ -43,6 +50,48 @@ export async function getCodingCatalogProgress(userId: string | null) {
     totalCount: CODING_PROBLEMS.length,
     completedSlugs: rows.map((row) => row.problemSlug),
   };
+}
+
+export async function getRecentCodingAttempts(
+  userId: string,
+  limit = 5,
+): Promise<RecentCodingAttempt[]> {
+  const attempts = await getDatabase()
+    .select({
+      id: codingSubmission.id,
+      problemSlug: codingSubmission.problemSlug,
+      verdict: codingSubmission.verdict,
+      passedTests: codingSubmission.passedTests,
+      totalTests: codingSubmission.totalTests,
+      createdAt: codingSubmission.createdAt,
+    })
+    .from(codingSubmission)
+    .where(
+      and(
+        eq(codingSubmission.userId, userId),
+        inArray(
+          codingSubmission.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(desc(codingSubmission.createdAt))
+    .limit(Math.max(1, Math.min(limit, 8)));
+
+  return attempts.flatMap((attempt) => {
+    const problem = getCodingProblem(attempt.problemSlug);
+
+    return problem
+      ? [
+          {
+            ...attempt,
+            problemNumber: problem.number,
+            problemTitle: problem.title,
+            createdAt: attempt.createdAt.toISOString(),
+          },
+        ]
+      : [];
+  });
 }
 
 export async function getCodingProblemForStudent(
@@ -171,6 +220,8 @@ export async function saveCodingSubmission(
       current?.bestVerdict === "Accepted" || result.verdict === "Accepted"
         ? "Accepted"
         : "Wrong Answer";
+    const isFirstAcceptedResult =
+      result.verdict === "Accepted" && current?.bestVerdict !== "Accepted";
 
     await transaction
       .insert(codingProblemProgress)
@@ -209,13 +260,17 @@ export async function saveCodingSubmission(
       createdAt: now,
     });
 
-    const [completed] = await transaction
-      .select({ value: count() })
+    const completed = await transaction
+      .select({ problemSlug: codingProblemProgress.problemSlug })
       .from(codingProblemProgress)
       .where(
         and(
           eq(codingProblemProgress.userId, userId),
           eq(codingProblemProgress.bestVerdict, "Accepted"),
+          inArray(
+            codingProblemProgress.problemSlug,
+            CODING_PROBLEMS.map((problem) => problem.slug),
+          ),
         ),
       );
 
@@ -223,8 +278,12 @@ export async function saveCodingSubmission(
       id: submissionId,
       ...result,
       bestVerdict,
-      completedCount: completed?.value ?? 0,
+      isFirstAcceptedResult,
+      completedCount: completed.length,
       totalCount: CODING_PROBLEMS.length,
+      nextProblemSlug: getNextUnfinishedCodingProblemSlug(
+        completed.map((row) => row.problemSlug),
+      ),
       createdAt: now.toISOString(),
     };
   });
