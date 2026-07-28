@@ -2,13 +2,17 @@ import { and, asc, eq } from "drizzle-orm";
 import {
   FIRST_COURSE,
   FIRST_COURSE_LESSONS,
+  FIRST_LESSON_PASS_PERCENT,
 } from "@/lib/first-course-content";
+import { getDefaultCertificateDisplayName } from "@/lib/learner-settings";
 import { buildCourseProgress } from "@/lib/course-progress";
 import { getDatabase } from "./index";
 import {
   course,
   courseAssignment,
+  courseCertificate,
   courseFeedback,
+  learnerSetting,
   lesson,
   lessonArtifact,
   lessonNote,
@@ -288,9 +292,150 @@ export async function saveFirstLessonQuizResult(
       },
     });
 
+  if (completed && bestScore >= FIRST_LESSON_PASS_PERCENT) {
+    await database
+      .insert(courseCertificate)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        courseId: FIRST_COURSE.id,
+        awardedAt: existingProgress?.completedAt ?? now,
+      })
+      .onConflictDoNothing();
+  }
+
   return {
     completed,
     quizScore: bestScore,
+  };
+}
+
+export async function getLearnerSettingsForStudent(
+  userId: string,
+  accountName: string,
+) {
+  const database = getDatabase();
+  const [settings] = await database
+    .select({
+      certificateDisplayName: learnerSetting.certificateDisplayName,
+      updatedAt: learnerSetting.updatedAt,
+    })
+    .from(learnerSetting)
+    .where(eq(learnerSetting.userId, userId))
+    .limit(1);
+
+  return {
+    certificateDisplayName:
+      settings?.certificateDisplayName ??
+      getDefaultCertificateDisplayName(accountName),
+    updatedAt: settings?.updatedAt.toISOString() ?? null,
+  };
+}
+
+export async function saveLearnerSettingsForStudent(
+  userId: string,
+  certificateDisplayName: string,
+) {
+  const database = getDatabase();
+  const now = new Date();
+
+  await database
+    .insert(learnerSetting)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      certificateDisplayName,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: learnerSetting.userId,
+      set: {
+        certificateDisplayName,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    certificateDisplayName,
+    updatedAt: now.toISOString(),
+  };
+}
+
+export async function getFirstCourseCertificateForStudent(
+  userId: string,
+  accountName: string,
+) {
+  const database = getDatabase();
+  await ensureFirstCourseAssignment(userId);
+
+  const [completedLesson] = await database
+    .select({
+      completedAt: lessonProgress.completedAt,
+      quizScore: lessonProgress.quizScore,
+    })
+    .from(courseAssignment)
+    .innerJoin(course, eq(courseAssignment.courseId, course.id))
+    .innerJoin(lesson, eq(lesson.courseId, course.id))
+    .innerJoin(
+      lessonProgress,
+      and(
+        eq(lessonProgress.lessonId, lesson.id),
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.status, "completed"),
+      ),
+    )
+    .where(
+      and(
+        eq(courseAssignment.userId, userId),
+        eq(course.id, FIRST_COURSE.id),
+      ),
+    )
+    .limit(1);
+
+  const eligible =
+    Boolean(completedLesson?.completedAt) &&
+    (completedLesson?.quizScore ?? 0) >= FIRST_LESSON_PASS_PERCENT;
+
+  if (eligible && completedLesson?.completedAt) {
+    await database
+      .insert(courseCertificate)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        courseId: FIRST_COURSE.id,
+        awardedAt: completedLesson.completedAt,
+      })
+      .onConflictDoNothing();
+  }
+
+  const [certificateRow, settings] = await Promise.all([
+    database
+      .select({
+        id: courseCertificate.id,
+        awardedAt: courseCertificate.awardedAt,
+      })
+      .from(courseCertificate)
+      .where(
+        and(
+          eq(courseCertificate.userId, userId),
+          eq(courseCertificate.courseId, FIRST_COURSE.id),
+        ),
+      )
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+    getLearnerSettingsForStudent(userId, accountName),
+  ]);
+
+  return {
+    eligible,
+    certificate: certificateRow
+      ? {
+          id: certificateRow.id,
+          awardedAt: certificateRow.awardedAt.toISOString(),
+          displayName: settings.certificateDisplayName,
+          courseTitle: FIRST_COURSE.title,
+        }
+      : null,
   };
 }
 

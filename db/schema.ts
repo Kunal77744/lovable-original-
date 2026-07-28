@@ -172,6 +172,24 @@ export const courseFeedback = pgTable(
   ],
 );
 
+export const learnerSetting = pgTable(
+  "learner_setting",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    certificateDisplayName: text("certificate_display_name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("learner_setting_user_unique").on(table.userId),
+  ],
+);
+
 export const lesson = pgTable(
   "lesson",
   {
@@ -334,5 +352,27 @@ export const codingSubmission = pgTable(
       table.problemSlug,
     ),
     index("coding_submission_user_id_idx").on(table.userId),
+  ],
+);
+
+export const courseCertificate = pgTable(
+  "course_certificate",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => course.id, { onDelete: "cascade" }),
+    awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("course_certificate_user_course_unique").on(
+      table.userId,
+      table.courseId,
+    ),
+    index("course_certificate_user_id_idx").on(table.userId),
   ],
 );
