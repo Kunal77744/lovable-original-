@@ -137,7 +137,9 @@ describe("CodingWorkspace", () => {
       ),
     );
     expect(
-      screen.getByRole("link", { name: "Try the next problem" }),
+      screen.getByRole("link", {
+        name: "Continue to next unfinished step",
+      }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("Practice progress · 1/6 accepted")).toBeInTheDocument();
     expect(
@@ -233,10 +235,12 @@ describe("CodingWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
     expect(
-      await screen.findByRole("link", { name: "View completed set" }),
+      await screen.findByRole("link", { name: "View completed path" }),
     ).toHaveAttribute("href", "/practice");
     expect(
-      screen.queryByRole("link", { name: "Try the next problem" }),
+      screen.queryByRole("link", {
+        name: "Continue to next unfinished step",
+      }),
     ).not.toBeInTheDocument();
   });
 

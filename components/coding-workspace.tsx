@@ -359,8 +359,8 @@ export function CodingWorkspace({
               }
             >
               {runState.nextProblemSlug
-                ? "Try the next problem"
-                : "View completed set"}
+                ? "Continue to next unfinished step"
+                : "View completed path"}
             </Link>
           </div>
         ) : null}

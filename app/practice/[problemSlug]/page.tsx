@@ -6,6 +6,7 @@ import { CodingWorkspace } from "@/components/coding-workspace";
 import { getCodingProblemForStudent } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import {
+  CODING_PROBLEM_COUNT,
   CODING_PROBLEMS,
   getCodingProblem,
   getCodingProblemPreview,
@@ -67,15 +68,16 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
         <nav className="problem-breadcrumbs" aria-label="Problem navigation">
           <Link href="/practice">Practice arena</Link>
           <span aria-hidden="true">/</span>
-          <span>Problem {String(problem.number).padStart(2, "0")}</span>
+          <span>
+            Step {problem.number} of {CODING_PROBLEM_COUNT}
+          </span>
         </nav>
 
         <div className="coding-problem-layout">
           <article className="problem-brief">
             <div className="problem-brief-heading">
               <p className="eyebrow">
-                Problem {String(problem.number).padStart(2, "0")} ·{" "}
-                {problem.skill}
+                Step {problem.number} of {CODING_PROBLEM_COUNT} · {problem.skill}
               </p>
               <h1>{problem.title}</h1>
               <div className="problem-meta">
@@ -137,7 +139,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
         <nav className="problem-step-navigation" aria-label="Adjacent problems">
           {previousProblem ? (
             <Link href={`/practice/${previousProblem.slug}`}>
-              <span>Previous</span>
+              <span>Previous step</span>
               <strong>{previousProblem.title}</strong>
             </Link>
           ) : (
@@ -145,12 +147,12 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
           )}
           {nextProblem ? (
             <Link href={`/practice/${nextProblem.slug}`}>
-              <span>Next problem</span>
+              <span>Next step</span>
               <strong>{nextProblem.title}</strong>
             </Link>
           ) : (
             <Link href="/practice">
-              <span>Set complete</span>
+              <span>Path complete</span>
               <strong>Back to the arena</strong>
             </Link>
           )}

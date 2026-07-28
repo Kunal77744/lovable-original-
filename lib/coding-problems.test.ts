@@ -11,6 +11,9 @@ describe("coding problems", () => {
   it("defines six distinct beginner problems with deterministic tests", () => {
     expect(CODING_PROBLEMS).toHaveLength(6);
     expect(new Set(CODING_PROBLEMS.map((problem) => problem.slug)).size).toBe(6);
+    expect(CODING_PROBLEMS.map((problem) => problem.number)).toEqual([
+      1, 2, 3, 4, 5, 6,
+    ]);
     expect(CODING_PROBLEMS.map((problem) => problem.skill)).toEqual([
       "Input handling",
       "Conditions",
