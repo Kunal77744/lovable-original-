@@ -2,21 +2,25 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { ProjectFeedback } from "@/components/project-feedback";
 import {
   getEmptyGuidedProjectChecks,
   type GuidedProjectRecord,
 } from "@/lib/guided-project";
 import { captureProjectCompleted } from "@/lib/product-analytics";
+import type { SavedProjectFeedback } from "@/lib/project-feedback";
 import { buildSandboxedPreviewDocument } from "@/lib/semantic-html-workspace";
 
 type GuidedProjectWorkspaceProps = {
   projectSlug: string;
   initialProject: GuidedProjectRecord;
+  initialFeedback: SavedProjectFeedback | null;
 };
 
 export function GuidedProjectWorkspace({
   projectSlug,
   initialProject,
+  initialFeedback,
 }: GuidedProjectWorkspaceProps) {
   const [html, setHtml] = useState(initialProject.html);
   const [project, setProject] = useState(initialProject);
@@ -260,6 +264,12 @@ export function GuidedProjectWorkspace({
           ) : null}
         </aside>
       </div>
+      {isComplete ? (
+        <ProjectFeedback
+          projectSlug={projectSlug}
+          initialFeedback={initialFeedback}
+        />
+      ) : null}
     </section>
   );
 }

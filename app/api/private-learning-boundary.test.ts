@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as courseDb from "@/db/course";
+import * as projectDb from "@/db/guided-project";
 import { auth } from "@/lib/auth";
 import { GET as getCertificate } from "./certificate/route";
 import {
@@ -19,6 +20,10 @@ import {
   GET as getSettings,
   POST as saveSettings,
 } from "./settings/route";
+import {
+  GET as getProjectFeedback,
+  POST as saveProjectFeedback,
+} from "./projects/[projectSlug]/feedback/route";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -45,6 +50,11 @@ vi.mock("@/db/course", () => ({
   saveLearnerSettingsForStudent: vi.fn(),
 }));
 
+vi.mock("@/db/guided-project", () => ({
+  getGuidedProjectFeedbackForStudent: vi.fn(),
+  saveGuidedProjectFeedbackForStudent: vi.fn(),
+}));
+
 const getSession = vi.mocked(auth.api.getSession);
 
 describe("signed-out private learning boundary", () => {
@@ -59,6 +69,9 @@ describe("signed-out private learning boundary", () => {
     };
     const courseContext = {
       params: Promise.resolve({ courseSlug: "web-development-foundations" }),
+    };
+    const projectContext = {
+      params: Promise.resolve({ projectSlug: "semantic-html-article" }),
     };
     const request = new Request("http://localhost/private", {
       method: "POST",
@@ -77,10 +90,15 @@ describe("signed-out private learning boundary", () => {
       getCertificate(),
       getSettings(),
       saveSettings(request.clone()),
+      getProjectFeedback(
+        new Request("http://localhost/private"),
+        projectContext,
+      ),
+      saveProjectFeedback(request.clone(), projectContext),
     ]);
 
     expect(responses.map((response) => response.status)).toEqual(
-      Array(10).fill(401),
+      Array(12).fill(401),
     );
     expect(courseDb.getFirstLessonNote).not.toHaveBeenCalled();
     expect(courseDb.saveFirstLessonNote).not.toHaveBeenCalled();
@@ -92,5 +110,11 @@ describe("signed-out private learning boundary", () => {
     expect(courseDb.getFirstCourseCertificateForStudent).not.toHaveBeenCalled();
     expect(courseDb.getLearnerSettingsForStudent).not.toHaveBeenCalled();
     expect(courseDb.saveLearnerSettingsForStudent).not.toHaveBeenCalled();
+    expect(
+      projectDb.getGuidedProjectFeedbackForStudent,
+    ).not.toHaveBeenCalled();
+    expect(
+      projectDb.saveGuidedProjectFeedbackForStudent,
+    ).not.toHaveBeenCalled();
   });
 });

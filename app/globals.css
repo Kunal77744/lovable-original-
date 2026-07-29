@@ -4040,6 +4040,12 @@ h1 {
   color: #8b2e2e;
 }
 
+.project-feedback {
+  max-width: 720px;
+  margin-top: 42px;
+  padding-top: 38px;
+}
+
 .dashboard-loading,
 .dashboard-error {
   min-height: 100vh;

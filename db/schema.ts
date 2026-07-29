@@ -323,6 +323,30 @@ export const guidedProject = pgTable(
   ],
 );
 
+export const guidedProjectFeedback = pgTable(
+  "guided_project_feedback",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectSlug: text("project_slug").notNull(),
+    confidence: text("confidence").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("guided_project_feedback_user_slug_unique").on(
+      table.userId,
+      table.projectSlug,
+    ),
+    index("guided_project_feedback_user_id_idx").on(table.userId),
+  ],
+);
+
 export const interviewDrillProgress = pgTable(
   "interview_drill_progress",
   {

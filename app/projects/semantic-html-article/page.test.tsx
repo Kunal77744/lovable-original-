@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getGuidedProjectForStudent } from "@/db/guided-project";
+import {
+  getGuidedProjectFeedbackForStudent,
+  getGuidedProjectForStudent,
+} from "@/db/guided-project";
 import { auth } from "@/lib/auth";
 import SemanticHtmlProjectPage, { metadata } from "./page";
 
@@ -17,11 +20,13 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/db/guided-project", () => ({
+  getGuidedProjectFeedbackForStudent: vi.fn(),
   getGuidedProjectForStudent: vi.fn(),
 }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const getProject = vi.mocked(getGuidedProjectForStudent);
+const getProjectFeedback = vi.mocked(getGuidedProjectFeedbackForStudent);
 
 describe("SemanticHtmlProjectPage", () => {
   beforeEach(() => {
@@ -36,6 +41,7 @@ describe("SemanticHtmlProjectPage", () => {
       hasUnreviewedChanges: false,
       submission: null,
     });
+    getProjectFeedback.mockResolvedValue({ feedback: null });
   });
 
   it("keeps the account-only project out of search", () => {
@@ -49,6 +55,10 @@ describe("SemanticHtmlProjectPage", () => {
     render(await SemanticHtmlProjectPage());
 
     expect(getProject).toHaveBeenCalledWith(
+      "learner-1",
+      "semantic-html-article",
+    );
+    expect(getProjectFeedback).toHaveBeenCalledWith(
       "learner-1",
       "semantic-html-article",
     );

@@ -7,8 +7,9 @@ import {
   type GuidedProjectSubmission,
   isGuidedProjectSlug,
 } from "@/lib/guided-project";
+import type { ProjectFeedbackConfidence } from "@/lib/project-feedback";
 import { getDatabase } from "./index";
-import { guidedProject } from "./schema";
+import { guidedProject, guidedProjectFeedback } from "./schema";
 
 type StoredProject = {
   html: string;
@@ -194,5 +195,97 @@ export async function submitGuidedProjectForReview(
     project: projectResponse(project),
     completedForFirstTime:
       completed && project.completionId === completionId,
+  };
+}
+
+export async function getGuidedProjectFeedbackForStudent(
+  userId: string,
+  projectSlug: string,
+) {
+  if (!isGuidedProjectSlug(projectSlug)) {
+    return null;
+  }
+
+  const database = getDatabase();
+  const [feedback] = await database
+    .select({
+      confidence: guidedProjectFeedback.confidence,
+      comment: guidedProjectFeedback.comment,
+      updatedAt: guidedProjectFeedback.updatedAt,
+    })
+    .from(guidedProjectFeedback)
+    .where(
+      and(
+        eq(guidedProjectFeedback.userId, userId),
+        eq(guidedProjectFeedback.projectSlug, projectSlug),
+      ),
+    )
+    .limit(1);
+
+  return {
+    feedback: feedback
+      ? {
+          confidence: feedback.confidence as ProjectFeedbackConfidence,
+          comment: feedback.comment ?? "",
+          updatedAt: feedback.updatedAt.toISOString(),
+        }
+      : null,
+  };
+}
+
+export async function saveGuidedProjectFeedbackForStudent(
+  userId: string,
+  projectSlug: string,
+  confidence: string,
+  comment: string | null,
+) {
+  if (!isGuidedProjectSlug(projectSlug)) {
+    return null;
+  }
+
+  const database = getDatabase();
+  const [completedProject] = await database
+    .select({ id: guidedProject.id })
+    .from(guidedProject)
+    .where(
+      and(
+        eq(guidedProject.userId, userId),
+        eq(guidedProject.projectSlug, projectSlug),
+        eq(guidedProject.status, "completed"),
+      ),
+    )
+    .limit(1);
+
+  if (!completedProject) {
+    return null;
+  }
+
+  const now = new Date();
+  await database
+    .insert(guidedProjectFeedback)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      projectSlug,
+      confidence,
+      comment,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [
+        guidedProjectFeedback.userId,
+        guidedProjectFeedback.projectSlug,
+      ],
+      set: {
+        confidence,
+        comment,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    confidence,
+    comment: comment ?? "",
+    updatedAt: now.toISOString(),
   };
 }
