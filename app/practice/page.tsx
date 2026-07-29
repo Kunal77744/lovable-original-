@@ -103,9 +103,12 @@ export default async function PracticePage() {
                 Build from input handling to FizzBuzz.
               </h2>
             </div>
-            <span aria-label={catalogProgressLabel}>
-              {catalogProgressLabel}
-            </span>
+            <div className="catalog-progress-summary">
+              <span aria-label={catalogProgressLabel}>
+                {catalogProgressLabel}
+              </span>
+              {session ? <p>Saved privately to your account</p> : null}
+            </div>
           </div>
 
           <div className="problem-table" role="list">

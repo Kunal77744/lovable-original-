@@ -5109,11 +5109,23 @@ h1 {
   text-wrap: balance;
 }
 
-.problem-catalog-heading > span {
+.catalog-progress-summary {
+  text-align: right;
+}
+
+.catalog-progress-summary span {
   color: var(--muted);
   font-size: 13px;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.catalog-progress-summary p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
   white-space: nowrap;
 }
 
@@ -7902,6 +7914,10 @@ footer {
     align-items: flex-start;
     flex-direction: column;
     gap: 16px;
+  }
+
+  .catalog-progress-summary {
+    text-align: left;
   }
 
   .problem-catalog-heading h2 {
