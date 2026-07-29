@@ -12,7 +12,7 @@ import sitemap from "./sitemap";
 afterEach(cleanup);
 
 describe("public product promise", () => {
-  it("keeps the homepage focused on the live first course", () => {
+  it("connects the homepage to the live lesson, project, and practice path", () => {
     render(<Home />);
 
     expect(
@@ -24,14 +24,14 @@ describe("public product promise", () => {
       "/learn/web-development-foundations/semantic-html",
     );
     expect(
-      screen.getByText(/build and save an article page/i),
+      screen.getByText(/private field guide, revise it against six clear checks/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/real projects|interview practice/i),
-    ).not.toBeInTheDocument();
+      screen.getByText(/six ordered JavaScript problems/i),
+    ).toBeInTheDocument();
   });
 
-  it("distinguishes the live course from planned breadth on About", () => {
+  it("lists the guided project as live on About", () => {
     render(<AboutPage />);
 
     expect(
@@ -60,11 +60,17 @@ describe("public product promise", () => {
       screen.getByText(/private saved JavaScript playground/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/six beginner JavaScript problems/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/six beginner JavaScript problems/i),
+    ).not.toHaveLength(0);
     expect(
-      screen.getByText(/guided semantic HTML field-guide project/i),
+      screen.getByText(/private semantic HTML field-guide project/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/saved drafts/i)).toHaveTextContent(
+      /six-check review/i,
+    );
+    expect(
+      screen.queryByText(/planned next|not live yet/i),
+    ).not.toBeInTheDocument();
   });
 
   it("describes only live capability in page and share metadata", () => {
@@ -119,9 +125,19 @@ describe("public product promise", () => {
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
-    expect(screen.getByText("75% to pass")).toBeInTheDocument();
-    expect(screen.getByText("Four recall questions")).toBeInTheDocument();
-    expect(screen.getByText("1 saved page")).toBeInTheDocument();
+    expect(screen.getAllByText(/pass four questions at 75%/i)).not.toHaveLength(
+      0,
+    );
+    expect(screen.getByText("6 review checks")).toBeInTheDocument();
+    expect(screen.getByText("One saved field guide")).toBeInTheDocument();
+    expect(screen.getByText("6 problems")).toBeInTheDocument();
+    expect(screen.getByText("Ordered JavaScript practice")).toBeInTheDocument();
+    expect(
+      screen.getByText(/private semantic HTML field guide/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/six ordered beginner problems/i),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/AI tutor|certificate/i)).not.toBeInTheDocument();
   });
 
