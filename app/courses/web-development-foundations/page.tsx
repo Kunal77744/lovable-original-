@@ -5,7 +5,7 @@ import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 const courseDescription =
   "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.";
 const courseShareImageAlt =
-  "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.";
+  "Web Development Foundations: build and save a semantic HTML field guide with a six-check guided project review.";
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",

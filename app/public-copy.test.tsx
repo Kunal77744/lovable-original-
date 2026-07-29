@@ -93,14 +93,14 @@ describe("public product promise", () => {
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.",
+          "Web Development Foundations: build and save a semantic HTML field guide with a six-check guided project review.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.",
+          "Web Development Foundations: build and save a semantic HTML field guide with a six-check guided project review.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
