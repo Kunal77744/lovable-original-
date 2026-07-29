@@ -252,7 +252,9 @@ describe("CodingWorkspace", () => {
         attempts={[]}
         bestVerdict="Accepted"
         initialCode="function solve(input) { return input; }"
+        initialPracticeFeedback={null}
         isSignedIn
+        isPracticeFeedbackEligible={false}
         problem={problem}
       />,
     );

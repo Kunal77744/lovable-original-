@@ -152,6 +152,10 @@ describe("GuidedProjectWorkspace", () => {
           },
         }}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 
