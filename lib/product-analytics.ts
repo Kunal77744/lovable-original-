@@ -32,6 +32,10 @@ type PracticeAcceptedProperties = {
   passedCheckCount: number;
 };
 
+type PracticeStartedProperties = {
+  problemSlug: string;
+};
+
 let initialized = false;
 let fallbackJourneyId: string | null = null;
 const fallbackCapturedEvents = new Set<string>();
@@ -194,6 +198,7 @@ function capture(
     | "quiz_completed"
     | "feedback_submitted"
     | "project_completed"
+    | "practice_problem_started"
     | "practice_problem_accepted",
   properties: Record<string, string | number | boolean>,
 ) {
@@ -305,6 +310,27 @@ export function capturePracticeProblemAccepted({
   const didCapture = capture("practice_problem_accepted", {
     problem_slug: problemSlug,
     passed_check_count: passedCheckCount,
+  });
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function capturePracticeProblemStarted({
+  problemSlug,
+}: PracticeStartedProperties) {
+  const dedupeKey = `practice_problem_started:${problemSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture("practice_problem_started", {
+    problem_slug: problemSlug,
   });
 
   if (didCapture) {
