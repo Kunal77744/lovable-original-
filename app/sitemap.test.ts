@@ -12,6 +12,7 @@ describe("public sitemap", () => {
       `${productionUrl}/practice`,
       `${productionUrl}/learn/semantic-html`,
       `${productionUrl}/learn/semantic-html-project`,
+      `${productionUrl}/learn/semantic-html-cheat-sheet`,
       `${productionUrl}/learn/beginner-javascript-practice`,
     ]);
   });

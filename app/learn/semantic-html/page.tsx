@@ -143,6 +143,13 @@ export default function SemanticHtmlEntryPage() {
               The lesson connects explanation, a real build, and a short recall
               check. You finish with working HTML, not a page of notes.
             </p>
+            <Link
+              className="learn-reference-link"
+              href="/learn/semantic-html-cheat-sheet"
+            >
+              Keep the HTML semantic tags cheat sheet nearby
+              <ArrowIcon />
+            </Link>
           </div>
 
           <ol className="learn-step-rail">
