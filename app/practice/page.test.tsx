@@ -51,6 +51,9 @@ describe("PracticePage progress", () => {
     expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
       "Accepted 0 of 6",
     );
+    expect(
+      screen.getByText("Saved privately to your account"),
+    ).toBeInTheDocument();
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
   });
 
@@ -94,6 +97,9 @@ describe("PracticePage progress", () => {
 
     expect(screen.getByText("6 problems")).toBeInTheDocument();
     expect(screen.getByLabelText("6 problems")).toHaveTextContent("6 problems");
+    expect(
+      screen.queryByText("Saved privately to your account"),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Open the playground" }),
     ).not.toBeInTheDocument();
