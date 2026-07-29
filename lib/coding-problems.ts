@@ -11,6 +11,12 @@ export type CodingProblemTestCase = {
   expectedOutput: string;
 };
 
+export type CodingProblemExplanation = {
+  concept: string;
+  whyItWorks: string;
+  commonMistake: string;
+};
+
 export type CodingProblem = {
   slug: string;
   number: number;
@@ -21,6 +27,7 @@ export type CodingProblem = {
   inputFormat: string;
   outputFormat: string;
   recoveryHint: string;
+  acceptedExplanation: CodingProblemExplanation;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
@@ -39,6 +46,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "One integer: a + b.",
     recoveryHint:
       "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
+    acceptedExplanation: {
+      concept: "Parse text before arithmetic",
+      whyItWorks:
+        "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
+      commonMistake:
+        'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    },
     examples: [
       {
         input: "4 9",
@@ -75,6 +89,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: 'The exact word "Even" or "Odd".',
     recoveryHint:
       "Trace the remainder for zero, an even positive number, and a negative odd number. Then check the exact capitalization of the word you return.",
+    acceptedExplanation: {
+      concept: "Remainders reveal divisibility",
+      whyItWorks:
+        "Every even integer leaves a remainder of zero when divided by 2. Odd integers do not, including negative ones.",
+      commonMistake:
+        'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
+    },
     examples: [
       {
         input: "17",
@@ -111,6 +132,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "Ten multiples separated by a single space.",
     recoveryHint:
       "Count your loop boundaries. The result needs exactly ten values, starting with the first multiple and ending with the tenth, separated by single spaces.",
+    acceptedExplanation: {
+      concept: "Loop boundaries define the sequence",
+      whyItWorks:
+        "Visiting multipliers 1 through 10 once creates ten ordered values. Joining them once keeps the spacing exact.",
+      commonMistake:
+        "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
+    },
     examples: [
       {
         input: "5",
@@ -148,6 +176,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "The largest integer in the list.",
     recoveryHint:
       "Separate the leading count from the values you compare. Test an all-negative list so a starting value of zero cannot hide the mistake.",
+    acceptedExplanation: {
+      concept: "Compare only the data values",
+      whyItWorks:
+        "Separating the leading count leaves only the values that should compete for the maximum, including values below zero.",
+      commonMistake:
+        "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
+    },
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -180,6 +215,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "The same word reversed.",
     recoveryHint:
       "Trace one character from each end of the word. Check that every character appears once and that the returned text has no extra spaces.",
+    acceptedExplanation: {
+      concept: "Order can change without changing characters",
+      whyItWorks:
+        "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
+      commonMistake:
+        "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+    },
     examples: [
       {
         input: "semantic",
@@ -216,6 +258,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "The sequence from 1 to n, separated by a single space.",
     recoveryHint:
       "Check the overlap before either single divisibility case. A multiple of both 3 and 5 needs one token, and the sequence still needs to include n.",
+    acceptedExplanation: {
+      concept: "Handle overlapping rules first",
+      whyItWorks:
+        "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
+      commonMistake:
+        "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+    },
     examples: [
       {
         input: "5",

@@ -28,6 +28,13 @@ const problem = {
   title: "Sum two numbers",
   recoveryHint:
     "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
+  acceptedExplanation: {
+    concept: "Parse text before arithmetic",
+    whyItWorks:
+      "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
+    commonMistake:
+      'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+  },
   tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
   example: {
     input: "4 9",
@@ -159,6 +166,15 @@ describe("CodingWorkspace", () => {
       }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("Practice progress · 1/6 accepted")).toBeInTheDocument();
+    expect(screen.getByText("Concept unlocked")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: problem.acceptedExplanation.concept,
+      }),
+    ).toBeInTheDocument();
+    expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
+    expect(screen.getByText("Common mistake")).toBeInTheDocument();
+    expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
     expect(
       screen.getByText(
         "Your saved code, attempts, and Accepted progress return after sign-in.",
@@ -228,6 +244,28 @@ describe("CodingWorkspace", () => {
         name: "Was this practice step useful?",
       }),
     ).not.toBeInTheDocument();
+  });
+
+  it("restores the concept explanation with a saved Accepted result", () => {
+    render(
+      <CodingWorkspace
+        attempts={[]}
+        bestVerdict="Accepted"
+        initialCode="function solve(input) { return input; }"
+        isSignedIn
+        problem={problem}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: problem.acceptedExplanation.concept,
+      }),
+    ).toBeInTheDocument();
+    const status = screen.getByRole("status");
+    expect(status).toHaveClass("is-accepted");
+    expect(status).toHaveTextContent("Accepted");
+    expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
   });
 
   it("returns a learner who completes all six problems to the catalog", async () => {
@@ -321,6 +359,7 @@ describe("CodingWorkspace", () => {
     );
     expect(screen.getByText("Try this next")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.recoveryHint);
+    expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 

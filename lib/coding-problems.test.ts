@@ -28,9 +28,22 @@ describe("coding problems", () => {
       expect(problem.examples.length).toBeGreaterThan(0);
       expect(problem.starterCode).toContain("function solve(input)");
       expect(problem.recoveryHint.length).toBeGreaterThan(80);
+      expect(problem.acceptedExplanation.concept).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.whyItWorks).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.commonMistake).not.toHaveLength(0);
+      expect(JSON.stringify(problem.acceptedExplanation)).not.toContain(
+        "function solve",
+      );
     }
     expect(
       new Set(CODING_PROBLEMS.map((problem) => problem.recoveryHint)).size,
+    ).toBe(6);
+    expect(
+      new Set(
+        CODING_PROBLEMS.map(
+          (problem) => problem.acceptedExplanation.concept,
+        ),
+      ).size,
     ).toBe(6);
   });
 
