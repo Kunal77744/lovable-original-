@@ -25,6 +25,11 @@ describe("focused public learner entry pages", () => {
     ).toHaveAttribute("href", "/courses/web-development-foundations");
     expect(screen.getByText("5/5 checks")).toBeInTheDocument();
     expect(screen.getByText(/75% quiz pass mark/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /keep the html semantic tags cheat sheet nearby/i,
+      }),
+    ).toHaveAttribute("href", "/learn/semantic-html-cheat-sheet");
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
   });
 
@@ -74,6 +79,9 @@ describe("focused public learner entry pages", () => {
 
     expect(urls).toContain(
       "https://lovable-original-eight.vercel.app/learn/semantic-html",
+    );
+    expect(urls).toContain(
+      "https://lovable-original-eight.vercel.app/learn/semantic-html-cheat-sheet",
     );
     expect(urls).toContain(
       "https://lovable-original-eight.vercel.app/learn/beginner-javascript-practice",

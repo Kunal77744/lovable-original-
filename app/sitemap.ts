@@ -30,6 +30,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${productionUrl}/learn/semantic-html-cheat-sheet`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${productionUrl}/learn/beginner-javascript-practice`,
       changeFrequency: "monthly",
       priority: 0.8,
