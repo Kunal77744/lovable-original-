@@ -51,6 +51,10 @@ describe("GuidedProjectWorkspace", () => {
         projectSlug="semantic-html-article"
         initialProject={starterProject}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 
@@ -106,6 +110,10 @@ describe("GuidedProjectWorkspace", () => {
         projectSlug="semantic-html-article"
         initialProject={starterProject}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 
@@ -221,6 +229,10 @@ describe("GuidedProjectWorkspace", () => {
         projectSlug="semantic-html-article"
         initialProject={{ ...starterProject, html: completeHtml }}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/multiplication-table",
+          label: "Continue to JavaScript step 03: Multiplication table",
+        }}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Submit for review" }));
@@ -238,8 +250,10 @@ describe("GuidedProjectWorkspace", () => {
       screen.getByRole("button", { name: "Submit updated project" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /View saved progress/ }),
-    ).toHaveAttribute("href", "/dashboard");
+      screen.getByRole("link", {
+        name: /Continue to JavaScript step 03: Multiplication table/,
+      }),
+    ).toHaveAttribute("href", "/practice/multiplication-table");
     expect(
       screen.getByRole("heading", {
         name: "What felt confusing while you built this?",
@@ -267,6 +281,10 @@ describe("GuidedProjectWorkspace", () => {
           html: '<img src="https://example.com/track.png"><script>alert(1)</script>',
         }}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 
