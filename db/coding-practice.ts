@@ -1,12 +1,20 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
   getNextUnfinishedCodingProblemSlug,
   gradeCodingOutputs,
 } from "@/lib/coding-problems";
+import type {
+  PracticeFeedbackUsefulness,
+  SavedPracticeFeedback,
+} from "@/lib/practice-feedback";
 import { getDatabase } from "./index";
-import { codingProblemProgress, codingSubmission } from "./schema";
+import {
+  codingProblemProgress,
+  codingSubmission,
+  practiceFeedback,
+} from "./schema";
 
 export type CodingAttempt = {
   id: string;
@@ -21,6 +29,116 @@ export type RecentCodingAttempt = CodingAttempt & {
   problemNumber: number;
   problemTitle: string;
 };
+
+async function getFirstAcceptedProblemSlug(userId: string) {
+  const [firstAccepted] = await getDatabase()
+    .select({ problemSlug: codingProblemProgress.problemSlug })
+    .from(codingProblemProgress)
+    .where(
+      and(
+        eq(codingProblemProgress.userId, userId),
+        eq(codingProblemProgress.bestVerdict, "Accepted"),
+        inArray(
+          codingProblemProgress.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(
+      asc(codingProblemProgress.completedAt),
+      asc(codingProblemProgress.createdAt),
+    )
+    .limit(1);
+
+  return firstAccepted?.problemSlug ?? null;
+}
+
+export async function getPracticeFeedbackForStudent(
+  userId: string,
+  problemSlug: string,
+) {
+  if (!getCodingProblem(problemSlug)) {
+    return null;
+  }
+
+  const firstAcceptedProblemSlug = await getFirstAcceptedProblemSlug(userId);
+
+  if (firstAcceptedProblemSlug !== problemSlug) {
+    return {
+      isEligible: false,
+      feedback: null as SavedPracticeFeedback | null,
+    };
+  }
+
+  const [feedback] = await getDatabase()
+    .select({
+      problemSlug: practiceFeedback.problemSlug,
+      usefulness: practiceFeedback.usefulness,
+      comment: practiceFeedback.comment,
+      updatedAt: practiceFeedback.updatedAt,
+    })
+    .from(practiceFeedback)
+    .where(eq(practiceFeedback.userId, userId))
+    .limit(1);
+
+  return {
+    isEligible: true,
+    feedback: feedback
+      ? {
+          problemSlug: feedback.problemSlug,
+          usefulness:
+            feedback.usefulness as PracticeFeedbackUsefulness,
+          comment: feedback.comment ?? "",
+          updatedAt: feedback.updatedAt.toISOString(),
+        }
+      : null,
+  };
+}
+
+export async function savePracticeFeedbackForStudent(
+  userId: string,
+  problemSlug: string,
+  usefulness: PracticeFeedbackUsefulness,
+  comment: string | null,
+) {
+  if (!getCodingProblem(problemSlug)) {
+    return null;
+  }
+
+  const firstAcceptedProblemSlug = await getFirstAcceptedProblemSlug(userId);
+
+  if (firstAcceptedProblemSlug !== problemSlug) {
+    return null;
+  }
+
+  const now = new Date();
+  await getDatabase()
+    .insert(practiceFeedback)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      problemSlug,
+      usefulness,
+      comment,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: practiceFeedback.userId,
+      set: {
+        problemSlug,
+        usefulness,
+        comment,
+        updatedAt: now,
+      },
+    });
+
+  return {
+    problemSlug,
+    usefulness,
+    comment: comment ?? "",
+    updatedAt: now.toISOString(),
+  };
+}
 
 export async function getCodingCatalogProgress(userId: string | null) {
   if (!userId) {

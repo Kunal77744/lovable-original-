@@ -10,6 +10,7 @@ import { CodingWorkspace } from "./coding-workspace";
 
 const runCodingSolution = vi.fn();
 const capturePracticeProblemAccepted = vi.fn();
+const capturePracticeFeedbackSubmitted = vi.fn();
 
 vi.mock("@/lib/coding-runner", () => ({
   runCodingSolution: (...args: unknown[]) => runCodingSolution(...args),
@@ -18,6 +19,8 @@ vi.mock("@/lib/coding-runner", () => ({
 vi.mock("@/lib/product-analytics", () => ({
   capturePracticeProblemAccepted: (...args: unknown[]) =>
     capturePracticeProblemAccepted(...args),
+  capturePracticeFeedbackSubmitted: (...args: unknown[]) =>
+    capturePracticeFeedbackSubmitted(...args),
 }));
 
 const problem = {
@@ -31,16 +34,27 @@ const problem = {
 };
 
 function renderWorkspace({
+  initialPracticeFeedback = null,
   isSignedIn = true,
+  isPracticeFeedbackEligible = false,
 }: {
+  initialPracticeFeedback?: {
+    problemSlug: string;
+    usefulness: "not_yet" | "somewhat" | "very";
+    comment: string;
+    updatedAt: string;
+  } | null;
   isSignedIn?: boolean;
+  isPracticeFeedbackEligible?: boolean;
 } = {}) {
   return render(
     <CodingWorkspace
       attempts={[]}
       bestVerdict={null}
       initialCode="function solve(input) { return input; }"
+      initialPracticeFeedback={initialPracticeFeedback}
       isSignedIn={isSignedIn}
+      isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       problem={problem}
     />,
   );
@@ -74,6 +88,7 @@ describe("CodingWorkspace", () => {
     vi.restoreAllMocks();
     runCodingSolution.mockReset();
     capturePracticeProblemAccepted.mockReset();
+    capturePracticeFeedbackSubmitted.mockReset();
   });
 
   it("runs a public example in the browser without saving", async () => {
@@ -160,6 +175,11 @@ describe("CodingWorkspace", () => {
     expect(JSON.stringify(capturePracticeProblemAccepted.mock.calls)).not.toMatch(
       /function solve|code|input|output|email/i,
     );
+    expect(
+      screen.getByRole("heading", {
+        name: "Was this practice step useful?",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("does not recapture a previously saved Accepted result", async () => {
@@ -189,7 +209,9 @@ describe("CodingWorkspace", () => {
         attempts={[]}
         bestVerdict="Accepted"
         initialCode="function solve(input) { return input; }"
+        initialPracticeFeedback={null}
         isSignedIn
+        isPracticeFeedbackEligible={false}
         problem={problem}
       />,
     );
@@ -198,6 +220,11 @@ describe("CodingWorkspace", () => {
 
     expect((await screen.findAllByText("Accepted")).length).toBeGreaterThan(0);
     expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Was this practice step useful?",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("returns a learner who completes all six problems to the catalog", async () => {
@@ -227,7 +254,9 @@ describe("CodingWorkspace", () => {
         attempts={[]}
         bestVerdict={null}
         initialCode="function solve(input) { return input; }"
+        initialPracticeFeedback={null}
         isSignedIn
+        isPracticeFeedbackEligible={false}
         problem={problem}
       />,
     );
@@ -242,6 +271,31 @@ describe("CodingWorkspace", () => {
         name: "Continue to next unfinished step",
       }),
     ).not.toBeInTheDocument();
+  });
+
+  it("recovers the private response on the first Accepted problem", () => {
+    renderWorkspace({
+      isPracticeFeedbackEligible: true,
+      initialPracticeFeedback: {
+        problemSlug: problem.slug,
+        usefulness: "somewhat",
+        comment: "The examples made the loop click.",
+        updatedAt: "2026-07-29T03:00:00.000Z",
+      },
+    });
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Was this practice step useful?",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Somewhat")).toBeChecked();
+    expect(
+      screen.getByDisplayValue("The examples made the loop click."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Update response" }),
+    ).toBeInTheDocument();
   });
 
   it("announces a saved Wrong Answer verdict in the same status region", async () => {

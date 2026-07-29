@@ -14,6 +14,7 @@ import {
   captureAccountCreated,
   captureLearnerEventOnce,
   captureProjectCompleted,
+  capturePracticeFeedbackSubmitted,
   capturePracticeProblemAccepted,
   capturePracticeProblemStarted,
   capturePublicPageview,
@@ -177,6 +178,36 @@ describe("product analytics", () => {
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /private learner code|private input|private output|learner@example\.com|private account note/i,
+    );
+  });
+
+  it("captures only the bounded practice usefulness choice", () => {
+    const privateResponse = {
+      usefulness: "very",
+      comment: "private feedback comment",
+      code: "private learner code",
+      email: "learner@example.com",
+    } as const;
+
+    capturePracticeFeedbackSubmitted(privateResponse.usefulness);
+
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "practice_feedback_submitted",
+      expect.objectContaining({ usefulness: "very" }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "deployment_environment",
+        "is_test",
+        "journey_id",
+        "usefulness",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private feedback comment|private learner code|learner@example\.com/i,
     );
   });
 

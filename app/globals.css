@@ -5325,6 +5325,87 @@ h1 {
   line-height: 1.55;
 }
 
+.practice-feedback {
+  max-width: none;
+  margin: 0 22px 24px;
+  padding: 22px;
+  color: #eef4ef;
+  border: 1px solid #3c4b44;
+  border-radius: 10px;
+  background: #15231d;
+}
+
+.practice-feedback .quiz-kicker {
+  color: #91cca9;
+}
+
+.practice-feedback .course-feedback-heading h3 {
+  color: #eef4ef;
+}
+
+.practice-feedback .course-feedback-heading > span {
+  color: #b8ebcc;
+  border-color: #4f775f;
+  background: #1b3428;
+}
+
+.practice-feedback legend,
+.practice-feedback .course-feedback-comment > span:first-child {
+  color: #d5e0da;
+}
+
+.practice-feedback .course-feedback-choices label {
+  color: #aebbb4;
+  border-color: #415149;
+  background: #1d2b25;
+}
+
+.practice-feedback .course-feedback-choices label:has(input:checked) {
+  color: #eef4ef;
+  border-color: #83dda8;
+  background: #1b3428;
+}
+
+.practice-feedback .course-feedback-comment small,
+.practice-feedback .course-feedback-note,
+.practice-feedback .course-feedback-submit p {
+  color: #94a39b;
+}
+
+.practice-feedback .course-feedback-comment textarea {
+  color: #eef4ef;
+  border-color: #415149;
+  background: #111b17;
+}
+
+.practice-feedback .course-feedback-comment textarea::placeholder {
+  color: #718078;
+}
+
+.practice-feedback .course-feedback-comment textarea:focus {
+  border-color: #83dda8;
+  box-shadow: 0 0 0 3px rgba(131, 221, 168, 0.14);
+}
+
+.practice-feedback .course-feedback-remaining {
+  color: #b0bdb6;
+}
+
+.practice-feedback .course-feedback-submit button {
+  color: #dff5e7;
+  border-color: #659978;
+}
+
+.practice-feedback .course-feedback-submit button:hover:not(:disabled) {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.practice-feedback .course-feedback-submit p.is-error {
+  color: #efaaa2;
+}
+
 .sample-output {
   margin-top: 15px;
   padding: 13px;
