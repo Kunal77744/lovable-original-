@@ -15,12 +15,17 @@ type GuidedProjectWorkspaceProps = {
   projectSlug: string;
   initialProject: GuidedProjectRecord;
   initialFeedback: SavedProjectFeedback | null;
+  practiceContinuation: {
+    href: string;
+    label: string;
+  };
 };
 
 export function GuidedProjectWorkspace({
   projectSlug,
   initialProject,
   initialFeedback,
+  practiceContinuation,
 }: GuidedProjectWorkspaceProps) {
   const [html, setHtml] = useState(initialProject.html);
   const [project, setProject] = useState(initialProject);
@@ -257,8 +262,8 @@ export function GuidedProjectWorkspace({
             {message}
           </p>
           {isComplete ? (
-            <Link href="/dashboard">
-              View saved progress
+            <Link href={practiceContinuation.href}>
+              {practiceContinuation.label}
               <span aria-hidden="true">→</span>
             </Link>
           ) : null}
