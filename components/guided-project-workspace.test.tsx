@@ -123,6 +123,61 @@ describe("GuidedProjectWorkspace", () => {
     expect(screen.getByText("Unsaved")).toBeInTheDocument();
   });
 
+  it("turns the first failed review check into a focused repair drill", () => {
+    const checks = getEmptyGuidedProjectChecks().map((check) => ({
+      ...check,
+      passed: check.id !== "article-introduction",
+    }));
+
+    render(
+      <GuidedProjectWorkspace
+        projectSlug="semantic-html-article"
+        initialProject={{
+          ...starterProject,
+          saved: true,
+          submission: {
+            status: "needs-revision",
+            checks,
+            passedChecks: 5,
+            totalChecks: 6,
+            submittedAt: "2026-07-29T10:00:00.000Z",
+          },
+        }}
+        initialFeedback={null}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Lead with the topic before the introduction.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Your review flagged:/),
+    ).toHaveTextContent("Open with a clear topic and introduction");
+
+    fireEvent.click(screen.getByLabelText(/Repair 2/));
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(
+      screen.getByText(
+        "Not yet. Put the article's single h1 before its opening paragraph.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/Repair 1/));
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(
+      screen.getByText(
+        "Correct. The h1 names the topic before the opening paragraph develops it.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /Use this pattern in field-guide.html/,
+      }),
+    ).toHaveAttribute("href", "#guided-project-editor");
+  });
+
   it("shows a completed review and preserves a revision path", async () => {
     const completeHtml =
       "<header></header><main><article><h1>Guide</h1><p>Intro</p><section><h2>One</h2><p>Copy</p></section><section><h2>Two</h2><p>Copy</p></section><aside>Tip</aside></article></main><footer></footer>";
