@@ -30,6 +30,31 @@ const requiredTables = [
   "user",
   "verification",
 ];
+const requiredColumns = {
+  guided_project: [
+    "id",
+    "user_id",
+    "project_slug",
+    "html",
+    "reviewed_html",
+    "status",
+    "review_checks",
+    "submitted_at",
+    "completed_at",
+    "completion_id",
+    "created_at",
+    "updated_at",
+  ],
+  guided_project_feedback: [
+    "id",
+    "user_id",
+    "project_slug",
+    "confidence",
+    "comment",
+    "created_at",
+    "updated_at",
+  ],
+};
 
 function getDatabaseUrl() {
   const databaseUrl = process.env.DATABASE_URL?.trim();
@@ -120,10 +145,34 @@ async function run() {
     const missingTables = requiredTables.filter(
       (tableName) => !presentTables.has(tableName),
     );
+    const columnResults = await sql`
+      select table_name, column_name
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name in (
+          'guided_project',
+          'guided_project_feedback'
+        )
+    `;
+    const presentColumns = new Set(
+      columnResults.map(
+        ({ table_name: tableName, column_name: columnName }) =>
+          `${tableName}.${columnName}`,
+      ),
+    );
+    const missingColumns = Object.entries(requiredColumns).flatMap(
+      ([tableName, columnNames]) =>
+        columnNames
+          .filter(
+            (columnName) => !presentColumns.has(`${tableName}.${columnName}`),
+          )
+          .map((columnName) => `${tableName}.${columnName}`),
+    );
 
     if (
       migrationResult.count < expectedMigrationCount ||
-      missingTables.length > 0
+      missingTables.length > 0 ||
+      missingColumns.length > 0
     ) {
       console.error(
         "Database verification failed after migration. Deployment must remain paused.",
@@ -132,7 +181,7 @@ async function run() {
     }
 
     console.log(
-      `Database release ready: ${expectedMigrationCount} required migrations verified (${migrationResult.count} recorded total) and ${requiredTables.length} required tables verified.`,
+      `Database release ready: ${expectedMigrationCount} required migrations verified (${migrationResult.count} recorded total), ${requiredTables.length} required tables verified, and ${presentColumns.size} project columns inspected.`,
     );
     return 0;
   } catch {
