@@ -900,20 +900,49 @@ async function runJourney(baseUrl, databaseUrl) {
   });
 
   await runStep(8, async (step) => {
-    const response = await request(
+    const lessonResponse = await request(
       `/learn/${COURSE_SLUG}/${LESSON_SLUG}`,
     );
-    const location = response.headers.get("location") ?? "";
+    const lessonText = pageText(await lessonResponse.text());
     assertStep(
-      [302, 303, 307, 308].includes(response.status),
+      lessonResponse.status === 200 &&
+        lessonText.includes(LESSON_TITLE) &&
+        lessonText.includes("Full lesson · Free to read"),
       step,
-      "Protected lesson did not redirect after sign out.",
+      "The public lesson did not remain readable after sign out.",
     );
     assertStep(
-      location.includes("/account?mode=signin"),
+      !lessonText.includes(savedWorkspaceHtml) &&
+        !lessonText.includes(savedProjectHtml) &&
+        !lessonText.includes(savedLessonNote) &&
+        !lessonText.includes(savedFeedbackComment) &&
+        !lessonText.includes(savedInterviewAnswer) &&
+        !lessonText.includes(savedCertificateName),
       step,
-      "Protected lesson did not redirect to sign in.",
+      "The signed-out lesson exposed private learner data.",
     );
+
+    const protectedPages = [
+      "/dashboard",
+      `/projects/${PROJECT_SLUG}`,
+      `/interview/${INTERVIEW_DRILL_SLUG}`,
+      "/profile",
+      "/settings",
+      "/certificate",
+      "/playground",
+    ];
+
+    for (const path of protectedPages) {
+      const pageResponse = await request(path);
+      const location = pageResponse.headers.get("location") ?? "";
+      assertStep(
+        [302, 303, 307, 308].includes(pageResponse.status) &&
+          location.includes("/account?mode=signin"),
+        step,
+        `Protected page ${path} did not redirect to sign in.`,
+      );
+    }
+
     const workspaceResponse = await request(
       `/api/lessons/${LESSON_SLUG}/workspace`,
     );
@@ -921,14 +950,6 @@ async function runJourney(baseUrl, databaseUrl) {
       workspaceResponse.status === 401,
       step,
       "Signed-out workspace access was not rejected.",
-    );
-    const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
-    const projectLocation = projectPageResponse.headers.get("location") ?? "";
-    assertStep(
-      [302, 303, 307, 308].includes(projectPageResponse.status) &&
-        projectLocation.includes("/account?mode=signin"),
-      step,
-      "Protected project did not redirect to sign in.",
     );
     const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
     assertStep(
@@ -963,15 +984,6 @@ async function runJourney(baseUrl, databaseUrl) {
       certificateApiResponse.status === 401,
       step,
       "Signed-out certificate access was not rejected.",
-    );
-    const certificatePageResponse = await request("/certificate");
-    assertStep(
-      [302, 303, 307, 308].includes(certificatePageResponse.status) &&
-        (certificatePageResponse.headers.get("location") ?? "").includes(
-          "/account?mode=signin",
-        ),
-      step,
-      "The signed-out certificate page did not redirect to sign in.",
     );
     const interviewResponse = await request(
       `/api/interview/${INTERVIEW_DRILL_SLUG}`,
