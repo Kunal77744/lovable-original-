@@ -25,6 +25,7 @@ const requiredTables = [
   "lesson_progress",
   "learner_setting",
   "playground_file",
+  "practice_feedback",
   "rate_limit",
   "session",
   "user",
@@ -50,6 +51,15 @@ const requiredColumns = {
     "user_id",
     "project_slug",
     "confidence",
+    "comment",
+    "created_at",
+    "updated_at",
+  ],
+  practice_feedback: [
+    "id",
+    "user_id",
+    "problem_slug",
+    "usefulness",
     "comment",
     "created_at",
     "updated_at",
@@ -151,7 +161,8 @@ async function run() {
       where table_schema = 'public'
         and table_name in (
           'guided_project',
-          'guided_project_feedback'
+          'guided_project_feedback',
+          'practice_feedback'
         )
     `;
     const presentColumns = new Set(

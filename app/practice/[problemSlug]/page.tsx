@@ -4,7 +4,10 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CodingWorkspace } from "@/components/coding-workspace";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
-import { getCodingProblemForStudent } from "@/db/coding-practice";
+import {
+  getCodingProblemForStudent,
+  getPracticeFeedbackForStudent,
+} from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEM_COUNT,
@@ -54,6 +57,12 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
   );
 
   if (!studentState) notFound();
+
+  const practiceFeedbackState = session
+    ? await getPracticeFeedbackForStudent(session.user.id, problemSlug)
+    : { isEligible: false, feedback: null };
+
+  if (!practiceFeedbackState) notFound();
 
   const previousProblem = CODING_PROBLEMS[problem.number - 2] ?? null;
   const nextProblem = CODING_PROBLEMS[problem.number] ?? null;
@@ -127,7 +136,9 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
             initialCode={studentState.code}
+            initialPracticeFeedback={practiceFeedbackState.feedback}
             isSignedIn={Boolean(session)}
+            isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             problem={{
               slug: problem.slug,
               title: problem.title,

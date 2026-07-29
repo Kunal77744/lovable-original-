@@ -1,6 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { getCodingProblemForStudent } from "@/db/coding-practice";
+import {
+  getCodingProblemForStudent,
+  getPracticeFeedbackForStudent,
+} from "@/db/coding-practice";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { capturePracticeProblemStarted } from "@/lib/product-analytics";
 import ProblemPage, { generateMetadata } from "./page";
@@ -19,6 +22,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/product-analytics", () => ({
   capturePracticeProblemAccepted: vi.fn(),
+  capturePracticeFeedbackSubmitted: vi.fn(),
   capturePracticeProblemStarted: vi.fn(),
 }));
 
@@ -38,6 +42,7 @@ vi.mock("@/db/coding-practice", () => ({
         : null,
     );
   }),
+  getPracticeFeedbackForStudent: vi.fn(),
 }));
 
 describe("practice problem metadata", () => {
@@ -104,6 +109,7 @@ describe("practice problem metadata", () => {
         null,
         problem.slug,
       );
+      expect(getPracticeFeedbackForStudent).not.toHaveBeenCalled();
 
       cleanup();
     }

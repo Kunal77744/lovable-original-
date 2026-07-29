@@ -36,6 +36,10 @@ type PracticeStartedProperties = {
   problemSlug: string;
 };
 
+type PracticeFeedbackProperties = {
+  usefulness: string;
+};
+
 let initialized = false;
 let fallbackJourneyId: string | null = null;
 const fallbackCapturedEvents = new Set<string>();
@@ -199,7 +203,8 @@ function capture(
     | "feedback_submitted"
     | "project_completed"
     | "practice_problem_started"
-    | "practice_problem_accepted",
+    | "practice_problem_accepted"
+    | "practice_feedback_submitted",
   properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
@@ -317,6 +322,12 @@ export function capturePracticeProblemAccepted({
   }
 
   return didCapture;
+}
+
+export function capturePracticeFeedbackSubmitted(
+  usefulness: PracticeFeedbackProperties["usefulness"],
+) {
+  return capture("practice_feedback_submitted", { usefulness });
 }
 
 export function capturePracticeProblemStarted({

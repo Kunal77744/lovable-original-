@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { PracticeFeedback } from "@/components/practice-feedback";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { capturePracticeProblemAccepted } from "@/lib/product-analytics";
 import type { CodingAttempt } from "@/db/coding-practice";
+import type { SavedPracticeFeedback } from "@/lib/practice-feedback";
 
 type CodingWorkspaceProps = {
   attempts: CodingAttempt[];
   bestVerdict: string | null;
   initialCode: string;
+  initialPracticeFeedback: SavedPracticeFeedback | null;
   isSignedIn: boolean;
+  isPracticeFeedbackEligible: boolean;
   problem: {
     slug: string;
     title: string;
@@ -57,12 +61,17 @@ export function CodingWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
   initialCode,
+  initialPracticeFeedback,
   isSignedIn,
+  isPracticeFeedbackEligible,
   problem,
 }: CodingWorkspaceProps) {
   const [code, setCode] = useState(initialCode);
   const [attempts, setAttempts] = useState(initialAttempts);
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
+  const [showPracticeFeedback, setShowPracticeFeedback] = useState(
+    isPracticeFeedbackEligible,
+  );
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
@@ -216,6 +225,14 @@ export function CodingWorkspace({
           problemSlug: problem.slug,
           passedCheckCount: payload.passedTests,
         });
+      }
+
+      if (
+        payload.verdict === "Accepted" &&
+        payload.isFirstAcceptedResult &&
+        payload.completedCount === 1
+      ) {
+        setShowPracticeFeedback(true);
       }
     } catch {
       setRunState({
@@ -373,6 +390,13 @@ export function CodingWorkspace({
           </p>
         </div>
       </div>
+
+      {showPracticeFeedback ? (
+        <PracticeFeedback
+          problemSlug={problem.slug}
+          initialFeedback={initialPracticeFeedback}
+        />
+      ) : null}
 
       <section className="attempt-history" aria-labelledby="attempt-history-title">
         <div>

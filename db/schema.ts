@@ -439,6 +439,27 @@ export const codingSubmission = pgTable(
   ],
 );
 
+export const practiceFeedback = pgTable(
+  "practice_feedback",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    usefulness: text("usefulness").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("practice_feedback_user_unique").on(table.userId),
+    index("practice_feedback_user_id_idx").on(table.userId),
+  ],
+);
+
 export const courseCertificate = pgTable(
   "course_certificate",
   {
