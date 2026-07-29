@@ -14,6 +14,11 @@ type CodingWorkspaceProps = {
   problem: {
     slug: string;
     title: string;
+    acceptedExplanation: {
+      concept: string;
+      whyItWorks: string;
+      commonMistake: string;
+    };
     tests: { input: string }[];
     example: {
       input: string;
@@ -75,6 +80,9 @@ export function CodingWorkspace({
       : "You can run the example now. Sign in to submit and save progress.",
   });
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showAcceptedExplanation =
+    (runState.kind === "verdict" && runState.verdict === "Accepted") ||
+    (runState.kind === "idle" && initialBestVerdict === "Accepted");
 
   useEffect(() => {
     return () => {
@@ -310,6 +318,9 @@ export function CodingWorkspace({
               : " is-wrong"
             : runState.kind === "sample" && runState.passed
               ? " is-accepted"
+              : runState.kind === "idle" &&
+                  initialBestVerdict === "Accepted"
+                ? " is-accepted"
               : ""
         }`}
         role="status"
@@ -330,7 +341,9 @@ export function CodingWorkspace({
                     ? "Time limit exceeded"
                   : runState.kind === "running"
                     ? "Judging"
-                    : "Ready"}
+                    : initialBestVerdict === "Accepted"
+                      ? "Accepted"
+                      : "Ready"}
           </span>
           {runState.kind === "verdict" ? (
             <strong>
@@ -363,6 +376,24 @@ export function CodingWorkspace({
                 : "View completed path"}
             </Link>
           </div>
+        ) : null}
+        {showAcceptedExplanation ? (
+          <section
+            className="accepted-explanation"
+            aria-labelledby={`accepted-explanation-${problem.slug}`}
+          >
+            <div>
+              <span>Concept unlocked</span>
+              <h3 id={`accepted-explanation-${problem.slug}`}>
+                {problem.acceptedExplanation.concept}
+              </h3>
+            </div>
+            <p>{problem.acceptedExplanation.whyItWorks}</p>
+            <div className="accepted-mistake">
+              <span>Common mistake</span>
+              <p>{problem.acceptedExplanation.commonMistake}</p>
+            </div>
+          </section>
         ) : null}
         <div className="practice-recovery-cue">
           <span aria-hidden="true" />

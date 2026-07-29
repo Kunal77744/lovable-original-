@@ -11,6 +11,12 @@ export type CodingProblemTestCase = {
   expectedOutput: string;
 };
 
+export type CodingProblemExplanation = {
+  concept: string;
+  whyItWorks: string;
+  commonMistake: string;
+};
+
 export type CodingProblem = {
   slug: string;
   number: number;
@@ -20,6 +26,7 @@ export type CodingProblem = {
   statement: string;
   inputFormat: string;
   outputFormat: string;
+  acceptedExplanation: CodingProblemExplanation;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
@@ -36,6 +43,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read two whole numbers from one line and return their sum. The numbers may be positive, negative, or zero.",
     inputFormat: "One line containing two space-separated integers: a b.",
     outputFormat: "One integer: a + b.",
+    acceptedExplanation: {
+      concept: "Parse text before arithmetic",
+      whyItWorks:
+        "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
+      commonMistake:
+        'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    },
     examples: [
       {
         input: "4 9",
@@ -70,6 +84,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read one whole number. Return "Even" when it is divisible by 2 and "Odd" otherwise.',
     inputFormat: "One integer n.",
     outputFormat: 'The exact word "Even" or "Odd".',
+    acceptedExplanation: {
+      concept: "Remainders reveal divisibility",
+      whyItWorks:
+        "Every even integer leaves a remainder of zero when divided by 2. Odd integers do not, including negative ones.",
+      commonMistake:
+        'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
+    },
     examples: [
       {
         input: "17",
@@ -104,6 +125,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one whole number and return its first ten multiples, from 1 × n through 10 × n.",
     inputFormat: "One integer n.",
     outputFormat: "Ten multiples separated by a single space.",
+    acceptedExplanation: {
+      concept: "Loop boundaries define the sequence",
+      whyItWorks:
+        "Visiting multipliers 1 through 10 once creates ten ordered values. Joining them once keeps the spacing exact.",
+      commonMistake:
+        "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
+    },
     examples: [
       {
         input: "5",
@@ -139,6 +167,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n space-separated integers.",
     outputFormat: "The largest integer in the list.",
+    acceptedExplanation: {
+      concept: "Compare only the data values",
+      whyItWorks:
+        "Separating the leading count leaves only the values that should compete for the maximum, including values below zero.",
+      commonMistake:
+        "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
+    },
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -169,6 +204,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one lowercase word and return its characters in reverse order.",
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: "The same word reversed.",
+    acceptedExplanation: {
+      concept: "Order can change without changing characters",
+      whyItWorks:
+        "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
+      commonMistake:
+        "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+    },
     examples: [
       {
         input: "semantic",
@@ -203,6 +245,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Return the numbers from 1 to n. Replace multiples of 3 with "Fizz", multiples of 5 with "Buzz", and multiples of both with "FizzBuzz".',
     inputFormat: "One positive integer n.",
     outputFormat: "The sequence from 1 to n, separated by a single space.",
+    acceptedExplanation: {
+      concept: "Handle overlapping rules first",
+      whyItWorks:
+        "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
+      commonMistake:
+        "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+    },
     examples: [
       {
         input: "5",

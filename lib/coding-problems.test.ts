@@ -27,7 +27,20 @@ describe("coding problems", () => {
       expect(problem.tests.length).toBeGreaterThanOrEqual(4);
       expect(problem.examples.length).toBeGreaterThan(0);
       expect(problem.starterCode).toContain("function solve(input)");
+      expect(problem.acceptedExplanation.concept).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.whyItWorks).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.commonMistake).not.toHaveLength(0);
+      expect(JSON.stringify(problem.acceptedExplanation)).not.toContain(
+        "function solve",
+      );
     }
+    expect(
+      new Set(
+        CODING_PROBLEMS.map(
+          (problem) => problem.acceptedExplanation.concept,
+        ),
+      ).size,
+    ).toBe(6);
   });
 
   it("grades normalized outputs without executing learner code", () => {
