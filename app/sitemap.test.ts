@@ -11,6 +11,7 @@ describe("public sitemap", () => {
       `${productionUrl}/courses/web-development-foundations`,
       `${productionUrl}/practice`,
       `${productionUrl}/learn/semantic-html`,
+      `${productionUrl}/learn/semantic-html-project`,
       `${productionUrl}/learn/beginner-javascript-practice`,
     ]);
   });
