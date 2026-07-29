@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import type { QuizQuestion } from "@/lib/first-course-content";
 import { captureLearnerEventOnce } from "@/lib/product-analytics";
+import { announceLessonProgress } from "@/lib/lesson-progress-events";
 import { CourseFeedback } from "@/components/course-feedback";
 import { RevisionPack } from "@/components/revision-pack";
 
@@ -97,6 +98,11 @@ export function LessonQuiz({
       }
 
       setResult(payload);
+      announceLessonProgress({
+        lessonSlug,
+        completed: payload.completed,
+        savedScore: payload.savedScore,
+      });
 
       if (payload.completed) {
         captureLearnerEventOnce("quiz_completed", {

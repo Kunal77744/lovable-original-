@@ -121,9 +121,10 @@ export function AccountForm() {
         noValidate
       >
         {mode === "create" ? (
-          <label>
+          <label htmlFor="account-name">
             <span>Name</span>
             <input
+              id="account-name"
               name="name"
               type="text"
               autoComplete="name"
@@ -135,9 +136,10 @@ export function AccountForm() {
           </label>
         ) : null}
 
-        <label>
+        <label htmlFor="account-email">
           <span>Email</span>
           <input
+            id="account-email"
             name="email"
             type="email"
             inputMode="email"
@@ -148,9 +150,10 @@ export function AccountForm() {
           />
         </label>
 
-        <label>
+        <label htmlFor="account-password">
           <span>Password</span>
           <input
+            id="account-password"
             name="password"
             type="password"
             autoComplete={mode === "create" ? "new-password" : "current-password"}

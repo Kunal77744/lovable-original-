@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LessonQuiz } from "@/components/lesson-quiz";
+import { LessonProgressRail } from "@/components/lesson-progress-rail";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { LessonNotes } from "@/components/lesson-notes";
 import { SemanticHtmlTutor } from "@/components/semantic-html-tutor";
@@ -133,59 +133,17 @@ export default async function LessonPage({ params }: LessonPageProps) {
       ) : null}
       <SiteNav currentPage="lesson" studentSession={Boolean(session)} />
       <div className="lesson-shell">
-        <aside className="lesson-rail" aria-label="Course progress">
-          <Link
-            className="lesson-back-link"
-            href={session ? "/dashboard" : "/courses/web-development-foundations"}
-          >
-            <span aria-hidden="true">←</span>
-            {session ? "Dashboard" : "Course overview"}
-          </Link>
-          <p>{studentLesson.courseTitle}</p>
-          <div className="lesson-rail-progress">
-            <span
-              className={studentLesson.courseCompleted ? "is-complete" : ""}
-              aria-hidden="true"
-            />
-            <div>
-              <strong>{studentLesson.moduleTitle}</strong>
-              <small>
-                {session
-                  ? `${studentLesson.completedLessons} of ${studentLesson.totalLessons} complete`
-                  : "Full lesson · Free to read"}
-              </small>
-            </div>
-          </div>
-          <ol>
-            {studentLesson.lessons.map((courseLesson) => (
-              <li
-                key={courseLesson.id}
-                aria-current={
-                  courseLesson.slug === studentLesson.lessonSlug
-                    ? "step"
-                    : undefined
-                }
-              >
-                <span>
-                  {courseLesson.completed ? "✓" : courseLesson.position}
-                </span>
-                <div>
-                  <Link
-                    href={`/learn/${studentLesson.courseSlug}/${courseLesson.slug}`}
-                  >
-                    <strong>{courseLesson.title}</strong>
-                  </Link>
-                  <small>
-                    {courseLesson.estimatedMinutes} min
-                    {courseLesson.quizScore !== null
-                      ? ` · Best ${courseLesson.quizScore}%`
-                      : ""}
-                  </small>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </aside>
+        <LessonProgressRail
+          courseTitle={studentLesson.courseTitle}
+          courseSlug={studentLesson.courseSlug}
+          moduleTitle={studentLesson.moduleTitle}
+          currentLessonSlug={studentLesson.lessonSlug}
+          signedIn={Boolean(session)}
+          initialCompletedLessons={studentLesson.completedLessons}
+          totalLessons={studentLesson.totalLessons}
+          initialCourseCompleted={studentLesson.courseCompleted}
+          initialLessons={studentLesson.lessons}
+        />
 
         <article className="lesson-content">
           <header className="lesson-hero">
