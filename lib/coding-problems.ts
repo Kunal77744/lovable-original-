@@ -20,6 +20,7 @@ export type CodingProblem = {
   statement: string;
   inputFormat: string;
   outputFormat: string;
+  recoveryHint: string;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
@@ -36,6 +37,8 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read two whole numbers from one line and return their sum. The numbers may be positive, negative, or zero.",
     inputFormat: "One line containing two space-separated integers: a b.",
     outputFormat: "One integer: a + b.",
+    recoveryHint:
+      "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
     examples: [
       {
         input: "4 9",
@@ -70,6 +73,8 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read one whole number. Return "Even" when it is divisible by 2 and "Odd" otherwise.',
     inputFormat: "One integer n.",
     outputFormat: 'The exact word "Even" or "Odd".',
+    recoveryHint:
+      "Trace the remainder for zero, an even positive number, and a negative odd number. Then check the exact capitalization of the word you return.",
     examples: [
       {
         input: "17",
@@ -104,6 +109,8 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one whole number and return its first ten multiples, from 1 × n through 10 × n.",
     inputFormat: "One integer n.",
     outputFormat: "Ten multiples separated by a single space.",
+    recoveryHint:
+      "Count your loop boundaries. The result needs exactly ten values, starting with the first multiple and ending with the tenth, separated by single spaces.",
     examples: [
       {
         input: "5",
@@ -139,6 +146,8 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n space-separated integers.",
     outputFormat: "The largest integer in the list.",
+    recoveryHint:
+      "Separate the leading count from the values you compare. Test an all-negative list so a starting value of zero cannot hide the mistake.",
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -169,6 +178,8 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one lowercase word and return its characters in reverse order.",
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: "The same word reversed.",
+    recoveryHint:
+      "Trace one character from each end of the word. Check that every character appears once and that the returned text has no extra spaces.",
     examples: [
       {
         input: "semantic",
@@ -203,6 +214,8 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Return the numbers from 1 to n. Replace multiples of 3 with "Fizz", multiples of 5 with "Buzz", and multiples of both with "FizzBuzz".',
     inputFormat: "One positive integer n.",
     outputFormat: "The sequence from 1 to n, separated by a single space.",
+    recoveryHint:
+      "Check the overlap before either single divisibility case. A multiple of both 3 and 5 needs one token, and the sequence still needs to include n.",
     examples: [
       {
         input: "5",

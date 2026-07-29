@@ -27,7 +27,11 @@ describe("coding problems", () => {
       expect(problem.tests.length).toBeGreaterThanOrEqual(4);
       expect(problem.examples.length).toBeGreaterThan(0);
       expect(problem.starterCode).toContain("function solve(input)");
+      expect(problem.recoveryHint.length).toBeGreaterThan(80);
     }
+    expect(
+      new Set(CODING_PROBLEMS.map((problem) => problem.recoveryHint)).size,
+    ).toBe(6);
   });
 
   it("grades normalized outputs without executing learner code", () => {

@@ -131,6 +131,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
             problem={{
               slug: problem.slug,
               title: problem.title,
+              recoveryHint: problem.recoveryHint,
               tests: problem.tests.map((test) => ({ input: test.input })),
               example: {
                 input: problem.examples[0].input,
