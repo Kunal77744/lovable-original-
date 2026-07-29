@@ -94,13 +94,13 @@ export default function SemanticHtmlEntryPage() {
             </p>
             <Link
               className="primary-action"
-              href="/courses/web-development-foundations"
+              href="/learn/web-development-foundations/semantic-html"
             >
-              See the 18-minute course
+              Read the full 18-minute lesson
               <ArrowIcon />
             </Link>
             <p className="learn-entry-note">
-              Free course overview · Five structure checks · 75% quiz pass mark
+              Free to read · Five structure checks · 75% quiz pass mark
             </p>
           </div>
 

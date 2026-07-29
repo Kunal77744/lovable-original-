@@ -21,8 +21,12 @@ describe("focused public learner entry pages", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /see the 18-minute course/i }),
-    ).toHaveAttribute("href", "/courses/web-development-foundations");
+      screen.getByRole("link", { name: /read the full 18-minute lesson/i }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
+    expect(screen.getByText(/free to read/i)).toBeInTheDocument();
     expect(screen.getByText("5/5 checks")).toBeInTheDocument();
     expect(screen.getByText(/75% quiz pass mark/i)).toBeInTheDocument();
     expect(
