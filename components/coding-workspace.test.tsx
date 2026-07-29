@@ -26,6 +26,8 @@ vi.mock("@/lib/product-analytics", () => ({
 const problem = {
   slug: "sum-two-numbers",
   title: "Sum two numbers",
+  recoveryHint:
+    "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
   tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
   example: {
     input: "4 9",
@@ -162,6 +164,7 @@ describe("CodingWorkspace", () => {
         "Your saved code, attempts, and Accepted progress return after sign-in.",
       ),
     ).toBeInTheDocument();
+    expect(screen.queryByText("Try this next")).not.toBeInTheDocument();
     await waitFor(() =>
       expect(globalThis.fetch).toHaveBeenCalledWith(
         "/api/practice/sum-two-numbers",
@@ -316,6 +319,8 @@ describe("CodingWorkspace", () => {
         "Wrong Answer3/4 checks3 of 4 checks passed. Your attempt is saved.",
       ),
     );
+    expect(screen.getByText("Try this next")).toBeInTheDocument();
+    expect(status).toHaveTextContent(problem.recoveryHint);
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 

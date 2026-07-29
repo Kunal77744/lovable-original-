@@ -18,6 +18,7 @@ type CodingWorkspaceProps = {
   problem: {
     slug: string;
     title: string;
+    recoveryHint: string;
     tests: { input: string }[];
     example: {
       input: string;
@@ -379,6 +380,13 @@ export function CodingWorkspace({
                 ? "Continue to next unfinished step"
                 : "View completed path"}
             </Link>
+          </div>
+        ) : null}
+        {runState.kind === "verdict" &&
+        runState.verdict === "Wrong Answer" ? (
+          <div className="wrong-answer-hint">
+            <span>Try this next</span>
+            <p>{problem.recoveryHint}</p>
           </div>
         ) : null}
         <div className="practice-recovery-cue">
