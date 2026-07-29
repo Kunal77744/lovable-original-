@@ -43,21 +43,21 @@ export const metadata: Metadata = {
 const courseSteps = [
   {
     number: "01",
-    label: "Learn",
-    title: "Read the page before you style it.",
-    copy: "Three focused sections explain how landmarks, headings, and articles give a document useful structure.",
+    label: "Lesson",
+    title: "Learn the structure and check your recall.",
+    copy: "Read three focused sections, build a saved article page, and pass four questions at 75%.",
   },
   {
     number: "02",
-    label: "Build",
-    title: "Turn the structure into a saved page.",
-    copy: "Write semantic HTML in the course workspace, see the page take shape, and save the exact result to your account.",
+    label: "Project",
+    title: "Turn the lesson into a field guide.",
+    copy: "Build and save a private semantic HTML field guide, review six checks, then revise your work.",
   },
   {
     number: "03",
-    label: "Recall",
-    title: "Prove the choices make sense.",
-    copy: "Answer four questions, pass at 75%, and return to your best score and completed progress from the dashboard.",
+    label: "Practice",
+    title: "Keep going with JavaScript.",
+    copy: "Continue through six ordered beginner problems and return to the next unfinished step.",
   },
 ];
 
@@ -105,8 +105,9 @@ export default function WebDevelopmentFoundationsPage() {
             </h1>
             <p className="course-overview-lede">
               Learn how browsers read a page, build and save your own semantic
-              HTML, then check your choices with four questions. Pass at 75%
-              and keep your best result.
+              HTML, then pass four questions at 75%. Next, build a private field
+              guide with a six-check review and continue through six beginner
+              JavaScript problems.
             </p>
             <Link
               className="primary-action"
@@ -116,7 +117,7 @@ export default function WebDevelopmentFoundationsPage() {
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              One lesson · Saved workspace · Four-question quiz
+              One lesson · Six-check field guide · Six JavaScript problems
             </p>
           </div>
 
@@ -167,22 +168,22 @@ export default function WebDevelopmentFoundationsPage() {
             <span>One focused lesson</span>
           </div>
           <div>
-            <strong>1 saved page</strong>
-            <span>Your practical result</span>
+            <strong>6 review checks</strong>
+            <span>One saved field guide</span>
           </div>
           <div>
-            <strong>75% to pass</strong>
-            <span>Four recall questions</span>
+            <strong>6 problems</strong>
+            <span>Ordered JavaScript practice</span>
           </div>
         </section>
 
         <section className="course-journey" aria-labelledby="journey-title">
           <div className="course-journey-heading">
             <p className="eyebrow">The complete course</p>
-            <h2 id="journey-title">Structure, practice, proof.</h2>
+            <h2 id="journey-title">Learn, build, keep going.</h2>
             <p>
-              Each step stays connected, so the lesson ends with something you
-              made and a result you can return to.
+              The lesson leads into one reviewed project, then a JavaScript path
+              that resumes where you left off.
             </p>
           </div>
 

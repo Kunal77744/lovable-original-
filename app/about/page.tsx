@@ -5,7 +5,7 @@ import { SiteFooter, SiteNav, SkipLink } from "../site-chrome";
 export const metadata: Metadata = {
   title: "About Lovable Original | Learn, recall, and build",
   description:
-    "See how Lovable Original turns one semantic HTML lesson into a saved page, a four-question recall check, and progress you can return to.",
+    "See how Lovable Original connects one semantic HTML lesson to a saved field guide, a six-check review, and beginner JavaScript practice.",
   alternates: {
     canonical: "/about",
   },
@@ -24,8 +24,8 @@ const learningLoop = [
   },
   {
     number: "03",
-    title: "Use it for real",
-    copy: "Build and save an accessible article page in your course workspace.",
+    title: "Build beyond the lesson",
+    copy: "Save a semantic HTML field guide, review six checks, then continue into JavaScript practice.",
   },
 ];
 
@@ -58,8 +58,8 @@ export default function AboutPage() {
             </h1>
             <p className="about-lede">
               Lovable Original begins with Web Development Foundations: one
-              18-minute semantic HTML lesson, a saved coding workspace, four
-              recall questions, and progress you can return to.
+              18-minute semantic HTML lesson, a saved field guide with a
+              six-check review, and six beginner JavaScript problems.
             </p>
             <Link
               className="primary-action"
@@ -105,7 +105,8 @@ export default function AboutPage() {
             <p>
               The first focused course is live now. Web Development Foundations
               takes one 18-minute lesson from explanation to a saved semantic
-              HTML page, then records your best quiz score and progress.
+              HTML page, then into a private field guide and six-check review.
+              Six ordered JavaScript problems give you a clear next step.
             </p>
           </div>
         </section>
@@ -121,6 +122,10 @@ export default function AboutPage() {
               <li>
                 One complete 18-minute semantic HTML lesson with a saved
                 workspace, assignment, quiz, notes, and revision.
+              </li>
+              <li>
+                A private semantic HTML field-guide project with saved drafts,
+                revision, and a six-check review.
               </li>
               <li>
                 A lesson-bound semantic HTML tutor that answers from the course
@@ -141,11 +146,6 @@ export default function AboutPage() {
                 saved Accepted progress.
               </li>
             </ul>
-            <p className="about-standard-planned">
-              <span>Planned next</span>
-              The guided semantic HTML field-guide project and its six-check
-              review are not live yet.
-            </p>
           </div>
         </section>
       </main>
