@@ -3,7 +3,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
-import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import {
+  CODING_PROBLEMS,
+  getCodingProblem,
+  getNextUnfinishedCodingProblemSlug,
+} from "@/lib/coding-problems";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -23,9 +27,21 @@ export default async function PracticePage() {
   });
   const progress = await getCodingCatalogProgress(session?.user.id ?? null);
   const completedSlugs = new Set(progress.completedSlugs);
+  const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
+    progress.completedSlugs,
+  );
+  const nextProblem = nextProblemSlug
+    ? getCodingProblem(nextProblemSlug)
+    : CODING_PROBLEMS[0];
+  const primaryProblem = nextProblem ?? CODING_PROBLEMS[0];
   const catalogProgressLabel = session
     ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
     : `${progress.totalCount} problems`;
+  const primaryActionLabel = session
+    ? nextProblemSlug
+      ? `Continue at step ${primaryProblem.number} of ${progress.totalCount}`
+      : "Review the six-step path"
+    : `Start step 1 of ${progress.totalCount}`;
 
   return (
     <main>
@@ -34,17 +50,17 @@ export default async function PracticePage() {
         <section className="practice-hero" aria-labelledby="practice-title">
           <div className="practice-hero-copy">
             <p className="eyebrow">JavaScript practice arena</p>
-            <h1 id="practice-title">Six problems. One honest first streak.</h1>
+            <h1 id="practice-title">Six problems. One beginner path.</h1>
             <p>
-              Work from input handling to FizzBuzz in a focused beginner set.
-              Run every solution in your browser, submit against deterministic
-              checks, and keep your progress free.
+              Follow six ordered steps from input handling to FizzBuzz. Run
+              every solution in your browser, submit against deterministic
+              checks, and return to your next unfinished step.
             </p>
             <Link
               className="primary-action"
-              href={`/practice/${CODING_PROBLEMS[0].slug}`}
+              href={`/practice/${primaryProblem.slug}`}
             >
-              Solve problem 01 <span aria-hidden="true">→</span>
+              {primaryActionLabel} <span aria-hidden="true">→</span>
             </Link>
           </div>
 
@@ -72,8 +88,8 @@ export default async function PracticePage() {
             <p>
               {session
                 ? progress.completedCount === progress.totalCount
-                  ? "Beginner set complete. Every accepted result is saved."
-                  : "Accepted solutions stay attached to your account."
+                  ? "Six-step path complete. Every Accepted result is saved."
+                  : "Complete all six steps. Accepted results stay attached to your account."
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
           </aside>
@@ -82,8 +98,10 @@ export default async function PracticePage() {
         <section className="problem-catalog" aria-labelledby="catalog-title">
           <div className="problem-catalog-heading">
             <div>
-              <p className="eyebrow">Beginner set · JavaScript</p>
-              <h2 id="catalog-title">Build the habit one problem at a time.</h2>
+              <p className="eyebrow">Six-step path · JavaScript</p>
+              <h2 id="catalog-title">
+                Build from input handling to FizzBuzz.
+              </h2>
             </div>
             <span aria-label={catalogProgressLabel}>
               {catalogProgressLabel}

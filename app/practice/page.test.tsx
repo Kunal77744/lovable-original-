@@ -45,6 +45,9 @@ describe("PracticePage progress", () => {
     render(await PracticePage());
 
     expect(screen.getByText("Accepted 0 of 6")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Continue at step 1 of 6" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers");
     expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
       "Accepted 0 of 6",
     );
@@ -71,6 +74,9 @@ describe("PracticePage progress", () => {
       document.querySelectorAll(".problem-row.is-complete"),
     ).toHaveLength(2);
     expect(
+      screen.getByRole("link", { name: "Continue at step 2 of 6" }),
+    ).toHaveAttribute("href", "/practice/even-or-odd");
+    expect(
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
@@ -92,6 +98,39 @@ describe("PracticePage progress", () => {
       screen.queryByRole("link", { name: "Open the playground" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Start step 1 of 6" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers");
     expect(getProgress).toHaveBeenCalledWith(null);
+  });
+
+  it("shows one completed six-step outcome without inventing another step", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "complete-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [
+        "sum-two-numbers",
+        "even-or-odd",
+        "multiplication-table",
+        "largest-value",
+        "reverse-a-word",
+        "fizz-buzz",
+      ],
+    });
+
+    render(await PracticePage());
+
+    expect(
+      screen.getByText(
+        "Six-step path complete. Every Accepted result is saved.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Review the six-step path" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers");
+    expect(screen.getAllByText("Accepted")).toHaveLength(6);
   });
 });

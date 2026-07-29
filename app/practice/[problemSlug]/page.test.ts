@@ -75,7 +75,7 @@ describe("practice problem metadata", () => {
     });
   });
 
-  it("shows the signed-out recovery cue on all six problem routes", async () => {
+  it("shows a stable path position and recovery cue on all six problem routes", async () => {
     for (const problem of CODING_PROBLEMS) {
       render(
         await ProblemPage({
@@ -88,6 +88,12 @@ describe("practice problem metadata", () => {
           "Sign in to save this work. Your code, attempts, and Accepted progress return with your account.",
         ),
       ).toBeInTheDocument();
+      expect(
+        screen.getAllByText(
+          `Step ${problem.number} of ${CODING_PROBLEMS.length}`,
+          { exact: false },
+        ),
+      ).toHaveLength(2);
       expect(getCodingProblemForStudent).toHaveBeenCalledWith(
         null,
         problem.slug,
