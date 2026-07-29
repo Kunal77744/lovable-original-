@@ -7,6 +7,7 @@ const pageDescription =
   "Practice beginner JavaScript with six free problems covering input, conditions, loops, arrays, strings, and simple algorithms. Run code in your browser and save Accepted progress.";
 const shareImageAlt =
   "Six free beginner JavaScript practice problems with browser-run checks and saved Accepted progress.";
+const firstProblem = CODING_PROBLEMS[0];
 
 export const metadata: Metadata = {
   title: "Beginner JavaScript Practice: 6 Free Problems | Lovable Original",
@@ -72,12 +73,13 @@ export default function BeginnerJavaScriptPracticeEntryPage() {
               Make your first six problems count.
             </h1>
             <p className="learn-entry-lede">
-              Solve a focused set from input handling to FizzBuzz. Run code in
-              your browser, submit against fixed checks, and build an Accepted
-              streak you can save.
+              Six problems, one beginner path
             </p>
-            <Link className="primary-action" href="/practice">
-              Open the six-problem set
+            <Link
+              className="primary-action"
+              href={`/practice/${firstProblem.slug}`}
+            >
+              Start problem {String(firstProblem.number).padStart(2, "0")}
               <ArrowIcon />
             </Link>
             <p className="learn-entry-note">
