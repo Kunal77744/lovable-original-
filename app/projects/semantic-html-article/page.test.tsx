@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getGuidedProjectFeedbackForStudent,
   getGuidedProjectForStudent,
@@ -53,6 +53,10 @@ describe("SemanticHtmlProjectPage", () => {
       totalCount: 6,
       completedSlugs: [],
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("keeps the account-only project out of search", () => {
