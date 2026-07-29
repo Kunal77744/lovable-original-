@@ -271,18 +271,41 @@ export function RevisionPack({
         </div>
       </div>
 
-      {practiceHref ? (
-        <div className="revision-next-step">
-          <div>
-            <p className="quiz-kicker">Next step</p>
-            <p>Apply the habit across six beginner JavaScript problems.</p>
-          </div>
-          <Link className="revision-practice-link" href={practiceHref}>
-            Continue to JavaScript practice
+      <div className="revision-project-bridge">
+        <div>
+          <p className="quiz-kicker">Guided project</p>
+          <h4>Turn the lesson into a complete field guide.</h4>
+          <p>
+            Build a longer semantic article, save the exact HTML to your
+            account, and revise it against a six-check review.
+          </p>
+        </div>
+        <nav
+          className="revision-project-actions"
+          aria-label="Continue after Web Development Foundations"
+        >
+          <Link
+            className="revision-project-primary"
+            href="/projects/semantic-html-article"
+          >
+            Build the semantic HTML field guide
             <span aria-hidden="true">→</span>
           </Link>
-        </div>
-      ) : null}
+          {practiceHref ? (
+            <Link className="revision-practice-secondary" href={practiceHref}>
+              Continue to JavaScript practice
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+          <Link
+            className="revision-practice-secondary"
+            href="/interview/javascript-fundamentals"
+          >
+            Practice JavaScript interview questions
+            <span aria-hidden="true">→</span>
+          </Link>
+        </nav>
+      </div>
     </section>
   );
 }

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getCourse: vi.fn(),
   getPractice: vi.fn(),
+  getProject: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -26,6 +27,10 @@ vi.mock("@/db/course", () => ({
 
 vi.mock("@/db/coding-practice", () => ({
   getCodingCatalogProgress: mocks.getPractice,
+}));
+
+vi.mock("@/db/guided-project", () => ({
+  getGuidedProjectForStudent: mocks.getProject,
 }));
 
 vi.mock("@/components/sign-out-button", () => ({
@@ -64,6 +69,9 @@ describe("DashboardPage", () => {
       totalCount: 6,
       completedSlugs: [],
     });
+    mocks.getProject.mockResolvedValue({
+      submission: null,
+    });
   });
 
   it("keeps the course action primary and adds one-click private progress access", async () => {
@@ -78,5 +86,37 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("link", { name: "View private progress" }),
     ).toHaveAttribute("href", "/profile");
+    expect(
+      screen.queryByRole("link", { name: "Build the field guide" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adds a restrained guided-project path after course completion", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 1,
+      progressPercent: 100,
+      courseCompleted: true,
+      nextLesson: {
+        slug: "semantic-html",
+        title: "Structure a page with semantic HTML",
+        description: "Build the structure of a readable article.",
+        moduleTitle: "HTML foundations",
+        completed: true,
+        quizScore: 100,
+      },
+    });
+
+    render(await DashboardPage());
+
+    expect(
+      screen.getByRole("link", { name: "Open revision pack" }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html#revision-pack",
+    );
+    expect(
+      screen.getByRole("link", { name: "Build the field guide" }),
+    ).toHaveAttribute("href", "/projects/semantic-html-article");
   });
 });

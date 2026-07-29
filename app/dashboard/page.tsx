@@ -4,7 +4,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
+import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { auth } from "@/lib/auth";
+import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
@@ -27,10 +29,13 @@ export default async function DashboardPage() {
     redirect("/account?mode=signin");
   }
 
-  const [firstCourse, practiceProgress] = await Promise.all([
+  const [firstCourse, practiceProgress, guidedProject] = await Promise.all([
     getOrCreateFirstCourseAssignment(session.user.id),
     getCodingCatalogProgress(session.user.id),
+    getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
   ]);
+  const guidedProjectCompleted =
+    guidedProject?.submission?.status === "completed";
   const nextLesson = firstCourse.nextLesson;
   const firstName = session.user.name.trim().split(/\s+/)[0];
   const courseFormat =
@@ -85,6 +90,17 @@ export default async function DashboardPage() {
             <Link className="dashboard-progress-action" href="/profile">
               View private progress <span aria-hidden="true">→</span>
             </Link>
+            {firstCourse.courseCompleted && !guidedProjectCompleted ? (
+              <div className="dashboard-project-ready">
+                <span>Project ready</span>
+                <p>
+                  Apply the lesson in your private semantic HTML field guide.
+                </p>
+                <Link href={`/projects/${GUIDED_PROJECT_SLUG}`}>
+                  Build the field guide <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            ) : null}
           </div>
           <div className="course-next-step">
             <span>

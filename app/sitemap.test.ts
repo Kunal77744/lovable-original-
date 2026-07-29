@@ -20,6 +20,7 @@ describe("public sitemap", () => {
     "/profile",
     "/interview/javascript-fundamentals",
     "/playground",
+    "/projects/semantic-html-article",
     "/settings",
     "/certificate",
   ])("excludes the private route %s", (privateRoute) => {

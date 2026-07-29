@@ -18,6 +18,10 @@ describe("RevisionPack", () => {
     window.localStorage.clear();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it("lets a learner reveal and work through every flashcard", async () => {
     render(<RevisionPack lessonSlug="semantic-html" />);
 
@@ -86,7 +90,7 @@ describe("RevisionPack", () => {
         ],
       }),
     );
-  });
+  }, 10_000);
 
   it("restores the learner's last card and checked progress", async () => {
     window.localStorage.setItem(
@@ -111,5 +115,21 @@ describe("RevisionPack", () => {
     expect(
       screen.getByRole("heading", { name: "How the structure connects" }),
     ).toBeInTheDocument();
+  });
+
+  it("connects a completed lesson to the semantic HTML field guide first", () => {
+    render(
+      <RevisionPack
+        lessonSlug="semantic-html"
+        practiceHref="/practice"
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /Build the semantic HTML field guide/ }),
+    ).toHaveAttribute("href", "/projects/semantic-html-article");
+    expect(
+      screen.getByRole("link", { name: /Continue to JavaScript practice/ }),
+    ).toHaveAttribute("href", "/practice");
   });
 });

@@ -7,7 +7,9 @@ import {
   getRecentCodingAttempts,
 } from "@/db/coding-practice";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
+import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { auth } from "@/lib/auth";
+import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { buildLearnerProfile } from "@/lib/learner-profile";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
@@ -32,12 +34,18 @@ export default async function ProfilePage() {
     redirect("/account?mode=signin");
   }
 
-  const [course, practice, attempts] = await Promise.all([
+  const [course, practice, attempts, project] = await Promise.all([
     getOrCreateFirstCourseAssignment(session.user.id),
     getCodingCatalogProgress(session.user.id),
     getRecentCodingAttempts(session.user.id),
+    getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
   ]);
-  const profile = buildLearnerProfile({ course, practice, attempts });
+  const profile = buildLearnerProfile({
+    course,
+    practice,
+    attempts,
+    projectCompleted: project?.submission?.status === "completed",
+  });
 
   return (
     <main>

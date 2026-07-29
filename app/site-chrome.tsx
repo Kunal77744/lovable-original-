@@ -9,6 +9,7 @@ type SiteNavProps = {
     | "dashboard"
     | "profile"
     | "lesson"
+    | "project"
     | "practice"
     | "settings"
     | "certificate"
@@ -32,9 +33,12 @@ export function SiteNav({
   const inStudentSpace =
     currentPage === "dashboard" ||
     currentPage === "profile" ||
+    (currentPage === "lesson" && studentSession) ||
+    currentPage === "project" ||
     currentPage === "settings" ||
     currentPage === "certificate" ||
     currentPage === "interview" ||
+    currentPage === "playground" ||
     studentSession;
 
   return (

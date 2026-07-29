@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getCourse: vi.fn(),
   getPractice: vi.fn(),
   getAttempts: vi.fn(),
+  getProject: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -37,6 +38,10 @@ vi.mock("@/db/coding-practice", () => ({
   getRecentCodingAttempts: mocks.getAttempts,
 }));
 
+vi.mock("@/db/guided-project", () => ({
+  getGuidedProjectForStudent: mocks.getProject,
+}));
+
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,6 +66,9 @@ describe("ProfilePage", () => {
       completedSlugs: [],
     });
     mocks.getAttempts.mockResolvedValue([]);
+    mocks.getProject.mockResolvedValue({
+      submission: null,
+    });
   });
 
   it("describes saved progress as private account activity", () => {
@@ -89,6 +97,7 @@ describe("ProfilePage", () => {
     expect(mocks.getCourse).not.toHaveBeenCalled();
     expect(mocks.getPractice).not.toHaveBeenCalled();
     expect(mocks.getAttempts).not.toHaveBeenCalled();
+    expect(mocks.getProject).not.toHaveBeenCalled();
   });
 
   it("loads only the signed-in learner's account-backed record", async () => {
@@ -115,6 +124,10 @@ describe("ProfilePage", () => {
     expect(mocks.getCourse).toHaveBeenCalledWith("learner-1");
     expect(mocks.getPractice).toHaveBeenCalledWith("learner-1");
     expect(mocks.getAttempts).toHaveBeenCalledWith("learner-1");
+    expect(mocks.getProject).toHaveBeenCalledWith(
+      "learner-1",
+      "semantic-html-article",
+    );
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Start the course/ }),
@@ -122,5 +135,36 @@ describe("ProfilePage", () => {
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
+  });
+
+  it("routes a completed learner into an unfinished private project", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: {
+        id: "learner-1",
+        name: "Verification Learner",
+        email: "private@example.com",
+      },
+    });
+    mocks.getCourse.mockResolvedValue({
+      slug: "web-development-foundations",
+      title: "Web Development Foundations",
+      completedLessons: 1,
+      totalLessons: 1,
+      progressPercent: 100,
+      courseCompleted: true,
+      nextLesson: {
+        slug: "semantic-html",
+        title: "Structure a page with semantic HTML",
+        moduleTitle: "HTML foundations",
+        completed: true,
+        quizScore: 100,
+      },
+    });
+
+    render(await ProfilePage());
+
+    expect(
+      screen.getByRole("link", { name: "Build the field guide" }),
+    ).toHaveAttribute("href", "/projects/semantic-html-article");
   });
 });

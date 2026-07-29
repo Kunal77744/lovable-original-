@@ -1,5 +1,9 @@
 import type { RecentCodingAttempt } from "@/db/coding-practice";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import {
+  GUIDED_PROJECT_SLUG,
+  GUIDED_PROJECT_TITLE,
+} from "@/lib/guided-project";
 
 type CourseLesson = {
   slug: string;
@@ -46,10 +50,12 @@ export function buildLearnerProfile({
   course,
   practice,
   attempts,
+  projectCompleted,
 }: {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
+  projectCompleted: boolean;
 }): LearnerProfileViewModel {
   const quizScore = course.nextLesson?.quizScore ?? null;
   const isFreshLearner =
@@ -75,6 +81,24 @@ export function buildLearnerProfile({
         description: hasQuizAttempt
           ? `Your best quiz result is ${quizScore}%. Return to the lesson and reach the 75% pass mark.`
           : "Build one semantic HTML page, then complete the four-question recall check.",
+      },
+    };
+  }
+
+  if (!projectCompleted) {
+    return {
+      course,
+      practice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: "Build the field guide",
+        href: `/projects/${GUIDED_PROJECT_SLUG}`,
+        kicker: "Your practical next step",
+        title: GUIDED_PROJECT_TITLE,
+        description:
+          "Turn the completed lesson into a private saved article, then revise it against six review checks.",
       },
     };
   }
