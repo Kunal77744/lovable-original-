@@ -6,7 +6,12 @@ import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { auth } from "@/lib/auth";
+import {
+  getCodingProblem,
+  getNextUnfinishedCodingProblemSlug,
+} from "@/lib/coding-problems";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
+import { LearnerMilestoneChecklist } from "@/components/learner-milestone-checklist";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
@@ -36,12 +41,15 @@ export default async function DashboardPage() {
   ]);
   const guidedProjectCompleted =
     guidedProject?.submission?.status === "completed";
+  const guidedProjectStarted = Boolean(guidedProject?.saved);
   const nextLesson = firstCourse.nextLesson;
+  const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
+    practiceProgress.completedSlugs,
+  );
+  const nextProblem = nextProblemSlug
+    ? getCodingProblem(nextProblemSlug)
+    : null;
   const firstName = session.user.name.trim().split(/\s+/)[0];
-  const courseFormat =
-    firstCourse.totalLessons === 1
-      ? "One-lesson course"
-      : `${firstCourse.totalLessons}-lesson course`;
 
   if (!nextLesson) {
     throw new Error("The assigned course has no lessons.");
@@ -64,67 +72,29 @@ export default async function DashboardPage() {
           <SignOutButton />
         </div>
 
-        <article className="dashboard-course">
-          <div className="dashboard-course-copy">
-            <div className="course-status-row">
-              <span className="course-status">
-                {firstCourse.courseCompleted ? "Course completed" : "Course live"}
-              </span>
-              <span className="course-progress-value">
-                {firstCourse.completedLessons}/{firstCourse.totalLessons} lessons
-              </span>
-            </div>
-            <p className="course-kicker">{courseFormat}</p>
-            <h2>{firstCourse.title}</h2>
-            <p>{firstCourse.description}</p>
-            <div
-              className="course-progress-track"
-              role="progressbar"
-              aria-label="Course progress"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={firstCourse.progressPercent}
-            >
-              <span style={{ width: `${firstCourse.progressPercent}%` }} />
-            </div>
-            <Link className="dashboard-progress-action" href="/profile">
-              View private progress <span aria-hidden="true">→</span>
-            </Link>
-            {firstCourse.courseCompleted && !guidedProjectCompleted ? (
-              <div className="dashboard-project-ready">
-                <span>Project ready</span>
-                <p>
-                  Apply the lesson in your private semantic HTML field guide.
-                </p>
-                <Link href={`/projects/${GUIDED_PROJECT_SLUG}`}>
-                  Build the field guide <span aria-hidden="true">→</span>
-                </Link>
-              </div>
-            ) : null}
-          </div>
-          <div className="course-next-step">
-            <span>
-              {nextLesson.completed
-                ? `Quiz score · ${nextLesson.quizScore}%`
-                : nextLesson.moduleTitle}
-            </span>
-            <strong>{nextLesson.title}</strong>
-            <p>{nextLesson.description}</p>
-            <Link
-              className="course-lesson-action"
-              href={`/learn/${firstCourse.slug}/${nextLesson.slug}${
-                nextLesson.completed ? "#revision-pack" : ""
-              }`}
-            >
-              {nextLesson.completed
-                ? "Open revision pack"
-                : firstCourse.completedLessons > 0
-                  ? "Continue course"
-                  : "Start lesson"}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-        </article>
+        <LearnerMilestoneChecklist
+          course={{
+            completed: firstCourse.courseCompleted,
+            quizScore: nextLesson.quizScore,
+            href: `/learn/${firstCourse.slug}/${nextLesson.slug}`,
+          }}
+          project={{
+            completed: guidedProjectCompleted,
+            started: guidedProjectStarted,
+            href: `/projects/${GUIDED_PROJECT_SLUG}`,
+          }}
+          practice={{
+            completedCount: practiceProgress.completedCount,
+            totalCount: practiceProgress.totalCount,
+            nextProblem: nextProblem
+              ? {
+                  number: nextProblem.number,
+                  title: nextProblem.title,
+                  href: `/practice/${nextProblem.slug}`,
+                }
+              : null,
+          }}
+        />
 
         <section
           className="dashboard-account-tools"
@@ -153,49 +123,6 @@ export default async function DashboardPage() {
                 : "Certificate requirements"}
               <span aria-hidden="true">→</span>
             </Link>
-          </div>
-        </section>
-
-        <section
-          className="dashboard-practice"
-          aria-labelledby="dashboard-practice-title"
-        >
-          <div>
-            <p className="course-kicker">JavaScript practice arena</p>
-            <h2 id="dashboard-practice-title">
-              Turn the next 20 minutes into a solved problem.
-            </h2>
-            <p>
-              Six beginner problems cover input, conditions, loops, arrays,
-              strings, and FizzBuzz. Every accepted verdict and saved solution
-              returns with your account.
-            </p>
-            <Link className="course-lesson-action" href="/practice">
-              {practiceProgress.completedCount > 0
-                ? "Continue practice"
-                : "Start problem 01"}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-          <div className="dashboard-practice-score">
-            <span>Problems accepted</span>
-            <strong>
-              {practiceProgress.completedCount}/{practiceProgress.totalCount}
-            </strong>
-            <div
-              className="practice-progress-track"
-              role="progressbar"
-              aria-label="JavaScript problems completed"
-              aria-valuemin={0}
-              aria-valuemax={practiceProgress.totalCount}
-              aria-valuenow={practiceProgress.completedCount}
-            >
-              <span
-                style={{
-                  width: `${(practiceProgress.completedCount / practiceProgress.totalCount) * 100}%`,
-                }}
-              />
-            </div>
           </div>
         </section>
 

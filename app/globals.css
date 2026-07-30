@@ -1267,6 +1267,213 @@ h1 {
   font-size: 17px;
 }
 
+.dashboard-learning-path {
+  margin-top: 64px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 19px;
+  background: var(--surface);
+  box-shadow: 0 25px 55px rgba(23, 35, 30, 0.1);
+}
+
+.dashboard-learning-path-heading {
+  padding: 42px 46px 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  align-items: end;
+  gap: 56px;
+}
+
+.dashboard-learning-path-heading .course-kicker {
+  margin: 0 0 11px;
+}
+
+.dashboard-learning-path-heading h2 {
+  max-width: 700px;
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(38px, 4.5vw, 56px);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.dashboard-learning-path-heading > div:first-child > p:last-child {
+  max-width: 62ch;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.dashboard-path-summary {
+  min-height: 132px;
+  padding: 20px 22px;
+  display: grid;
+  align-content: center;
+  border-radius: 12px;
+  color: white;
+  background: var(--ink);
+}
+
+.dashboard-path-summary > span {
+  color: #9baba2;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.dashboard-path-summary strong {
+  margin-top: 3px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-path-summary a {
+  width: fit-content;
+  margin-top: 15px;
+  color: #b9d8c5;
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.dashboard-path-summary a:hover {
+  color: white;
+}
+
+.dashboard-path-summary a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(159, 217, 184, 0.5);
+  outline-offset: 3px;
+}
+
+.dashboard-milestone-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-milestone {
+  min-height: 132px;
+  padding: 26px 46px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) minmax(190px, auto);
+  align-items: center;
+  gap: 24px;
+  color: #738078;
+  background: #fafbf8;
+}
+
+.dashboard-milestone + .dashboard-milestone {
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-milestone.is-current {
+  color: var(--ink);
+  background: #eff7f1;
+}
+
+.dashboard-milestone.is-complete {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.dashboard-milestone-marker {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #cbd3cc;
+  border-radius: 50%;
+  color: #7e8a83;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-milestone.is-current .dashboard-milestone-marker {
+  color: white;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.dashboard-milestone.is-complete .dashboard-milestone-marker {
+  color: var(--accent-deep);
+  border-color: #bcd5c3;
+  background: #e5f1e7;
+  font-size: 16px;
+}
+
+.dashboard-milestone-copy > span {
+  color: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-milestone-copy h3 {
+  margin: 5px 0 0;
+  color: inherit;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 23px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.dashboard-milestone-copy p {
+  max-width: 60ch;
+  margin: 8px 0 0;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.dashboard-path-action {
+  min-height: 50px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 8px;
+  color: white;
+  background: var(--accent-deep);
+  box-shadow: 0 10px 22px rgba(23, 84, 55, 0.17);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.dashboard-path-action:hover {
+  background: #0f432b;
+  transform: translateY(-1px);
+}
+
+.dashboard-path-action:active {
+  transform: translateY(0);
+}
+
+.dashboard-path-action:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.32);
+  outline-offset: 3px;
+}
+
 .sign-out-control {
   min-height: 44px;
   display: flex;
@@ -7646,6 +7853,24 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-learning-path-heading {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .dashboard-path-summary {
+    max-width: 240px;
+  }
+
+  .dashboard-milestone {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .dashboard-path-action {
+    width: fit-content;
+    grid-column: 2;
+  }
+
   .dashboard-practice {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -8309,6 +8534,44 @@ footer {
 
   .dashboard-course {
     margin-top: 46px;
+  }
+
+  .dashboard-learning-path {
+    margin-top: 46px;
+    border-radius: 15px;
+  }
+
+  .dashboard-learning-path-heading {
+    padding: 32px 24px;
+  }
+
+  .dashboard-path-summary {
+    width: 100%;
+    max-width: none;
+    min-height: 116px;
+  }
+
+  .dashboard-milestone {
+    min-height: 0;
+    padding: 25px 24px 28px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: start;
+    gap: 15px;
+  }
+
+  .dashboard-milestone-marker {
+    width: 34px;
+    height: 34px;
+  }
+
+  .dashboard-milestone-copy h3 {
+    font-size: 21px;
+  }
+
+  .dashboard-path-action {
+    width: 100%;
+    margin-top: 4px;
+    grid-column: 1 / -1;
   }
 
   .dashboard-course-copy {
