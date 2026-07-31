@@ -9,9 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LessonQuiz } from "./lesson-quiz";
 
 const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
+const captureLessonCompleted = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/product-analytics", () => ({
   captureLearnerEventOnce,
+  captureLessonCompleted,
 }));
 
 const questions = [
@@ -83,8 +85,18 @@ describe("LessonQuiz analytics", () => {
         passed: true,
       }),
     );
+    expect(captureLessonCompleted).toHaveBeenCalledOnce();
+    expect(captureLessonCompleted).toHaveBeenCalledWith({
+      courseSlug: "web-development-foundations",
+      completionState: "completed",
+    });
 
-    expect(JSON.stringify(captureLearnerEventOnce.mock.calls)).not.toMatch(
+    expect(
+      JSON.stringify([
+        captureLearnerEventOnce.mock.calls,
+        captureLessonCompleted.mock.calls,
+      ]),
+    ).not.toMatch(
       /First question|First answer|q1/i,
     );
     expect(

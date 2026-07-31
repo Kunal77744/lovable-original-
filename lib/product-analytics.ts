@@ -22,6 +22,11 @@ type LearnerEventProperties = {
   passed?: boolean;
 };
 
+type LessonCompletedProperties = {
+  courseSlug: string;
+  completionState: "completed";
+};
+
 type ProjectCompletedProperties = {
   projectSlug: string;
   passedCheckCount: number;
@@ -199,6 +204,7 @@ function capture(
     | "$pageview"
     | "account_created"
     | "lesson_started"
+    | "lesson_completed"
     | "quiz_completed"
     | "feedback_submitted"
     | "project_completed"
@@ -270,6 +276,29 @@ export function captureLearnerEventOnce(
     eventName,
     properties as Record<string, string | number | boolean>,
   );
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function captureLessonCompleted({
+  courseSlug,
+  completionState,
+}: LessonCompletedProperties) {
+  const dedupeKey = `lesson_completed:${courseSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture("lesson_completed", {
+    course_slug: courseSlug,
+    completion_state: completionState,
+  });
 
   if (didCapture) {
     rememberCapturedEvent(dedupeKey, capturedEvents);

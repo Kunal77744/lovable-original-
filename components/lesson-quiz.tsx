@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import type { QuizQuestion } from "@/lib/first-course-content";
-import { captureLearnerEventOnce } from "@/lib/product-analytics";
+import {
+  captureLearnerEventOnce,
+  captureLessonCompleted,
+} from "@/lib/product-analytics";
 import { announceLessonProgress } from "@/lib/lesson-progress-events";
 import { CourseFeedback } from "@/components/course-feedback";
 import { RevisionPack } from "@/components/revision-pack";
@@ -109,6 +112,10 @@ export function LessonQuiz({
           course_slug: courseSlug,
           lesson_slug: lessonSlug,
           passed: true,
+        });
+        captureLessonCompleted({
+          courseSlug,
+          completionState: "completed",
         });
       }
     } catch {

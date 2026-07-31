@@ -13,6 +13,7 @@ vi.mock("posthog-js", () => ({
 import {
   captureAccountCreated,
   captureLearnerEventOnce,
+  captureLessonCompleted,
   captureProjectCompleted,
   capturePracticeFeedbackSubmitted,
   capturePracticeProblemAccepted,
@@ -139,6 +140,46 @@ describe("product analytics", () => {
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /private learner HTML|learner@example\.com|private review message|private learner note|private certificate|private learner feedback/i,
+    );
+  });
+
+  it("captures one privacy-safe lesson completion", () => {
+    const completedLesson = {
+      courseSlug: "web-development-foundations",
+      completionState: "completed" as const,
+      note: "private learner note",
+      code: "private learner code",
+      answers: "private quiz answers",
+      feedback: "private feedback text",
+      email: "learner@example.com",
+      displayName: "Private Learner",
+    };
+
+    expect(captureLessonCompleted(completedLesson)).toBe(true);
+    expect(captureLessonCompleted(completedLesson)).toBe(false);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "lesson_completed",
+      expect.objectContaining({
+        course_slug: "web-development-foundations",
+        completion_state: "completed",
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "completion_state",
+        "course_slug",
+        "deployment_environment",
+        "is_test",
+        "journey_id",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private learner note|private learner code|private quiz answers|private feedback text|learner@example\.com|Private Learner/i,
     );
   });
 
