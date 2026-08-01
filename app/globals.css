@@ -4717,6 +4717,15 @@ h1 {
   text-wrap: balance;
 }
 
+.problem-catalog-helper {
+  max-width: 62ch;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
 .problem-catalog-heading > span {
   color: var(--muted);
   font-size: 13px;

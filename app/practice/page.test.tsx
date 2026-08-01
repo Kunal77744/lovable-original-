@@ -51,6 +51,11 @@ describe("PracticePage progress", () => {
     expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
       "Accepted 0 of 6",
     );
+    expect(
+      screen.getByText(
+        "Each problem runs in browser-based JavaScript. Signed-in attempts are saved to your account.",
+      ),
+    ).toBeInTheDocument();
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
   });
 
