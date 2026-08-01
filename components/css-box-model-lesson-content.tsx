@@ -29,7 +29,7 @@ export function CssBoxModelLessonContent() {
         <div>
           <h2>Combine selectors to keep a rule local.</h2>
           <p>
-            A space means “inside.” The selector <code>.learning-card strong</code>
+            A space means “inside.” The selector <code>.learning-card strong</code>{" "}
             reaches <code>&lt;strong&gt;</code> elements inside the card without
             changing every strong element on the page.
           </p>
