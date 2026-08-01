@@ -54,6 +54,11 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByText("Saved privately to your account"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Each problem runs in browser-based JavaScript. Signed-in attempts are saved to your account.",
+      ),
+    ).toBeInTheDocument();
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
   });
 

@@ -102,6 +102,10 @@ export default async function PracticePage() {
               <h2 id="catalog-title">
                 Build from input handling to FizzBuzz.
               </h2>
+              <p className="problem-catalog-helper">
+                Each problem runs in browser-based JavaScript. Signed-in
+                attempts are saved to your account.
+              </p>
             </div>
             <div className="catalog-progress-summary">
               <span aria-label={catalogProgressLabel}>
