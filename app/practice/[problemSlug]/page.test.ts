@@ -100,6 +100,21 @@ describe("practice problem metadata", () => {
           { exact: false },
         ),
       ).toHaveLength(2);
+      expect(
+        screen.getAllByText(
+          `Step ${problem.number} of ${CODING_PROBLEMS.length}`,
+          { exact: true },
+        ),
+      ).toHaveLength(1);
+      expect(
+        screen.getByText(
+          `Step ${problem.number} of ${CODING_PROBLEMS.length}`,
+          { exact: true },
+        ),
+      ).toHaveAttribute("aria-current", "step");
+      expect(
+        document.querySelectorAll('[aria-current="step"]'),
+      ).toHaveLength(1);
       expect(getCodingProblemForStudent).toHaveBeenCalledWith(
         null,
         problem.slug,

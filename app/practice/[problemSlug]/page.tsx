@@ -72,7 +72,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
         <nav className="problem-breadcrumbs" aria-label="Problem navigation">
           <Link href="/practice">Practice arena</Link>
           <span aria-hidden="true">/</span>
-          <span>
+          <span aria-current="step">
             Step {problem.number} of {CODING_PROBLEM_COUNT}
           </span>
         </nav>
