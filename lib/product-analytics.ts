@@ -1,4 +1,5 @@
 import posthog, { type CaptureResult } from "posthog-js";
+import type { LearnerEntrySource } from "./learner-entry-source";
 
 const POSTHOG_KEY =
   "phc_mKF4BaB7MLJ2KcvCU3xqCpHLZoPZ6k5ZrYQyxKD2NXor";
@@ -20,6 +21,7 @@ type LearnerEventProperties = {
   course_slug?: string;
   lesson_slug?: string;
   passed?: boolean;
+  entry_source?: LearnerEntrySource;
 };
 
 type ProjectCompletedProperties = {
@@ -248,10 +250,25 @@ export function captureLearnerEventOnce(
   eventName: "lesson_started" | "quiz_completed" | "feedback_submitted",
   properties: LearnerEventProperties,
 ) {
+  const safeProperties: LearnerEventProperties = {
+    ...(properties.course_slug
+      ? { course_slug: properties.course_slug }
+      : {}),
+    ...(properties.lesson_slug
+      ? { lesson_slug: properties.lesson_slug }
+      : {}),
+    ...(typeof properties.passed === "boolean"
+      ? { passed: properties.passed }
+      : {}),
+    ...(eventName === "lesson_started" &&
+    properties.entry_source === "founder_warm"
+      ? { entry_source: properties.entry_source }
+      : {}),
+  };
   const dedupeKey = [
     eventName,
-    properties.course_slug,
-    properties.lesson_slug,
+    safeProperties.course_slug,
+    safeProperties.lesson_slug,
   ]
     .filter(Boolean)
     .join(":");
@@ -263,7 +280,7 @@ export function captureLearnerEventOnce(
 
   const didCapture = capture(
     eventName,
-    properties as Record<string, string | number | boolean>,
+    safeProperties as Record<string, string | number | boolean>,
   );
 
   if (didCapture) {

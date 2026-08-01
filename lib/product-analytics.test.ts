@@ -101,6 +101,45 @@ describe("product analytics", () => {
     });
   });
 
+  it("captures the founder-warm lesson source without private learner fields", () => {
+    const warmLessonStart = {
+      course_slug: "web-development-foundations",
+      lesson_slug: "semantic-html",
+      entry_source: "founder_warm" as const,
+      email: "learner@example.com",
+      note: "private learner note",
+      answer: "private learner answer",
+    };
+
+    captureLearnerEventOnce("lesson_started", warmLessonStart);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "lesson_started",
+      expect.objectContaining({
+        course_slug: "web-development-foundations",
+        lesson_slug: "semantic-html",
+        entry_source: "founder_warm",
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "course_slug",
+        "deployment_environment",
+        "entry_source",
+        "is_test",
+        "journey_id",
+        "lesson_slug",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /learner@example\.com|private learner note|private learner answer/i,
+    );
+  });
+
   it("captures one privacy-safe completed project result", () => {
     const completedProject = {
       projectSlug: "semantic-html-article",

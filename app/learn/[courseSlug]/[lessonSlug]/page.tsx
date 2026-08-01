@@ -24,6 +24,7 @@ import {
   gradeSemanticHtml,
   SEMANTIC_HTML_STARTER,
 } from "@/lib/semantic-html-workspace";
+import { parseLearnerEntrySource } from "@/lib/learner-entry-source";
 import { auth } from "@/lib/auth";
 import { SiteNav } from "../../../site-chrome";
 
@@ -44,10 +45,19 @@ type LessonPageProps = {
     courseSlug: string;
     lessonSlug: string;
   }>;
+  searchParams?: Promise<{
+    entry_source?: string | string[];
+  }>;
 };
 
-export default async function LessonPage({ params }: LessonPageProps) {
+export default async function LessonPage({
+  params,
+  searchParams,
+}: LessonPageProps) {
   const { courseSlug, lessonSlug } = await params;
+  const entrySource = parseLearnerEntrySource(
+    (await searchParams)?.entry_source,
+  );
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -124,11 +134,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   return (
     <main className="lesson-page">
-      {session ? (
+      {session || entrySource ? (
         <LessonStartTracker
           courseSlug={courseSlug}
           lessonSlug={studentLesson.lessonSlug}
           alreadyCompleted={studentLesson.completed}
+          entrySource={entrySource}
         />
       ) : null}
       <SiteNav currentPage="lesson" studentSession={Boolean(session)} />
