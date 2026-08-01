@@ -189,15 +189,15 @@ function pageText(html) {
     .trim();
 }
 
+function attributeValue(tag, attribute) {
+  const match = tag.match(
+    new RegExp(`\\b${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i"),
+  );
+
+  return match?.[2]?.trim() ?? null;
+}
+
 function metaContent(html, name) {
-  const attributeValue = (tag, attribute) => {
-    const match = tag.match(
-      new RegExp(`\\b${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i"),
-    );
-
-    return match?.[2]?.trim() ?? null;
-  };
-
   return [...html.matchAll(/<meta\b[^>]*>/gi)]
     .map(([tag]) => ({
       name: attributeValue(tag, "name"),
@@ -205,6 +205,23 @@ function metaContent(html, name) {
     }))
     .filter((meta) => meta.name?.toLowerCase() === name.toLowerCase())
     .map((meta) => meta.content);
+}
+
+function streamedRedirectLocation(html) {
+  for (const [tag] of html.matchAll(/<meta\b[^>]*>/gi)) {
+    if (attributeValue(tag, "http-equiv")?.toLowerCase() !== "refresh") {
+      continue;
+    }
+
+    const content = attributeValue(tag, "content");
+    const location = content?.match(/^\s*\d+\s*;\s*url=(.+)$/i)?.[1];
+
+    if (location) {
+      return location.replace(/&amp;/gi, "&").trim();
+    }
+  }
+
+  return "";
 }
 
 function childOutput(env, args) {
@@ -1060,12 +1077,26 @@ async function runJourney(baseUrl, databaseUrl) {
 
     for (const path of protectedPages) {
       const pageResponse = await request(path);
-      const location = pageResponse.headers.get("location") ?? "";
+      const html = await pageResponse.text();
+      const location =
+        pageResponse.headers.get("location") ?? streamedRedirectLocation(html);
+      const visibleText = pageText(html);
       assertStep(
-        [302, 303, 307, 308].includes(pageResponse.status) &&
+        ([302, 303, 307, 308].includes(pageResponse.status) ||
+          (pageResponse.status === 200 &&
+            Boolean(streamedRedirectLocation(html)))) &&
           location.includes("/account?mode=signin"),
         step,
         `Protected page ${path} did not redirect to sign in.`,
+      );
+      assertStep(
+        !html.includes(runId) &&
+          !visibleText.includes(savedLessonNote) &&
+          !visibleText.includes(savedFeedbackComment) &&
+          !visibleText.includes(savedInterviewAnswer) &&
+          !visibleText.includes(savedCertificateName),
+        step,
+        `Protected page ${path} exposed private learner data after sign out.`,
       );
     }
 
