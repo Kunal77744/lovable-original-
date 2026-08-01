@@ -6,8 +6,10 @@ import postgres from "postgres";
 const COURSE_TITLE = "Web Development Foundations";
 const COURSE_SLUG = "web-development-foundations";
 const LESSON_SLUG = "semantic-html";
+const SECOND_LESSON_SLUG = "css-selectors-box-model";
 const PROJECT_SLUG = "semantic-html-article";
 const LESSON_TITLE = "Build a page the browser understands";
+const SECOND_LESSON_TITLE = "Style a card without guessing";
 const INTERVIEW_DRILL_SLUG = "javascript-fundamentals";
 const INTERVIEW_QUESTION_SLUG = "const-let-var";
 const CERTIFICATE_TITLE = "Private course certificate";
@@ -17,6 +19,12 @@ const QUIZ_ANSWERS = {
   "article-choice": "standalone",
   "semantic-benefit": "meaning",
 };
+const SECOND_QUIZ_ANSWERS = {
+  "class-selector": "class",
+  "descendant-selector": "nested-strong",
+  "box-width": "whole-box",
+  "spacing-choice": "padding",
+};
 const DEFAULT_APP_URL = "http://127.0.0.1:3210";
 const DATABASE_PREFIX = "lovable_release_gate_";
 const WAIT_TIMEOUT_MS = 60_000;
@@ -24,8 +32,8 @@ const WAIT_TIMEOUT_MS = 60_000;
 const steps = [
   "Account creation",
   "Initial dashboard",
-  "Lesson workspace",
-  "Workspace save and checks",
+  "Two lesson workspaces",
+  "Two workspace saves and checks",
   "Quiz, project, feedback, certificate, and interview",
   "Saved learner state after reload",
   "Sign out",
@@ -318,6 +326,7 @@ async function runJourney(baseUrl, databaseUrl) {
   const password = `${randomBytes(24).toString("hex")}Aa1!`;
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
+  let savedCssWorkspace = "";
   let savedProjectHtml = "";
   let savedFeedbackComment = "";
   let savedLessonNote = "";
@@ -391,9 +400,9 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(response.status === 200, step, "Dashboard did not load.");
     assertStep(text.includes(COURSE_TITLE), step, "First course was not visible.");
     assertStep(
-      /0\s*\/\s*1 lessons/.test(text),
+      /Start here\s*·\s*34 minutes/.test(text),
       step,
-      "Initial progress was not 0/1.",
+      "Initial progress was not ready for both lessons.",
     );
     assertStep(
       text.includes("Certificate settings") &&
@@ -439,6 +448,36 @@ async function runJourney(baseUrl, databaseUrl) {
       typeof workspace.html === "string" && workspace.checks?.length === 5,
       step,
       "Starter code and five checks were not ready.",
+    );
+
+    const secondLessonResponse = await request(
+      `/learn/${COURSE_SLUG}/${SECOND_LESSON_SLUG}`,
+    );
+    const secondLessonText = pageText(await secondLessonResponse.text());
+    assertStep(
+      secondLessonResponse.status === 200 &&
+        secondLessonText.includes(SECOND_LESSON_TITLE) &&
+        /75\s*%\s*to complete/.test(secondLessonText),
+      step,
+      "The second lesson and its recall check did not load.",
+    );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    assertStep(
+      secondWorkspaceResponse.status === 200,
+      step,
+      "The second lesson workspace did not load.",
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspace.saved === false &&
+        secondWorkspace.submission === null &&
+        typeof secondWorkspace.html === "string" &&
+        secondWorkspace.checks?.length === 4,
+      step,
+      "A fresh learner did not receive the four-check CSS workspace.",
     );
 
     const noteResponse = await request(
@@ -540,6 +579,48 @@ async function runJourney(baseUrl, databaseUrl) {
     );
     savedWorkspaceHtml = passingDraft;
 
+    const failingCss = `.learning-card { width: 280px; }
+.learning-card strong { color: #175437; }`;
+    const failingCssResponse = await jsonRequest(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+      { html: failingCss },
+    );
+    const failingCssWorkspace = await failingCssResponse.json();
+    assertStep(
+      failingCssResponse.status === 200 &&
+        failingCssWorkspace.html === failingCss &&
+        failingCssWorkspace.submission?.status === "needs-revision" &&
+        failingCssWorkspace.submission?.passedChecks < 4,
+      step,
+      "The CSS revision result was not saved.",
+    );
+
+    savedCssWorkspace = `.learning-card {
+  width: 280px;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 2px solid #175437;
+}
+
+.learning-card strong {
+  color: #175437;
+}`;
+    const passingCssResponse = await jsonRequest(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+      { html: savedCssWorkspace },
+    );
+    const passingCssWorkspace = await passingCssResponse.json();
+    assertStep(
+      passingCssResponse.status === 200 &&
+        passingCssWorkspace.html === savedCssWorkspace &&
+        passingCssWorkspace.checks?.length === 4 &&
+        passingCssWorkspace.submission?.status === "completed" &&
+        passingCssWorkspace.submission?.passedChecks === 4 &&
+        passingCssWorkspace.checks.every((check) => check.passed === true),
+      step,
+      "The CSS workspace did not save a completed 4/4 result.",
+    );
+
     const firstNoteResponse = await jsonRequest(
       `/api/lessons/${LESSON_SLUG}/notes`,
       { content: "Landmarks explain the purpose of each page region." },
@@ -629,6 +710,24 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(payload.passed === true, step, "Quiz result did not pass.");
     assertStep(payload.completed === true, step, "Lesson was not completed.");
     assertStep(payload.savedScore === 100, step, "Best score was not saved.");
+
+    const secondResponse = await jsonRequest(
+      `/api/lessons/${SECOND_LESSON_SLUG}/complete`,
+      { answers: SECOND_QUIZ_ANSWERS },
+    );
+    assertStep(
+      secondResponse.status === 200,
+      step,
+      "The second lesson recall check did not succeed.",
+    );
+    const secondPayload = await secondResponse.json();
+    assertStep(
+      secondPayload.passed === true &&
+        secondPayload.completed === true &&
+        secondPayload.savedScore === 100,
+      step,
+      "The second lesson was not completed with a saved 100% score.",
+    );
 
     const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
     const projectPageHtml = await projectPageResponse.text();
@@ -790,19 +889,19 @@ async function runJourney(baseUrl, databaseUrl) {
     const text = pageText(html);
     assertStep(response.status === 200, step, "Reloaded dashboard did not load.");
     assertStep(
-      /1\s*\/\s*1 lessons/.test(text),
+      /Completed\s*·\s*2\s*\/\s*2 lessons/.test(text),
       step,
-      "Saved progress was not 1/1.",
+      "Saved progress was not 2/2.",
     );
     assertStep(
-      /Quiz score\s*·\s*100%/.test(text),
+      text.includes("HTML and CSS foundations complete"),
       step,
-      "Saved score was not 100%.",
+      "The completed two-lesson milestone was not restored.",
     );
     assertStep(
-      /aria-valuenow="100"/.test(html),
+      /0\s*\/\s*6 Accepted/.test(text),
       step,
-      "Progress percentage was not 100%.",
+      "The JavaScript continuation was not ready after course completion.",
     );
 
     const workspaceResponse = await request(
@@ -817,6 +916,20 @@ async function runJourney(baseUrl, databaseUrl) {
         workspace.submission?.passedChecks === 5,
       step,
       "The exact assignment and completed result were not restored after reload.",
+    );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspaceResponse.status === 200 &&
+        secondWorkspace.saved === true &&
+        secondWorkspace.html === savedCssWorkspace &&
+        secondWorkspace.submission?.status === "completed" &&
+        secondWorkspace.submission?.passedChecks === 4,
+      step,
+      "The exact CSS workspace and 4/4 result were not restored after reload.",
     );
 
     const feedbackResponse = await request(
@@ -913,6 +1026,7 @@ async function runJourney(baseUrl, databaseUrl) {
     );
     assertStep(
       !lessonText.includes(savedWorkspaceHtml) &&
+        !lessonText.includes(savedCssWorkspace) &&
         !lessonText.includes(savedProjectHtml) &&
         !lessonText.includes(savedLessonNote) &&
         !lessonText.includes(savedFeedbackComment) &&
@@ -920,6 +1034,18 @@ async function runJourney(baseUrl, databaseUrl) {
         !lessonText.includes(savedCertificateName),
       step,
       "The signed-out lesson exposed private learner data.",
+    );
+
+    const secondLessonResponse = await request(
+      `/learn/${COURSE_SLUG}/${SECOND_LESSON_SLUG}`,
+    );
+    const secondLessonText = pageText(await secondLessonResponse.text());
+    assertStep(
+      secondLessonResponse.status === 200 &&
+        secondLessonText.includes(SECOND_LESSON_TITLE) &&
+        !secondLessonText.includes(savedCssWorkspace),
+      step,
+      "The second public lesson was unavailable or exposed saved CSS after sign out.",
     );
 
     const protectedPages = [
@@ -950,6 +1076,14 @@ async function runJourney(baseUrl, databaseUrl) {
       workspaceResponse.status === 401,
       step,
       "Signed-out workspace access was not rejected.",
+    );
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    assertStep(
+      secondWorkspaceResponse.status === 401,
+      step,
+      "Signed-out CSS workspace access was not rejected.",
     );
     const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
     assertStep(
@@ -1011,7 +1145,7 @@ async function runJourney(baseUrl, databaseUrl) {
       "Dashboard did not load after sign in.",
     );
     assertStep(
-      /1\s*\/\s*1 lessons/.test(text) && /Quiz score\s*·\s*100%/.test(text),
+      /Completed\s*·\s*2\s*\/\s*2 lessons/.test(text),
       step,
       "Saved result did not remain after sign in.",
     );
@@ -1027,6 +1161,19 @@ async function runJourney(baseUrl, databaseUrl) {
         workspace.submission?.passedChecks === 5,
       step,
       "Saved assignment and result did not remain after sign in.",
+    );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspaceResponse.status === 200 &&
+        secondWorkspace.html === savedCssWorkspace &&
+        secondWorkspace.submission?.status === "completed" &&
+        secondWorkspace.submission?.passedChecks === 4,
+      step,
+      "The exact CSS workspace and 4/4 result did not remain after sign in.",
     );
 
     const feedbackResponse = await request(
@@ -1199,6 +1346,33 @@ async function runJourney(baseUrl, databaseUrl) {
       !workspace.html.includes(runId),
       step,
       "One learner could read another learner’s artifact.",
+    );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+      {},
+      secondJar,
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspaceResponse.status === 200 &&
+        secondWorkspace.saved === false &&
+        secondWorkspace.submission === null &&
+        secondWorkspace.html !== savedCssWorkspace,
+      step,
+      "One learner could read another learner’s CSS workspace.",
+    );
+
+    const originalSecondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    const originalSecondWorkspace = await originalSecondWorkspaceResponse.json();
+    assertStep(
+      originalSecondWorkspaceResponse.status === 200 &&
+        originalSecondWorkspace.html === savedCssWorkspace &&
+        originalSecondWorkspace.submission?.passedChecks === 4,
+      step,
+      "The isolation learner changed the original CSS workspace.",
     );
 
     const noteResponse = await request(
