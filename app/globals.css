@@ -2062,6 +2062,75 @@ h1 {
   font-size: 12px;
 }
 
+.selector-trace {
+  margin-top: 30px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 18px;
+  color: var(--accent-deep);
+  border: 1px solid #cddfce;
+  border-radius: 12px;
+  background: #edf4ec;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selector-trace span:nth-child(2) {
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.box-model-diagram {
+  margin-top: 34px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.box-model-diagram span {
+  display: block;
+  margin-bottom: 8px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.box-model-margin,
+.box-model-border,
+.box-model-padding,
+.box-model-content {
+  padding: 18px;
+  border-radius: 9px;
+}
+
+.box-model-margin { color: #625130; background: #eee4ca; }
+.box-model-border { color: #253f31; background: #8fb99d; }
+.box-model-padding { color: #23412f; background: #d9eadb; }
+.box-model-content {
+  color: white;
+  background: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.css-practice-workspace .workspace-editor textarea {
+  min-height: 380px;
+}
+
+.css-practice-workspace .workspace-preview iframe {
+  min-height: 380px;
+}
+
 .lesson-practice {
   color: white;
   border-color: var(--ink);
@@ -8778,6 +8847,11 @@ footer {
     align-items: flex-start;
     flex-direction: column;
     gap: 5px;
+  }
+
+  .selector-trace {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .lesson-quiz,

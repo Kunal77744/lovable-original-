@@ -93,14 +93,14 @@ describe("public product promise", () => {
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: build and save a semantic HTML field guide with a six-check guided project review.",
+          "Web Development Foundations: two practical lessons, a reviewed field guide, and six JavaScript problems.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: build and save a semantic HTML field guide with a six-check guided project review.",
+          "Web Development Foundations: two practical lessons, a reviewed field guide, and six JavaScript problems.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
@@ -116,7 +116,7 @@ describe("public product promise", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /build a semantic article page in 18 minutes/i,
+        name: /build the page. then make its css predictable/i,
       }),
     ).toBeInTheDocument();
     expect(
@@ -125,13 +125,11 @@ describe("public product promise", () => {
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
-    expect(screen.getAllByText(/pass four questions at 75%/i)).not.toHaveLength(
-      0,
-    );
-    expect(screen.getByText("6 review checks")).toBeInTheDocument();
-    expect(screen.getByText("One saved field guide")).toBeInTheDocument();
-    expect(screen.getByText("6 problems")).toBeInTheDocument();
-    expect(screen.getByText("Ordered JavaScript practice")).toBeInTheDocument();
+    expect(screen.getByText(/pass each four-question check at 75%/i)).toBeInTheDocument();
+    expect(screen.getByText("2 saved builds")).toBeInTheDocument();
+    expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
+    expect(screen.getByText("6 + 6")).toBeInTheDocument();
+    expect(screen.getByText("Project checks and JS problems")).toBeInTheDocument();
     expect(
       screen.getByText(/private semantic HTML field guide/i),
     ).toBeInTheDocument();

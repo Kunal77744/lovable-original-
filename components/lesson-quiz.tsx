@@ -36,6 +36,9 @@ type LessonQuizProps = {
     updatedAt: string;
   } | null;
   isSignedIn?: boolean;
+  completedLessonsAfterPass?: number;
+  nextLesson?: { title: string; href: string } | null;
+  showRevisionPack?: boolean;
 };
 
 export function LessonQuiz({
@@ -50,6 +53,9 @@ export function LessonQuiz({
   initialScore,
   initialFeedback,
   isSignedIn = true,
+  completedLessonsAfterPass = courseLessonCount,
+  nextLesson = null,
+  showRevisionPack = lessonSlug === "semantic-html",
 }: LessonQuizProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(
@@ -144,25 +150,34 @@ export function LessonQuiz({
         </h2>
         <p>
           Your best score is <strong>{result.savedScore}%</strong>. Your result
-          is saved and the dashboard now shows {courseLessonCount} of{" "}
+          is saved and the dashboard now shows {completedLessonsAfterPass} of{" "}
           {courseLessonCount} {lessonCountLabel} complete.
         </p>
-        <Link className="lesson-primary-action" href="#revision-pack">
-          Start revision
+        <Link
+          className="lesson-primary-action"
+          href={nextLesson?.href ?? (showRevisionPack ? "#revision-pack" : "/dashboard")}
+        >
+          {nextLesson ? `Continue to ${nextLesson.title}` : showRevisionPack ? "Start revision" : "View saved progress"}
           <span aria-hidden="true">→</span>
         </Link>
-        <Link className="completion-dashboard-link" href="/dashboard">
-          View saved progress
-        </Link>
-        <RevisionPack
-          lessonSlug={lessonSlug}
-          practiceHref={completesCourse ? "/practice" : undefined}
-        />
-        <CourseFeedback
-          courseSlug={courseSlug}
-          lessonSlug={lessonSlug}
-          initialFeedback={initialFeedback}
-        />
+        {nextLesson || showRevisionPack ? (
+          <Link className="completion-dashboard-link" href="/dashboard">
+            View saved progress
+          </Link>
+        ) : null}
+        {showRevisionPack ? (
+          <RevisionPack
+            lessonSlug={lessonSlug}
+            practiceHref={completesCourse ? "/practice" : undefined}
+          />
+        ) : null}
+        {completesCourse ? (
+          <CourseFeedback
+            courseSlug={courseSlug}
+            lessonSlug={lessonSlug}
+            initialFeedback={initialFeedback}
+          />
+        ) : null}
       </section>
     );
   }

@@ -3,9 +3,9 @@ import Link from "next/link";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
 const courseDescription =
-  "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.";
+  "Build semantic HTML, style a predictable CSS card, complete a reviewed field guide, and continue through six JavaScript problems.";
 const courseShareImageAlt =
-  "Web Development Foundations: build and save a semantic HTML field guide with a six-check guided project review.";
+  "Web Development Foundations: two practical lessons, a reviewed field guide, and six JavaScript problems.";
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
@@ -43,9 +43,9 @@ export const metadata: Metadata = {
 const courseSteps = [
   {
     number: "01",
-    label: "Lesson",
-    title: "Learn the structure and check your recall.",
-    copy: "Read three focused sections, build a saved article page, and pass four questions at 75%.",
+    label: "Lessons",
+    title: "Build the structure, then style it.",
+    copy: "Read the public HTML and CSS lessons, save two practice builds, and pass four questions per lesson at 75%.",
   },
   {
     number: "02",
@@ -101,12 +101,12 @@ export default function WebDevelopmentFoundationsPage() {
           <div className="course-overview-copy">
             <p className="eyebrow">Web Development Foundations</p>
             <h1 id="course-title">
-              Build a semantic article page in 18 minutes.
+              Build the page. Then make its CSS predictable.
             </h1>
             <p className="course-overview-lede">
-              Learn how browsers read a page, build and save your own semantic
-              HTML, then pass four questions at 75%. Next, build a private field
-              guide with a six-check review and continue through six beginner
+              Start with semantic HTML, then use selectors and the box model to
+              style a learning card. Pass each four-question check at 75%, then
+              build a private field guide and continue through six beginner
               JavaScript problems.
             </p>
             <Link
@@ -117,7 +117,7 @@ export default function WebDevelopmentFoundationsPage() {
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              One lesson · Six-check field guide · Six JavaScript problems
+              Two lessons · Six-check field guide · Six JavaScript problems
             </p>
           </div>
 
@@ -164,16 +164,16 @@ export default function WebDevelopmentFoundationsPage() {
 
         <section className="course-proof-strip" aria-label="Course facts">
           <div>
-            <strong>18 minutes</strong>
-            <span>One focused lesson</span>
+            <strong>34 minutes</strong>
+            <span>Two focused lessons</span>
           </div>
           <div>
-            <strong>6 review checks</strong>
-            <span>One saved field guide</span>
+            <strong>2 saved builds</strong>
+            <span>HTML and CSS practice</span>
           </div>
           <div>
-            <strong>6 problems</strong>
-            <span>Ordered JavaScript practice</span>
+            <strong>6 + 6</strong>
+            <span>Project checks and JS problems</span>
           </div>
         </section>
 

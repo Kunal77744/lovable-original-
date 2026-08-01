@@ -4,7 +4,11 @@ import {
   FIRST_LESSON,
   FIRST_LESSON_QUIZ,
   FIRST_LESSON_REVISION,
+  SECOND_LESSON,
+  SECOND_LESSON_QUIZ,
+  getPublicLessonQuiz,
   getPublicFirstLessonQuiz,
+  gradeLessonQuiz,
   gradeFirstLessonQuiz,
 } from "./first-course-content";
 
@@ -19,14 +23,19 @@ describe("gradeFirstLessonQuiz", () => {
     ).toBe(true);
   });
 
-  it("defines Version 1 as one usable 18-minute course lesson", () => {
-    expect(FIRST_COURSE_LESSONS).toEqual([FIRST_LESSON]);
-    expect(FIRST_COURSE_LESSONS).toHaveLength(1);
+  it("defines two ordered, practical foundation lessons", () => {
+    expect(FIRST_COURSE_LESSONS).toEqual([FIRST_LESSON, SECOND_LESSON]);
+    expect(FIRST_COURSE_LESSONS).toHaveLength(2);
     expect(FIRST_LESSON).toMatchObject({
       slug: "semantic-html",
       estimatedMinutes: 18,
     });
     expect(FIRST_LESSON_QUIZ).toHaveLength(4);
+    expect(SECOND_LESSON).toMatchObject({
+      slug: "css-selectors-box-model",
+      estimatedMinutes: 16,
+    });
+    expect(SECOND_LESSON_QUIZ).toHaveLength(4);
   });
 
   it("passes an answer set at the 75 percent threshold", () => {
@@ -54,5 +63,23 @@ describe("gradeFirstLessonQuiz", () => {
   it("does not expose the answer key to the client quiz", () => {
     expect(getPublicFirstLessonQuiz()[0]).not.toHaveProperty("correctChoiceId");
     expect(getPublicFirstLessonQuiz()[0]).not.toHaveProperty("explanation");
+    expect(getPublicLessonQuiz(SECOND_LESSON.slug)?.[0]).not.toHaveProperty(
+      "correctChoiceId",
+    );
+  });
+
+  it("grades the CSS recall path with the shared pass threshold", () => {
+    const answers = Object.fromEntries(
+      SECOND_LESSON_QUIZ.map((question, index) => [
+        question.id,
+        index === 0 ? "incorrect" : question.correctChoiceId,
+      ]),
+    );
+
+    expect(gradeLessonQuiz(SECOND_LESSON.slug, answers)).toMatchObject({
+      valid: true,
+      score: 75,
+      passed: true,
+    });
   });
 });
