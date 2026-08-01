@@ -33,12 +33,16 @@ import {
   SEMANTIC_HTML_STARTER,
   type SemanticHtmlCheck,
 } from "@/lib/semantic-html-workspace";
+import { parseLearnerEntrySource } from "@/lib/learner-entry-source";
 import { SiteNav } from "../../../site-chrome";
 
 export const dynamic = "force-dynamic";
 
 type LessonPageProps = {
   params: Promise<{ courseSlug: string; lessonSlug: string }>;
+  searchParams?: Promise<{
+    entry_source?: string | string[];
+  }>;
 };
 
 export async function generateMetadata({ params }: LessonPageProps): Promise<Metadata> {
@@ -52,8 +56,14 @@ export async function generateMetadata({ params }: LessonPageProps): Promise<Met
   };
 }
 
-export default async function LessonPage({ params }: LessonPageProps) {
+export default async function LessonPage({
+  params,
+  searchParams,
+}: LessonPageProps) {
   const { courseSlug, lessonSlug } = await params;
+  const entrySource = parseLearnerEntrySource(
+    (await searchParams)?.entry_source,
+  );
   const session = await auth.api.getSession({ headers: await headers() });
   const courseLesson =
     courseSlug === FIRST_COURSE.slug
@@ -125,11 +135,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   return (
     <main className="lesson-page">
-      {session ? (
+      {session || entrySource ? (
         <LessonStartTracker
           courseSlug={courseSlug}
           lessonSlug={studentLesson.lessonSlug}
           alreadyCompleted={studentLesson.completed}
+          entrySource={entrySource}
         />
       ) : null}
       <SiteNav currentPage="lesson" studentSession={Boolean(session)} />

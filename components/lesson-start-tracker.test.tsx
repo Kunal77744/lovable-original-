@@ -41,4 +41,23 @@ describe("LessonStartTracker", () => {
 
     expect(captureLearnerEventOnce).not.toHaveBeenCalled();
   });
+
+  it("labels the founder-warm entry without a learner identity", async () => {
+    render(
+      <LessonStartTracker
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        alreadyCompleted={false}
+        entrySource="founder_warm"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(captureLearnerEventOnce).toHaveBeenCalledWith("lesson_started", {
+        course_slug: "web-development-foundations",
+        lesson_slug: "semantic-html",
+        entry_source: "founder_warm",
+      }),
+    );
+  });
 });
