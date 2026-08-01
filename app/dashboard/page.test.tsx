@@ -52,14 +52,31 @@ describe("DashboardPage", () => {
       title: "Web Development Foundations",
       description: "Build and save a semantic HTML article.",
       completedLessons: 0,
-      totalLessons: 1,
+      totalLessons: 2,
       progressPercent: 0,
       courseCompleted: false,
+      lessons: [
+        {
+          slug: "semantic-html",
+          title: "Build a page the browser understands",
+          estimatedMinutes: 18,
+          completed: false,
+          quizScore: null,
+        },
+        {
+          slug: "css-selectors-box-model",
+          title: "Style a card without guessing",
+          estimatedMinutes: 16,
+          completed: false,
+          quizScore: null,
+        },
+      ],
       nextLesson: {
         slug: "semantic-html",
-        title: "Structure a page with semantic HTML",
+        title: "Build a page the browser understands",
         description: "Build the structure of a readable article.",
         moduleTitle: "HTML foundations",
+        estimatedMinutes: 18,
         completed: false,
         quizScore: null,
       },
@@ -78,7 +95,7 @@ describe("DashboardPage", () => {
     render(await DashboardPage());
 
     expect(
-      screen.getByRole("link", { name: "Start the lesson" }),
+      screen.getByRole("link", { name: "Start the first lesson" }),
     ).toHaveAttribute(
       "href",
       "/learn/web-development-foundations/semantic-html",
@@ -98,19 +115,50 @@ describe("DashboardPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("0/3")).toBeInTheDocument();
+    expect(screen.getByText("Start here · 34 minutes")).toBeInTheDocument();
+  });
+
+  it("continues an HTML completer to the exact CSS lesson", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 1,
+      progressPercent: 50,
+      nextLesson: {
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
+        completed: false,
+        quizScore: null,
+      },
+    });
+
+    render(await DashboardPage());
+
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to Style a card without guessing",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/css-selectors-box-model",
+    );
+    expect(screen.getByText("1/2 lessons complete")).toBeInTheDocument();
   });
 
   it("resumes a saved field guide after course completion", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 1,
+      completedLessons: 2,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
-        slug: "semantic-html",
-        title: "Structure a page with semantic HTML",
-        description: "Build the structure of a readable article.",
-        moduleTitle: "HTML foundations",
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
         completed: true,
         quizScore: 100,
       },
@@ -132,14 +180,15 @@ describe("DashboardPage", () => {
   it("points a returning learner to the exact next unfinished problem", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 1,
+      completedLessons: 2,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
-        slug: "semantic-html",
-        title: "Structure a page with semantic HTML",
-        description: "Build the structure of a readable article.",
-        moduleTitle: "HTML foundations",
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
         completed: true,
         quizScore: 100,
       },

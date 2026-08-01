@@ -168,6 +168,11 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        completedLessonsAfterPass={1}
+        nextLesson={{
+          title: "Style a card without guessing",
+          href: "/learn/web-development-foundations/css-selectors-box-model",
+        }}
       />,
     );
 
@@ -185,6 +190,15 @@ describe("LessonQuiz analytics", () => {
         name: "Continue to JavaScript practice",
       }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText(/1 of 2 lessons complete/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to Style a card without guessing",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/css-selectors-box-model",
+    );
   });
 
   it("keeps signed-out answers local until the learner requests grading", () => {

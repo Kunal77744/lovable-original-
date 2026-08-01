@@ -155,9 +155,16 @@ export function LessonQuiz({
         </p>
         <Link
           className="lesson-primary-action"
-          href={nextLesson?.href ?? (showRevisionPack ? "#revision-pack" : "/dashboard")}
+          href={
+            nextLesson?.href ??
+            (showRevisionPack ? "#revision-pack" : "/dashboard")
+          }
         >
-          {nextLesson ? `Continue to ${nextLesson.title}` : showRevisionPack ? "Start revision" : "View saved progress"}
+          {nextLesson
+            ? `Continue to ${nextLesson.title}`
+            : showRevisionPack
+              ? "Start revision"
+              : "View saved progress"}
           <span aria-hidden="true">→</span>
         </Link>
         {nextLesson || showRevisionPack ? (

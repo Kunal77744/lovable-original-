@@ -66,7 +66,7 @@ export default async function DashboardPage() {
             <p>
               {firstCourse.courseCompleted
                 ? "You completed Web Development Foundations. Your result is saved."
-                : "Your one-lesson Web Development Foundations course is ready."}
+                : `Your ${firstCourse.totalLessons}-lesson Web Development Foundations course is ready.`}
             </p>
           </div>
           <SignOutButton />
@@ -75,7 +75,13 @@ export default async function DashboardPage() {
         <LearnerMilestoneChecklist
           course={{
             completed: firstCourse.courseCompleted,
-            quizScore: nextLesson.quizScore,
+            completedLessons: firstCourse.completedLessons,
+            totalLessons: firstCourse.totalLessons,
+            totalEstimatedMinutes: firstCourse.lessons.reduce(
+              (total, lesson) => total + lesson.estimatedMinutes,
+              0,
+            ),
+            nextLessonTitle: nextLesson.title,
             href: `/learn/${firstCourse.slug}/${nextLesson.slug}`,
           }}
           project={{
@@ -107,7 +113,8 @@ export default async function DashboardPage() {
             </h2>
             <p>
               Choose your certificate name now. Your private course certificate
-              becomes available after you pass the saved quiz at 75% or higher.
+              becomes available after you pass both saved recall checks at 75%
+              or higher.
             </p>
           </div>
           <div className="dashboard-account-actions">

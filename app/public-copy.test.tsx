@@ -125,11 +125,15 @@ describe("public product promise", () => {
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
-    expect(screen.getByText(/pass each four-question check at 75%/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/pass each four-question check at 75%/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("2 saved builds")).toBeInTheDocument();
     expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
     expect(screen.getByText("6 + 6")).toBeInTheDocument();
-    expect(screen.getByText("Project checks and JS problems")).toBeInTheDocument();
+    expect(
+      screen.getByText("Project checks and JS problems"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/private semantic HTML field guide/i),
     ).toBeInTheDocument();

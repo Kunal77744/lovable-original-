@@ -3,7 +3,10 @@ import Link from "next/link";
 type LearnerMilestoneChecklistProps = {
   course: {
     completed: boolean;
-    quizScore: number | null;
+    completedLessons: number;
+    totalLessons: number;
+    totalEstimatedMinutes: number;
+    nextLessonTitle: string;
     href: string;
   };
   project: {
@@ -78,17 +81,27 @@ export function LearnerMilestoneChecklist({
           <div className="dashboard-milestone-copy">
             <span>
               {course.completed
-                ? `Completed · Quiz ${course.quizScore}%`
-                : "Start here · 18 minutes"}
+                ? `Completed · ${course.completedLessons}/${course.totalLessons} lessons`
+                : course.completedLessons > 0
+                  ? `${course.completedLessons}/${course.totalLessons} lessons complete`
+                  : `Start here · ${course.totalEstimatedMinutes} minutes`}
             </span>
-            <h3>Learn semantic HTML foundations</h3>
+            <h3>
+              {course.completed
+                ? "HTML and CSS foundations complete"
+                : `Next: ${course.nextLessonTitle}`}
+            </h3>
             <p>
-              Build a readable article and pass the four-question recall check.
+              Build semantic HTML, style it with predictable CSS, and pass both
+              four-question recall checks.
             </p>
           </div>
           {!course.completed ? (
             <Link className="dashboard-path-action" href={course.href}>
-              Start the lesson <span aria-hidden="true">→</span>
+              {course.completedLessons > 0
+                ? `Continue to ${course.nextLessonTitle}`
+                : "Start the first lesson"}{" "}
+              <span aria-hidden="true">→</span>
             </Link>
           ) : null}
         </li>
