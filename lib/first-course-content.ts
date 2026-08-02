@@ -23,7 +23,7 @@ export const SECOND_LESSON = {
   slug: "css-selectors-box-model",
   title: "Style a card without guessing",
   description:
-    "Use precise CSS selectors and the box model to turn structured HTML into a predictable learning card.",
+    "Use CSS selectors and the box model to style a predictable learning card, then return to your saved practice after sign-in.",
   moduleTitle: "Module 2 · CSS foundations",
   position: 2,
   estimatedMinutes: 16,

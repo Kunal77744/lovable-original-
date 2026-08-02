@@ -27,6 +27,7 @@ import {
   FIRST_COURSE_LESSONS,
   FIRST_LESSON,
   FIRST_LESSON_PASS_PERCENT,
+  SECOND_LESSON,
   getPublicLessonQuiz,
 } from "@/lib/first-course-content";
 import {
@@ -49,10 +50,30 @@ type LessonPageProps = {
 export async function generateMetadata({ params }: LessonPageProps): Promise<Metadata> {
   const { lessonSlug } = await params;
   const courseLesson = FIRST_COURSE_LESSONS.find((item) => item.slug === lessonSlug);
+  const title = `${courseLesson?.title ?? "Lesson"} | Lovable Original`;
+  const description = courseLesson?.description;
+  const isCssLesson = lessonSlug === SECOND_LESSON.slug;
 
   return {
-    title: `${courseLesson?.title ?? "Lesson"} | Lovable Original`,
-    description: courseLesson?.description,
+    title,
+    description,
+    ...(isCssLesson
+      ? {
+          openGraph: {
+            type: "website" as const,
+            url: `/learn/${FIRST_COURSE.slug}/${SECOND_LESSON.slug}`,
+            title,
+            description,
+            images: ["/opengraph-image"],
+          },
+          twitter: {
+            card: "summary_large_image" as const,
+            title,
+            description,
+            images: ["/opengraph-image"],
+          },
+        }
+      : {}),
     robots: { index: false, follow: false },
   };
 }
