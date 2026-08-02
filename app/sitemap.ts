@@ -20,6 +20,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${productionUrl}/learn/web-development-foundations/css-selectors-box-model`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${productionUrl}/practice`,
       changeFrequency: "weekly",
       priority: 0.9,
