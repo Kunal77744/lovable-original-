@@ -40,6 +40,7 @@ export type LearnerProfileAction = {
 export type LearnerProfileViewModel = {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
+  cssPractice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   quizScore: number | null;
   isFreshLearner: boolean;
@@ -49,11 +50,13 @@ export type LearnerProfileViewModel = {
 export function buildLearnerProfile({
   course,
   practice,
+  cssPractice,
   attempts,
   projectCompleted,
 }: {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
+  cssPractice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   projectCompleted: boolean;
 }): LearnerProfileViewModel {
@@ -61,6 +64,7 @@ export function buildLearnerProfile({
   const isFreshLearner =
     course.completedLessons === 0 &&
     practice.completedCount === 0 &&
+    cssPractice.completedCount === 0 &&
     attempts.length === 0 &&
     quizScore === null;
 
@@ -70,6 +74,7 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -89,6 +94,7 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -112,6 +118,7 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -131,6 +138,7 @@ export function buildLearnerProfile({
   return {
     course,
     practice,
+    cssPractice,
     attempts,
     quizScore,
     isFreshLearner,

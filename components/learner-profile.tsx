@@ -32,8 +32,8 @@ export function LearnerProfile({
           </div>
           <p>
             {profile.isFreshLearner
-              ? "Nothing is completed yet. Start with one focused lesson, and your course and JavaScript practice progress will build here."
-              : "Course results and accepted JavaScript problems stay together here, attached only to your account."}
+              ? "Nothing is completed yet. Start with one focused lesson, and your course, JavaScript, and CSS progress will build here."
+              : "Course results, accepted JavaScript problems, and completed CSS challenges stay together here, attached only to your account."}
           </p>
         </div>
         <div className="profile-privacy-note">
@@ -94,15 +94,25 @@ export function LearnerProfile({
         </article>
 
         <article className="profile-practice-progress">
-          <p>JavaScript practice</p>
-          <strong>
-            {profile.practice.completedCount}
-            <span>/{profile.practice.totalCount}</span>
-          </strong>
-          <h2>problems accepted</h2>
+          <p>Coding practice</p>
+          <div className="profile-practice-counts">
+            <div>
+              <strong>
+                {profile.practice.completedCount}
+                <span>/{profile.practice.totalCount}</span>
+              </strong>
+              <h2>JavaScript Accepted</h2>
+            </div>
+            <div>
+              <strong>
+                {profile.cssPractice.completedCount}
+                <span>/{profile.cssPractice.totalCount}</span>
+              </strong>
+              <h2>CSS completed</h2>
+            </div>
+          </div>
           <p>
-            Accepted results stay here after reload, sign-out, and your next
-            sign-in.
+            Saved results return after reload, sign-out, and your next sign-in.
           </p>
         </article>
       </section>

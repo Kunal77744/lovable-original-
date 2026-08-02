@@ -23,11 +23,18 @@ const emptyPractice = {
   completedSlugs: [] as string[],
 };
 
+const emptyCssPractice = {
+  completedCount: 0,
+  totalCount: 6,
+  completedSlugs: [] as string[],
+};
+
 describe("buildLearnerProfile", () => {
   it("starts an empty learner with the course", () => {
     const profile = buildLearnerProfile({
       course: baseCourse,
       practice: emptyPractice,
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: false,
     });
@@ -53,6 +60,7 @@ describe("buildLearnerProfile", () => {
         totalCount: 6,
         completedSlugs: ["sum-two-numbers"],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: false,
     });
@@ -61,6 +69,23 @@ describe("buildLearnerProfile", () => {
     expect(profile.isFreshLearner).toBe(false);
     expect(profile.nextAction.label).toBe("Continue course");
     expect(profile.nextAction.description).toContain("75% pass mark");
+  });
+
+  it("does not call a learner fresh when only CSS progress exists", () => {
+    const profile = buildLearnerProfile({
+      course: baseCourse,
+      practice: emptyPractice,
+      cssPractice: {
+        completedCount: 1,
+        totalCount: 6,
+        completedSlugs: ["class-selector"],
+      },
+      attempts: [],
+      projectCompleted: false,
+    });
+
+    expect(profile.isFreshLearner).toBe(false);
+    expect(profile.cssPractice.completedCount).toBe(1);
   });
 
   it("routes a completed course into the unfinished guided project", () => {
@@ -81,6 +106,7 @@ describe("buildLearnerProfile", () => {
         totalCount: 6,
         completedSlugs: ["sum-two-numbers"],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: false,
     });
@@ -112,6 +138,7 @@ describe("buildLearnerProfile", () => {
         totalCount: 6,
         completedSlugs: ["sum-two-numbers"],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: true,
     });
@@ -149,6 +176,7 @@ describe("buildLearnerProfile", () => {
           "fizz-buzz",
         ],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: true,
     });

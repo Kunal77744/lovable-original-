@@ -7574,26 +7574,43 @@ h1 {
   color: #9fd9b8;
 }
 
-.profile-practice-progress > strong {
-  margin-top: 19px;
+.profile-practice-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 22px;
+}
+
+.profile-practice-counts > div {
+  min-width: 0;
+}
+
+.profile-practice-counts > div + div {
+  padding-left: 22px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.profile-practice-counts strong {
+  display: block;
   font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  font-size: 66px;
+  font-size: 48px;
   line-height: 0.85;
   font-weight: 600;
   letter-spacing: -0.06em;
   font-variant-numeric: tabular-nums;
 }
 
-.profile-practice-progress > strong span {
+.profile-practice-counts strong span {
   color: #81928a;
-  font-size: 31px;
+  font-size: 23px;
 }
 
-.profile-practice-progress h2 {
+.profile-practice-counts h2 {
   margin: 14px 0 0;
   color: white;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 750;
+  line-height: 1.35;
 }
 
 .profile-practice-progress > p:last-child {
@@ -9201,6 +9218,14 @@ footer {
 
   .profile-practice-progress {
     min-height: 230px;
+  }
+
+  .profile-practice-counts {
+    gap: 18px;
+  }
+
+  .profile-practice-counts > div + div {
+    padding-left: 18px;
   }
 
   .profile-attempts {

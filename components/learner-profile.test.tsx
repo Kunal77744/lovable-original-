@@ -24,6 +24,16 @@ const profile: LearnerProfileViewModel = {
     totalCount: 6,
     completedSlugs: ["sum-two-numbers"],
   },
+  cssPractice: {
+    completedCount: 4,
+    totalCount: 6,
+    completedSlugs: [
+      "class-selector",
+      "descendant-selector",
+      "padding",
+      "border",
+    ],
+  },
   attempts: [
     {
       id: "attempt-1",
@@ -53,8 +63,11 @@ describe("LearnerProfile", () => {
 
     expect(screen.getByText("Private progress")).toBeInTheDocument();
     expect(screen.getAllByText("100%")).toHaveLength(2);
-    expect(screen.getByText("problems accepted").parentElement).toHaveTextContent(
+    expect(screen.getByText("JavaScript Accepted").parentElement).toHaveTextContent(
       "1/6",
+    );
+    expect(screen.getByText("CSS completed").parentElement).toHaveTextContent(
+      "4/6",
     );
     expect(screen.getByText("Sum two numbers")).toBeInTheDocument();
     expect(screen.getByText("Accepted")).toBeInTheDocument();
@@ -89,6 +102,11 @@ describe("LearnerProfile", () => {
         totalCount: 6,
         completedSlugs: [],
       },
+      cssPractice: {
+        completedCount: 0,
+        totalCount: 6,
+        completedSlugs: [],
+      },
       attempts: [],
       quizScore: null,
       isFreshLearner: true,
@@ -113,8 +131,11 @@ describe("LearnerProfile", () => {
     expect(freshState.getByText("Private progress")).toBeInTheDocument();
     expect(freshState.getByText("0/1")).toBeInTheDocument();
     expect(
-      freshState.getByText("problems accepted").parentElement,
+      freshState.getByText("JavaScript Accepted").parentElement,
     ).toHaveTextContent("0/6");
+    expect(freshState.getByText("CSS completed").parentElement).toHaveTextContent(
+      "0/6",
+    );
     expect(freshState.getByText("Not started")).toBeInTheDocument();
     expect(freshState.getByText("Not attempted")).toBeInTheDocument();
     expect(freshState.getAllByRole("link")).toHaveLength(1);
@@ -123,6 +144,34 @@ describe("LearnerProfile", () => {
     ).toHaveAttribute(
       "href",
       "/learn/web-development-foundations/semantic-html",
+    );
+  });
+
+  it("shows both practice paths as complete without combining their totals", () => {
+    const { container } = render(
+      <LearnerProfile
+        profile={{
+          ...profile,
+          practice: {
+            completedCount: 6,
+            totalCount: 6,
+            completedSlugs: profile.practice.completedSlugs,
+          },
+          cssPractice: {
+            completedCount: 6,
+            totalCount: 6,
+            completedSlugs: profile.cssPractice.completedSlugs,
+          },
+        }}
+      />,
+    );
+
+    const completeState = within(container);
+    expect(completeState.getByText("JavaScript Accepted").parentElement).toHaveTextContent(
+      "6/6",
+    );
+    expect(completeState.getByText("CSS completed").parentElement).toHaveTextContent(
+      "6/6",
     );
   });
 
