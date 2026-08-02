@@ -15,6 +15,8 @@ const requiredTables = [
   "course_feedback",
   "coding_problem_progress",
   "coding_submission",
+  "css_practice_attempt",
+  "css_practice_progress",
   "early_access_signup",
   "guided_project",
   "guided_project_feedback",
@@ -32,6 +34,25 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  css_practice_attempt: [
+    "id",
+    "user_id",
+    "challenge_slug",
+    "verdict",
+    "passed_checks",
+    "total_checks",
+    "created_at",
+  ],
+  css_practice_progress: [
+    "id",
+    "user_id",
+    "challenge_slug",
+    "css",
+    "best_verdict",
+    "completed_at",
+    "created_at",
+    "updated_at",
+  ],
   guided_project: [
     "id",
     "user_id",
@@ -160,6 +181,8 @@ async function run() {
       from information_schema.columns
       where table_schema = 'public'
         and table_name in (
+          'css_practice_attempt',
+          'css_practice_progress',
           'guided_project',
           'guided_project_feedback',
           'practice_feedback'

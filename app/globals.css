@@ -6294,6 +6294,509 @@ h1 {
   font-weight: 600;
 }
 
+.css-practice-bridge {
+  margin-top: 22px;
+  padding: 26px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 36px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.css-practice-bridge h2 {
+  max-width: 620px;
+  margin: 7px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 600;
+}
+
+.css-practice-bridge p:last-child {
+  max-width: 66ch;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.css-practice-bridge > a {
+  min-height: 44px;
+  padding: 0 16px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-deep);
+  border: 1px solid #bfd4c5;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.css-practice-bridge > a:hover {
+  border-color: var(--accent);
+  background: #edf4ec;
+}
+
+.css-practice-bridge > a:focus-visible,
+.css-challenge-row:focus-visible,
+.css-next-challenge:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.css-practice-hero,
+.css-challenge-catalog,
+.css-challenge-shell {
+  width: min(1184px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.css-practice-hero {
+  padding: 88px 0 74px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.22fr) minmax(320px, 0.58fr);
+  align-items: end;
+  gap: 88px;
+}
+
+.css-practice-hero-copy {
+  max-width: 760px;
+}
+
+.css-practice-hero h1 {
+  max-width: 760px;
+  font-size: clamp(54px, 6.2vw, 82px);
+}
+
+.css-practice-hero-copy > p:not(.eyebrow) {
+  max-width: 60ch;
+  margin: 28px 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.css-path-progress {
+  padding: 31px;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 17px 17px 5px 17px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 22px 50px rgba(23, 35, 30, 0.09);
+}
+
+.css-path-progress > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.css-path-progress > div:first-child span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.css-path-progress strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 42px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+}
+
+.css-path-progress p {
+  margin: 19px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.css-challenge-catalog {
+  padding: 68px 0 112px;
+}
+
+.css-challenge-list {
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: 0 20px 48px rgba(23, 35, 30, 0.08);
+}
+
+.css-challenge-row {
+  min-height: 94px;
+  padding: 0 27px;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 170px 96px 24px;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  transition:
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.css-challenge-row:last-child {
+  border-bottom: 0;
+}
+
+.css-challenge-row:hover {
+  background: #f2f6f0;
+}
+
+.css-challenge-row-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.css-challenge-row-copy strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.css-challenge-row-copy small {
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.css-challenge-row > span:last-child {
+  color: var(--accent);
+  font-size: 20px;
+}
+
+.css-challenge-shell {
+  padding: 34px 0 104px;
+}
+
+.css-challenge-brief {
+  margin-top: 22px;
+  padding: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.4fr);
+  align-items: end;
+  gap: 64px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 17px 17px 5px 17px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.css-challenge-brief h1 {
+  margin-top: 10px;
+  font-size: clamp(48px, 6vw, 70px);
+}
+
+.css-challenge-brief > div:first-child > p:last-child {
+  max-width: 62ch;
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.css-challenge-outcome {
+  padding-left: 25px;
+  display: grid;
+  gap: 9px;
+  border-left: 1px solid var(--line);
+}
+
+.css-challenge-outcome span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.css-challenge-outcome strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.css-challenge-workspace {
+  margin-top: 26px;
+  overflow: hidden;
+  color: #edf4ef;
+  border: 1px solid #26342e;
+  border-radius: 17px;
+  background: #17231e;
+  box-shadow: 0 25px 58px rgba(23, 35, 30, 0.2);
+}
+
+.css-challenge-workspace-heading {
+  padding: 31px 32px 27px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  border-bottom: 1px solid #31423a;
+}
+
+.css-challenge-workspace-heading .quiz-kicker,
+.css-check-list .quiz-kicker,
+.css-attempt-history .quiz-kicker {
+  color: #91cca9;
+}
+
+.css-challenge-workspace-heading h2 {
+  margin: 7px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 35px;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.css-challenge-workspace-heading p:not(.quiz-kicker) {
+  max-width: 60ch;
+  margin: 13px 0 0;
+  color: #aebbb4;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.css-best-result {
+  min-width: 148px;
+  padding-left: 24px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  border-left: 1px solid #31423a;
+  text-align: right;
+}
+
+.css-best-result span,
+.css-best-result small {
+  color: #8c9b93;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.css-best-result span {
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.css-best-result strong {
+  color: #d4ddd7;
+  font-size: 13px;
+}
+
+.css-best-result.is-complete strong {
+  color: #83dda8;
+}
+
+.css-challenge-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.css-challenge-editor {
+  border-right: 1px solid #31423a;
+}
+
+.css-challenge-editor label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.css-challenge-editor textarea,
+.css-challenge-preview iframe {
+  width: 100%;
+  min-height: 420px;
+  display: block;
+  border: 0;
+}
+
+.css-challenge-editor textarea {
+  margin: 0;
+  padding: 24px;
+  resize: vertical;
+  color: #eef4ef;
+  outline: none;
+  background:
+    linear-gradient(90deg, #1a2721 42px, transparent 42px),
+    #111b17;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.css-challenge-editor textarea:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(102, 220, 157, 0.38);
+}
+
+.css-challenge-preview {
+  background: var(--paper);
+}
+
+.css-challenge-submit {
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-top: 1px solid #31423a;
+  border-bottom: 1px solid #31423a;
+  background: #1a2721;
+}
+
+.css-challenge-submit p {
+  margin: 0;
+  color: #aebbb4;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.css-challenge-submit p.is-error {
+  color: #efaaa2;
+}
+
+.css-challenge-submit a {
+  color: #83dda8;
+  text-underline-offset: 3px;
+}
+
+.css-challenge-feedback {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+}
+
+.css-check-list,
+.css-attempt-history {
+  padding: 28px 30px 32px;
+}
+
+.css-check-list {
+  border-right: 1px solid #31423a;
+}
+
+.css-check-list-heading {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.css-check-list-heading h3,
+.css-attempt-history h3 {
+  margin: 6px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.css-check-list-heading > span {
+  color: #aebbb4;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.css-check {
+  min-height: 74px;
+  padding: 15px 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  border-top: 1px solid #31423a;
+}
+
+.css-check > span {
+  color: #819087;
+  font-size: 14px;
+}
+
+.css-check.is-passed > span,
+.css-check.is-passed strong {
+  color: #83dda8;
+}
+
+.css-check strong {
+  color: #e2e9e4;
+  font-size: 12px;
+}
+
+.css-check p {
+  margin: 5px 0 0;
+  color: #9eada5;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.css-attempt-history ol {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.css-attempt-history li {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #31423a;
+}
+
+.css-attempt-history li strong,
+.css-attempt-history li span {
+  font-size: 11px;
+}
+
+.css-attempt-history li strong {
+  color: #dce5df;
+}
+
+.css-attempt-history li span {
+  color: #8f9e96;
+}
+
+.css-empty-attempts {
+  margin: 20px 0 0;
+  padding: 16px;
+  color: #96a49d;
+  border: 1px dashed #415149;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.css-next-challenge {
+  min-height: 44px;
+  margin-top: 20px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #dff5e7;
+  border: 1px solid #659978;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.css-next-challenge:hover {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
 .dashboard-practice {
   margin-top: 24px;
   padding: 35px 40px;
@@ -7803,6 +8306,36 @@ footer {
     gap: 52px;
   }
 
+  .css-practice-hero {
+    padding-top: 72px;
+    grid-template-columns: 1fr;
+    gap: 52px;
+  }
+
+  .css-path-progress {
+    max-width: 620px;
+  }
+
+  .css-challenge-brief {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .css-challenge-outcome {
+    padding: 22px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .css-challenge-feedback {
+    grid-template-columns: 1fr;
+  }
+
+  .css-check-list {
+    border-right: 0;
+    border-bottom: 1px solid #31423a;
+  }
+
   .practice-progress-card {
     max-width: 620px;
   }
@@ -8035,6 +8568,9 @@ footer {
   .practice-hero,
   .problem-catalog,
   .coding-problem-shell,
+  .css-practice-hero,
+  .css-challenge-catalog,
+  .css-challenge-shell,
   .settings-shell,
   .certificate-shell,
   .certificate-locked-shell {
@@ -8161,6 +8697,93 @@ footer {
   .practice-hero {
     padding: 56px 0 42px;
     gap: 38px;
+  }
+
+  .css-practice-hero {
+    padding: 56px 0 42px;
+    gap: 38px;
+  }
+
+  .css-practice-hero h1 {
+    font-size: clamp(47px, 14vw, 64px);
+  }
+
+  .css-practice-hero-copy > p:not(.eyebrow) {
+    margin: 25px 0;
+    font-size: 16px;
+  }
+
+  .css-path-progress {
+    padding: 25px;
+  }
+
+  .css-challenge-catalog {
+    padding: 52px 0 80px;
+  }
+
+  .css-challenge-row {
+    min-height: 100px;
+    padding: 0 18px;
+    grid-template-columns: 34px minmax(0, 1fr) 24px;
+    gap: 11px;
+  }
+
+  .css-challenge-row .problem-difficulty,
+  .css-challenge-row .problem-state {
+    display: none;
+  }
+
+  .css-challenge-row-copy strong {
+    font-size: 20px;
+  }
+
+  .css-challenge-brief {
+    padding: 32px 24px;
+  }
+
+  .css-challenge-brief h1 {
+    font-size: 47px;
+  }
+
+  .css-challenge-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .css-challenge-editor {
+    border-right: 0;
+    border-bottom: 1px solid #31423a;
+  }
+
+  .css-challenge-workspace-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .css-best-result {
+    padding: 18px 0 0;
+    border-top: 1px solid #31423a;
+    border-left: 0;
+    text-align: left;
+  }
+
+  .css-challenge-submit,
+  .css-practice-bridge {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .css-challenge-submit .submit-code-action,
+  .css-practice-bridge > a {
+    width: 100%;
+  }
+
+  .css-practice-bridge {
+    padding: 22px;
+  }
+
+  .css-check-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .learn-entry-hero {

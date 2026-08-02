@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CssBoxModelLessonContent } from "@/components/css-box-model-lesson-content";
@@ -189,13 +190,28 @@ export default async function LessonPage({
               />
             </>
           ) : (
-            <CssBoxModelWorkspace
-              lessonSlug={studentLesson.lessonSlug}
-              initialCss={workspace.html}
-              initialChecks={workspace.checks as CssPracticeCheck[]}
-              initiallySaved={workspace.saved}
-              isSignedIn={Boolean(session)}
-            />
+            <>
+              <CssBoxModelWorkspace
+                lessonSlug={studentLesson.lessonSlug}
+                initialCss={workspace.html}
+                initialChecks={workspace.checks as CssPracticeCheck[]}
+                initiallySaved={workspace.saved}
+                isSignedIn={Boolean(session)}
+              />
+              <div className="css-practice-bridge">
+                <div>
+                  <p className="quiz-kicker">More repetition, same model</p>
+                  <h2>Use six short challenges to make the pattern stick.</h2>
+                  <p>
+                    Practice selectors, spacing, box sizing, and reusable link
+                    targets with exact feedback after every attempt.
+                  </p>
+                </div>
+                <Link href="/practice/css">
+                  Open CSS practice <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </>
           )}
 
           <LessonQuiz

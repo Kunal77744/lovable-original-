@@ -439,6 +439,53 @@ export const codingSubmission = pgTable(
   ],
 );
 
+export const cssPracticeProgress = pgTable(
+  "css_practice_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSlug: text("challenge_slug").notNull(),
+    css: text("css").notNull(),
+    bestVerdict: text("best_verdict"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_practice_progress_user_challenge_unique").on(
+      table.userId,
+      table.challengeSlug,
+    ),
+    index("css_practice_progress_user_id_idx").on(table.userId),
+  ],
+);
+
+export const cssPracticeAttempt = pgTable(
+  "css_practice_attempt",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSlug: text("challenge_slug").notNull(),
+    verdict: text("verdict").notNull(),
+    passedChecks: integer("passed_checks").notNull(),
+    totalChecks: integer("total_checks").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("css_practice_attempt_user_challenge_idx").on(
+      table.userId,
+      table.challengeSlug,
+    ),
+    index("css_practice_attempt_user_id_idx").on(table.userId),
+  ],
+);
+
 export const practiceFeedback = pgTable(
   "practice_feedback",
   {

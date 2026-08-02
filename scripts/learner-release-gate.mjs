@@ -10,6 +10,7 @@ const SECOND_LESSON_SLUG = "css-selectors-box-model";
 const PROJECT_SLUG = "semantic-html-article";
 const LESSON_TITLE = "Build a page the browser understands";
 const SECOND_LESSON_TITLE = "Style a card without guessing";
+const CSS_CHALLENGE_SLUG = "class-selector";
 const INTERVIEW_DRILL_SLUG = "javascript-fundamentals";
 const INTERVIEW_QUESTION_SLUG = "const-let-var";
 const CERTIFICATE_TITLE = "Private course certificate";
@@ -344,6 +345,7 @@ async function runJourney(baseUrl, databaseUrl) {
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
   let savedCssWorkspace = "";
+  let savedCssChallenge = "";
   let savedProjectHtml = "";
   let savedFeedbackComment = "";
   let savedLessonNote = "";
@@ -497,6 +499,41 @@ async function runJourney(baseUrl, databaseUrl) {
       "A fresh learner did not receive the four-check CSS workspace.",
     );
 
+    const practicePageResponse = await request("/practice/css");
+    const practicePageText = pageText(await practicePageResponse.text());
+    assertStep(
+      practicePageResponse.status === 200 &&
+        practicePageText.includes("six saved challenges") &&
+        practicePageText.includes("Move from selector to reusable component."),
+      step,
+      "The six-challenge CSS practice path did not load.",
+    );
+
+    const challengePageResponse = await request(
+      `/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    const challengePageText = pageText(await challengePageResponse.text());
+    assertStep(
+      challengePageResponse.status === 200 &&
+        challengePageText.includes("Select one card") &&
+        challengePageText.includes("Run checks"),
+      step,
+      "The first CSS practice challenge did not load.",
+    );
+
+    const challengeStateResponse = await request(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    const challengeState = await challengeStateResponse.json();
+    assertStep(
+      challengeStateResponse.status === 200 &&
+        challengeState.saved === false &&
+        challengeState.bestVerdict === null &&
+        challengeState.attempts?.length === 0,
+      step,
+      "A fresh learner inherited another learner's CSS practice state.",
+    );
+
     const noteResponse = await request(
       `/api/lessons/${LESSON_SLUG}/notes`,
     );
@@ -636,6 +673,40 @@ async function runJourney(baseUrl, databaseUrl) {
         passingCssWorkspace.checks.every((check) => check.passed === true),
       step,
       "The CSS workspace did not save a completed 4/4 result.",
+    );
+
+    const failingChallengeResponse = await jsonRequest(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+      { mode: "submit", css: ".learning-card { color: #17231e; }" },
+    );
+    const failingChallenge = await failingChallengeResponse.json();
+    assertStep(
+      failingChallengeResponse.status === 200 &&
+        failingChallenge.verdict === "Keep going" &&
+        failingChallenge.passedChecks < failingChallenge.totalChecks,
+      step,
+      "The CSS practice challenge did not save deterministic revision feedback.",
+    );
+
+    savedCssChallenge = `.learning-card {
+  background: #ffffff;
+  color: #17231e;
+  --release-gate: "${runId}";
+}`;
+    const passingChallengeResponse = await jsonRequest(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+      { mode: "submit", css: savedCssChallenge },
+    );
+    const passingChallenge = await passingChallengeResponse.json();
+    assertStep(
+      passingChallengeResponse.status === 200 &&
+        passingChallenge.css === savedCssChallenge &&
+        passingChallenge.verdict === "Completed" &&
+        passingChallenge.passedChecks === 3 &&
+        passingChallenge.totalChecks === 3 &&
+        passingChallenge.checks.every((check) => check.passed === true),
+      step,
+      "The CSS practice challenge did not save a completed 3/3 attempt.",
     );
 
     const firstNoteResponse = await jsonRequest(
@@ -949,6 +1020,21 @@ async function runJourney(baseUrl, databaseUrl) {
       "The exact CSS workspace and 4/4 result were not restored after reload.",
     );
 
+    const challengeStateResponse = await request(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    const challengeState = await challengeStateResponse.json();
+    assertStep(
+      challengeStateResponse.status === 200 &&
+        challengeState.saved === true &&
+        challengeState.css === savedCssChallenge &&
+        challengeState.bestVerdict === "Completed" &&
+        challengeState.attempts?.[0]?.verdict === "Completed" &&
+        challengeState.attempts?.[0]?.passedChecks === 3,
+      step,
+      "The exact CSS challenge and completed attempt were not restored after reload.",
+    );
+
     const feedbackResponse = await request(
       `/api/courses/${COURSE_SLUG}/feedback`,
     );
@@ -1065,6 +1151,19 @@ async function runJourney(baseUrl, databaseUrl) {
       "The second public lesson was unavailable or exposed saved CSS after sign out.",
     );
 
+    const challengePageResponse = await request(
+      `/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    const challengePageHtml = await challengePageResponse.text();
+    const challengePageText = pageText(challengePageHtml);
+    assertStep(
+      challengePageResponse.status === 200 &&
+        challengePageText.includes("Select one card") &&
+        !challengePageHtml.includes(runId),
+      step,
+      "The signed-out CSS challenge was unavailable or exposed saved practice CSS.",
+    );
+
     const protectedPages = [
       "/dashboard",
       `/projects/${PROJECT_SLUG}`,
@@ -1115,6 +1214,14 @@ async function runJourney(baseUrl, databaseUrl) {
       secondWorkspaceResponse.status === 401,
       step,
       "Signed-out CSS workspace access was not rejected.",
+    );
+    const challengeStateResponse = await request(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    assertStep(
+      challengeStateResponse.status === 401,
+      step,
+      "Signed-out CSS practice state access was not rejected.",
     );
     const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
     assertStep(
@@ -1205,6 +1312,19 @@ async function runJourney(baseUrl, databaseUrl) {
         secondWorkspace.submission?.passedChecks === 4,
       step,
       "The exact CSS workspace and 4/4 result did not remain after sign in.",
+    );
+
+    const challengeStateResponse = await request(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    const challengeState = await challengeStateResponse.json();
+    assertStep(
+      challengeStateResponse.status === 200 &&
+        challengeState.css === savedCssChallenge &&
+        challengeState.bestVerdict === "Completed" &&
+        challengeState.attempts?.[0]?.passedChecks === 3,
+      step,
+      "The exact CSS practice state did not remain after sign in.",
     );
 
     const feedbackResponse = await request(
@@ -1404,6 +1524,47 @@ async function runJourney(baseUrl, databaseUrl) {
         originalSecondWorkspace.submission?.passedChecks === 4,
       step,
       "The isolation learner changed the original CSS workspace.",
+    );
+
+    const isolationChallengeResponse = await request(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+      {},
+      secondJar,
+    );
+    const isolationChallenge = await isolationChallengeResponse.json();
+    assertStep(
+      isolationChallengeResponse.status === 200 &&
+        isolationChallenge.saved === false &&
+        isolationChallenge.bestVerdict === null &&
+        isolationChallenge.attempts?.length === 0 &&
+        isolationChallenge.css !== savedCssChallenge &&
+        !isolationChallenge.css.includes(runId),
+      step,
+      "One learner could read another learner's CSS practice state.",
+    );
+
+    const isolationDraft = `.learning-card { color: #17231e; --isolation: "${runId}"; }`;
+    const isolationSaveResponse = await jsonRequest(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+      { mode: "draft", css: isolationDraft },
+      secondJar,
+    );
+    assertStep(
+      isolationSaveResponse.status === 200,
+      step,
+      "The isolation learner could not save separate CSS practice work.",
+    );
+
+    const originalChallengeResponse = await request(
+      `/api/practice/css/${CSS_CHALLENGE_SLUG}`,
+    );
+    const originalChallenge = await originalChallengeResponse.json();
+    assertStep(
+      originalChallengeResponse.status === 200 &&
+        originalChallenge.css === savedCssChallenge &&
+        originalChallenge.bestVerdict === "Completed",
+      step,
+      "Another learner changed the original learner's CSS practice state.",
     );
 
     const noteResponse = await request(
