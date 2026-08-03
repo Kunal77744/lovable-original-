@@ -175,6 +175,8 @@ export async function saveCssPracticeAttempt(
       current?.bestVerdict === "Completed" || verdict === "Completed"
         ? "Completed"
         : "Needs revision";
+    const isFirstCompletedResult =
+      verdict === "Completed" && current?.bestVerdict !== "Completed";
 
     await transaction
       .insert(cssPracticeProgress)
@@ -235,6 +237,7 @@ export async function saveCssPracticeAttempt(
       id: attempt.id,
       verdict,
       bestVerdict,
+      isFirstCompletedResult,
       checks,
       passedChecks,
       totalChecks,

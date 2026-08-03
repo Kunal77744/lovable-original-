@@ -47,6 +47,11 @@ type PracticeFeedbackProperties = {
   usefulness: string;
 };
 
+type PracticePathCompletedProperties = {
+  pathSlug: string;
+  completionState: "completed";
+};
+
 let initialized = false;
 let fallbackJourneyId: string | null = null;
 const fallbackCapturedEvents = new Set<string>();
@@ -212,7 +217,9 @@ function capture(
     | "project_completed"
     | "practice_problem_started"
     | "practice_problem_accepted"
-    | "practice_feedback_submitted",
+    | "practice_feedback_submitted"
+    | "javascript_practice_completed"
+    | "css_practice_completed",
   properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
@@ -374,6 +381,44 @@ export function capturePracticeFeedbackSubmitted(
   usefulness: PracticeFeedbackProperties["usefulness"],
 ) {
   return capture("practice_feedback_submitted", { usefulness });
+}
+
+function capturePracticePathCompleted(
+  eventName: "javascript_practice_completed" | "css_practice_completed",
+  { pathSlug, completionState }: PracticePathCompletedProperties,
+) {
+  const dedupeKey = `${eventName}:${pathSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture(eventName, {
+    path_slug: pathSlug,
+    completion_state: completionState,
+  });
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function captureJavaScriptPracticeCompleted(
+  properties: PracticePathCompletedProperties,
+) {
+  return capturePracticePathCompleted(
+    "javascript_practice_completed",
+    properties,
+  );
+}
+
+export function captureCssPracticeCompleted(
+  properties: PracticePathCompletedProperties,
+) {
+  return capturePracticePathCompleted("css_practice_completed", properties);
 }
 
 export function capturePracticeProblemStarted({

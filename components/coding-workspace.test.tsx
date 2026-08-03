@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CodingWorkspace } from "./coding-workspace";
 
 const runCodingSolution = vi.fn();
+const captureJavaScriptPracticeCompleted = vi.fn();
 const capturePracticeProblemAccepted = vi.fn();
 const capturePracticeFeedbackSubmitted = vi.fn();
 
@@ -17,6 +18,8 @@ vi.mock("@/lib/coding-runner", () => ({
 }));
 
 vi.mock("@/lib/product-analytics", () => ({
+  captureJavaScriptPracticeCompleted: (...args: unknown[]) =>
+    captureJavaScriptPracticeCompleted(...args),
   capturePracticeProblemAccepted: (...args: unknown[]) =>
     capturePracticeProblemAccepted(...args),
   capturePracticeFeedbackSubmitted: (...args: unknown[]) =>
@@ -96,6 +99,7 @@ describe("CodingWorkspace", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     runCodingSolution.mockReset();
+    captureJavaScriptPracticeCompleted.mockReset();
     capturePracticeProblemAccepted.mockReset();
     capturePracticeFeedbackSubmitted.mockReset();
   });
@@ -214,8 +218,9 @@ describe("CodingWorkspace", () => {
           bestVerdict: "Accepted",
           passedTests: 4,
           totalTests: 4,
-          completedCount: 1,
+          completedCount: 6,
           totalCount: 6,
+          nextProblemSlug: null,
           createdAt: "2026-07-26T22:35:00.000Z",
           isFirstAcceptedResult: false,
         }),
@@ -239,6 +244,7 @@ describe("CodingWorkspace", () => {
 
     expect((await screen.findAllByText("Accepted")).length).toBeGreaterThan(0);
     expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
     expect(
       screen.queryByRole("heading", {
         name: "Was this practice step useful?",
@@ -287,6 +293,7 @@ describe("CodingWorkspace", () => {
           totalCount: 6,
           nextProblemSlug: null,
           createdAt: "2026-07-27T02:00:00.000Z",
+          isFirstAcceptedResult: true,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       ),
@@ -314,6 +321,14 @@ describe("CodingWorkspace", () => {
         name: "Continue to next unfinished step",
       }),
     ).not.toBeInTheDocument();
+    expect(captureJavaScriptPracticeCompleted).toHaveBeenCalledOnce();
+    expect(captureJavaScriptPracticeCompleted).toHaveBeenCalledWith({
+      pathSlug: "beginner-javascript",
+      completionState: "completed",
+    });
+    expect(JSON.stringify(captureJavaScriptPracticeCompleted.mock.calls)).not.toMatch(
+      /function solve|code|input|output|email/i,
+    );
   });
 
   it("recovers the private response on the first Accepted problem", () => {

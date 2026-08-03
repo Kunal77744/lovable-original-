@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { runCodingSolution } from "@/lib/coding-runner";
-import { capturePracticeProblemAccepted } from "@/lib/product-analytics";
+import {
+  captureJavaScriptPracticeCompleted,
+  capturePracticeProblemAccepted,
+} from "@/lib/product-analytics";
 import type { CodingAttempt } from "@/db/coding-practice";
 import type { SavedPracticeFeedback } from "@/lib/practice-feedback";
 
@@ -233,6 +236,17 @@ export function CodingWorkspace({
         capturePracticeProblemAccepted({
           problemSlug: problem.slug,
           passedCheckCount: payload.passedTests,
+        });
+      }
+
+      if (
+        payload.verdict === "Accepted" &&
+        payload.isFirstAcceptedResult &&
+        payload.completedCount === payload.totalCount
+      ) {
+        captureJavaScriptPracticeCompleted({
+          pathSlug: "beginner-javascript",
+          completionState: "completed",
         });
       }
 

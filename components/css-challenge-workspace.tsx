@@ -7,6 +7,7 @@ import {
   buildCssChallengePreview,
   type CssChallengeCheck,
 } from "@/lib/css-practice-challenges";
+import { captureCssPracticeCompleted } from "@/lib/product-analytics";
 
 type CssChallengeWorkspaceProps = {
   attempts: CssPracticeAttempt[];
@@ -32,6 +33,7 @@ type AttemptResponse = {
   totalCount: number;
   nextChallengeSlug: string | null;
   createdAt: string;
+  isFirstCompletedResult: boolean;
   error?: string;
 };
 
@@ -147,6 +149,17 @@ export function CssChallengeWorkspace({
           ? `${challenge.title} is complete. Your CSS and result are saved.`
           : `${payload.passedChecks} of ${payload.totalChecks} checks pass. This attempt is saved with exact feedback below.`,
       );
+
+      if (
+        payload.verdict === "Completed" &&
+        payload.isFirstCompletedResult &&
+        payload.completedCount === payload.totalCount
+      ) {
+        captureCssPracticeCompleted({
+          pathSlug: "css-selectors-box-model",
+          completionState: "completed",
+        });
+      }
     } catch {
       setSaveState("error");
       setStatus("The attempt could not be saved. Check your connection and try again.");

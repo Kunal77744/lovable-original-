@@ -12,6 +12,8 @@ vi.mock("posthog-js", () => ({
 
 import {
   captureAccountCreated,
+  captureCssPracticeCompleted,
+  captureJavaScriptPracticeCompleted,
   captureLearnerEventOnce,
   captureLessonCompleted,
   captureProjectCompleted,
@@ -258,6 +260,54 @@ describe("product analytics", () => {
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /private learner code|private input|private output|learner@example\.com|private account note/i,
+    );
+  });
+
+  it("captures each completed six-step practice path once without private work", () => {
+    const javascriptCompletion = {
+      pathSlug: "beginner-javascript",
+      completionState: "completed" as const,
+      code: "private learner code",
+      answers: "private learner answers",
+      attempts: "private attempt history",
+      feedback: "private feedback text",
+      email: "learner@example.com",
+      accountId: "private-account-id",
+    };
+    const cssCompletion = {
+      pathSlug: "css-selectors-box-model",
+      completionState: "completed" as const,
+      css: "private learner CSS",
+      answers: "private learner answers",
+      attempts: "private attempt history",
+      feedback: "private feedback text",
+      email: "learner@example.com",
+      accountId: "private-account-id",
+    };
+
+    expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(true);
+    expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(false);
+    expect(captureCssPracticeCompleted(cssCompletion)).toBe(true);
+    expect(captureCssPracticeCompleted(cssCompletion)).toBe(false);
+
+    expect(posthogMocks.capture.mock.calls.map(([event]) => event)).toEqual([
+      "javascript_practice_completed",
+      "css_practice_completed",
+    ]);
+
+    for (const [, properties] of posthogMocks.capture.mock.calls) {
+      expect(Object.keys(properties).sort()).toEqual(
+        [
+          "completion_state",
+          "deployment_environment",
+          "is_test",
+          "journey_id",
+          "path_slug",
+        ].sort(),
+      );
+    }
+    expect(JSON.stringify(posthogMocks.capture.mock.calls)).not.toMatch(
+      /private learner code|private learner CSS|private learner answers|private attempt history|private feedback text|learner@example\.com|private-account-id/i,
     );
   });
 

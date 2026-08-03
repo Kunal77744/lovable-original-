@@ -73,6 +73,7 @@ describe("CSS practice API", () => {
       id: "attempt-one",
       verdict: "Completed",
       bestVerdict: "Completed",
+      isFirstCompletedResult: true,
       checks: [],
       passedChecks: 3,
       totalChecks: 3,
