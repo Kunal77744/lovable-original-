@@ -45,8 +45,8 @@ export default async function AccountPage() {
             saved result.
           </p>
           <p>
-            Sign back in anytime and your saved course work and JavaScript code
-            will return.
+            Sign back in anytime and your saved course work, JavaScript code,
+            and CSS practice will return.
           </p>
           <ul aria-label={`What ${FIRST_COURSE.title} includes`}>
             <li>Turn a blank document into an accessible article page</li>

@@ -43,7 +43,7 @@ describe("AccountPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Sign back in anytime and your saved course work and JavaScript code will return.",
+        "Sign back in anytime and your saved course work, JavaScript code, and CSS practice will return.",
       ),
     ).toBeInTheDocument();
     expect(
