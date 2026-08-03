@@ -14,6 +14,7 @@ type CodingWorkspaceProps = {
   problem: {
     slug: string;
     title: string;
+    starterCode: string;
     tests: { input: string }[];
     example: {
       input: string;
@@ -63,6 +64,8 @@ export function CodingWorkspace({
   const [code, setCode] = useState(initialCode);
   const [attempts, setAttempts] = useState(initialAttempts);
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
+  const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
+    useState(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
@@ -112,6 +115,22 @@ export function CodingWorkspace({
     draftTimer.current = setTimeout(() => {
       void saveDraft(nextCode);
     }, 700);
+  }
+
+  function restoreStarter() {
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    setCode(problem.starterCode);
+    setSaveState("unsaved");
+    setIsRestoreConfirmationOpen(false);
+    setRunState({
+      kind: "idle",
+      message:
+        "Clean starter restored in the editor. Your saved code and attempts have not changed.",
+    });
   }
 
   async function runExample() {
@@ -265,6 +284,54 @@ export function CodingWorkspace({
           onChange={(event) => updateCode(event.target.value)}
           spellCheck={false}
         />
+        {isSignedIn ? (
+          <div className="starter-restore">
+            {isRestoreConfirmationOpen ? (
+              <div
+                className="starter-restore-confirmation"
+                role="group"
+                aria-labelledby="starter-restore-title"
+              >
+                <div>
+                  <strong id="starter-restore-title">Restore the clean starter?</strong>
+                  <p>
+                    This replaces only the editor. Your saved code and attempts stay
+                    unchanged until you edit or submit again.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    className="starter-restore-cancel"
+                    type="button"
+                    onClick={() => setIsRestoreConfirmationOpen(false)}
+                  >
+                    Keep my code
+                  </button>
+                  <button
+                    className="starter-restore-confirm"
+                    type="button"
+                    onClick={restoreStarter}
+                  >
+                    Restore starter
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="starter-restore-trigger"
+                type="button"
+                onClick={() => {
+                  setIsRestoreConfirmationOpen(true);
+                }}
+                disabled={code === problem.starterCode}
+              >
+                {code === problem.starterCode
+                  ? "Clean starter loaded"
+                  : "Restore clean starter"}
+              </button>
+            )}
+          </div>
+        ) : null}
       </div>
 
       <div className="coding-actions">

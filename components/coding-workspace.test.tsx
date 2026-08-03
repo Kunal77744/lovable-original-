@@ -23,6 +23,10 @@ vi.mock("@/lib/product-analytics", () => ({
 const problem = {
   slug: "sum-two-numbers",
   title: "Sum two numbers",
+  starterCode: `function solve(input) {
+  // Read the problem, use input, and return the exact output.
+  return "";
+}`,
   tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
   example: {
     input: "4 9",
@@ -74,6 +78,77 @@ describe("CodingWorkspace", () => {
     vi.restoreAllMocks();
     runCodingSolution.mockReset();
     capturePracticeProblemAccepted.mockReset();
+  });
+
+  it("shows the fresh scaffold without offering a destructive restore", () => {
+    render(
+      <CodingWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        initialCode={problem.starterCode}
+        isSignedIn
+        problem={problem}
+      />,
+    );
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      problem.starterCode,
+    );
+    expect(
+      screen.getByRole("button", { name: "Clean starter loaded" }),
+    ).toBeDisabled();
+  });
+
+  it("keeps edited code when the restore confirmation is cancelled", () => {
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore clean starter" }),
+    );
+    expect(screen.getByText("Restore the clean starter?")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Keep my code" }));
+
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(
+      screen.queryByText("Restore the clean starter?"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("restores only the editor without saving a draft or adding an attempt", async () => {
+    vi.useFakeTimers();
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+
+    fireEvent.change(editor, {
+      target: { value: "function solve(input) { return 'edited'; }" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore clean starter" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Restore starter" }));
+    await vi.advanceTimersByTimeAsync(800);
+
+    expect(editor).toHaveValue(problem.starterCode);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Clean starter restored in the editor. Your saved code and attempts have not changed.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("No saved submissions yet. Your first verdict will appear here.")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("does not offer account-code restoration to signed-out learners", () => {
+    renderWorkspace({ isSignedIn: false });
+
+    expect(
+      screen.queryByRole("button", { name: /starter/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("runs a public example in the browser without saving", async () => {
