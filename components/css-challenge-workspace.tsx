@@ -68,6 +68,7 @@ export function CssChallengeWorkspace({
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewDocument = useMemo(() => buildCssChallengePreview(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
+  const hasSavedAttempt = attempts.length > 0;
 
   useEffect(() => {
     return () => {
@@ -261,7 +262,7 @@ export function CssChallengeWorkspace({
           <div className="css-check-list-heading">
             <div>
               <p className="quiz-kicker">Deterministic feedback</p>
-              <h3>Every check names the next fix.</h3>
+              <h3>Every failed check gives you a next move.</h3>
             </div>
             <span>{passedCount}/{checks.length} passing</span>
           </div>
@@ -273,7 +274,18 @@ export function CssChallengeWorkspace({
               <span aria-hidden="true">{check.passed ? "✓" : "○"}</span>
               <div>
                 <strong>{check.label}</strong>
-                <p>{check.guidance}</p>
+                {!check.passed && hasSavedAttempt ? (
+                  <div className="css-check-recovery">
+                    <p>
+                      <span>Concept to revisit</span>
+                      {check.concept}
+                    </p>
+                    <p>
+                      <span>Next attempt</span>
+                      {check.nextAttempt}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
           ))}

@@ -109,6 +109,57 @@ describe("CssChallengeWorkspace", () => {
     expect(captureCssPracticeCompleted).not.toHaveBeenCalled();
   });
 
+  it("reveals concept-level recovery only after a saved failed attempt", async () => {
+    const failedCss = `.learning-card { color: #17231e; }`;
+    const checks = gradeCssPracticeChallenge(challenge.slug, failedCss)!;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "attempt-needs-revision",
+        verdict: "Needs revision",
+        bestVerdict: "Needs revision",
+        checks,
+        passedChecks: 2,
+        totalChecks: 3,
+        completedCount: 0,
+        totalCount: 6,
+        nextChallengeSlug: "class-selector",
+        createdAt: "2026-08-03T12:00:00.000Z",
+        isFirstCompletedResult: false,
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks,
+        }}
+        initialCss={failedCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const failedCheck = checks.find((check) => !check.passed)!;
+    expect(screen.queryByText(failedCheck.concept)).not.toBeInTheDocument();
+    expect(screen.queryByText(failedCheck.nextAttempt)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Check and save attempt" }));
+
+    await waitFor(() =>
+      expect(screen.getByText(failedCheck.concept)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(failedCheck.nextAttempt)).toBeInTheDocument();
+    expect(screen.getByText("Concept to revisit")).toBeInTheDocument();
+    expect(screen.getByText("Next attempt")).toBeInTheDocument();
+    expect(screen.queryByText(/background\s*:/i)).not.toBeInTheDocument();
+  });
+
   it("captures only the first genuine completion of all six CSS challenges", async () => {
     const completedCss = `.learning-card {
       background: #ffffff;

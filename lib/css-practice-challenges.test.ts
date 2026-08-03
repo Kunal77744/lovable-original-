@@ -52,9 +52,26 @@ describe("CSS practice challenge catalog", () => {
 
       expect(checks).not.toBeNull();
       expect(checks?.every((check) => check.passed)).toBe(true);
-      expect(checks?.every((check) => check.guidance.length > 20)).toBe(true);
+      expect(checks?.every((check) => check.concept.length > 40)).toBe(true);
+      expect(checks?.every((check) => check.nextAttempt.length > 40)).toBe(true);
     },
   );
+
+  it("gives every failed check distinct recovery guidance without finished code", () => {
+    const failedChecks = CSS_PRACTICE_CHALLENGES.flatMap((challenge) =>
+      gradeCssPracticeChallenge(challenge.slug, "/* try again */") ?? [],
+    );
+
+    expect(failedChecks).toHaveLength(19);
+    expect(failedChecks.every((check) => !check.passed)).toBe(true);
+    expect(new Set(failedChecks.map((check) => check.nextAttempt)).size).toBe(19);
+
+    for (const check of failedChecks) {
+      expect(`${check.concept} ${check.nextAttempt}`).not.toMatch(
+        /\{\s*\.?.+\}|(?:background|color|width|box-sizing|border|padding|margin|display|border-radius)\s*:/i,
+      );
+    }
+  });
 
   it("returns exact feedback instead of accepting a nearby selector", () => {
     const checks = gradeCssPracticeChallenge(
