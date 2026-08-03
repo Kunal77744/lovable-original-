@@ -5876,6 +5876,98 @@ h1 {
   box-shadow: inset 0 0 0 3px rgba(102, 220, 157, 0.38);
 }
 
+.starter-restore {
+  min-height: 49px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #31423a;
+  background: #15211c;
+}
+
+.starter-restore-trigger,
+.starter-restore-cancel {
+  min-height: 44px;
+  padding: 8px 0;
+  color: #aebbb4;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: #52635a;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.starter-restore-trigger:hover,
+.starter-restore-cancel:hover {
+  color: #eef4ef;
+  text-decoration-color: #91cca9;
+}
+
+.starter-restore-trigger:focus-visible,
+.starter-restore-cancel:focus-visible,
+.starter-restore-confirm:focus-visible {
+  outline: 3px solid rgba(102, 220, 157, 0.38);
+  outline-offset: 3px;
+}
+
+.starter-restore-trigger:disabled {
+  color: #718078;
+  text-decoration: none;
+  cursor: default;
+}
+
+.starter-restore-confirmation {
+  width: 100%;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.starter-restore-confirmation strong {
+  color: #eef4ef;
+  font-size: 12px;
+}
+
+.starter-restore-confirmation p {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: #9eada5;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.starter-restore-confirmation > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.starter-restore-confirm {
+  min-height: 44px;
+  padding: 0 12px;
+  color: #d5e9dc;
+  border: 1px solid #52635a;
+  border-radius: 7px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.starter-restore-confirm:hover {
+  border-color: #91cca9;
+  background: #1d2b25;
+}
+
 .coding-actions {
   padding: 18px 22px;
   display: flex;
@@ -9059,6 +9151,21 @@ footer {
     padding: 20px 16px;
     background: #111b17;
     font-size: 12px;
+  }
+
+  .starter-restore {
+    padding: 8px 16px;
+  }
+
+  .starter-restore-confirmation {
+    padding: 12px 0;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .starter-restore-confirmation > div:last-child {
+    justify-content: space-between;
   }
 
   .coding-actions {

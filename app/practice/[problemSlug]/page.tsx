@@ -144,6 +144,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
               title: problem.title,
               recoveryHint: problem.recoveryHint,
               acceptedExplanation: problem.acceptedExplanation,
+              starterCode: problem.starterCode,
               tests: problem.tests.map((test) => ({ input: test.input })),
               example: {
                 input: problem.examples[0].input,
