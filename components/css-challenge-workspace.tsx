@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CssPathFeedback } from "@/components/css-path-feedback";
 import type { CssPracticeAttempt } from "@/db/css-practice";
+import type { SavedCssPathFeedback } from "@/lib/css-path-feedback";
 import {
   buildCssChallengePreview,
   type CssChallengeCheck,
@@ -18,7 +20,9 @@ type CssChallengeWorkspaceProps = {
     checks: CssChallengeCheck[];
   };
   initialCss: string;
+  initialPathFeedback?: SavedCssPathFeedback | null;
   isSignedIn: boolean;
+  isPathFeedbackEligible?: boolean;
   nextChallengeSlug: string | null;
 };
 
@@ -42,7 +46,9 @@ export function CssChallengeWorkspace({
   bestVerdict: initialBestVerdict,
   challenge,
   initialCss,
+  initialPathFeedback = null,
   isSignedIn,
+  isPathFeedbackEligible = false,
   nextChallengeSlug: initialNextChallengeSlug,
 }: CssChallengeWorkspaceProps) {
   const [css, setCss] = useState(initialCss);
@@ -51,6 +57,9 @@ export function CssChallengeWorkspace({
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
   const [nextChallengeSlug, setNextChallengeSlug] = useState(
     initialNextChallengeSlug,
+  );
+  const [showPathFeedback, setShowPathFeedback] = useState(
+    isPathFeedbackEligible,
   );
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
@@ -127,7 +136,9 @@ export function CssChallengeWorkspace({
 
       if (!response.ok) {
         setSaveState("error");
-        setStatus(payload.error ?? "The attempt could not be saved. Try again.");
+        setStatus(
+          payload.error ?? "The attempt could not be saved. Try again.",
+        );
         return;
       }
 
@@ -135,16 +146,18 @@ export function CssChallengeWorkspace({
       setBestVerdict(payload.bestVerdict);
       setNextChallengeSlug(payload.nextChallengeSlug);
       setSaveState("saved");
-      setAttempts((current) => [
-        {
-          id: payload.id,
-          verdict: payload.verdict,
-          passedChecks: payload.passedChecks,
-          totalChecks: payload.totalChecks,
-          createdAt: payload.createdAt,
-        },
-        ...current,
-      ].slice(0, 8));
+      setAttempts((current) =>
+        [
+          {
+            id: payload.id,
+            verdict: payload.verdict,
+            passedChecks: payload.passedChecks,
+            totalChecks: payload.totalChecks,
+            createdAt: payload.createdAt,
+          },
+          ...current,
+        ].slice(0, 8),
+      );
       setStatus(
         payload.verdict === "Completed"
           ? `${challenge.title} is complete. Your CSS and result are saved.`
@@ -156,6 +169,7 @@ export function CssChallengeWorkspace({
         payload.isFirstCompletedResult &&
         payload.completedCount === payload.totalCount
       ) {
+        setShowPathFeedback(true);
         captureCssPracticeCompleted({
           pathSlug: "css-selectors-box-model",
           completionState: "completed",
@@ -163,14 +177,19 @@ export function CssChallengeWorkspace({
       }
     } catch {
       setSaveState("error");
-      setStatus("The attempt could not be saved. Check your connection and try again.");
+      setStatus(
+        "The attempt could not be saved. Check your connection and try again.",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <section className="css-challenge-workspace" aria-labelledby="css-workspace-title">
+    <section
+      className="css-challenge-workspace"
+      aria-labelledby="css-workspace-title"
+    >
       <header className="css-challenge-workspace-heading">
         <div>
           <p className="quiz-kicker">Live CSS workbench</p>
@@ -189,7 +208,9 @@ export function CssChallengeWorkspace({
         >
           <span>Best result</span>
           <strong>{bestVerdict ?? "Not submitted"}</strong>
-          <small>{passedCount}/{checks.length} latest checks</small>
+          <small>
+            {passedCount}/{checks.length} latest checks
+          </small>
         </div>
       </header>
 
@@ -264,7 +285,9 @@ export function CssChallengeWorkspace({
               <p className="quiz-kicker">Deterministic feedback</p>
               <h3>Every failed check gives you a next move.</h3>
             </div>
-            <span>{passedCount}/{checks.length} passing</span>
+            <span>
+              {passedCount}/{checks.length} passing
+            </span>
           </div>
           {checks.map((check) => (
             <div
@@ -299,7 +322,9 @@ export function CssChallengeWorkspace({
               {attempts.map((attempt) => (
                 <li key={attempt.id}>
                   <strong>{attempt.verdict}</strong>
-                  <span>{attempt.passedChecks}/{attempt.totalChecks} checks</span>
+                  <span>
+                    {attempt.passedChecks}/{attempt.totalChecks} checks
+                  </span>
                 </li>
               ))}
             </ol>
@@ -314,7 +339,8 @@ export function CssChallengeWorkspace({
                 className="css-next-challenge"
                 href={`/practice/css/${nextChallengeSlug}`}
               >
-                Continue to the next unfinished challenge <span aria-hidden="true">→</span>
+                Continue to the next unfinished challenge{" "}
+                <span aria-hidden="true">→</span>
               </Link>
             ) : (
               <Link className="css-next-challenge" href="/practice/css">
@@ -324,6 +350,10 @@ export function CssChallengeWorkspace({
           ) : null}
         </aside>
       </div>
+
+      {showPathFeedback ? (
+        <CssPathFeedback initialFeedback={initialPathFeedback} />
+      ) : null}
     </section>
   );
 }

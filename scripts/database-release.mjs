@@ -16,6 +16,7 @@ const requiredTables = [
   "coding_problem_progress",
   "coding_submission",
   "css_practice_attempt",
+  "css_practice_feedback",
   "css_practice_progress",
   "early_access_signup",
   "guided_project",
@@ -50,6 +51,15 @@ const requiredColumns = {
     "css",
     "best_verdict",
     "completed_at",
+    "created_at",
+    "updated_at",
+  ],
+  css_practice_feedback: [
+    "id",
+    "user_id",
+    "path_slug",
+    "usefulness",
+    "comment",
     "created_at",
     "updated_at",
   ],
@@ -172,7 +182,9 @@ async function run() {
       from pg_catalog.pg_tables
       where schemaname = 'public'
     `;
-    const presentTables = new Set(tableResults.map(({ tablename }) => tablename));
+    const presentTables = new Set(
+      tableResults.map(({ tablename }) => tablename),
+    );
     const missingTables = requiredTables.filter(
       (tableName) => !presentTables.has(tableName),
     );
@@ -182,6 +194,7 @@ async function run() {
       where table_schema = 'public'
         and table_name in (
           'css_practice_attempt',
+          'css_practice_feedback',
           'css_practice_progress',
           'guided_project',
           'guided_project_feedback',

@@ -19,7 +19,9 @@ export const user = pgTable(
     email: text("email").notNull(),
     emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -33,7 +35,9 @@ export const session = pgTable(
     id: text("id").primaryKey(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     token: text("token").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -69,7 +73,9 @@ export const account = pgTable(
     }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -90,7 +96,9 @@ export const verification = pgTable(
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -117,7 +125,9 @@ export const course = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     status: text("status").notNull().default("topic-selection"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -160,7 +170,9 @@ export const courseFeedback = pgTable(
       .references(() => course.id, { onDelete: "cascade" }),
     usefulness: text("usefulness").notNull(),
     comment: text("comment"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -182,14 +194,14 @@ export const learnerSetting = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     certificateDisplayName: text("certificate_display_name").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    uniqueIndex("learner_setting_user_unique").on(table.userId),
-  ],
+  (table) => [uniqueIndex("learner_setting_user_unique").on(table.userId)],
 );
 
 export const lesson = pgTable(
@@ -205,14 +217,19 @@ export const lesson = pgTable(
     moduleTitle: text("module_title").notNull(),
     position: integer("position").notNull(),
     estimatedMinutes: integer("estimated_minutes").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [
     uniqueIndex("lesson_course_slug_unique").on(table.courseId, table.slug),
-    uniqueIndex("lesson_course_position_unique").on(table.courseId, table.position),
+    uniqueIndex("lesson_course_position_unique").on(
+      table.courseId,
+      table.position,
+    ),
     index("lesson_course_id_idx").on(table.courseId),
   ],
 );
@@ -229,7 +246,9 @@ export const lessonProgress = pgTable(
       .references(() => lesson.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("in-progress"),
     quizScore: integer("quiz_score").notNull().default(0),
-    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -255,7 +274,9 @@ export const lessonArtifact = pgTable(
       .notNull()
       .references(() => lesson.id, { onDelete: "cascade" }),
     html: text("html").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -280,7 +301,9 @@ export const lessonNote = pgTable(
       .notNull()
       .references(() => lesson.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -309,7 +332,9 @@ export const guidedProject = pgTable(
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     completionId: text("completion_id"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -333,7 +358,9 @@ export const guidedProjectFeedback = pgTable(
     projectSlug: text("project_slug").notNull(),
     confidence: text("confidence").notNull(),
     comment: text("comment"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -382,7 +409,9 @@ export const earlyAccessSignup = pgTable(
     id: text("id").primaryKey(),
     email: text("email").notNull(),
     courseSlug: text("course_slug").notNull().default("first-course"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("early_access_signup_email_course_unique").on(
@@ -403,7 +432,9 @@ export const codingProblemProgress = pgTable(
     code: text("code").notNull(),
     bestVerdict: text("best_verdict"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -428,7 +459,9 @@ export const codingSubmission = pgTable(
     verdict: text("verdict").notNull(),
     passedTests: integer("passed_tests").notNull(),
     totalTests: integer("total_tests").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     index("coding_submission_user_problem_idx").on(
@@ -450,7 +483,9 @@ export const cssPracticeProgress = pgTable(
     css: text("css").notNull(),
     bestVerdict: text("best_verdict"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -475,7 +510,9 @@ export const cssPracticeAttempt = pgTable(
     verdict: text("verdict").notNull(),
     passedChecks: integer("passed_checks").notNull(),
     totalChecks: integer("total_checks").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     index("css_practice_attempt_user_challenge_idx").on(
@@ -483,6 +520,32 @@ export const cssPracticeAttempt = pgTable(
       table.challengeSlug,
     ),
     index("css_practice_attempt_user_id_idx").on(table.userId),
+  ],
+);
+
+export const cssPracticeFeedback = pgTable(
+  "css_practice_feedback",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    pathSlug: text("path_slug").notNull(),
+    usefulness: text("usefulness").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_practice_feedback_user_path_unique").on(
+      table.userId,
+      table.pathSlug,
+    ),
+    index("css_practice_feedback_user_id_idx").on(table.userId),
   ],
 );
 
@@ -496,7 +559,9 @@ export const practiceFeedback = pgTable(
     problemSlug: text("problem_slug").notNull(),
     usefulness: text("usefulness").notNull(),
     comment: text("comment"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -518,7 +583,9 @@ export const courseCertificate = pgTable(
       .notNull()
       .references(() => course.id, { onDelete: "cascade" }),
     awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("course_certificate_user_course_unique").on(
@@ -537,7 +604,9 @@ export const playgroundFile = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     code: text("code").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
