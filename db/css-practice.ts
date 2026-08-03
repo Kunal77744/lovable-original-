@@ -4,8 +4,17 @@ import {
   getCssPracticeChallenge,
   gradeCssPracticeChallenge,
 } from "@/lib/css-practice-challenges";
+import {
+  CSS_PATH_FEEDBACK_PATH_SLUG,
+  type CssPathFeedbackUsefulness,
+  type SavedCssPathFeedback,
+} from "@/lib/css-path-feedback";
 import { getDatabase } from "./index";
-import { cssPracticeAttempt, cssPracticeProgress } from "./schema";
+import {
+  cssPracticeAttempt,
+  cssPracticeFeedback,
+  cssPracticeProgress,
+} from "./schema";
 
 export type CssPracticeAttempt = {
   id: string;
@@ -114,6 +123,80 @@ export async function getCssPracticeChallengeForStudent(
   };
 }
 
+export async function getCssPracticePathFeedbackForStudent(userId: string) {
+  const catalogProgress = await getCssPracticeCatalogProgress(userId);
+
+  if (catalogProgress.completedCount !== catalogProgress.totalCount) {
+    return {
+      isEligible: false,
+      feedback: null as SavedCssPathFeedback | null,
+    };
+  }
+
+  const [feedback] = await getDatabase()
+    .select({
+      pathSlug: cssPracticeFeedback.pathSlug,
+      usefulness: cssPracticeFeedback.usefulness,
+      comment: cssPracticeFeedback.comment,
+      updatedAt: cssPracticeFeedback.updatedAt,
+    })
+    .from(cssPracticeFeedback)
+    .where(
+      and(
+        eq(cssPracticeFeedback.userId, userId),
+        eq(cssPracticeFeedback.pathSlug, CSS_PATH_FEEDBACK_PATH_SLUG),
+      ),
+    )
+    .limit(1);
+
+  return {
+    isEligible: true,
+    feedback: feedback
+      ? {
+          pathSlug: feedback.pathSlug,
+          usefulness: feedback.usefulness as CssPathFeedbackUsefulness,
+          comment: feedback.comment ?? "",
+          updatedAt: feedback.updatedAt.toISOString(),
+        }
+      : null,
+  };
+}
+
+export async function saveCssPracticePathFeedbackForStudent(
+  userId: string,
+  usefulness: CssPathFeedbackUsefulness,
+  comment: string | null,
+) {
+  const catalogProgress = await getCssPracticeCatalogProgress(userId);
+
+  if (catalogProgress.completedCount !== catalogProgress.totalCount) {
+    return null;
+  }
+
+  const now = new Date();
+  await getDatabase()
+    .insert(cssPracticeFeedback)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      pathSlug: CSS_PATH_FEEDBACK_PATH_SLUG,
+      usefulness,
+      comment,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [cssPracticeFeedback.userId, cssPracticeFeedback.pathSlug],
+      set: { usefulness, comment, updatedAt: now },
+    });
+
+  return {
+    pathSlug: CSS_PATH_FEEDBACK_PATH_SLUG,
+    usefulness,
+    comment: comment ?? "",
+    updatedAt: now.toISOString(),
+  };
+}
+
 export async function saveCssPracticeDraft(
   userId: string,
   challengeSlug: string,
@@ -132,10 +215,7 @@ export async function saveCssPracticeDraft(
       updatedAt: now,
     })
     .onConflictDoUpdate({
-      target: [
-        cssPracticeProgress.userId,
-        cssPracticeProgress.challengeSlug,
-      ],
+      target: [cssPracticeProgress.userId, cssPracticeProgress.challengeSlug],
       set: { css, updatedAt: now },
     });
 
@@ -191,10 +271,7 @@ export async function saveCssPracticeAttempt(
         updatedAt: now,
       })
       .onConflictDoUpdate({
-        target: [
-          cssPracticeProgress.userId,
-          cssPracticeProgress.challengeSlug,
-        ],
+        target: [cssPracticeProgress.userId, cssPracticeProgress.challengeSlug],
         set: {
           css,
           bestVerdict,

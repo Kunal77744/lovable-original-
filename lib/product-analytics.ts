@@ -1,11 +1,9 @@
 import posthog, { type CaptureResult } from "posthog-js";
 import type { LearnerEntrySource } from "./learner-entry-source";
 
-const POSTHOG_KEY =
-  "phc_mKF4BaB7MLJ2KcvCU3xqCpHLZoPZ6k5ZrYQyxKD2NXor";
+const POSTHOG_KEY = "phc_mKF4BaB7MLJ2KcvCU3xqCpHLZoPZ6k5ZrYQyxKD2NXor";
 const POSTHOG_HOST = "https://us.i.posthog.com";
-const TEST_CAPTURE_URL =
-  process.env.NEXT_PUBLIC_ANALYTICS_TEST_CAPTURE_URL;
+const TEST_CAPTURE_URL = process.env.NEXT_PUBLIC_ANALYTICS_TEST_CAPTURE_URL;
 const PRODUCTION_HOST = "lovable-original-eight.vercel.app";
 const VERCEL_PREVIEW_HOST = /\.vercel\.app$/;
 const JOURNEY_ID_KEY = "lovable_original_journey_id";
@@ -219,7 +217,8 @@ function capture(
     | "practice_problem_accepted"
     | "practice_feedback_submitted"
     | "javascript_practice_completed"
-    | "css_practice_completed",
+    | "css_practice_completed"
+    | "css_path_feedback_submitted",
   properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
@@ -269,12 +268,8 @@ export function captureLearnerEventOnce(
   properties: LearnerEventProperties,
 ) {
   const safeProperties: LearnerEventProperties = {
-    ...(properties.course_slug
-      ? { course_slug: properties.course_slug }
-      : {}),
-    ...(properties.lesson_slug
-      ? { lesson_slug: properties.lesson_slug }
-      : {}),
+    ...(properties.course_slug ? { course_slug: properties.course_slug } : {}),
+    ...(properties.lesson_slug ? { lesson_slug: properties.lesson_slug } : {}),
     ...(typeof properties.passed === "boolean"
       ? { passed: properties.passed }
       : {}),
@@ -381,6 +376,12 @@ export function capturePracticeFeedbackSubmitted(
   usefulness: PracticeFeedbackProperties["usefulness"],
 ) {
   return capture("practice_feedback_submitted", { usefulness });
+}
+
+export function captureCssPathFeedbackSubmitted(
+  usefulness: PracticeFeedbackProperties["usefulness"],
+) {
+  return capture("css_path_feedback_submitted", { usefulness });
 }
 
 function capturePracticePathCompleted(
