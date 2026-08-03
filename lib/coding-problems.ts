@@ -33,6 +33,11 @@ export type CodingProblem = {
   tests: CodingProblemTestCase[];
 };
 
+export const CODING_SOLUTION_SCAFFOLD = `function solve(input) {
+  // Read the problem, use input, and return the exact output.
+  return "";
+}`;
+
 export const CODING_PROBLEMS: CodingProblem[] = [
   {
     slug: "sum-two-numbers",
@@ -65,11 +70,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "Adding 3 to -8 gives -5.",
       },
     ],
-    starterCode: `function solve(input) {
-  const [a, b] = input.trim().split(/\\s+/).map(Number);
-
-  return String(a + b);
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "4 9", expectedOutput: "13" },
       { input: "-8 3", expectedOutput: "-5" },
@@ -108,11 +109,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "24 is divisible by 2.",
       },
     ],
-    starterCode: `function solve(input) {
-  const number = Number(input.trim());
-
-  return number % 2 === 0 ? "Even" : "Odd";
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "17", expectedOutput: "Odd" },
       { input: "24", expectedOutput: "Even" },
@@ -146,16 +143,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "These are 5 multiplied by 1 through 10.",
       },
     ],
-    starterCode: `function solve(input) {
-  const number = Number(input.trim());
-  const multiples = [];
-
-  for (let step = 1; step <= 10; step += 1) {
-    multiples.push(number * step);
-  }
-
-  return multiples.join(" ");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5", expectedOutput: "5 10 15 20 25 30 35 40 45 50" },
       { input: "1", expectedOutput: "1 2 3 4 5 6 7 8 9 10" },
@@ -190,12 +178,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "19 is greater than every other value in the list.",
       },
     ],
-    starterCode: `function solve(input) {
-  const values = input.trim().split(/\\s+/).map(Number);
-  const numbers = values.slice(1);
-
-  return String(Math.max(...numbers));
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5\n7 2 19 4 11", expectedOutput: "19" },
       { input: "4\n-8 -3 -21 -6", expectedOutput: "-3" },
@@ -234,11 +217,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "A palindrome is unchanged when reversed.",
       },
     ],
-    starterCode: `function solve(input) {
-  const word = input.trim();
-
-  return word.split("").reverse().join("");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "semantic", expectedOutput: "citnames" },
       { input: "level", expectedOutput: "level" },
@@ -272,19 +251,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "3 becomes Fizz and 5 becomes Buzz.",
       },
     ],
-    starterCode: `function solve(input) {
-  const limit = Number(input.trim());
-  const answer = [];
-
-  for (let number = 1; number <= limit; number += 1) {
-    if (number % 15 === 0) answer.push("FizzBuzz");
-    else if (number % 3 === 0) answer.push("Fizz");
-    else if (number % 5 === 0) answer.push("Buzz");
-    else answer.push(String(number));
-  }
-
-  return answer.join(" ");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5", expectedOutput: "1 2 Fizz 4 Buzz" },
       {
