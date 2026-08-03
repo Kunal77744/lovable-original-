@@ -13,6 +13,7 @@ vi.mock("posthog-js", () => ({
 import {
   captureAccountCreated,
   captureCssPracticeCompleted,
+  captureCssPathFeedbackSubmitted,
   captureJavaScriptPracticeCompleted,
   captureLearnerEventOnce,
   captureLessonCompleted,
@@ -286,7 +287,9 @@ describe("product analytics", () => {
     };
 
     expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(true);
-    expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(false);
+    expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(
+      false,
+    );
     expect(captureCssPracticeCompleted(cssCompletion)).toBe(true);
     expect(captureCssPracticeCompleted(cssCompletion)).toBe(false);
 
@@ -329,15 +332,35 @@ describe("product analytics", () => {
     const [, properties] = posthogMocks.capture.mock.calls[0];
 
     expect(Object.keys(properties).sort()).toEqual(
-      [
-        "deployment_environment",
-        "is_test",
-        "journey_id",
-        "usefulness",
-      ].sort(),
+      ["deployment_environment", "is_test", "journey_id", "usefulness"].sort(),
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /private feedback comment|private learner code|learner@example\.com/i,
+    );
+  });
+
+  it("captures only the bounded CSS path usefulness choice", () => {
+    const privateResponse = {
+      usefulness: "somewhat",
+      comment: "private CSS path feedback",
+      css: "private learner CSS",
+      email: "learner@example.com",
+    } as const;
+
+    captureCssPathFeedbackSubmitted(privateResponse.usefulness);
+
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "css_path_feedback_submitted",
+      expect.objectContaining({ usefulness: "somewhat" }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      ["deployment_environment", "is_test", "journey_id", "usefulness"].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private CSS path feedback|private learner CSS|learner@example\.com/i,
     );
   });
 

@@ -6,6 +6,7 @@ import { CssChallengeWorkspace } from "@/components/css-challenge-workspace";
 import {
   getCssPracticeCatalogProgress,
   getCssPracticeChallengeForStudent,
+  getCssPracticePathFeedbackForStudent,
 } from "@/db/css-practice";
 import { auth } from "@/lib/auth";
 import {
@@ -39,7 +40,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function CssChallengePage({ params }: CssChallengePageProps) {
+export default async function CssChallengePage({
+  params,
+}: CssChallengePageProps) {
   const { challengeSlug } = await params;
   const challenge = getCssPracticeChallenge(challengeSlug);
 
@@ -50,6 +53,9 @@ export default async function CssChallengePage({ params }: CssChallengePageProps
     getCssPracticeChallengeForStudent(session?.user.id ?? null, challengeSlug),
     getCssPracticeCatalogProgress(session?.user.id ?? null),
   ]);
+  const pathFeedbackState = session
+    ? await getCssPracticePathFeedbackForStudent(session.user.id)
+    : { isEligible: false, feedback: null };
 
   if (!studentState) notFound();
 
@@ -64,7 +70,10 @@ export default async function CssChallengePage({ params }: CssChallengePageProps
     <main>
       <SiteNav currentPage="practice" studentSession={Boolean(session)} />
       <div className="css-challenge-shell" id="main-content" tabIndex={-1}>
-        <nav className="problem-breadcrumbs" aria-label="CSS challenge navigation">
+        <nav
+          className="problem-breadcrumbs"
+          aria-label="CSS challenge navigation"
+        >
           <Link href="/practice/css">CSS practice</Link>
           <span aria-hidden="true">/</span>
           <span aria-current="step">
@@ -75,7 +84,8 @@ export default async function CssChallengePage({ params }: CssChallengePageProps
         <header className="css-challenge-brief">
           <div>
             <p className="eyebrow">
-              Step {challenge.number} of {CSS_PRACTICE_CHALLENGE_COUNT} · {challenge.skill}
+              Step {challenge.number} of {CSS_PRACTICE_CHALLENGE_COUNT} ·{" "}
+              {challenge.skill}
             </p>
             <h1>{challenge.title}</h1>
             <p>{challenge.brief}</p>
@@ -91,11 +101,16 @@ export default async function CssChallengePage({ params }: CssChallengePageProps
           bestVerdict={studentState.bestVerdict}
           challenge={{ slug: challenge.slug, title: challenge.title, checks }}
           initialCss={studentState.css}
+          initialPathFeedback={pathFeedbackState.feedback}
           isSignedIn={Boolean(session)}
+          isPathFeedbackEligible={pathFeedbackState.isEligible}
           nextChallengeSlug={catalogProgress.nextChallengeSlug}
         />
 
-        <nav className="problem-step-navigation" aria-label="Adjacent CSS challenges">
+        <nav
+          className="problem-step-navigation"
+          aria-label="Adjacent CSS challenges"
+        >
           {previousChallenge ? (
             <Link href={`/practice/css/${previousChallenge.slug}`}>
               <span>Previous step</span>
