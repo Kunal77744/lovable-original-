@@ -3,9 +3,9 @@ import Link from "next/link";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
 const courseDescription =
-  "Build semantic HTML, style a predictable CSS card, complete a reviewed field guide, and continue through six JavaScript problems.";
+  "Follow one beginner coding path through semantic HTML, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
 const courseShareImageAlt =
-  "Web Development Foundations: two practical lessons, a reviewed field guide, and six JavaScript problems.";
+  "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
@@ -46,18 +46,32 @@ const courseSteps = [
     label: "Lessons",
     title: "Build the structure, then style it.",
     copy: "Read the public HTML and CSS lessons, save two practice builds, and pass four questions per lesson at 75%.",
+    href: "/learn/web-development-foundations/semantic-html",
+    linkLabel: "Open the first lesson",
   },
   {
     number: "02",
     label: "Project",
     title: "Turn the lesson into a field guide.",
     copy: "Build and save a private semantic HTML field guide, review six checks, then revise your work.",
+    href: "/learn/semantic-html-project",
+    linkLabel: "Preview the guided project",
   },
   {
     number: "03",
-    label: "Practice",
-    title: "Keep going with JavaScript.",
+    label: "JavaScript practice",
+    title: "Solve one small problem at a time.",
     copy: "Continue through six ordered beginner problems and return to the next unfinished step.",
+    href: "/learn/beginner-javascript-practice",
+    linkLabel: "See the JavaScript path",
+  },
+  {
+    number: "04",
+    label: "CSS practice",
+    title: "Make the box model predictable.",
+    copy: "Work through six selector and box-model challenges, with saved attempts that resume at the next unfinished step.",
+    href: "/practice/css",
+    linkLabel: "See the CSS path",
   },
 ];
 
@@ -101,23 +115,24 @@ export default function WebDevelopmentFoundationsPage() {
           <div className="course-overview-copy">
             <p className="eyebrow">Web Development Foundations</p>
             <h1 id="course-title">
-              Build the page. Then make its CSS predictable.
+              One beginner path from page structure to working code.
             </h1>
             <p className="course-overview-lede">
-              Start with semantic HTML, then use selectors and the box model to
-              style a learning card. Pass each four-question check at 75%, then
-              build a private field guide and continue through six beginner
-              JavaScript problems.
+              Read two practical lessons, build a reviewed semantic HTML field
+              guide, then keep practicing through six JavaScript problems and
+              six CSS challenges. Your next unfinished step waits when you
+              return.
             </p>
             <Link
               className="primary-action"
               href="/learn/web-development-foundations/semantic-html"
             >
-              Read the full lesson
+              Start the beginner path
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              Two lessons · Six-check field guide · Six JavaScript problems
+              Two lessons · Six-check project · Six JavaScript + six CSS
+              challenges
             </p>
           </div>
 
@@ -172,18 +187,18 @@ export default function WebDevelopmentFoundationsPage() {
             <span>HTML and CSS practice</span>
           </div>
           <div>
-            <strong>6 + 6</strong>
-            <span>Project checks and JS problems</span>
+            <strong>6 + 6 + 6</strong>
+            <span>Project checks, JS problems, and CSS challenges</span>
           </div>
         </section>
 
         <section className="course-journey" aria-labelledby="journey-title">
           <div className="course-journey-heading">
             <p className="eyebrow">The complete course</p>
-            <h2 id="journey-title">Learn, build, keep going.</h2>
+            <h2 id="journey-title">Follow the path from lesson to practice.</h2>
             <p>
-              The lesson leads into one reviewed project, then a JavaScript path
-              that resumes where you left off.
+              Every stage has one clear outcome. Start with the lesson, then use
+              the quieter links to understand what comes next.
             </p>
           </div>
 
@@ -195,6 +210,10 @@ export default function WebDevelopmentFoundationsPage() {
                   <p>{step.label}</p>
                   <h3>{step.title}</h3>
                   <span>{step.copy}</span>
+                  <Link className="course-step-link" href={step.href}>
+                    {step.linkLabel}
+                    <ArrowIcon />
+                  </Link>
                 </div>
               </li>
             ))}

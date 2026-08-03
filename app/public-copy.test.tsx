@@ -93,14 +93,14 @@ describe("public product promise", () => {
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: two practical lessons, a reviewed field guide, and six JavaScript problems.",
+          "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: two practical lessons, a reviewed field guide, and six JavaScript problems.",
+          "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
@@ -116,23 +116,23 @@ describe("public product promise", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /build the page. then make its css predictable/i,
+        name: /one beginner path from page structure to working code/i,
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /read the full lesson/i }),
+      screen.getByRole("link", { name: /start the beginner path/i }),
     ).toHaveAttribute(
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
     expect(
-      screen.getByText(/pass each four-question check at 75%/i),
+      screen.getByText(/six JavaScript problems and six CSS challenges/i),
     ).toBeInTheDocument();
     expect(screen.getByText("2 saved builds")).toBeInTheDocument();
     expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
-    expect(screen.getByText("6 + 6")).toBeInTheDocument();
+    expect(screen.getByText("6 + 6 + 6")).toBeInTheDocument();
     expect(
-      screen.getByText("Project checks and JS problems"),
+      screen.getByText("Project checks, JS problems, and CSS challenges"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/private semantic HTML field guide/i),
@@ -140,6 +140,16 @@ describe("public product promise", () => {
     expect(
       screen.getByText(/six ordered beginner problems/i),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /preview the guided project/i }),
+    ).toHaveAttribute("href", "/learn/semantic-html-project");
+    expect(
+      screen.getByRole("link", { name: /see the JavaScript path/i }),
+    ).toHaveAttribute("href", "/learn/beginner-javascript-practice");
+    expect(
+      screen.getByRole("link", { name: /see the CSS path/i }),
+    ).toHaveAttribute("href", "/practice/css");
+    expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
     expect(screen.queryByText(/AI tutor|certificate/i)).not.toBeInTheDocument();
   });
 
