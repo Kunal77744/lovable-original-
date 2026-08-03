@@ -6777,11 +6777,32 @@ h1 {
   font-size: 12px;
 }
 
-.css-check p {
+.css-check-recovery {
+  max-width: 66ch;
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.css-check-recovery p {
   margin: 5px 0 0;
   color: #9eada5;
   font-size: 11px;
   line-height: 1.5;
+}
+
+.css-check-recovery p:first-child {
+  margin-top: 0;
+}
+
+.css-check-recovery span {
+  margin-right: 7px;
+  color: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .css-attempt-history ol {

@@ -3,7 +3,8 @@ export type CssChallengeDifficulty = "Beginner";
 export type CssChallengeCheck = {
   id: string;
   label: string;
-  guidance: string;
+  concept: string;
+  nextAttempt: string;
   passed: boolean;
 };
 
@@ -46,13 +47,19 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "card-selector",
         label: "Use the .learning-card selector",
-        guidance: "Put these declarations inside .learning-card { ... }.",
+        concept:
+          "A class selector limits a rule to elements that carry that reusable class.",
+        nextAttempt:
+          "Start with the class on the preview card, then keep the card's visual choices together in that rule.",
         selector: ".learning-card",
       },
       {
         id: "card-background",
         label: "Give the card a white surface",
-        guidance: "Add background: #ffffff to .learning-card.",
+        concept:
+          "A component's surface belongs to the component rule, not the page around it.",
+        nextAttempt:
+          "Find the card rule and set its surface to the white color named in the outcome, then check again.",
         selector: ".learning-card",
         property: "background",
         value: /^(?:#fff(?:fff)?|white)$/i,
@@ -60,7 +67,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "card-color",
         label: "Set the card text color",
-        guidance: "Add color: #17231e to .learning-card.",
+        concept:
+          "Text color set on a container is inherited by its children unless a narrower rule overrides it.",
+        nextAttempt:
+          "Put the dark text choice from the outcome on the card rule so its text can inherit it.",
         selector: ".learning-card",
         property: "color",
         value: /^#17231e$/i,
@@ -86,13 +96,19 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "descendant-selector",
         label: "Scope the rule to the card",
-        guidance: "Use .learning-card strong { ... }.",
+        concept:
+          "A descendant selector starts with a container and narrows the match to an element inside it.",
+        nextAttempt:
+          "Build the selector from the outer card to its inner strong text without targeting strong text everywhere.",
         selector: ".learning-card strong",
       },
       {
         id: "count-color",
         label: "Use the lesson accent color",
-        guidance: "Add color: #175437 to .learning-card strong.",
+        concept:
+          "A color declaration changes only the elements matched by the rule that contains it.",
+        nextAttempt:
+          "Apply the green accent named in the outcome inside the scoped emphasis rule, then compare the preview.",
         selector: ".learning-card strong",
         property: "color",
         value: /^#175437$/i,
@@ -100,7 +116,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "count-weight",
         label: "Make the count visibly stronger",
-        guidance: "Add font-weight: 700 or font-weight: bold.",
+        concept:
+          "Font weight creates emphasis without changing the text or widening the selector.",
+        nextAttempt:
+          "Strengthen the text weight inside the scoped rule using a value the browser treats as bold.",
         selector: ".learning-card strong",
         property: "font-weight",
         value: /^(?:[7-9]00|bold)$/i,
@@ -127,7 +146,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "fixed-width",
         label: "Declare the card width",
-        guidance: "Keep width: 280px on .learning-card.",
+        concept:
+          "The declared width is the target size that the browser's sizing model works from.",
+        nextAttempt:
+          "Keep the width target from the brief on the card before changing how padding and border are counted.",
         selector: ".learning-card",
         property: "width",
         value: /^280px$/i,
@@ -135,7 +157,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "border-box",
         label: "Include padding and border in the width",
-        guidance: "Add box-sizing: border-box to .learning-card.",
+        concept:
+          "The box-sizing model decides whether padding and border add to a declared width or fit inside it.",
+        nextAttempt:
+          "Choose the sizing model that keeps padding and border inside the card's declared width.",
         selector: ".learning-card",
         property: "box-sizing",
         value: /^border-box$/i,
@@ -143,7 +168,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "visible-border",
         label: "Keep a visible card edge",
-        guidance: "Keep a non-zero border on .learning-card.",
+        concept:
+          "A border occupies space only when its thickness is greater than zero.",
+        nextAttempt:
+          "Keep a visible edge on the card and make sure its thickness does not collapse to zero.",
         selector: ".learning-card",
         property: "border",
         value: NON_ZERO_LENGTH,
@@ -173,7 +201,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "card-padding",
         label: "Add inner card space",
-        guidance: "Add padding: 24px to .learning-card.",
+        concept:
+          "Padding creates space between a component's content and its own edge.",
+        nextAttempt:
+          "Apply the inner-space amount from the outcome to the card itself, then watch the content move inward.",
         selector: ".learning-card",
         property: "padding",
         value: /^24px$/i,
@@ -181,13 +212,19 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "paragraph-selector",
         label: "Target the paragraph inside the card",
-        guidance: "Keep the spacing rule inside .learning-card p { ... }.",
+        concept:
+          "Spacing between two pieces of content should be scoped to the element that needs that separation.",
+        nextAttempt:
+          "Narrow the spacing rule from the card container to the paragraph inside the card.",
         selector: ".learning-card p",
       },
       {
         id: "paragraph-margin",
         label: "Add space before the paragraph",
-        guidance: "Add margin-top: 12px to .learning-card p.",
+        concept:
+          "Margin creates space outside an element, separating it from the content before it.",
+        nextAttempt:
+          "Use the gap named in the outcome above the paragraph, without adding more inner card space.",
         selector: ".learning-card p",
         property: "margin-top",
         value: /^12px$/i,
@@ -213,13 +250,19 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "nested-link-selector",
         label: "Keep the link rule inside the card",
-        guidance: "Use .learning-card .card-link { ... }.",
+        concept:
+          "Combining the container and link classes keeps a component rule from changing similar links elsewhere.",
+        nextAttempt:
+          "Start with the card context, then narrow the selector to the link class shown in the preview markup.",
         selector: ".learning-card .card-link",
       },
       {
         id: "inline-block",
         label: "Let padding form a stable box",
-        guidance: "Add display: inline-block to the card link.",
+        concept:
+          "An inline-level box can flow with text while still accepting a predictable width and height from spacing.",
+        nextAttempt:
+          "Choose the display mode that keeps the link inline but lets its padding shape a stable box.",
         selector: ".learning-card .card-link",
         property: "display",
         value: /^inline-block$/i,
@@ -227,7 +270,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "link-padding",
         label: "Give the link a usable hit area",
-        guidance: "Add non-zero padding to the card link.",
+        concept:
+          "Padding enlarges the clickable area around link text without changing the text itself.",
+        nextAttempt:
+          "Add some inner space to the scoped link and confirm the green target grows around its label.",
         selector: ".learning-card .card-link",
         property: "padding",
         value: NON_ZERO_LENGTH,
@@ -235,7 +281,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "link-radius",
         label: "Round the link corners",
-        guidance: "Add a non-zero border-radius to the card link.",
+        concept:
+          "Corner radius rounds the background box, and zero leaves its corners square.",
+        nextAttempt:
+          "Give the scoped link a visible amount of corner rounding, then compare all four corners.",
         selector: ".learning-card .card-link",
         property: "border-radius",
         value: NON_ZERO_LENGTH,
@@ -260,13 +309,19 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "stage-card-selector",
         label: "Scope the rule to the staged card",
-        guidance: "Use .stage .learning-card { ... }.",
+        concept:
+          "A contextual selector can change a component only when it appears inside a particular layout.",
+        nextAttempt:
+          "Build the selector from the outer stage to the card so cards outside that stage stay unchanged.",
         selector: ".stage .learning-card",
       },
       {
         id: "card-max-width",
         label: "Cap the card width",
-        guidance: "Add max-width: 280px to .stage .learning-card.",
+        concept:
+          "A maximum width lets a responsive element shrink while preventing it from growing past a readable cap.",
+        nextAttempt:
+          "Keep the card fluid, then add the width ceiling named in the outcome to the staged-card rule.",
         selector: ".stage .learning-card",
         property: "max-width",
         value: /^280px$/i,
@@ -274,7 +329,10 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
       {
         id: "center-card",
         label: "Center the card in its stage",
-        guidance: "Add margin-inline: auto to .stage .learning-card.",
+        concept:
+          "Automatic space on both inline sides shares the unused room and centers a constrained block.",
+        nextAttempt:
+          "Let the browser divide the stage's leftover horizontal space equally on both sides of the card.",
         selector: ".stage .learning-card",
         property: "margin-inline",
         value: /^auto$/i,
@@ -324,7 +382,8 @@ export function gradeCssPracticeChallenge(slug: string, css: string) {
     return {
       id: requirement.id,
       label: requirement.label,
-      guidance: requirement.guidance,
+      concept: requirement.concept,
+      nextAttempt: requirement.nextAttempt,
       passed,
     };
   });
