@@ -10,6 +10,17 @@ export type PlaygroundRunnerResult =
   | { status: "error"; message: string; output: string[] }
   | { status: "timeout"; message: string; output: string[] };
 
+export type PlaygroundCheckResult = {
+  expression: string;
+  passed: boolean;
+  message: string | null;
+};
+
+export type PlaygroundCheckRunnerResult =
+  | { status: "finished"; checks: PlaygroundCheckResult[] }
+  | { status: "error"; message: string; checks: PlaygroundCheckResult[] }
+  | { status: "timeout"; message: string; checks: PlaygroundCheckResult[] };
+
 const WORKER_SOURCE = `
 const blocked = () => {
   throw new Error("Network access is disabled inside the practice runner.");
@@ -120,6 +131,58 @@ self.onmessage = ({ data }) => {
 };
 `;
 
+const PLAYGROUND_CHECK_WORKER_SOURCE = `
+const blocked = () => {
+  throw new Error("Network access is disabled inside the playground.");
+};
+
+self.fetch = blocked;
+self.XMLHttpRequest = undefined;
+self.WebSocket = undefined;
+self.EventSource = undefined;
+self.importScripts = blocked;
+
+self.onmessage = ({ data }) => {
+  try {
+    const runChecks = new Function(
+      "fetch",
+      "XMLHttpRequest",
+      "WebSocket",
+      "EventSource",
+      "importScripts",
+      "checkExpressions",
+      "\\"use strict\\";\\n" +
+        data.source +
+        "\\nreturn checkExpressions.map((expression) => {" +
+        "try {" +
+        "return { expression, passed: Boolean(eval(expression)), message: null };" +
+        "} catch (error) {" +
+        "return { expression, passed: false, message: error instanceof Error ? error.message : 'Check could not run.' };" +
+        "}" +
+        "});",
+    );
+    const checks = runChecks(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      data.checks,
+    );
+    self.postMessage({ status: "finished", checks });
+  } catch (error) {
+    self.postMessage({
+      status: "error",
+      checks: [],
+      message:
+        error instanceof Error
+          ? error.message
+          : "The quick checks stopped before they finished.",
+    });
+  }
+};
+`;
+
 export async function runCodingSolution(
   source: string,
   inputs: string[],
@@ -215,5 +278,56 @@ export async function runPlaygroundCode(
       });
     };
     worker.postMessage({ source });
+  });
+}
+
+export async function runPlaygroundChecks(
+  source: string,
+  checks: string[],
+  timeoutMs = CODING_RUN_TIMEOUT_MS,
+): Promise<PlaygroundCheckRunnerResult> {
+  if (typeof Worker === "undefined") {
+    return {
+      status: "error",
+      message: "The browser runner is unavailable. Try a current browser.",
+      checks: [],
+    };
+  }
+
+  const workerUrl = URL.createObjectURL(
+    new Blob([PLAYGROUND_CHECK_WORKER_SOURCE], { type: "text/javascript" }),
+  );
+  const worker = new Worker(workerUrl);
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result: PlaygroundCheckRunnerResult) => {
+      if (settled) return;
+      settled = true;
+      worker.terminate();
+      URL.revokeObjectURL(workerUrl);
+      resolve(result);
+    };
+    const timeout = window.setTimeout(() => {
+      finish({
+        status: "timeout",
+        message: `Quick checks stopped after ${timeoutMs.toLocaleString()} ms.`,
+        checks: [],
+      });
+    }, timeoutMs);
+
+    worker.onmessage = (event: MessageEvent<PlaygroundCheckRunnerResult>) => {
+      window.clearTimeout(timeout);
+      finish(event.data);
+    };
+    worker.onerror = () => {
+      window.clearTimeout(timeout);
+      finish({
+        status: "error",
+        message: "The quick checks stopped before they finished.",
+        checks: [],
+      });
+    };
+    worker.postMessage({ source, checks });
   });
 }

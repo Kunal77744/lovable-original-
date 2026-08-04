@@ -8471,6 +8471,204 @@ h1 {
   color: #efaaa2;
 }
 
+.playground-checks {
+  border-top: 1px solid #304239;
+  background: #18241e;
+}
+
+.playground-checks > summary {
+  min-height: 68px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  color: #dbe5df;
+  cursor: pointer;
+  list-style: none;
+}
+
+.playground-checks > summary::-webkit-details-marker {
+  display: none;
+}
+
+.playground-checks > summary > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.playground-checks > summary strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.playground-checks > summary small,
+.playground-checks > summary > span:last-child {
+  color: #84958b;
+  font-size: 10px;
+}
+
+.playground-checks > summary > span:last-child {
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.playground-checks > summary:focus-visible {
+  outline: 2px solid #91dfae;
+  outline-offset: -4px;
+}
+
+.playground-checks-body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 24px;
+  border-top: 1px solid #304239;
+  background: #111a16;
+}
+
+.playground-checks-input {
+  display: grid;
+  align-content: start;
+}
+
+.playground-checks-input label,
+.playground-check-results > strong {
+  color: #dbe5df;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.playground-checks-input textarea {
+  width: 100%;
+  min-height: 116px;
+  margin-top: 9px;
+  padding: 14px;
+  resize: vertical;
+  color: #eaf1ed;
+  border: 1px solid #43564c;
+  border-radius: 8px;
+  outline: none;
+  background: #18241e;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.playground-checks-input textarea::placeholder {
+  color: #718077;
+}
+
+.playground-checks-input textarea:focus-visible {
+  border-color: #91dfae;
+  box-shadow: 0 0 0 3px rgba(145, 223, 174, 0.16);
+}
+
+.playground-checks-input p {
+  margin: 8px 0 0;
+  color: #84958b;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.playground-checks-run {
+  min-height: 42px;
+  margin-top: 14px;
+  padding: 0 16px;
+  justify-self: start;
+  color: #dbe5df;
+  border: 1px solid #60756a;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.playground-checks-run:hover:not(:disabled) {
+  border-color: #91dfae;
+  background: #223029;
+}
+
+.playground-checks-run:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.playground-checks-run:focus-visible {
+  outline: 3px solid rgba(145, 223, 174, 0.3);
+  outline-offset: 3px;
+}
+
+.playground-checks-run:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.playground-check-results {
+  min-height: 188px;
+  padding: 18px;
+  border: 1px solid #304239;
+  border-radius: 10px;
+  background: #141f19;
+}
+
+.playground-check-results > p {
+  margin: 6px 0 0;
+  color: #84958b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.playground-check-results.is-error > p {
+  color: #efaaa2;
+}
+
+.playground-check-results ol {
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  list-style: none;
+}
+
+.playground-check-results li {
+  padding: 11px 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  border: 1px solid #304239;
+  border-radius: 7px;
+  background: #18241e;
+}
+
+.playground-check-results li > span {
+  color: #91dfae;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.playground-check-results li.is-failed > span {
+  color: #efaaa2;
+}
+
+.playground-check-results code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #eaf1ed;
+  font-size: 11px;
+}
+
+.playground-check-results small {
+  grid-column: 2;
+  color: #efaaa2;
+  font-size: 10px;
+}
+
 .playground-boundary {
   margin-top: 24px;
   display: grid;
@@ -9738,6 +9936,21 @@ footer {
   .playground-console header,
   .playground-console-output {
     padding-inline: 17px;
+  }
+
+  .playground-checks > summary {
+    min-height: 74px;
+    padding: 0 17px;
+  }
+
+  .playground-checks-body {
+    padding: 17px;
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+
+  .playground-checks-run {
+    width: 100%;
   }
 
   .playground-boundary {
