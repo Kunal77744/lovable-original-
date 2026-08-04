@@ -59,6 +59,7 @@ export default async function PlaygroundPage() {
 
         <JavaScriptPlayground
           initialCode={file.code}
+          initialQuickChecks={file.quickChecks}
           initialUpdatedAt={file.updatedAt}
         />
 

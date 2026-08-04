@@ -38,6 +38,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="console.log('answer', 42);"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -69,6 +70,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="console.log('shortcut');"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -93,6 +95,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="const double = (value) => value * 2;"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -129,6 +132,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="const double = (value) => value * 2;"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -171,6 +175,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="while (true) {}"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -191,7 +196,11 @@ describe("JavaScriptPlayground", () => {
       }),
     );
     render(
-      <JavaScriptPlayground initialCode={exactCode} initialUpdatedAt={null} />,
+      <JavaScriptPlayground
+        initialCode={exactCode}
+        initialQuickChecks={'double(4) === 8\ndouble(0) === 0'}
+        initialUpdatedAt={null}
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Save file" }));
@@ -207,7 +216,10 @@ describe("JavaScriptPlayground", () => {
         "/api/playground",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ code: exactCode }),
+          body: JSON.stringify({
+            code: exactCode,
+            quickChecks: "double(4) === 8\ndouble(0) === 0",
+          }),
         }),
       ),
     );
@@ -218,6 +230,7 @@ describe("JavaScriptPlayground", () => {
           JSON.stringify({
             file: {
               code: exactCode,
+              quickChecks: "double(4) === 8\ndouble(0) === 0",
               updatedAt: "2026-07-27T03:02:00.000Z",
             },
           }),
@@ -252,6 +265,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="console.log('keep this exact code');"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
