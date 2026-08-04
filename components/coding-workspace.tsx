@@ -40,6 +40,7 @@ type RunState =
   | { kind: "idle"; message: string }
   | { kind: "running"; message: string }
   | { kind: "sample"; message: string; output: string; passed: boolean }
+  | { kind: "custom"; message: string; output: string }
   | {
       kind: "verdict";
       message: string;
@@ -63,6 +64,7 @@ export function CodingWorkspace({
   const [code, setCode] = useState(initialCode);
   const [attempts, setAttempts] = useState(initialAttempts);
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
+  const [customInput, setCustomInput] = useState(problem.example.input);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
@@ -137,6 +139,30 @@ export function CodingWorkspace({
       message: passed
         ? "Example passed. Submit when you’re ready for all four checks."
         : "The example output doesn’t match yet.",
+    });
+  }
+
+  async function runCustomInput() {
+    setRunState({
+      kind: "running",
+      message: "Running your custom input in the browser…",
+    });
+    const result = await runCodingSolution(code, [customInput]);
+
+    if (result.status === "timeout") {
+      setRunState({ kind: "timeout", message: result.message });
+      return;
+    }
+
+    if (result.status !== "finished") {
+      setRunState({ kind: "error", message: result.message });
+      return;
+    }
+
+    setRunState({
+      kind: "custom",
+      output: result.outputs[0] ?? "",
+      message: "Custom input finished. Review the output before you submit.",
     });
   }
 
@@ -302,6 +328,30 @@ export function CodingWorkspace({
         )}
       </div>
 
+      <details className="custom-test-runner">
+        <summary>
+          <span>Try your own input</span>
+          <small>Runs locally without adding a saved attempt</small>
+        </summary>
+        <div className="custom-test-fields">
+          <label htmlFor="custom-test-input">Custom input</label>
+          <textarea
+            id="custom-test-input"
+            value={customInput}
+            onChange={(event) => setCustomInput(event.target.value)}
+            spellCheck={false}
+          />
+          <button
+            className="custom-test-action"
+            type="button"
+            onClick={runCustomInput}
+            disabled={runState.kind === "running"}
+          >
+            {runState.kind === "running" ? "Running…" : "Run custom input"}
+          </button>
+        </div>
+      </details>
+
       <div
         className={`coding-result is-${runState.kind}${
           runState.kind === "verdict"
@@ -324,6 +374,8 @@ export function CodingWorkspace({
                 ? runState.passed
                   ? "Example passed"
                   : "Example differs"
+                : runState.kind === "custom"
+                  ? "Custom run"
                 : runState.kind === "error"
                   ? "Runner stopped"
                   : runState.kind === "timeout"
@@ -339,7 +391,7 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
-        {runState.kind === "sample" ? (
+        {runState.kind === "sample" || runState.kind === "custom" ? (
           <div className="sample-output">
             <span>Your output</span>
             <pre>{runState.output || "(empty)"}</pre>

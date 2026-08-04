@@ -5202,9 +5202,105 @@ h1 {
 }
 
 .secondary-code-action:disabled,
-.submit-code-action:disabled {
+.submit-code-action:disabled,
+.custom-test-action:disabled {
   opacity: 0.58;
   cursor: wait;
+}
+
+.custom-test-runner {
+  margin: 0 22px 22px;
+  border: 1px solid #34443c;
+  border-radius: 10px;
+  background: #18241f;
+}
+
+.custom-test-runner summary {
+  min-height: 64px;
+  padding: 14px 18px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  color: #dce6e0;
+  cursor: pointer;
+}
+
+.custom-test-runner summary::marker {
+  color: #83dda8;
+}
+
+.custom-test-runner summary span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.custom-test-runner summary small {
+  color: #94a39b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.custom-test-runner summary:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+}
+
+.custom-test-fields {
+  padding: 16px 18px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 12px;
+  border-top: 1px solid #34443c;
+}
+
+.custom-test-fields label {
+  grid-column: 1 / -1;
+  color: #aebbb4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.custom-test-fields textarea {
+  min-height: 76px;
+  padding: 12px;
+  resize: vertical;
+  color: #e8efeb;
+  border: 1px solid #415149;
+  border-radius: 8px;
+  background: #111b17;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.custom-test-fields textarea:focus {
+  border-color: #83dda8;
+  outline: 3px solid rgba(131, 221, 168, 0.22);
+  outline-offset: 1px;
+}
+
+.custom-test-action {
+  min-height: 44px;
+  padding: 0 15px;
+  align-self: end;
+  color: #dff5e7;
+  border: 1px solid #659978;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.custom-test-action:hover {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.custom-test-action:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
 }
 
 .coding-result {
@@ -7453,6 +7549,18 @@ footer {
 
   .coding-result {
     margin: 16px;
+  }
+
+  .custom-test-runner {
+    margin: 0 16px 16px;
+  }
+
+  .custom-test-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-test-action {
+    width: 100%;
   }
 
   .accepted-continuation {
