@@ -6641,6 +6641,395 @@ h1 {
   line-height: 1.55;
 }
 
+.practice-review-entry {
+  margin-top: 22px;
+  padding: 26px 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 40px;
+  color: #e9f1ec;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 13px;
+  background: var(--ink);
+  box-shadow: 0 18px 42px rgba(23, 35, 30, 0.12);
+}
+
+.practice-review-entry .eyebrow {
+  margin-bottom: 8px;
+  color: #91cca9;
+}
+
+.practice-review-entry h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.practice-review-entry > div:first-child > p:last-child {
+  max-width: 62ch;
+  margin: 9px 0 0;
+  color: #aebbb4;
+  font-size: 13px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.practice-review-entry-action {
+  min-width: 174px;
+  display: grid;
+  justify-items: end;
+  gap: 9px;
+}
+
+.practice-review-entry-action > span {
+  color: #aebbb4;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.practice-review-entry-action a {
+  min-height: 44px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #dff5e7;
+  border: 1px solid #5c806a;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 760;
+  text-decoration: none;
+  transition:
+    color 160ms ease-out,
+    border-color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.practice-review-entry-action a:hover {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.practice-review-entry-action a:focus-visible {
+  outline: 3px solid rgba(160, 233, 189, 0.35);
+  outline-offset: 3px;
+}
+
+.review-session-shell {
+  width: min(calc(100% - 48px), 1120px);
+  margin: 0 auto;
+  padding: 26px 0 96px;
+}
+
+.review-session-breadcrumbs {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-session-breadcrumbs a {
+  color: var(--ink);
+  text-underline-offset: 4px;
+}
+
+.review-session-breadcrumbs a:hover {
+  color: var(--accent-deep);
+}
+
+.review-session-breadcrumbs a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.review-session-hero {
+  margin-top: 18px;
+  padding: 58px 62px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 64px;
+  color: #edf4ef;
+  border-radius: 20px;
+  background: var(--ink);
+  box-shadow: 0 24px 58px rgba(23, 35, 30, 0.14);
+}
+
+.review-session-hero .eyebrow {
+  margin-bottom: 15px;
+  color: #91cca9;
+}
+
+.review-session-hero h1 {
+  max-width: 820px;
+  margin: 0;
+  font-size: clamp(46px, 6vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  text-wrap: balance;
+}
+
+.review-session-hero div:first-child > p:last-child {
+  max-width: 64ch;
+  margin: 24px 0 0;
+  color: #b3c0b9;
+  font-size: 15px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.review-session-count {
+  width: 118px;
+  padding-left: 24px;
+  display: grid;
+  gap: 4px;
+  border-left: 1px solid #43564c;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-session-count strong {
+  color: #a0e9bd;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 58px;
+  line-height: 0.9;
+  font-weight: 600;
+}
+
+.review-session-count span {
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.review-session-count small {
+  color: #87968e;
+  font-size: 10px;
+}
+
+.review-session-plan,
+.review-session-empty {
+  margin-top: 24px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 17px;
+  background: var(--surface);
+  box-shadow: 0 18px 44px rgba(23, 35, 30, 0.07);
+}
+
+.review-session-plan {
+  padding: 42px;
+}
+
+.review-session-plan-heading {
+  padding-bottom: 28px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-session-plan-heading .eyebrow {
+  margin-bottom: 9px;
+}
+
+.review-session-plan-heading h2,
+.review-session-empty h2 {
+  max-width: 720px;
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(34px, 4vw, 48px);
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.review-session-plan-heading > p {
+  max-width: 32ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: right;
+  text-wrap: pretty;
+}
+
+.review-session-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-session-list li {
+  min-height: 178px;
+  padding: 27px 20px;
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-session-list li.is-first {
+  margin-inline: -18px;
+  padding-inline: 38px;
+  border-bottom-color: #c4dac9;
+  border-radius: 12px 12px 0 0;
+  background: #eef6ed;
+}
+
+.review-session-list li:last-child {
+  border-bottom: 0;
+}
+
+.review-session-step {
+  display: grid;
+  gap: 8px;
+}
+
+.review-session-step > span {
+  color: var(--ink);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.review-session-step small,
+.review-session-copy > span,
+.review-session-copy > small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.review-session-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.review-session-copy > span {
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.review-session-copy h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 27px;
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.review-session-copy strong {
+  color: var(--accent-deep);
+  font-size: 12px;
+}
+
+.review-session-copy p {
+  max-width: 62ch;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.review-session-primary-action,
+.review-session-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 780;
+  white-space: nowrap;
+}
+
+.review-session-primary-action {
+  padding: 0 17px;
+  color: #fff;
+  border-radius: 999px;
+  background: var(--accent);
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(40, 118, 82, 0.18);
+}
+
+.review-session-primary-action:hover {
+  background: var(--accent-deep);
+}
+
+.review-session-link {
+  color: var(--accent-deep);
+  text-underline-offset: 4px;
+}
+
+.review-session-primary-action:focus-visible,
+.review-session-link:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+
+.review-session-empty {
+  padding: 62px;
+}
+
+.review-session-empty .eyebrow {
+  margin-bottom: 11px;
+}
+
+.review-session-empty > p:not(.eyebrow) {
+  max-width: 58ch;
+  margin: 18px 0 26px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.review-session-empty > a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 780;
+  text-underline-offset: 4px;
+}
+
+.review-session-empty.is-complete {
+  background:
+    linear-gradient(135deg, rgba(238, 246, 237, 0.9), transparent 72%),
+    var(--surface);
+}
+
+.review-session-return {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+}
+
+.review-session-return a {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-underline-offset: 4px;
+}
+
+.review-session-return a:hover {
+  color: var(--ink);
+}
+
 .saved-problems-heading {
   display: flex;
   align-items: flex-start;
@@ -11467,6 +11856,17 @@ footer {
     gap: 18px;
   }
 
+  .practice-review-entry {
+    padding: 23px 21px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .practice-review-entry-action {
+    min-width: 0;
+    justify-items: start;
+  }
+
   .saved-problems {
     padding: 21px 20px;
   }
@@ -11505,6 +11905,70 @@ footer {
 
   .practice-playground-action {
     width: 100%;
+  }
+
+  .review-session-shell {
+    width: min(100% - 32px, 1120px);
+    padding-top: 16px;
+  }
+
+  .review-session-hero {
+    padding: 40px 25px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 32px;
+  }
+
+  .review-session-count {
+    width: auto;
+    padding: 18px 0 0;
+    grid-template-columns: auto auto 1fr;
+    align-items: baseline;
+    gap: 9px;
+    border-top: 1px solid #43564c;
+    border-left: 0;
+  }
+
+  .review-session-count strong {
+    font-size: 42px;
+  }
+
+  .review-session-plan,
+  .review-session-empty {
+    padding: 29px 21px;
+  }
+
+  .review-session-plan-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .review-session-plan-heading > p {
+    max-width: 54ch;
+    text-align: left;
+  }
+
+  .review-session-list li,
+  .review-session-list li.is-first {
+    min-height: 0;
+    margin-inline: 0;
+    padding: 24px 0;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 14px;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .review-session-step {
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+  }
+
+  .review-session-primary-action,
+  .review-session-link {
+    justify-self: start;
   }
 
   .problem-row {

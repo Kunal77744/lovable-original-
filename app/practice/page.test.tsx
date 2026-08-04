@@ -75,6 +75,9 @@ describe("PracticePage progress", () => {
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
     expect(getBookmarks).toHaveBeenCalledWith("fresh-learner");
     expect(getReviewQueue).toHaveBeenCalledWith("fresh-learner");
+    expect(
+      screen.getByRole("link", { name: "Check review status" }),
+    ).toHaveAttribute("href", "/practice/review");
     expect(screen.getByText("Nothing saved yet. Use Save for later on any problem.")).toBeInTheDocument();
     expect(screen.getByText("No concepts waiting. A saved Wrong Answer adds one here; an Accepted retry clears it.")).toBeInTheDocument();
   });
@@ -137,6 +140,12 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Review Largest value" }),
     ).toHaveAttribute("href", "/practice/largest-value");
+    expect(
+      screen.getByRole("link", { name: "Open review session" }),
+    ).toHaveAttribute("href", "/practice/review");
+    expect(
+      document.querySelector(".practice-review-entry"),
+    ).toHaveTextContent("2 problems");
     expect(document.querySelector(".mistake-review")).not.toHaveTextContent(
       /function solve|learner code/i,
     );
@@ -172,6 +181,7 @@ describe("PracticePage progress", () => {
     expect(getReviewQueue).not.toHaveBeenCalled();
     expect(screen.queryByText("Saved for later")).not.toBeInTheDocument();
     expect(screen.queryByText("Mistakes to revisit")).not.toBeInTheDocument();
+    expect(screen.queryByText("Private review session")).not.toBeInTheDocument();
   });
 
   it("shows one completed six-step outcome without inventing another step", async () => {

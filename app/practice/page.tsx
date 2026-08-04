@@ -12,6 +12,7 @@ import {
   getCodingProblem,
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
+import { buildCodingReviewSession } from "@/lib/coding-review-session";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,11 @@ export default async function PracticePage() {
       : Promise.resolve([]),
   ]);
   const completedSlugs = new Set(progress.completedSlugs);
+  const reviewSession = buildCodingReviewSession({
+    mistakes: reviewQueue,
+    bookmarks: savedProblems,
+    completedSlugs: progress.completedSlugs,
+  });
   const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
     progress.completedSlugs,
   );
@@ -166,6 +172,36 @@ export default async function PracticePage() {
               );
             })}
           </div>
+
+          {session ? (
+            <aside
+              className="practice-review-entry"
+              aria-labelledby="practice-review-entry-title"
+            >
+              <div>
+                <p className="eyebrow">Private review session</p>
+                <h3 id="practice-review-entry-title">
+                  Revisit up to three saved weak spots.
+                </h3>
+                <p>
+                  Unresolved Wrong Answers come first, then problems you saved
+                  for later. The order updates after your next result.
+                </p>
+              </div>
+              <div className="practice-review-entry-action">
+                <span>
+                  {reviewSession.length}{" "}
+                  {reviewSession.length === 1 ? "problem" : "problems"}
+                </span>
+                <Link href="/practice/review">
+                  {reviewSession.length > 0
+                    ? "Open review session"
+                    : "Check review status"}{" "}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </aside>
+          ) : null}
 
           {session ? (
             <aside
