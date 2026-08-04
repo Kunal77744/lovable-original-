@@ -5919,7 +5919,8 @@ h1 {
 }
 
 .problem-example span,
-.sample-output span {
+.sample-output span,
+.debug-output span {
   display: block;
   color: var(--muted);
   font-size: 10px;
@@ -5929,7 +5930,8 @@ h1 {
 }
 
 .problem-example pre,
-.sample-output pre {
+.sample-output pre,
+.debug-output pre {
   margin: 9px 0 0;
   overflow-x: auto;
   color: var(--ink);
@@ -6613,6 +6615,26 @@ h1 {
 
 .sample-output pre {
   color: #e8efeb;
+}
+
+.debug-output {
+  margin-top: 10px;
+  padding: 13px;
+  border: 1px solid #34443c;
+  border-radius: 7px;
+  background: #16221c;
+}
+
+.debug-output span {
+  color: #91cca9;
+}
+
+.debug-output pre {
+  max-height: 150px;
+  margin: 9px 0 0;
+  overflow: auto;
+  color: #cbd6d0;
+  white-space: pre-wrap;
 }
 
 .attempt-history {

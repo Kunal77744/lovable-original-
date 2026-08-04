@@ -1,9 +1,9 @@
 import { CODING_RUN_TIMEOUT_MS } from "./coding-problems";
 
 type RunnerResult =
-  | { status: "finished"; outputs: string[] }
-  | { status: "error"; message: string }
-  | { status: "timeout"; message: string };
+  | { status: "finished"; outputs: string[]; debugOutput: string[] }
+  | { status: "error"; message: string; debugOutput: string[] }
+  | { status: "timeout"; message: string; debugOutput: string[] };
 
 export type PlaygroundRunnerResult =
   | { status: "finished"; output: string[] }
@@ -32,6 +32,39 @@ self.WebSocket = undefined;
 self.EventSource = undefined;
 self.importScripts = blocked;
 
+const debugOutput = [];
+const MAX_DEBUG_LINES = 80;
+const MAX_DEBUG_LINE_LENGTH = 500;
+const formatDebugValue = (value) => {
+  if (typeof value === "string") return value;
+  if (typeof value === "undefined") return "undefined";
+  if (typeof value === "bigint") return value.toString() + "n";
+
+  try {
+    const serialized = JSON.stringify(value);
+    return typeof serialized === "string" ? serialized : String(value);
+  } catch {
+    return String(value);
+  }
+};
+const writeDebug = (...values) => {
+  if (debugOutput.length >= MAX_DEBUG_LINES) return;
+
+  const line = values.map(formatDebugValue).join(" ");
+  debugOutput.push(
+    line.length > MAX_DEBUG_LINE_LENGTH
+      ? line.slice(0, MAX_DEBUG_LINE_LENGTH) + "…"
+      : line,
+  );
+};
+
+self.console = {
+  log: writeDebug,
+  info: writeDebug,
+  warn: writeDebug,
+  error: writeDebug,
+};
+
 self.onmessage = ({ data }) => {
   const { source, inputs } = data;
 
@@ -57,10 +90,11 @@ self.onmessage = ({ data }) => {
     }
 
     const outputs = inputs.map((input) => String(solve(input) ?? ""));
-    self.postMessage({ status: "finished", outputs });
+    self.postMessage({ status: "finished", outputs, debugOutput });
   } catch (error) {
     self.postMessage({
       status: "error",
+      debugOutput,
       message:
         error instanceof Error
           ? error.message
@@ -192,6 +226,7 @@ export async function runCodingSolution(
     return {
       status: "error",
       message: "The browser runner is unavailable. Try a current browser.",
+      debugOutput: [],
     };
   }
 
@@ -213,6 +248,7 @@ export async function runCodingSolution(
       finish({
         status: "timeout",
         message: `Time limit exceeded after ${timeoutMs.toLocaleString()} ms.`,
+        debugOutput: [],
       });
     }, timeoutMs);
 
@@ -225,6 +261,7 @@ export async function runCodingSolution(
       finish({
         status: "error",
         message: "The solution stopped before producing an answer.",
+        debugOutput: [],
       });
     };
     worker.postMessage({ source, inputs });

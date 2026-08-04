@@ -53,7 +53,13 @@ type SubmissionResponse = {
 type RunState =
   | { kind: "idle"; message: string }
   | { kind: "running"; message: string }
-  | { kind: "sample"; message: string; output: string; passed: boolean }
+  | {
+      kind: "sample";
+      message: string;
+      output: string;
+      debugOutput: string[];
+      passed: boolean;
+    }
   | { kind: "custom"; message: string; output: string }
   | {
       kind: "verdict";
@@ -66,7 +72,7 @@ type RunState =
       nextProblemSlug: string | null;
     }
   | { kind: "timeout"; message: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; debugOutput?: string[] };
 
 export function CodingWorkspace({
   attempts: initialAttempts,
@@ -166,7 +172,11 @@ export function CodingWorkspace({
     }
 
     if (result.status !== "finished") {
-      setRunState({ kind: "error", message: result.message });
+      setRunState({
+        kind: "error",
+        message: result.message,
+        debugOutput: result.debugOutput,
+      });
       return;
     }
 
@@ -175,6 +185,7 @@ export function CodingWorkspace({
     setRunState({
       kind: "sample",
       output,
+      debugOutput: result.debugOutput,
       passed,
       message: passed
         ? "Example passed. Submit when you’re ready for all four checks."
@@ -310,6 +321,11 @@ export function CodingWorkspace({
     }
   }
 
+  const visibleDebugOutput =
+    runState.kind === "sample" || runState.kind === "error"
+      ? (runState.debugOutput ?? [])
+      : [];
+
   return (
     <section className="coding-workspace" aria-labelledby="workspace-title">
       <header className="coding-workspace-heading">
@@ -318,7 +334,8 @@ export function CodingWorkspace({
           <h2 id="workspace-title">Write your solution.</h2>
           <p>
             Define <code>solve(input)</code> and return the exact output. Network
-            access is blocked and the runner stops after 1,000 ms.
+            access is blocked and the runner stops after 1,000 ms. Run the
+            example to inspect local <code>console.log</code> output.
           </p>
         </div>
         <div className={bestVerdict === "Accepted" ? "best-verdict is-accepted" : "best-verdict"}>
@@ -507,6 +524,12 @@ export function CodingWorkspace({
           <div className="sample-output">
             <span>Your output</span>
             <pre>{runState.output || "(empty)"}</pre>
+          </div>
+        ) : null}
+        {visibleDebugOutput.length > 0 ? (
+          <div className="debug-output">
+            <span>Debug console · local only</span>
+            <pre>{visibleDebugOutput.join("\n")}</pre>
           </div>
         ) : null}
         {runState.kind === "verdict" && runState.verdict === "Accepted" ? (
