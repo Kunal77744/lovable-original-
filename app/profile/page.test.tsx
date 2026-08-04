@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ProfilePage, { metadata } from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -79,6 +79,10 @@ describe("ProfilePage", () => {
     mocks.getProject.mockResolvedValue({
       submission: null,
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("describes saved progress as private account activity", () => {
