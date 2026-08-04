@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { PracticeFeedback } from "@/components/practice-feedback";
+import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   captureJavaScriptPracticeCompleted,
@@ -10,12 +11,14 @@ import {
 } from "@/lib/product-analytics";
 import type { CodingAttempt } from "@/db/coding-practice";
 import type { SavedPracticeFeedback } from "@/lib/practice-feedback";
+import type { SavedPracticeSolutionNote } from "@/lib/practice-solution-note";
 
 type CodingWorkspaceProps = {
   attempts: CodingAttempt[];
   bestVerdict: string | null;
   initialCode: string;
   initialPracticeFeedback: SavedPracticeFeedback | null;
+  initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
   isPracticeFeedbackEligible: boolean;
   problem: {
@@ -79,6 +82,7 @@ export function CodingWorkspace({
   bestVerdict: initialBestVerdict,
   initialCode,
   initialPracticeFeedback,
+  initialSolutionNote = null,
   isSignedIn,
   isPracticeFeedbackEligible,
   problem,
@@ -585,6 +589,13 @@ export function CodingWorkspace({
           </p>
         </div>
       </div>
+
+      {isSignedIn && bestVerdict === "Accepted" ? (
+        <PracticeSolutionNote
+          problemSlug={problem.slug}
+          initialNote={initialSolutionNote}
+        />
+      ) : null}
 
       {showPracticeFeedback ? (
         <PracticeFeedback

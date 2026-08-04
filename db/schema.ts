@@ -496,6 +496,31 @@ export const codingProblemBookmark = pgTable(
   ],
 );
 
+export const codingProblemNote = pgTable(
+  "coding_problem_note",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_note_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_note_user_id_idx").on(table.userId),
+  ],
+);
+
 export const cssPracticeProgress = pgTable(
   "css_practice_progress",
   {

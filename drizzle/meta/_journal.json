@@ -127,6 +127,13 @@
       "when": 1785826380298,
       "tag": "0017_spicy_purifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785830751901,
+      "tag": "0018_living_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

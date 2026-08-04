@@ -12,6 +12,7 @@ import type {
 import { getDatabase } from "./index";
 import {
   codingProblemBookmark,
+  codingProblemNote,
   codingProblemProgress,
   codingSubmission,
   practiceFeedback,
@@ -37,6 +38,60 @@ export type SavedCodingProblem = {
   title: string;
   skill: string;
 };
+
+export async function saveCodingProblemNote(
+  userId: string,
+  problemSlug: string,
+  content: string,
+) {
+  if (!getCodingProblem(problemSlug)) {
+    return { status: "problem_not_found" as const };
+  }
+
+  const database = getDatabase();
+  const [accepted] = await database
+    .select({ bestVerdict: codingProblemProgress.bestVerdict })
+    .from(codingProblemProgress)
+    .where(
+      and(
+        eq(codingProblemProgress.userId, userId),
+        eq(codingProblemProgress.problemSlug, problemSlug),
+        eq(codingProblemProgress.bestVerdict, "Accepted"),
+      ),
+    )
+    .limit(1);
+
+  if (!accepted) {
+    return { status: "accepted_required" as const };
+  }
+
+  const now = new Date();
+  const [saved] = await database
+    .insert(codingProblemNote)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      problemSlug,
+      content,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [codingProblemNote.userId, codingProblemNote.problemSlug],
+      set: { content, updatedAt: now },
+    })
+    .returning({
+      content: codingProblemNote.content,
+      updatedAt: codingProblemNote.updatedAt,
+    });
+
+  return {
+    status: "saved" as const,
+    note: {
+      content: saved.content,
+      updatedAt: saved.updatedAt.toISOString(),
+    },
+  };
+}
 
 export async function getCodingProblemBookmarksForStudent(
   userId: string,
@@ -321,11 +376,12 @@ export async function getCodingProblemForStudent(
       code: problem.starterCode,
       bestVerdict: null,
       attempts: [] as CodingAttempt[],
+      solutionNote: null,
     };
   }
 
   const database = getDatabase();
-  const [progress, attempts] = await Promise.all([
+  const [progress, attempts, solutionNotes] = await Promise.all([
     database
       .select({
         code: codingProblemProgress.code,
@@ -356,6 +412,19 @@ export async function getCodingProblemForStudent(
       )
       .orderBy(desc(codingSubmission.createdAt))
       .limit(8),
+    database
+      .select({
+        content: codingProblemNote.content,
+        updatedAt: codingProblemNote.updatedAt,
+      })
+      .from(codingProblemNote)
+      .where(
+        and(
+          eq(codingProblemNote.userId, userId),
+          eq(codingProblemNote.problemSlug, problemSlug),
+        ),
+      )
+      .limit(1),
   ]);
 
   return {
@@ -365,6 +434,12 @@ export async function getCodingProblemForStudent(
       ...attempt,
       createdAt: attempt.createdAt.toISOString(),
     })),
+    solutionNote: solutionNotes[0]
+      ? {
+          content: solutionNotes[0].content,
+          updatedAt: solutionNotes[0].updatedAt.toISOString(),
+        }
+      : null,
   };
 }
 

@@ -148,6 +148,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
             bestVerdict={studentState.bestVerdict}
             initialCode={studentState.code}
             initialPracticeFeedback={practiceFeedbackState.feedback}
+            initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             problem={{
