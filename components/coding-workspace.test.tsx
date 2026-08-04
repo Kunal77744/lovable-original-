@@ -77,9 +77,11 @@ describe("CodingWorkspace", () => {
   });
 
   it("runs a public example in the browser without saving", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     runCodingSolution.mockResolvedValue({
       status: "finished",
       outputs: ["13"],
+      debugOutput: ["input 4 9", "numbers [4,9]"],
     });
 
     renderWorkspace({ isSignedIn: false });
@@ -109,6 +111,9 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent(
       "Example passedExample passed. Submit when you’re ready for all four checks.",
     );
+    expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
+    expect(screen.getByText(/input 4 9\s+numbers \[4,9\]/)).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Sign in to submit" })).toHaveAttribute(
       "href",
       expect.stringContaining("/account?mode=signin"),
