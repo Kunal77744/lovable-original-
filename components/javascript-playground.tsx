@@ -14,6 +14,7 @@ import {
 
 type JavaScriptPlaygroundProps = {
   initialCode: string;
+  initialQuickChecks: string;
   initialUpdatedAt: string | null;
 };
 
@@ -31,6 +32,7 @@ type CheckState =
 
 export function JavaScriptPlayground({
   initialCode,
+  initialQuickChecks,
   initialUpdatedAt,
 }: JavaScriptPlaygroundProps) {
   const [code, setCode] = useState(initialCode);
@@ -42,7 +44,7 @@ export function JavaScriptPlayground({
     output: [],
     message: "Run playground.js to see console output here.",
   });
-  const [checkSource, setCheckSource] = useState("");
+  const [checkSource, setCheckSource] = useState(initialQuickChecks);
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "ready",
     checks: [],
@@ -83,7 +85,7 @@ export function JavaScriptPlayground({
       const response = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, quickChecks: checkSource }),
       });
 
       if (!response.ok) {
@@ -131,6 +133,11 @@ export function JavaScriptPlayground({
 
   function updateCode(nextCode: string) {
     setCode(nextCode);
+    setSaveState("unsaved");
+  }
+
+  function updateCheckSource(nextSource: string) {
+    setCheckSource(nextSource);
     setSaveState("unsaved");
   }
 
@@ -263,13 +270,13 @@ export function JavaScriptPlayground({
             <textarea
               id="playground-check-source"
               value={checkSource}
-              onChange={(event) => setCheckSource(event.target.value)}
+              onChange={(event) => updateCheckSource(event.target.value)}
               placeholder={'double(4) === 8\nformatName("ada") === "Ada"'}
               spellCheck={false}
             />
             <p>
-              One true-or-false JavaScript expression per line. Checks run
-              locally and are not saved.
+              One true-or-false JavaScript expression per line. Runs stay
+              local; Save file keeps these checks private with your code.
             </p>
             <button
               className="playground-checks-run"

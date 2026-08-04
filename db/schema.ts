@@ -604,6 +604,7 @@ export const playgroundFile = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     code: text("code").notNull(),
+    quickChecks: text("quick_checks").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

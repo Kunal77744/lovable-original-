@@ -86,6 +86,14 @@ const requiredColumns = {
     "created_at",
     "updated_at",
   ],
+  playground_file: [
+    "id",
+    "user_id",
+    "code",
+    "quick_checks",
+    "created_at",
+    "updated_at",
+  ],
   practice_feedback: [
     "id",
     "user_id",
@@ -198,7 +206,8 @@ async function run() {
           'css_practice_progress',
           'guided_project',
           'guided_project_feedback',
-          'practice_feedback'
+          'practice_feedback',
+          'playground_file'
         )
     `;
     const presentColumns = new Set(
