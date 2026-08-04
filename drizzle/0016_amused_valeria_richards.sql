@@ -1,1 +1,1 @@
-ALTER TABLE "playground_file" ADD COLUMN "quick_checks" text DEFAULT '' NOT NULL;
+ALTER TABLE "playground_file" ADD COLUMN IF NOT EXISTS "quick_checks" text DEFAULT '' NOT NULL;
