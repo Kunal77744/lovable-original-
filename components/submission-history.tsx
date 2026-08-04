@@ -310,9 +310,33 @@ export function SubmissionSnapshot({
             </p>
           </div>
         ) : (
-          <pre tabIndex={0} aria-label="Submitted JavaScript source">
-            <code>{submission.code}</code>
-          </pre>
+          <>
+            <pre tabIndex={0} aria-label="Submitted JavaScript source">
+              <code>{submission.code}</code>
+            </pre>
+            <details className="submission-source-reuse">
+              <summary>Use this source in the editor</summary>
+              <div>
+                <div>
+                  <strong>Load this exact submission?</strong>
+                  <p>
+                    This replaces the editor view with an unsaved copy. Loading
+                    alone does not change your saved code, attempts, Accepted
+                    progress, bookmark, note, private test cases, or analytics.
+                  </p>
+                  <p>
+                    Typing will save the changed draft after a short pause.
+                    Submitting will add a new judged attempt.
+                  </p>
+                </div>
+                <Link
+                  href={`/practice/${submission.problemSlug}?submission=${submission.id}`}
+                >
+                  Load in editor <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </details>
+          </>
         )}
       </section>
 

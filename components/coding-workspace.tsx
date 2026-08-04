@@ -26,6 +26,12 @@ type CodingWorkspaceProps = {
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
   isPracticeFeedbackEligible: boolean;
+  loadedSubmission?: {
+    createdAt: string;
+    verdict: string;
+    passedTests: number;
+    totalTests: number;
+  } | null;
   problem: {
     slug: string;
     title: string;
@@ -92,6 +98,7 @@ export function CodingWorkspace({
   initialSolutionNote = null,
   isSignedIn,
   isPracticeFeedbackEligible,
+  loadedSubmission = null,
   problem,
 }: CodingWorkspaceProps) {
   const [code, setCode] = useState(initialCode);
@@ -116,14 +123,22 @@ export function CodingWorkspace({
   );
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
-  >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
+  >(
+    loadedSubmission
+      ? "unsaved"
+      : isSignedIn && initialAttempts.length > 0
+        ? "saved"
+        : "unsaved",
+  );
   const [runState, setRunState] = useState<RunState>({
     kind: "idle",
-    message: isSignedIn
-      ? initialBestVerdict === "Accepted"
-        ? "Accepted solution restored from your account."
-        : "Run the example, then submit against all four checks."
-      : "You can run the example now. Sign in to submit and save progress.",
+    message: loadedSubmission
+      ? "A past submission is loaded as an unsaved copy. Loading it did not change your saved work."
+      : isSignedIn
+        ? initialBestVerdict === "Accepted"
+          ? "Accepted solution restored from your account."
+          : "Run the example, then submit against all four checks."
+        : "You can run the example now. Sign in to submit and save progress.",
   });
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showAcceptedExplanation =
@@ -461,6 +476,32 @@ export function CodingWorkspace({
               : "Local only"}
           </span>
         </div>
+        {loadedSubmission ? (
+          <div className="loaded-submission-cue" role="status">
+            <div>
+              <span>Past submission loaded</span>
+              <strong>
+                {loadedSubmission.verdict} · {loadedSubmission.passedTests}/
+                {loadedSubmission.totalTests} checks
+              </strong>
+              <small>
+                Submitted{" "}
+                {new Intl.DateTimeFormat("en", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  timeZone: "UTC",
+                }).format(new Date(loadedSubmission.createdAt))}
+              </small>
+            </div>
+            <p>
+              This is an unsaved editor copy. Run it safely, or edit and submit
+              when ready. Your saved code and learning record were not changed
+              by loading it.
+            </p>
+            <Link href={`/practice/${problem.slug}`}>Restore saved editor</Link>
+          </div>
+        ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <textarea
           id="coding-solution"

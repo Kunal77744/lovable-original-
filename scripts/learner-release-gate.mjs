@@ -861,9 +861,35 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(
       submissionPageResponse.status === 200 &&
         renderedSubmissionSource === savedCodingSubmissionSource &&
-        renderedSubmissionSource !== revisedCodingDraft,
+        renderedSubmissionSource !== revisedCodingDraft &&
+        submissionPageHtml.includes(
+          `/practice/sum-two-numbers?submission=${savedCodingSubmissionId}`,
+        ) &&
+        submissionPageHtml.includes("Load this exact submission?"),
       step,
-      "The immutable JavaScript source snapshot changed with the current draft.",
+      "The immutable JavaScript source snapshot or its guarded editor action was not available.",
+    );
+
+    const reusedSubmissionResponse = await request(
+      `/practice/sum-two-numbers?submission=${savedCodingSubmissionId}`,
+    );
+    const reusedSubmissionHtml = await reusedSubmissionResponse.text();
+    const reusedSubmissionSource = elementTextByAttribute(
+      reusedSubmissionHtml,
+      {
+        tagName: "textarea",
+        attribute: "id",
+        value: "coding-solution",
+      },
+    );
+    assertStep(
+      reusedSubmissionResponse.status === 200 &&
+        reusedSubmissionSource === savedCodingSubmissionSource &&
+        reusedSubmissionSource !== revisedCodingDraft &&
+        reusedSubmissionHtml.includes("Past submission loaded") &&
+        reusedSubmissionHtml.includes("Restore saved editor"),
+      step,
+      "The past JavaScript submission was not loaded as a clearly unsaved editor copy.",
     );
 
     const submissionSql = postgres(databaseUrl, {
@@ -1961,6 +1987,21 @@ async function runJourney(baseUrl, databaseUrl) {
         !isolatedSubmissionHtml.includes(runId),
       step,
       "One learner could read another learner’s JavaScript submission snapshot.",
+    );
+
+    const isolatedReuseResponse = await request(
+      `/practice/sum-two-numbers?submission=${savedCodingSubmissionId}`,
+      {},
+      secondJar,
+    );
+    const isolatedReuseHtml = await isolatedReuseResponse.text();
+    assertStep(
+      isolatedReuseResponse.status === 200 &&
+        !isolatedReuseHtml.includes(savedCodingSubmissionSource) &&
+        !isolatedReuseHtml.includes("Past submission loaded") &&
+        !isolatedReuseHtml.includes(runId),
+      step,
+      "One learner could load another learner’s JavaScript source into the editor.",
     );
 
     const originalSubmissionResponse = await request(

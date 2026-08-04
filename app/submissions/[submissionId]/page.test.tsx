@@ -91,6 +91,7 @@ describe("SubmissionPage", () => {
 
     expect(mocks.getSubmission).toHaveBeenCalledWith("learner-1", "attempt-1");
     expect(screen.getByText(/function sum/)).toBeInTheDocument();
+    expect(screen.getByText("Use this source in the editor")).toBeInTheDocument();
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });

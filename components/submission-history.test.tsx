@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   SubmissionHistory,
@@ -74,7 +80,7 @@ describe("SubmissionHistory", () => {
 });
 
 describe("SubmissionSnapshot", () => {
-  it("shows exact source without a restore or mutation control", () => {
+  it("confirms before loading exact source into an unsaved editor copy", () => {
     const { container } = render(
       <SubmissionSnapshot
         submission={{
@@ -126,6 +132,17 @@ describe("SubmissionSnapshot", () => {
     expect(
       snapshot.getByRole("link", { name: /Open current problem/ }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
+    fireEvent.click(snapshot.getByText("Use this source in the editor"));
+    expect(snapshot.getByText("Load this exact submission?")).toBeInTheDocument();
+    expect(
+      snapshot.getByText(/Loading alone does not change your saved code/),
+    ).toBeInTheDocument();
+    expect(
+      snapshot.getByRole("link", { name: /Load in editor/ }),
+    ).toHaveAttribute(
+      "href",
+      "/practice/sum-two-numbers?submission=submission-2",
+    );
     expect(snapshot.queryByRole("button")).not.toBeInTheDocument();
     expect(container).not.toHaveTextContent("private@example.com");
   });
@@ -160,6 +177,9 @@ describe("SubmissionSnapshot", () => {
         name: "Review later submission: Accepted, 4 of 4 checks",
       }),
     ).toHaveAttribute("href", "/submissions/submission-2");
+    expect(
+      screen.queryByText("Use this source in the editor"),
+    ).not.toBeInTheDocument();
   });
 
   it("stays uncluttered when a problem has only one saved try", () => {

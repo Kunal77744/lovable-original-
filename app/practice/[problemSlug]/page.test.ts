@@ -1,8 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCodingProblemBookmarkForStudent,
   getCodingProblemForStudent,
+  getCodingSubmissionForStudent,
   getPracticeFeedbackForStudent,
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
@@ -30,6 +31,7 @@ vi.mock("@/lib/product-analytics", () => ({
 
 vi.mock("@/db/coding-practice", () => ({
   getCodingProblemBookmarkForStudent: vi.fn(),
+  getCodingSubmissionForStudent: vi.fn(),
   getCodingProblemForStudent: vi.fn((_: string | null, problemSlug: string) => {
     const problem = CODING_PROBLEMS.find(
       (candidate) => candidate.slug === problemSlug,
@@ -52,13 +54,17 @@ vi.mock("@/db/coding-practice", () => ({
 
 const getSession = vi.mocked(auth.api.getSession);
 const getBookmark = vi.mocked(getCodingProblemBookmarkForStudent);
+const getSubmission = vi.mocked(getCodingSubmissionForStudent);
 const getPracticeFeedback = vi.mocked(getPracticeFeedbackForStudent);
+
+afterEach(cleanup);
 
 describe("practice problem metadata", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSession.mockResolvedValue(null);
     getBookmark.mockResolvedValue(false);
+    getSubmission.mockResolvedValue(null);
     getPracticeFeedback.mockResolvedValue({
       isEligible: false,
       feedback: null,
@@ -191,5 +197,98 @@ describe("practice problem metadata", () => {
     expect(screen.getByDisplayValue("19 23")).toBeInTheDocument();
     expect(screen.getByDisplayValue("-5 8")).toBeInTheDocument();
     expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
+  });
+
+  it("loads only an owned submission as an unsaved editor copy without writing", async () => {
+    const problem = CODING_PROBLEMS[0];
+    const currentCode = "function solve(input) { return 'current'; }";
+    const submittedCode = "function solve(input) { return 'past'; }";
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    getSession.mockResolvedValue({
+      user: { id: "returning-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+      attempts: [
+        {
+          id: "attempt-current",
+          verdict: "Accepted",
+          passedTests: 4,
+          totalTests: 4,
+          createdAt: "2026-08-04T10:35:00.000Z",
+          hasSource: true,
+        },
+      ],
+      bestVerdict: "Accepted",
+      code: currentCode,
+      customTestCases: ["19 23"],
+      solutionNote: null,
+    });
+    getSubmission.mockResolvedValueOnce({
+      id: "attempt-past",
+      problemSlug: problem.slug,
+      problemNumber: problem.number,
+      problemTitle: problem.title,
+      verdict: "Wrong Answer",
+      passedTests: 2,
+      totalTests: 4,
+      createdAt: "2026-08-04T10:30:00.000Z",
+      hasSource: true,
+      code: submittedCode,
+      previousSubmission: null,
+      nextSubmission: null,
+    });
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ submission: "attempt-past" }),
+      }),
+    );
+
+    expect(getSubmission).toHaveBeenCalledWith(
+      "returning-learner",
+      "attempt-past",
+    );
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      submittedCode,
+    );
+    expect(screen.getByText("Past submission loaded")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Restore saved editor" }),
+    ).toHaveAttribute("href", `/practice/${problem.slug}`);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
+  it("ignores a submission that is unavailable to this learner", async () => {
+    const problem = CODING_PROBLEMS[0];
+    const currentCode = "function solve(input) { return 'mine'; }";
+    getSession.mockResolvedValue({
+      user: { id: "other-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+      attempts: [],
+      bestVerdict: null,
+      code: currentCode,
+      customTestCases: [],
+      solutionNote: null,
+    });
+    getSubmission.mockResolvedValueOnce(null);
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ submission: "someone-elses-attempt" }),
+      }),
+    );
+
+    expect(getSubmission).toHaveBeenCalledWith(
+      "other-learner",
+      "someone-elses-attempt",
+    );
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(currentCode);
+    expect(screen.queryByText("Past submission loaded")).not.toBeInTheDocument();
   });
 });
