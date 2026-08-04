@@ -6340,6 +6340,34 @@ h1 {
   white-space: nowrap;
 }
 
+.catalog-submission-history-link {
+  min-height: 44px;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 760;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(40, 118, 82, 0.34);
+  text-underline-offset: 4px;
+  transition:
+    color 160ms ease-out,
+    text-decoration-color 160ms ease-out;
+}
+
+.catalog-submission-history-link:hover {
+  color: var(--ink);
+  text-decoration-color: var(--accent);
+}
+
+.catalog-submission-history-link:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 .problem-table {
   overflow: hidden;
   border: 1px solid rgba(23, 35, 30, 0.14);

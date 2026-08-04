@@ -124,6 +124,14 @@ export default async function PracticePage() {
                 {catalogProgressLabel}
               </span>
               {session ? <p>Saved privately to your account</p> : null}
+              {session ? (
+                <Link
+                  className="catalog-submission-history-link"
+                  href="/submissions"
+                >
+                  Review saved submissions <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
             </div>
           </div>
 

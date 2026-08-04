@@ -65,6 +65,9 @@ describe("PracticePage progress", () => {
       screen.getByText("Saved privately to your account"),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "Review saved submissions" }),
+    ).toHaveAttribute("href", "/submissions");
+    expect(
       screen.getByText(
         "Each problem runs in browser-based JavaScript. Signed-in attempts are saved to your account.",
       ),
@@ -156,6 +159,9 @@ describe("PracticePage progress", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Open the playground" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Review saved submissions" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
