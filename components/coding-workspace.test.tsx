@@ -246,6 +246,27 @@ describe("CodingWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: /starter/i }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Plan the behavior before the syntax.",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the structured private planning stage before submission", () => {
+    renderWorkspace();
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Plan the behavior before the syntax.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Input shape")).toBeInTheDocument();
+    expect(screen.getByLabelText("Edge case")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ordered approach")).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Post-Accepted reflection"),
+    ).not.toBeInTheDocument();
   });
 
   it("runs a public example in the browser without saving", async () => {
@@ -569,6 +590,12 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
     expect(screen.getByText("Common mistake")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(
+      screen.getByRole("heading", {
+        name: "Compare your plan with what passed.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Post-Accepted reflection")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Your saved code, attempts, and Accepted progress return after sign-in.",

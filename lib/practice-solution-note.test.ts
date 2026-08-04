@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_PRACTICE_SOLUTION_NOTE_LENGTH,
+  parsePracticeJournal,
+  serializePracticeJournal,
   validatePracticeSolutionNote,
 } from "./practice-solution-note";
 
@@ -11,6 +13,28 @@ describe("validatePracticeSolutionNote", () => {
     ).toEqual({
       valid: true,
       content: "  I split, convert, then add.\n",
+    });
+  });
+
+  it("round-trips a structured plan and reflection", () => {
+    const journal = {
+      inputShape: "Two integers separated by a space.",
+      edgeCase: "Negative values.",
+      steps: "Split, convert, add, return.",
+      reflection: "Converting first prevents string concatenation.",
+    };
+
+    expect(parsePracticeJournal(serializePracticeJournal(journal))).toEqual(
+      journal,
+    );
+  });
+
+  it("migrates an existing solution note into the reflection stage", () => {
+    expect(parsePracticeJournal("Split, convert, then add.")).toEqual({
+      inputShape: "",
+      edgeCase: "",
+      steps: "",
+      reflection: "Split, convert, then add.",
     });
   });
 

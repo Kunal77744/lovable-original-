@@ -1015,10 +1015,11 @@ export function CodingWorkspace({
         </div>
       </div>
 
-      {isSignedIn && bestVerdict === "Accepted" ? (
+      {isSignedIn ? (
         <PracticeSolutionNote
           problemSlug={problem.slug}
           initialNote={initialSolutionNote}
+          isAccepted={bestVerdict === "Accepted"}
         />
       ) : null}
 

@@ -42,12 +42,5 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Problem not found." }, { status: 404 });
   }
 
-  if (saved.status === "accepted_required") {
-    return NextResponse.json(
-      { error: "Reach Accepted before saving a solution note." },
-      { status: 403 },
-    );
-  }
-
   return NextResponse.json({ note: saved.note });
 }

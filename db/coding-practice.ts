@@ -161,22 +161,6 @@ export async function saveCodingProblemNote(
   }
 
   const database = getDatabase();
-  const [accepted] = await database
-    .select({ bestVerdict: codingProblemProgress.bestVerdict })
-    .from(codingProblemProgress)
-    .where(
-      and(
-        eq(codingProblemProgress.userId, userId),
-        eq(codingProblemProgress.problemSlug, problemSlug),
-        eq(codingProblemProgress.bestVerdict, "Accepted"),
-      ),
-    )
-    .limit(1);
-
-  if (!accepted) {
-    return { status: "accepted_required" as const };
-  }
-
   const now = new Date();
   const [saved] = await database
     .insert(codingProblemNote)

@@ -1,5 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  parsePracticeJournal,
+  serializePracticeJournal,
+} from "@/lib/practice-solution-note";
 import { PracticeSolutionNote } from "./practice-solution-note";
 
 describe("PracticeSolutionNote", () => {
@@ -9,12 +13,18 @@ describe("PracticeSolutionNote", () => {
     vi.restoreAllMocks();
   });
 
-  it("saves the exact private reflection without an analytics call", async () => {
+  it("requires and saves a structured plan before Accepted", async () => {
+    const savedJournal = {
+      inputShape: "Two integers separated by one space.",
+      edgeCase: "Negative values.",
+      steps: "Split, convert both values, add, then return.",
+      reflection: "",
+    };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         note: {
-          content: "  Split, convert, then add.\n",
+          content: serializePracticeJournal(savedJournal),
           updatedAt: "2026-08-04T08:00:00.000Z",
         },
       }),
@@ -22,38 +32,63 @@ describe("PracticeSolutionNote", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <PracticeSolutionNote problemSlug="sum-two-numbers" initialNote={null} />,
+      <PracticeSolutionNote
+        problemSlug="sum-two-numbers"
+        initialNote={null}
+        isAccepted={false}
+      />,
     );
 
-    fireEvent.change(
-      screen.getByLabelText("What would you want to remember next time?"),
-      { target: { value: "  Split, convert, then add.\n" } },
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Save note" }));
+    expect(screen.getByText("Stage 1 · Plan")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Input shape"), {
+      target: { value: savedJournal.inputShape },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save plan" }));
+    expect(
+      screen.getByText(
+        "Name the input shape, one edge case, and your ordered approach.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Edge case"), {
+      target: { value: savedJournal.edgeCase },
+    });
+    fireEvent.change(screen.getByLabelText("Ordered approach"), {
+      target: { value: savedJournal.steps },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save plan" }));
 
     await waitFor(() =>
       expect(
-        screen.getByText("Solution note saved. It will return with your account."),
+        screen.getByText(
+          "Plan saved. Return after Accepted to compare it with what worked.",
+        ),
       ).toBeInTheDocument(),
     );
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/practice/sum-two-numbers/note",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ content: "  Split, convert, then add.\n" }),
-      }),
-    );
-    expect(screen.getByRole("button", { name: "Update note" })).toBeDisabled();
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(request.body)) as { content: string };
+    expect(parsePracticeJournal(body.content)).toEqual(savedJournal);
+    expect(screen.getByRole("button", { name: "Update plan" })).toBeDisabled();
   });
 
-  it("restores and revises one saved reflection", async () => {
+  it("restores the plan and adds a post-Accepted reflection", async () => {
+    const initialJournal = {
+      inputShape: "Two integers.",
+      edgeCase: "Negative values.",
+      steps: "Split, convert, add.",
+      reflection: "",
+    };
+    const revisedJournal = {
+      ...initialJournal,
+      reflection: "Converting both tokens first avoids string concatenation.",
+    };
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
           note: {
-            content: "Convert both input tokens before addition.",
+            content: serializePracticeJournal(revisedJournal),
             updatedAt: "2026-08-04T08:05:00.000Z",
           },
         }),
@@ -64,23 +99,39 @@ describe("PracticeSolutionNote", () => {
       <PracticeSolutionNote
         problemSlug="sum-two-numbers"
         initialNote={{
-          content: "Convert input before addition.",
+          content: serializePracticeJournal(initialJournal),
           updatedAt: "2026-08-04T08:00:00.000Z",
         }}
+        isAccepted
       />,
     );
 
-    const note = screen.getByDisplayValue("Convert input before addition.");
-    expect(screen.getByText("Saved reflection")).toBeInTheDocument();
-    fireEvent.change(note, {
-      target: { value: "Convert both input tokens before addition." },
+    expect(screen.getByText("Stage 2 · Reflect")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Negative values.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Post-Accepted reflection"), {
+      target: { value: revisedJournal.reflection },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Update note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update journal" }));
 
     await waitFor(() =>
-      expect(
-        screen.getByDisplayValue("Convert both input tokens before addition."),
-      ).toBeInTheDocument(),
+      expect(screen.getByDisplayValue(revisedJournal.reflection)).toBeInTheDocument(),
     );
+  });
+
+  it("restores a legacy solution note as the reflection without losing it", () => {
+    render(
+      <PracticeSolutionNote
+        problemSlug="sum-two-numbers"
+        initialNote={{
+          content: "Convert both input tokens before addition.",
+          updatedAt: "2026-08-04T08:00:00.000Z",
+        }}
+        isAccepted
+      />,
+    );
+
+    expect(
+      screen.getByDisplayValue("Convert both input tokens before addition."),
+    ).toBeInTheDocument();
   });
 });

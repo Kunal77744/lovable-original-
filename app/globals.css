@@ -8087,6 +8087,96 @@ h1 {
   text-transform: uppercase;
 }
 
+.practice-journal-stage {
+  display: grid;
+  grid-template-columns: auto minmax(24px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-journal-stage span {
+  color: #74837b;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.practice-journal-stage span.is-complete {
+  color: #b8ebcc;
+}
+
+.practice-journal-stage span.is-active {
+  color: #eef4ef;
+}
+
+.practice-journal-stage i {
+  height: 1px;
+  background: #415149;
+}
+
+.practice-journal-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.practice-journal-field {
+  min-width: 0;
+  padding: 13px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  border: 1px solid #35453d;
+  border-radius: 8px;
+  background: #111b17;
+}
+
+.practice-journal-field > span {
+  grid-row: span 2;
+  color: #79bd94;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.practice-journal-field strong {
+  color: #d5e0da;
+  font-size: 11px;
+}
+
+.practice-journal-field small {
+  color: #8e9e96;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.practice-journal-field textarea {
+  min-height: 84px;
+  margin-top: 7px;
+  padding: 10px;
+  grid-column: 1 / -1;
+  resize: vertical;
+  color: #eef4ef;
+  border: 1px solid #415149;
+  border-radius: 6px;
+  background: #0d1612;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.practice-journal-field textarea::placeholder {
+  color: #66736c;
+}
+
+.practice-journal-field textarea:focus {
+  border-color: #83dda8;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(131, 221, 168, 0.12);
+}
+
 .practice-solution-note-field {
   display: grid;
   gap: 8px;
@@ -8096,6 +8186,16 @@ h1 {
   color: #d5e0da;
   font-size: 12px;
   font-weight: 700;
+}
+
+.practice-solution-note-field > small:first-of-type {
+  color: #8e9e96;
+  font-size: 10px;
+}
+
+.practice-journal-reflection {
+  padding-top: 16px;
+  border-top: 1px solid #35453d;
 }
 
 .practice-solution-note-field textarea {
@@ -8171,6 +8271,13 @@ h1 {
 
 .practice-solution-note-save p.is-error {
   color: #efaaa2;
+}
+
+.practice-journal-privacy {
+  margin: -6px 0 0;
+  color: #74837b;
+  font-size: 9px;
+  line-height: 1.45;
 }
 
 .practice-feedback .quiz-kicker {
@@ -11515,6 +11622,10 @@ footer {
 
   .practice-solution-note-heading > span {
     width: fit-content;
+  }
+
+  .practice-journal-fields {
+    grid-template-columns: 1fr;
   }
 
   .practice-solution-note-save button {

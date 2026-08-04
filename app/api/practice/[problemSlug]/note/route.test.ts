@@ -71,15 +71,24 @@ describe("practice solution note route", () => {
     });
   });
 
-  it("requires an Accepted result before creating a note", async () => {
+  it("saves a private plan before the learner reaches Accepted", async () => {
     mocks.getSession.mockResolvedValue({ user: { id: "student-a" } });
     mocks.saveCodingProblemNote.mockResolvedValue({
-      status: "accepted_required",
+      status: "saved",
+      note: {
+        content: '{"v":1,"i":"Two integers","e":"Negatives","s":"Split and add","r":""}',
+        updatedAt: "2026-08-04T08:00:00.000Z",
+      },
     });
 
-    const response = await POST(noteRequest("I am not done yet."), routeContext);
+    const response = await POST(
+      noteRequest(
+        '{"v":1,"i":"Two integers","e":"Negatives","s":"Split and add","r":""}',
+      ),
+      routeContext,
+    );
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
     expect(mocks.saveCodingProblemNote).toHaveBeenCalledTimes(1);
   });
 
