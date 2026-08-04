@@ -32,6 +32,10 @@ const problem = {
   title: "Sum two numbers",
   recoveryHint:
     "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
+  recoveryHints: [
+    "Inspect the two input tokens before you add them. If either still behaves like text, arithmetic will not produce the intended total.",
+    "Use one negative case and the zero case from your private tests. The same conversion and return path should handle both without a special branch.",
+  ] as [string, string],
   acceptedExplanation: {
     concept: "Parse text before arithmetic",
     whyItWorks:
@@ -742,13 +746,13 @@ describe("CodingWorkspace", () => {
     ).toBeInTheDocument();
   });
 
-  it("announces a saved Wrong Answer verdict in the same status region", async () => {
+  it("reveals bounded recovery hints after a saved Wrong Answer", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
       outputs: ["12", "-5", "0", "1000"],
     });
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      submissionResponse("Wrong Answer", 3),
+    vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+      Promise.resolve(submissionResponse("Wrong Answer", 3)),
     );
 
     renderWorkspace();
@@ -762,6 +766,35 @@ describe("CodingWorkspace", () => {
     );
     expect(screen.getByText("Try this next")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.recoveryHint);
+    expect(screen.queryByText(problem.recoveryHints[0])).not.toBeInTheDocument();
+    expect(screen.queryByText(problem.recoveryHints[1])).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show another hint" }),
+    );
+
+    expect(screen.getByText(problem.recoveryHints[0])).toBeInTheDocument();
+    expect(screen.queryByText(problem.recoveryHints[1])).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show final hint" }));
+
+    expect(screen.getByText(problem.recoveryHints[1])).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /show .*hint/i }),
+    ).not.toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      "All hints shown. Return to your code and try one change at a time.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Show another hint" }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(problem.recoveryHints[0])).not.toBeInTheDocument();
+    expect(screen.queryByText(problem.recoveryHints[1])).not.toBeInTheDocument();
     expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });

@@ -178,6 +178,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               slug: problem.slug,
               title: problem.title,
               recoveryHint: problem.recoveryHint,
+              recoveryHints: problem.recoveryHints,
               acceptedExplanation: problem.acceptedExplanation,
               starterCode: problem.starterCode,
               tests: problem.tests.map((test) => ({ input: test.input })),

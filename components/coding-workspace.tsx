@@ -38,6 +38,7 @@ type CodingWorkspaceProps = {
     slug: string;
     title: string;
     recoveryHint: string;
+    recoveryHints: [string, string];
     acceptedExplanation: {
       concept: string;
       whyItWorks: string;
@@ -153,6 +154,8 @@ export function CodingWorkspace({
           : "Run the example, then submit against all four checks."
         : "You can run the example now. Sign in to submit and save progress.",
   });
+  const [revealedRecoveryHintCount, setRevealedRecoveryHintCount] =
+    useState(0);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
@@ -415,6 +418,7 @@ export function CodingWorkspace({
   async function submitSolution() {
     if (!isSignedIn) return;
 
+    setRevealedRecoveryHintCount(0);
     setRunState({
       kind: "running",
       message: "Running four deterministic checks in your browser…",
@@ -946,6 +950,41 @@ export function CodingWorkspace({
           <div className="wrong-answer-hint">
             <span>Try this next</span>
             <p>{problem.recoveryHint}</p>
+            {revealedRecoveryHintCount > 0 ? (
+              <ol
+                className="recovery-hint-ladder"
+                aria-label="Additional recovery hints"
+              >
+                {problem.recoveryHints
+                  .slice(0, revealedRecoveryHintCount)
+                  .map((hint, index) => (
+                    <li key={hint}>
+                      <span>Hint {index + 2}</span>
+                      <p>{hint}</p>
+                    </li>
+                  ))}
+              </ol>
+            ) : null}
+            {revealedRecoveryHintCount < problem.recoveryHints.length ? (
+              <button
+                className="recovery-hint-reveal"
+                type="button"
+                onClick={() =>
+                  setRevealedRecoveryHintCount((count) =>
+                    Math.min(count + 1, problem.recoveryHints.length),
+                  )
+                }
+              >
+                {revealedRecoveryHintCount === 0
+                  ? "Show another hint"
+                  : "Show final hint"}
+              </button>
+            ) : (
+              <p className="recovery-hint-complete">
+                All hints shown. Return to your code and try one change at a
+                time.
+              </p>
+            )}
           </div>
         ) : null}
         {showAcceptedExplanation ? (

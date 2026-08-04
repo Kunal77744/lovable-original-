@@ -7939,6 +7939,61 @@ h1 {
   line-height: 1.55;
 }
 
+.recovery-hint-ladder {
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.recovery-hint-ladder li {
+  padding-top: 10px;
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid rgba(131, 221, 168, 0.16);
+}
+
+.recovery-hint-ladder li > span {
+  color: #a9b7af;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.recovery-hint-reveal {
+  width: fit-content;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 12px;
+  border: 1px solid #4d6257;
+  border-radius: 7px;
+  background: transparent;
+  color: #d5dfd9;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recovery-hint-reveal:hover {
+  border-color: #83dda8;
+  background: rgba(131, 221, 168, 0.08);
+}
+
+.recovery-hint-reveal:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.34);
+  outline-offset: 2px;
+}
+
+.wrong-answer-hint .recovery-hint-complete {
+  margin-top: 6px;
+  color: #a9b7af;
+  font-size: 11px;
+}
+
 .practice-recovery-cue {
   margin-top: 16px;
   padding-top: 14px;

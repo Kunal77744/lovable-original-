@@ -27,6 +27,7 @@ export type CodingProblem = {
   inputFormat: string;
   outputFormat: string;
   recoveryHint: string;
+  recoveryHints: [string, string];
   acceptedExplanation: CodingProblemExplanation;
   examples: CodingProblemExample[];
   starterCode: string;
@@ -51,6 +52,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "One integer: a + b.",
     recoveryHint:
       "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
+    recoveryHints: [
+      "Inspect the two input tokens before you add them. If either still behaves like text, arithmetic will not produce the intended total.",
+      "Use one negative case and the zero case from your private tests. The same conversion and return path should handle both without a special branch.",
+    ],
     acceptedExplanation: {
       concept: "Parse text before arithmetic",
       whyItWorks:
@@ -90,6 +95,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: 'The exact word "Even" or "Odd".',
     recoveryHint:
       "Trace the remainder for zero, an even positive number, and a negative odd number. Then check the exact capitalization of the word you return.",
+    recoveryHints: [
+      "Write down the remainder produced by dividing the input by 2. Only one remainder should map to Even.",
+      "Check the exact returned word after the condition. The judge compares capitalization as well as the branch.",
+    ],
     acceptedExplanation: {
       concept: "Remainders reveal divisibility",
       whyItWorks:
@@ -129,6 +138,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "Ten multiples separated by a single space.",
     recoveryHint:
       "Count your loop boundaries. The result needs exactly ten values, starting with the first multiple and ending with the tenth, separated by single spaces.",
+    recoveryHints: [
+      "List the first and last multiplier your loop visits. They should account for ten results, not nine or eleven.",
+      "Build the ten values first, then join them once. Extra separators or line breaks change the judged output.",
+    ],
     acceptedExplanation: {
       concept: "Loop boundaries define the sequence",
       whyItWorks:
@@ -164,6 +177,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "The largest integer in the list.",
     recoveryHint:
       "Separate the leading count from the values you compare. Test an all-negative list so a starting value of zero cannot hide the mistake.",
+    recoveryHints: [
+      "Ignore the first token after using it as the count. Only the values on the list should compete for the maximum.",
+      "Choose the first list value as your starting comparison. That keeps an all-negative list below zero instead of inventing zero.",
+    ],
     acceptedExplanation: {
       concept: "Compare only the data values",
       whyItWorks:
@@ -198,6 +215,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "The same word reversed.",
     recoveryHint:
       "Trace one character from each end of the word. Check that every character appears once and that the returned text has no extra spaces.",
+    recoveryHints: [
+      "Check the index of the first character you append and the last character you append. They should be opposite ends of the word.",
+      "Compare the output length with the input length. A mismatch means a character was skipped, repeated, or joined with extra text.",
+    ],
     acceptedExplanation: {
       concept: "Order can change without changing characters",
       whyItWorks:
@@ -237,6 +258,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     outputFormat: "The sequence from 1 to n, separated by a single space.",
     recoveryHint:
       "Check the overlap before either single divisibility case. A multiple of both 3 and 5 needs one token, and the sequence still needs to include n.",
+    recoveryHints: [
+      "For 15, decide which condition should win before you handle divisibility by only 3 or only 5.",
+      "Count from 1 through the input, including the final value, and collect one token per number before joining the sequence.",
+    ],
     acceptedExplanation: {
       concept: "Handle overlapping rules first",
       whyItWorks:
