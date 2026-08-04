@@ -1435,6 +1435,157 @@ h1 {
   font-size: 11px;
 }
 
+.submission-comparison {
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 16px 16px 6px 16px;
+  background: #17231e;
+  box-shadow: 0 24px 52px rgba(23, 35, 30, 0.08);
+}
+
+.submission-comparison-heading {
+  padding: 28px 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.submission-comparison-heading > div:first-child > p:first-child {
+  margin: 0 0 7px;
+  color: #9fe2bd;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.submission-comparison-heading h2 {
+  margin: 0;
+  color: white;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 31px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.submission-comparison-heading > div:first-child > p:last-child {
+  max-width: 66ch;
+  margin: 10px 0 0;
+  color: #b9c4be;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.submission-comparison-score {
+  min-width: 164px;
+  padding-left: 22px;
+  border-left: 1px solid rgba(159, 226, 189, 0.35);
+}
+
+.submission-comparison-score > span {
+  display: block;
+  color: #9fe2bd;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.submission-comparison-score strong {
+  display: block;
+  margin-top: 8px;
+  color: white;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.submission-comparison-score p {
+  margin: 7px 0 0;
+  color: #9daea4;
+  font-size: 10px;
+}
+
+.submission-comparison-table-wrap {
+  max-height: 430px;
+  overflow: auto;
+}
+
+.submission-comparison-table-wrap:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -6px;
+}
+
+.submission-comparison table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: #e9f2ec;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+}
+
+.submission-comparison th {
+  padding: 12px 18px;
+  color: #9daea4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1c2b24;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.submission-comparison th + th,
+.submission-comparison td + td {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.submission-comparison td {
+  height: 31px;
+  padding: 0;
+  vertical-align: top;
+}
+
+.submission-comparison td > span {
+  width: 38px;
+  min-height: 31px;
+  padding: 7px 8px 6px 0;
+  display: inline-block;
+  color: #718078;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 9px;
+  text-align: right;
+  user-select: none;
+}
+
+.submission-comparison td code {
+  padding: 7px 12px 6px;
+  display: inline-block;
+  white-space: pre;
+}
+
+.submission-comparison tr.is-removed td:first-child {
+  background: rgba(176, 73, 62, 0.2);
+}
+
+.submission-comparison tr.is-removed td:first-child code::before {
+  content: "− ";
+  color: #f4b7ae;
+}
+
+.submission-comparison tr.is-added td:last-child {
+  background: rgba(102, 220, 157, 0.14);
+}
+
+.submission-comparison tr.is-added td:last-child code::before {
+  content: "+ ";
+  color: #9fe2bd;
+}
+
 .submission-snapshot-code {
   overflow: hidden;
   border: 1px solid rgba(23, 35, 30, 0.14);
@@ -1652,6 +1803,18 @@ h1 {
     align-items: flex-start;
     flex-direction: column;
     gap: 16px;
+  }
+
+  .submission-comparison-heading {
+    padding: 24px 22px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 20px;
+  }
+
+  .submission-comparison-score {
+    padding: 0;
+    border-left: 0;
   }
 
   .submission-snapshot-code pre {

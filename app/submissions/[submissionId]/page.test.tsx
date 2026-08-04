@@ -79,6 +79,7 @@ describe("SubmissionPage", () => {
       createdAt: "2026-08-04T10:30:00.000Z",
       hasSource: true,
       code: "function sum(a, b) { return a + b; }",
+      previousSubmission: null,
     });
 
     render(

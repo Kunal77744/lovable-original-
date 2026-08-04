@@ -80,6 +80,14 @@ describe("SubmissionSnapshot", () => {
         submission={{
           ...submissions[0],
           code: "function sum(a, b) {\n  return a + b;\n}",
+          previousSubmission: {
+            id: "submission-0",
+            code: "function sum(a, b) {\n  return a - b;\n}",
+            verdict: "Wrong Answer",
+            passedTests: 1,
+            totalTests: 4,
+            createdAt: "2026-08-04T10:15:00.000Z",
+          },
         }}
       />,
     );
@@ -87,8 +95,23 @@ describe("SubmissionSnapshot", () => {
 
     expect(snapshot.getByText("Accepted")).toBeInTheDocument();
     expect(snapshot.getByText("4/4 checks passed")).toBeInTheDocument();
-    expect(snapshot.getByText(/function sum/)).toBeInTheDocument();
+    expect(snapshot.getByLabelText("Submitted JavaScript source")).toHaveTextContent(
+      "function sum",
+    );
     expect(snapshot.getByText("Read-only snapshot")).toBeInTheDocument();
+    expect(
+      snapshot.getByRole("heading", {
+        name: "What changed since the previous try",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      snapshot.getByRole("table", {
+        name: "Previous and selected JavaScript source comparison",
+      }),
+    ).toHaveTextContent("return a - b");
+    expect(
+      snapshot.getByLabelText("Checks changed from 1 of 4 to 4 of 4"),
+    ).toHaveTextContent("1/4 → 4/4");
     expect(snapshot.getByText(/current work stays untouched/i)).toBeInTheDocument();
     expect(
       snapshot.getByRole("link", { name: /Open current problem/ }),
@@ -103,6 +126,7 @@ describe("SubmissionSnapshot", () => {
         submission={{
           ...submissions[1],
           code: null,
+          previousSubmission: null,
         }}
       />,
     );

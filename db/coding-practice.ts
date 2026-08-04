@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lt, or } from "drizzle-orm";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
@@ -43,6 +43,14 @@ export type CodingSubmissionHistoryItem = RecentCodingAttempt & {
 
 export type CodingSubmissionHistoryDetail = CodingSubmissionHistoryItem & {
   code: string | null;
+  previousSubmission: {
+    id: string;
+    code: string | null;
+    verdict: string;
+    passedTests: number;
+    totalTests: number;
+    createdAt: string;
+  } | null;
 };
 
 export type SavedCodingProblem = {
@@ -528,6 +536,32 @@ export async function getCodingSubmissionForStudent(
 
   if (!problem) return null;
 
+  const [previousSubmission] = await getDatabase()
+    .select({
+      id: codingSubmission.id,
+      code: codingSubmission.code,
+      verdict: codingSubmission.verdict,
+      passedTests: codingSubmission.passedTests,
+      totalTests: codingSubmission.totalTests,
+      createdAt: codingSubmission.createdAt,
+    })
+    .from(codingSubmission)
+    .where(
+      and(
+        eq(codingSubmission.userId, userId),
+        eq(codingSubmission.problemSlug, submission.problemSlug),
+        or(
+          lt(codingSubmission.createdAt, submission.createdAt),
+          and(
+            eq(codingSubmission.createdAt, submission.createdAt),
+            lt(codingSubmission.id, submission.id),
+          ),
+        ),
+      ),
+    )
+    .orderBy(desc(codingSubmission.createdAt), desc(codingSubmission.id))
+    .limit(1);
+
   return {
     id: submission.id,
     problemSlug: submission.problemSlug,
@@ -539,6 +573,12 @@ export async function getCodingSubmissionForStudent(
     totalTests: submission.totalTests,
     createdAt: submission.createdAt.toISOString(),
     hasSource: submission.code !== null,
+    previousSubmission: previousSubmission
+      ? {
+          ...previousSubmission,
+          createdAt: previousSubmission.createdAt.toISOString(),
+        }
+      : null,
   };
 }
 

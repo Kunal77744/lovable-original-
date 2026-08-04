@@ -3,6 +3,10 @@ import type {
   CodingSubmissionHistoryDetail,
   CodingSubmissionHistoryItem,
 } from "@/db/coding-practice";
+import {
+  buildSubmissionLineDiff,
+  summarizeSubmissionDiff,
+} from "@/lib/submission-comparison";
 
 export function formatSubmissionTime(createdAt: string) {
   return new Intl.DateTimeFormat("en", {
@@ -127,6 +131,15 @@ export function SubmissionSnapshot({
 }: {
   submission: CodingSubmissionHistoryDetail;
 }) {
+  const previousSubmission = submission.previousSubmission;
+  const comparison =
+    submission.code !== null && previousSubmission?.code != null
+      ? buildSubmissionLineDiff(previousSubmission.code, submission.code)
+      : null;
+  const comparisonSummary = comparison
+    ? summarizeSubmissionDiff(comparison)
+    : null;
+
   return (
     <div className="submission-snapshot-layout">
       <Link className="submission-snapshot-back" href="/submissions">
@@ -156,6 +169,67 @@ export function SubmissionSnapshot({
           </p>
         </div>
       </header>
+
+      {comparison && comparisonSummary && previousSubmission ? (
+        <section
+          className="submission-comparison"
+          aria-labelledby="submission-comparison-title"
+        >
+          <div className="submission-comparison-heading">
+            <div>
+              <p>Attempt comparison</p>
+              <h2 id="submission-comparison-title">
+                What changed since the previous try
+              </h2>
+              <p>
+                Added and removed lines are marked without changing either
+                source snapshot or your current editor.
+              </p>
+            </div>
+            <div
+              className="submission-comparison-score"
+              aria-label={`Checks changed from ${previousSubmission.passedTests} of ${previousSubmission.totalTests} to ${submission.passedTests} of ${submission.totalTests}`}
+            >
+              <span>Checks</span>
+              <strong>
+                {previousSubmission.passedTests}/{previousSubmission.totalTests}
+                <span aria-hidden="true"> → </span>
+                {submission.passedTests}/{submission.totalTests}
+              </strong>
+              <p>
+                {comparisonSummary.added} added · {comparisonSummary.removed}{" "}
+                removed
+              </p>
+            </div>
+          </div>
+          <div className="submission-comparison-table-wrap" tabIndex={0}>
+            <table aria-label="Previous and selected JavaScript source comparison">
+              <thead>
+                <tr>
+                  <th scope="col">Previous try</th>
+                  <th scope="col">Selected try</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((row, index) => (
+                  <tr key={`${index}-${row.kind}`} className={`is-${row.kind}`}>
+                    <td>
+                      <span aria-hidden="true">
+                        {row.previousLineNumber ?? ""}
+                      </span>
+                      <code>{row.previous ?? ""}</code>
+                    </td>
+                    <td>
+                      <span aria-hidden="true">{row.currentLineNumber ?? ""}</span>
+                      <code>{row.current ?? ""}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <section className="submission-snapshot-code" aria-labelledby="submitted-source-title">
         <div className="submission-snapshot-code-heading">
