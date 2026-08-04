@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { runPlaygroundCode } from "@/lib/coding-runner";
-import { MAX_PLAYGROUND_CODE_LENGTH } from "@/lib/javascript-playground";
+import {
+  type PlaygroundCheckResult,
+  runPlaygroundChecks,
+  runPlaygroundCode,
+} from "@/lib/coding-runner";
+import {
+  MAX_PLAYGROUND_CHECKS,
+  MAX_PLAYGROUND_CODE_LENGTH,
+  validatePlaygroundChecks,
+} from "@/lib/javascript-playground";
 
 type JavaScriptPlaygroundProps = {
   initialCode: string;
@@ -14,6 +22,12 @@ type RunState =
   | { kind: "running"; output: string[]; message: string }
   | { kind: "finished"; output: string[]; message: string }
   | { kind: "error"; output: string[]; message: string };
+
+type CheckState =
+  | { kind: "ready"; checks: PlaygroundCheckResult[]; message: string }
+  | { kind: "running"; checks: PlaygroundCheckResult[]; message: string }
+  | { kind: "finished"; checks: PlaygroundCheckResult[]; message: string }
+  | { kind: "error"; checks: PlaygroundCheckResult[]; message: string };
 
 export function JavaScriptPlayground({
   initialCode,
@@ -27,6 +41,12 @@ export function JavaScriptPlayground({
     kind: "ready",
     output: [],
     message: "Run playground.js to see console output here.",
+  });
+  const [checkSource, setCheckSource] = useState("");
+  const [checkState, setCheckState] = useState<CheckState>({
+    kind: "ready",
+    checks: [],
+    message: "Add one expression per line. Each check should return true.",
   });
 
   async function runCode() {
@@ -75,6 +95,38 @@ export function JavaScriptPlayground({
     } catch {
       setSaveState("error");
     }
+  }
+
+  async function runChecks() {
+    const validation = validatePlaygroundChecks(checkSource);
+
+    if (!validation.valid) {
+      setCheckState({ kind: "error", checks: [], message: validation.error });
+      return;
+    }
+
+    setCheckState({
+      kind: "running",
+      checks: [],
+      message: "Running quick checks in an isolated browser worker…",
+    });
+    const result = await runPlaygroundChecks(code, validation.checks);
+
+    if (result.status === "finished") {
+      const passed = result.checks.filter((check) => check.passed).length;
+      setCheckState({
+        kind: "finished",
+        checks: result.checks,
+        message: `${passed} of ${result.checks.length} checks passed.`,
+      });
+      return;
+    }
+
+    setCheckState({
+      kind: "error",
+      checks: result.checks,
+      message: result.message,
+    });
   }
 
   function updateCode(nextCode: string) {
@@ -196,6 +248,69 @@ export function JavaScriptPlayground({
           <p>{runState.message}</p>
         </div>
       </section>
+
+      <details className="playground-checks" open>
+        <summary>
+          <span>
+            <strong>Quick checks</strong>
+            <small>Test the behavior you expect before you save.</small>
+          </span>
+          <span>Up to {MAX_PLAYGROUND_CHECKS}</span>
+        </summary>
+        <div className="playground-checks-body">
+          <div className="playground-checks-input">
+            <label htmlFor="playground-check-source">Quick check expressions</label>
+            <textarea
+              id="playground-check-source"
+              value={checkSource}
+              onChange={(event) => setCheckSource(event.target.value)}
+              placeholder={'double(4) === 8\nformatName("ada") === "Ada"'}
+              spellCheck={false}
+            />
+            <p>
+              One true-or-false JavaScript expression per line. Checks run
+              locally and are not saved.
+            </p>
+            <button
+              className="playground-checks-run"
+              type="button"
+              onClick={runChecks}
+              disabled={checkState.kind === "running"}
+            >
+              {checkState.kind === "running"
+                ? "Running checks…"
+                : "Run quick checks"}
+            </button>
+          </div>
+          <div
+            className={
+              checkState.kind === "error"
+                ? "playground-check-results is-error"
+                : "playground-check-results"
+            }
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <strong>Check results</strong>
+            <p>{checkState.message}</p>
+            {checkState.checks.length > 0 ? (
+              <ol>
+                {checkState.checks.map((check, index) => (
+                  <li
+                    className={check.passed ? "is-passed" : "is-failed"}
+                    key={`${check.expression}-${index}`}
+                  >
+                    <span>{check.passed ? "Passed" : "Needs work"}</span>
+                    <code>{check.expression}</code>
+                    {check.message ? <small>{check.message}</small> : null}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </div>
+        </div>
+      </details>
     </section>
   );
 }

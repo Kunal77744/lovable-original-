@@ -10,9 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptPlayground } from "./javascript-playground";
 
 const runPlaygroundCode = vi.fn();
+const runPlaygroundChecks = vi.fn();
 
 vi.mock("@/lib/coding-runner", () => ({
   runPlaygroundCode: (...args: unknown[]) => runPlaygroundCode(...args),
+  runPlaygroundChecks: (...args: unknown[]) => runPlaygroundChecks(...args),
 }));
 
 describe("JavaScriptPlayground", () => {
@@ -21,6 +23,7 @@ describe("JavaScriptPlayground", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     runPlaygroundCode.mockReset();
+    runPlaygroundChecks.mockReset();
   });
 
   it("runs the exact editor source from the keyboard and announces the result", async () => {
@@ -77,6 +80,68 @@ describe("JavaScriptPlayground", () => {
     expect(actions).toContainElement(
       screen.getByRole("button", { name: "Run code" }),
     );
+  });
+
+  it("runs learner-authored checks against the exact editor source", async () => {
+    runPlaygroundChecks.mockResolvedValue({
+      status: "finished",
+      checks: [
+        { expression: "double(4) === 8", passed: true, message: null },
+        { expression: "double(0) === 0", passed: true, message: null },
+      ],
+    });
+    render(
+      <JavaScriptPlayground
+        initialCode="const double = (value) => value * 2;"
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+      { target: { value: "double(4) === 8\ndouble(0) === 0" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Run quick checks" }));
+
+    await waitFor(() =>
+      expect(runPlaygroundChecks).toHaveBeenCalledWith(
+        "const double = (value) => value * 2;",
+        ["double(4) === 8", "double(0) === 0"],
+      ),
+    );
+    expect(await screen.findByText("2 of 2 checks passed.")).toBeVisible();
+    expect(screen.getAllByText("Passed")).toHaveLength(2);
+    expect(screen.getByText("double(4) === 8")).toBeVisible();
+  });
+
+  it("keeps failed and broken expressions visible for the next attempt", async () => {
+    runPlaygroundChecks.mockResolvedValue({
+      status: "finished",
+      checks: [
+        { expression: "double(4) === 10", passed: false, message: null },
+        {
+          expression: "missing(2) === 2",
+          passed: false,
+          message: "missing is not defined",
+        },
+      ],
+    });
+    render(
+      <JavaScriptPlayground
+        initialCode="const double = (value) => value * 2;"
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+      { target: { value: "double(4) === 10\nmissing(2) === 2" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Run quick checks" }));
+
+    expect(await screen.findByText("0 of 2 checks passed.")).toBeVisible();
+    expect(screen.getAllByText("Needs work")).toHaveLength(2);
+    expect(screen.getByText("missing is not defined")).toBeVisible();
   });
 
   it.each([
