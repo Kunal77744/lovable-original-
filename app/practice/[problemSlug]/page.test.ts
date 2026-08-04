@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCodingProblemBookmarkForStudent,
@@ -41,6 +41,8 @@ vi.mock("@/db/coding-practice", () => ({
             attempts: [],
             bestVerdict: null,
             code: problem.starterCode,
+            customTestCases: [],
+            solutionNote: null,
           }
         : null,
     );
@@ -161,6 +163,13 @@ describe("practice problem metadata", () => {
       user: { id: "returning-learner" },
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getBookmark.mockResolvedValue(true);
+    vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+      attempts: [],
+      bestVerdict: null,
+      code: problem.starterCode,
+      customTestCases: ["19 23", "-5 8"],
+      solutionNote: null,
+    });
 
     render(
       await ProblemPage({
@@ -178,5 +187,9 @@ describe("practice problem metadata", () => {
       "returning-learner",
       problem.slug,
     );
+    fireEvent.click(screen.getByText("Try your own input"));
+    expect(screen.getByDisplayValue("19 23")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("-5 8")).toBeInTheDocument();
+    expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
   });
 });

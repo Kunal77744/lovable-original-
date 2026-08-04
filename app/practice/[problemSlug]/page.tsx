@@ -147,6 +147,7 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
             initialCode={studentState.code}
+            initialCustomTestCases={studentState.customTestCases}
             initialPracticeFeedback={practiceFeedbackState.feedback}
             initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}

@@ -50,10 +50,12 @@ const problem = {
 };
 
 function renderWorkspace({
+  initialCustomTestCases = [],
   initialPracticeFeedback = null,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
 }: {
+  initialCustomTestCases?: string[];
   initialPracticeFeedback?: {
     problemSlug: string;
     usefulness: "not_yet" | "somewhat" | "very";
@@ -68,6 +70,7 @@ function renderWorkspace({
       attempts={[]}
       bestVerdict={null}
       initialCode="function solve(input) { return input; }"
+      initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
@@ -253,6 +256,123 @@ describe("CodingWorkspace", () => {
     expect(
       screen.getByText("No saved submissions yet. Your first verdict will appear here."),
     ).toBeInTheDocument();
+  });
+
+  it("restores private test cases without changing attempts or analytics", () => {
+    renderWorkspace({ initialCustomTestCases: ["19 23", "-5 8"] });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+
+    expect(screen.getByText("2/6")).toBeInTheDocument();
+    expect(screen.getByLabelText("Test case 1")).toHaveValue("19 23");
+    expect(screen.getByDisplayValue("-5 8")).toBeInTheDocument();
+    expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No saved submissions yet. Your first verdict will appear here."),
+    ).toBeInTheDocument();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+  });
+
+  it("saves the current custom input privately without running or submitting it", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          testCases: {
+            inputs: ["19 23"],
+            updatedAt: "2026-08-04T10:00:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    renderWorkspace();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Custom input"), {
+      target: { value: "19 23" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save test case" }));
+
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers/test-cases",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ inputs: ["19 23"] }),
+        }),
+      ),
+    );
+    expect(await screen.findByText("1 private test case saved.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Test case 1")).toHaveValue("19 23");
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("No saved submissions yet. Your first verdict will appear here."),
+    ).toBeInTheDocument();
+  });
+
+  it("revises and removes a private test case", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              inputs: ["21 21"],
+              updatedAt: "2026-08-04T10:00:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              inputs: [],
+              updatedAt: "2026-08-04T10:01:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    renderWorkspace({ initialCustomTestCases: ["19 23"] });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Test case 1"), {
+      target: { value: "21 21" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByText("1 private test case saved.")).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "/api/practice/sum-two-numbers/test-cases",
+      expect.objectContaining({ body: JSON.stringify({ inputs: ["21 21"] }) }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    expect(await screen.findByText("All private test cases removed.")).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "/api/practice/sum-two-numbers/test-cases",
+      expect.objectContaining({ body: JSON.stringify({ inputs: [] }) }),
+    );
+    expect(screen.getByText("No saved cases yet. Try an input above, then save it here.")).toBeInTheDocument();
+  });
+
+  it("keeps signed-out custom runs local and hides private saving controls", () => {
+    renderWorkspace({ isSignedIn: false });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+
+    expect(screen.getByRole("button", { name: "Run custom input" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save test case" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Private test cases" })).not.toBeInTheDocument();
   });
 
   it("submits all outputs and renders a saved Accepted verdict", async () => {

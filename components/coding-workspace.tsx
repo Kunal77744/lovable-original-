@@ -6,6 +6,10 @@ import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
+  MAX_CODING_TEST_CASES,
+  validateCodingTestCaseInputs,
+} from "@/lib/coding-test-cases";
+import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
 } from "@/lib/product-analytics";
@@ -17,6 +21,7 @@ type CodingWorkspaceProps = {
   attempts: CodingAttempt[];
   bestVerdict: string | null;
   initialCode: string;
+  initialCustomTestCases?: string[];
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
@@ -81,6 +86,7 @@ export function CodingWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
   initialCode,
+  initialCustomTestCases = [],
   initialPracticeFeedback,
   initialSolutionNote = null,
   isSignedIn,
@@ -96,6 +102,17 @@ export function CodingWorkspace({
   const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
     useState(false);
   const [customInput, setCustomInput] = useState(problem.example.input);
+  const [customTestCases, setCustomTestCases] = useState(
+    initialCustomTestCases,
+  );
+  const [testCaseSaveState, setTestCaseSaveState] = useState<
+    "saved" | "unsaved" | "saving" | "error"
+  >("saved");
+  const [testCaseMessage, setTestCaseMessage] = useState(
+    initialCustomTestCases.length > 0
+      ? `${initialCustomTestCases.length} private test ${initialCustomTestCases.length === 1 ? "case" : "cases"} restored.`
+      : "Save up to six inputs privately for your next session.",
+  );
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
@@ -219,6 +236,85 @@ export function CodingWorkspace({
       output: result.outputs[0] ?? "",
       message: "Custom input finished. Review the output before you submit.",
     });
+  }
+
+  async function persistCustomTestCases(nextInputs: string[]) {
+    if (!isSignedIn) return false;
+
+    const validation = validateCodingTestCaseInputs(nextInputs);
+
+    if (!validation.valid) {
+      setTestCaseSaveState("error");
+      setTestCaseMessage(validation.error);
+      return false;
+    }
+
+    setTestCaseSaveState("saving");
+    setTestCaseMessage("Saving private test cases…");
+
+    try {
+      const response = await fetch(
+        `/api/practice/${problem.slug}/test-cases`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inputs: validation.inputs }),
+        },
+      );
+      const payload = (await response.json()) as {
+        testCases?: { inputs: string[] };
+        error?: string;
+      };
+
+      if (!response.ok || !payload.testCases) {
+        setTestCaseSaveState("error");
+        setTestCaseMessage(
+          payload.error ?? "Your test cases could not be saved. Try again.",
+        );
+        return false;
+      }
+
+      setCustomTestCases(payload.testCases.inputs);
+      setTestCaseSaveState("saved");
+      setTestCaseMessage(
+        payload.testCases.inputs.length === 0
+          ? "All private test cases removed."
+          : `${payload.testCases.inputs.length} private test ${payload.testCases.inputs.length === 1 ? "case" : "cases"} saved.`,
+      );
+      return true;
+    } catch {
+      setTestCaseSaveState("error");
+      setTestCaseMessage(
+        "Your test cases could not be saved. Check your connection and try again.",
+      );
+      return false;
+    }
+  }
+
+  async function saveCurrentCustomInput() {
+    if (customTestCases.includes(customInput)) {
+      setTestCaseSaveState("error");
+      setTestCaseMessage("That exact input is already saved.");
+      return;
+    }
+
+    await persistCustomTestCases([...customTestCases, customInput]);
+  }
+
+  function updateCustomTestCase(index: number, input: string) {
+    setCustomTestCases((current) =>
+      current.map((savedInput, savedIndex) =>
+        savedIndex === index ? input : savedInput,
+      ),
+    );
+    setTestCaseSaveState("unsaved");
+    setTestCaseMessage("Test case changes are not saved yet.");
+  }
+
+  async function removeCustomTestCase(index: number) {
+    await persistCustomTestCases(
+      customTestCases.filter((_, savedIndex) => savedIndex !== index),
+    );
   }
 
   async function submitSolution() {
@@ -469,15 +565,97 @@ export function CodingWorkspace({
             onChange={(event) => setCustomInput(event.target.value)}
             spellCheck={false}
           />
-          <button
-            className="custom-test-action"
-            type="button"
-            onClick={runCustomInput}
-            disabled={runState.kind === "running"}
-          >
-            {runState.kind === "running" ? "Running…" : "Run custom input"}
-          </button>
+          <div className="custom-test-actions">
+            <button
+              className="custom-test-action"
+              type="button"
+              onClick={runCustomInput}
+              disabled={runState.kind === "running"}
+            >
+              {runState.kind === "running" ? "Running…" : "Run custom input"}
+            </button>
+            {isSignedIn ? (
+              <button
+                className="custom-test-save-action"
+                type="button"
+                onClick={() => void saveCurrentCustomInput()}
+                disabled={
+                  testCaseSaveState === "saving" ||
+                  customInput.trim().length === 0 ||
+                  customTestCases.length >= MAX_CODING_TEST_CASES
+                }
+              >
+                {testCaseSaveState === "saving" ? "Saving…" : "Save test case"}
+              </button>
+            ) : null}
+          </div>
         </div>
+        {isSignedIn ? (
+          <div className="private-test-cases">
+            <div className="private-test-cases-heading">
+              <div>
+                <h3>Private test cases</h3>
+                <p>Inputs save only to your account. Local runs never add attempts.</p>
+              </div>
+              <span>
+                {customTestCases.length}/{MAX_CODING_TEST_CASES}
+              </span>
+            </div>
+            {customTestCases.length > 0 ? (
+              <div className="private-test-case-list">
+                {customTestCases.map((savedInput, index) => (
+                  <div className="private-test-case" key={index}>
+                    <label htmlFor={`saved-test-case-${index}`}>
+                      Test case {index + 1}
+                    </label>
+                    <textarea
+                      id={`saved-test-case-${index}`}
+                      value={savedInput}
+                      onChange={(event) =>
+                        updateCustomTestCase(index, event.target.value)
+                      }
+                      spellCheck={false}
+                    />
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setCustomInput(savedInput)}
+                      >
+                        Use input
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void removeCustomTestCase(index)}
+                        disabled={testCaseSaveState === "saving"}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="private-test-cases-empty">
+                No saved cases yet. Try an input above, then save it here.
+              </p>
+            )}
+            {testCaseSaveState === "unsaved" ? (
+              <button
+                className="private-test-cases-save"
+                type="button"
+                onClick={() => void persistCustomTestCases(customTestCases)}
+              >
+                Save changes
+              </button>
+            ) : null}
+            <p
+              className={`private-test-cases-status is-${testCaseSaveState}`}
+              aria-live="polite"
+            >
+              {testCaseMessage}
+            </p>
+          </div>
+        ) : null}
       </details>
 
       <div

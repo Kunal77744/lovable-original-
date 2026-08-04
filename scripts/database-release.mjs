@@ -15,6 +15,7 @@ const requiredTables = [
   "course_feedback",
   "coding_problem_bookmark",
   "coding_problem_progress",
+  "coding_problem_test_case_set",
   "coding_submission",
   "css_practice_attempt",
   "css_practice_feedback",
@@ -36,6 +37,14 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  coding_problem_test_case_set: [
+    "id",
+    "user_id",
+    "problem_slug",
+    "inputs",
+    "created_at",
+    "updated_at",
+  ],
   css_practice_attempt: [
     "id",
     "user_id",
@@ -205,6 +214,7 @@ async function run() {
           'css_practice_attempt',
           'css_practice_feedback',
           'css_practice_progress',
+          'coding_problem_test_case_set',
           'guided_project',
           'guided_project_feedback',
           'practice_feedback',

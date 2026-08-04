@@ -134,6 +134,13 @@
       "when": 1785830751901,
       "tag": "0018_living_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785833640869,
+      "tag": "0019_quiet_stryfe",
+      "breakpoints": true
     }
   ]
 }

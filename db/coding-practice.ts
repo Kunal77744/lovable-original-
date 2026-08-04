@@ -14,6 +14,7 @@ import {
   codingProblemBookmark,
   codingProblemNote,
   codingProblemProgress,
+  codingProblemTestCaseSet,
   codingSubmission,
   practiceFeedback,
 } from "./schema";
@@ -38,6 +39,56 @@ export type SavedCodingProblem = {
   title: string;
   skill: string;
 };
+
+export async function saveCodingProblemTestCases(
+  userId: string,
+  problemSlug: string,
+  inputs: string[],
+) {
+  if (!getCodingProblem(problemSlug)) return null;
+
+  const database = getDatabase();
+
+  if (inputs.length === 0) {
+    await database
+      .delete(codingProblemTestCaseSet)
+      .where(
+        and(
+          eq(codingProblemTestCaseSet.userId, userId),
+          eq(codingProblemTestCaseSet.problemSlug, problemSlug),
+        ),
+      );
+
+    return { inputs, updatedAt: new Date().toISOString() };
+  }
+
+  const now = new Date();
+  const [saved] = await database
+    .insert(codingProblemTestCaseSet)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      problemSlug,
+      inputs,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [
+        codingProblemTestCaseSet.userId,
+        codingProblemTestCaseSet.problemSlug,
+      ],
+      set: { inputs, updatedAt: now },
+    })
+    .returning({
+      inputs: codingProblemTestCaseSet.inputs,
+      updatedAt: codingProblemTestCaseSet.updatedAt,
+    });
+
+  return {
+    inputs: saved.inputs,
+    updatedAt: saved.updatedAt.toISOString(),
+  };
+}
 
 export async function saveCodingProblemNote(
   userId: string,
@@ -377,11 +428,12 @@ export async function getCodingProblemForStudent(
       bestVerdict: null,
       attempts: [] as CodingAttempt[],
       solutionNote: null,
+      customTestCases: [] as string[],
     };
   }
 
   const database = getDatabase();
-  const [progress, attempts, solutionNotes] = await Promise.all([
+  const [progress, attempts, solutionNotes, testCaseSets] = await Promise.all([
     database
       .select({
         code: codingProblemProgress.code,
@@ -425,6 +477,16 @@ export async function getCodingProblemForStudent(
         ),
       )
       .limit(1),
+    database
+      .select({ inputs: codingProblemTestCaseSet.inputs })
+      .from(codingProblemTestCaseSet)
+      .where(
+        and(
+          eq(codingProblemTestCaseSet.userId, userId),
+          eq(codingProblemTestCaseSet.problemSlug, problemSlug),
+        ),
+      )
+      .limit(1),
   ]);
 
   return {
@@ -440,6 +502,7 @@ export async function getCodingProblemForStudent(
           updatedAt: solutionNotes[0].updatedAt.toISOString(),
         }
       : null,
+    customTestCases: testCaseSets[0]?.inputs ?? [],
   };
 }
 

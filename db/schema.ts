@@ -521,6 +521,31 @@ export const codingProblemNote = pgTable(
   ],
 );
 
+export const codingProblemTestCaseSet = pgTable(
+  "coding_problem_test_case_set",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    inputs: jsonb("inputs").$type<string[]>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_test_case_set_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_test_case_set_user_id_idx").on(table.userId),
+  ],
+);
+
 export const cssPracticeProgress = pgTable(
   "css_practice_progress",
   {
