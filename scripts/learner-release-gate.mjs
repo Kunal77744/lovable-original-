@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 
 import postgres from "postgres";
+import { elementTextByAttribute } from "./release-gate-html.mjs";
 
 const COURSE_TITLE = "Web Development Foundations";
 const COURSE_SLUG = "web-development-foundations";
@@ -829,13 +830,18 @@ async function runJourney(baseUrl, databaseUrl) {
       "/practice/sum-two-numbers",
     );
     const codingWorkspaceHtml = await codingWorkspaceResponse.text();
+    const renderedCodingDraft = elementTextByAttribute(codingWorkspaceHtml, {
+      tagName: "textarea",
+      attribute: "id",
+      value: "coding-solution",
+    });
     assertStep(
       codingWorkspaceResponse.status === 200 &&
         codingWorkspaceHtml.includes(
           `href="/submissions/${savedCodingSubmissionId}"`,
         ) &&
         codingWorkspaceHtml.includes("Review source") &&
-        codingWorkspaceHtml.includes(revisedCodingDraft),
+        renderedCodingDraft === revisedCodingDraft,
       step,
       "The JavaScript workspace did not link its verdict to the saved source while preserving the current draft.",
     );
@@ -844,10 +850,18 @@ async function runJourney(baseUrl, databaseUrl) {
       `/submissions/${savedCodingSubmissionId}`,
     );
     const submissionPageHtml = await submissionPageResponse.text();
+    const renderedSubmissionSource = elementTextByAttribute(
+      submissionPageHtml,
+      {
+        tagName: "pre",
+        attribute: "aria-label",
+        value: "Submitted JavaScript source",
+      },
+    );
     assertStep(
       submissionPageResponse.status === 200 &&
-        submissionPageHtml.includes(savedCodingSubmissionSource) &&
-        !submissionPageHtml.includes(revisedCodingDraft),
+        renderedSubmissionSource === savedCodingSubmissionSource &&
+        renderedSubmissionSource !== revisedCodingDraft,
       step,
       "The immutable JavaScript source snapshot changed with the current draft.",
     );
@@ -1579,10 +1593,18 @@ async function runJourney(baseUrl, databaseUrl) {
       `/submissions/${savedCodingSubmissionId}`,
     );
     const submissionPageHtml = await submissionPageResponse.text();
+    const restoredSubmissionSource = elementTextByAttribute(
+      submissionPageHtml,
+      {
+        tagName: "pre",
+        attribute: "aria-label",
+        value: "Submitted JavaScript source",
+      },
+    );
     assertStep(
       submissionPageResponse.status === 200 &&
-        submissionPageHtml.includes(savedCodingSubmissionSource) &&
-        !submissionPageHtml.includes(revisedCodingDraft),
+        restoredSubmissionSource === savedCodingSubmissionSource &&
+        restoredSubmissionSource !== revisedCodingDraft,
       step,
       "The exact JavaScript submission snapshot did not return after sign in.",
     );
@@ -1945,10 +1967,18 @@ async function runJourney(baseUrl, databaseUrl) {
       `/submissions/${savedCodingSubmissionId}`,
     );
     const originalSubmissionHtml = await originalSubmissionResponse.text();
+    const originalSubmissionSource = elementTextByAttribute(
+      originalSubmissionHtml,
+      {
+        tagName: "pre",
+        attribute: "aria-label",
+        value: "Submitted JavaScript source",
+      },
+    );
     assertStep(
       originalSubmissionResponse.status === 200 &&
-        originalSubmissionHtml.includes(savedCodingSubmissionSource) &&
-        !originalSubmissionHtml.includes(revisedCodingDraft),
+        originalSubmissionSource === savedCodingSubmissionSource &&
+        originalSubmissionSource !== revisedCodingDraft,
       step,
       "The isolation check changed the original JavaScript submission snapshot.",
     );
