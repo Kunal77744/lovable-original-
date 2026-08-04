@@ -204,6 +204,40 @@ describe("practice problem metadata", () => {
     expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
   });
 
+  it("accepts only the exact signed-in review entry context", async () => {
+    const problem = CODING_PROBLEMS[0];
+    getSession.mockResolvedValue({
+      user: { id: "reviewing-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ review: "1" }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Private review session" }),
+    ).toHaveAttribute("href", "/practice/review");
+
+    cleanup();
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ review: ["1"] }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Practice arena" }),
+    ).toHaveAttribute("href", "/practice");
+    expect(
+      screen.queryByRole("link", { name: "Private review session" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("loads only an owned submission as an unsaved editor copy without writing", async () => {
     const problem = CODING_PROBLEMS[0];
     const currentCode = "function solve(input) { return 'current'; }";

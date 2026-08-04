@@ -24,7 +24,10 @@ export const dynamic = "force-dynamic";
 
 type ProblemPageProps = {
   params: Promise<{ problemSlug: string }>;
-  searchParams?: Promise<{ submission?: string | string[] }>;
+  searchParams?: Promise<{
+    review?: string | string[];
+    submission?: string | string[];
+  }>;
 };
 
 export async function generateMetadata({
@@ -48,9 +51,11 @@ export async function generateMetadata({
 
 export default async function ProblemPage({ params, searchParams }: ProblemPageProps) {
   const { problemSlug } = await params;
-  const submissionParam = (await searchParams)?.submission;
+  const resolvedSearchParams = await searchParams;
+  const submissionParam = resolvedSearchParams?.submission;
   const requestedSubmissionId =
     typeof submissionParam === "string" ? submissionParam : null;
+  const reviewParam = resolvedSearchParams?.review;
   const problem = getCodingProblem(problemSlug);
 
   if (!problem) notFound();
@@ -75,6 +80,8 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
     : { isEligible: false, feedback: null };
 
   if (!practiceFeedbackState) notFound();
+
+  const isReviewSession = Boolean(session) && reviewParam === "1";
 
   const previousProblem = CODING_PROBLEMS[problem.number - 2] ?? null;
   const nextProblem = CODING_PROBLEMS[problem.number] ?? null;
@@ -103,7 +110,9 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
         tabIndex={-1}
       >
         <nav className="problem-breadcrumbs" aria-label="Problem navigation">
-          <Link href="/practice">Practice arena</Link>
+          <Link href={isReviewSession ? "/practice/review" : "/practice"}>
+            {isReviewSession ? "Private review session" : "Practice arena"}
+          </Link>
           <span aria-hidden="true">/</span>
           <span aria-current="step">
             Step {problem.number} of {CODING_PROBLEM_COUNT}
@@ -180,6 +189,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
             initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
+            isReviewSession={isReviewSession}
             loadedSubmission={loadedSubmission}
             problem={{
               slug: problem.slug,

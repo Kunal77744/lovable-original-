@@ -30,6 +30,7 @@ type CodingWorkspaceProps = {
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
   isPracticeFeedbackEligible: boolean;
+  isReviewSession?: boolean;
   loadedSubmission?: {
     createdAt: string;
     verdict: string;
@@ -115,6 +116,7 @@ export function CodingWorkspace({
   initialSolutionNote = null,
   isSignedIn,
   isPracticeFeedbackEligible,
+  isReviewSession = false,
   loadedSubmission = null,
   problem,
 }: CodingWorkspaceProps) {
@@ -936,22 +938,40 @@ export function CodingWorkspace({
           </div>
         ) : null}
         {runState.kind === "verdict" && runState.verdict === "Accepted" ? (
-          <div className="accepted-continuation">
+          <div
+            className={`accepted-continuation${
+              isReviewSession ? " is-review-session" : ""
+            }`}
+          >
             <p className="accepted-progress">
               Practice progress · {runState.completedCount}/{runState.totalCount} accepted
             </p>
-            <Link
-              className="accepted-next-action"
-              href={
-                runState.nextProblemSlug
-                  ? `/practice/${runState.nextProblemSlug}`
-                  : "/practice"
-              }
-            >
-              {runState.nextProblemSlug
-                ? "Continue to next unfinished step"
-                : "View completed path"}
-            </Link>
+            <div className="accepted-actions">
+              {isReviewSession ? (
+                <Link
+                  className="accepted-next-action"
+                  href="/practice/review"
+                >
+                  Return to refreshed review
+                </Link>
+              ) : null}
+              <Link
+                className={
+                  isReviewSession
+                    ? "accepted-secondary-action"
+                    : "accepted-next-action"
+                }
+                href={
+                  runState.nextProblemSlug
+                    ? `/practice/${runState.nextProblemSlug}`
+                    : "/practice"
+                }
+              >
+                {runState.nextProblemSlug
+                  ? "Continue to next unfinished step"
+                  : "View completed path"}
+              </Link>
+            </div>
           </div>
         ) : null}
         {runState.kind === "verdict" &&

@@ -137,7 +137,7 @@ export default async function PracticeReviewPage() {
                         ? "review-session-primary-action"
                         : "review-session-link"
                     }
-                    href={`/practice/${item.slug}`}
+                    href={`/practice/${item.slug}?review=1`}
                   >
                     {index === 0 ? "Start this review" : "Open problem"}{" "}
                     <span aria-hidden="true">→</span>

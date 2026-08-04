@@ -106,10 +106,10 @@ describe("PracticeReviewPage", () => {
     expect(screen.getByLabelText("2 review problems")).toHaveTextContent("2problemsMaximum 3");
     expect(
       screen.getByRole("link", { name: "Start this review" }),
-    ).toHaveAttribute("href", "/practice/largest-value");
+    ).toHaveAttribute("href", "/practice/largest-value?review=1");
     expect(
       screen.getByRole("link", { name: "Open problem" }),
-    ).toHaveAttribute("href", "/practice/reverse-a-word");
+    ).toHaveAttribute("href", "/practice/reverse-a-word?review=1");
     expect(screen.getByText("Unresolved mistake")).toBeInTheDocument();
     expect(
       screen.getByText("Accepted before · saved for later"),

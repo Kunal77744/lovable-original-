@@ -59,6 +59,7 @@ function renderWorkspace({
   initialPracticeFeedback = null,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
+  isReviewSession = false,
 }: {
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
@@ -69,6 +70,7 @@ function renderWorkspace({
   } | null;
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
+  isReviewSession?: boolean;
 } = {}) {
   return render(
     <CodingWorkspace
@@ -79,6 +81,7 @@ function renderWorkspace({
       initialPracticeFeedback={initialPracticeFeedback}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
+      isReviewSession={isReviewSession}
       problem={problem}
     />,
   );
@@ -632,6 +635,36 @@ describe("CodingWorkspace", () => {
     ).toBeInTheDocument();
   });
 
+  it("returns an Accepted review retry to the refreshed private session first", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      submissionResponse("Accepted", 4),
+    );
+
+    renderWorkspace({ isReviewSession: true });
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    expect(
+      await screen.findByRole("link", { name: "Return to refreshed review" }),
+    ).toHaveAttribute("href", "/practice/review");
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to next unfinished step",
+      }),
+    ).toHaveAttribute("href", "/practice/even-or-odd");
+    expect(
+      screen.getByRole("link", { name: "Return to refreshed review" }),
+    ).toHaveClass("accepted-next-action");
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to next unfinished step",
+      }),
+    ).toHaveClass("accepted-secondary-action");
+  });
+
   it("does not recapture a previously saved Accepted result", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
@@ -834,7 +867,7 @@ describe("CodingWorkspace", () => {
       Promise.resolve(submissionResponse("Wrong Answer", 3)),
     );
 
-    renderWorkspace();
+    renderWorkspace({ isReviewSession: true });
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
     const status = screen.getByRole("status");
@@ -844,6 +877,9 @@ describe("CodingWorkspace", () => {
       ),
     );
     expect(screen.getByText("Try this next")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Return to refreshed review" }),
+    ).not.toBeInTheDocument();
     expect(status).toHaveTextContent(problem.recoveryHint);
     expect(screen.queryByText(problem.recoveryHints[0])).not.toBeInTheDocument();
     expect(screen.queryByText(problem.recoveryHints[1])).not.toBeInTheDocument();

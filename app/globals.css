@@ -8210,6 +8210,13 @@ h1 {
   margin: 0;
 }
 
+.accepted-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 14px;
+}
+
 .accepted-next-action {
   min-height: 44px;
   padding: 0 14px;
@@ -8234,6 +8241,38 @@ h1 {
 .accepted-next-action:focus-visible {
   outline: 3px solid rgba(131, 221, 168, 0.35);
   outline-offset: 3px;
+}
+
+.accepted-continuation.is-review-session .accepted-next-action {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.accepted-continuation.is-review-session .accepted-next-action:hover {
+  border-color: #c8f4d9;
+  background: #c8f4d9;
+}
+
+.accepted-secondary-action {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: #c9d3cd;
+  font-size: 11px;
+  font-weight: 750;
+  text-underline-offset: 4px;
+}
+
+.accepted-secondary-action:hover {
+  color: #fff;
+}
+
+.accepted-secondary-action:focus-visible {
+  color: #fff;
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .accepted-explanation {
@@ -12257,6 +12296,17 @@ footer {
 
   .accepted-next-action {
     width: 100%;
+  }
+
+  .accepted-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .accepted-secondary-action {
+    justify-content: center;
   }
 
   .attempt-history {
