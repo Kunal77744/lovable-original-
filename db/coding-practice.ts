@@ -6,7 +6,11 @@ import {
   gradeCodingOutputs,
 } from "@/lib/coding-problems";
 import { getDatabase } from "./index";
-import { codingProblemProgress, codingSubmission } from "./schema";
+import {
+  codingProblemBookmark,
+  codingProblemProgress,
+  codingSubmission,
+} from "./schema";
 
 export type CodingAttempt = {
   id: string;
@@ -21,6 +25,99 @@ export type RecentCodingAttempt = CodingAttempt & {
   problemNumber: number;
   problemTitle: string;
 };
+
+export type SavedCodingProblem = {
+  slug: string;
+  number: number;
+  title: string;
+  skill: string;
+};
+
+export async function getCodingProblemBookmarksForStudent(
+  userId: string,
+): Promise<SavedCodingProblem[]> {
+  const rows = await getDatabase()
+    .select({ problemSlug: codingProblemBookmark.problemSlug })
+    .from(codingProblemBookmark)
+    .where(
+      and(
+        eq(codingProblemBookmark.userId, userId),
+        inArray(
+          codingProblemBookmark.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    );
+  const savedSlugs = new Set(rows.map((row) => row.problemSlug));
+
+  return CODING_PROBLEMS.filter((problem) => savedSlugs.has(problem.slug)).map(
+    ({ slug, number, title, skill }) => ({ slug, number, title, skill }),
+  );
+}
+
+export async function getCodingProblemBookmarkForStudent(
+  userId: string,
+  problemSlug: string,
+) {
+  if (!getCodingProblem(problemSlug)) return null;
+
+  const [bookmark] = await getDatabase()
+    .select({ id: codingProblemBookmark.id })
+    .from(codingProblemBookmark)
+    .where(
+      and(
+        eq(codingProblemBookmark.userId, userId),
+        eq(codingProblemBookmark.problemSlug, problemSlug),
+      ),
+    )
+    .limit(1);
+
+  return Boolean(bookmark);
+}
+
+export async function saveCodingProblemBookmark(
+  userId: string,
+  problemSlug: string,
+) {
+  if (!getCodingProblem(problemSlug)) return null;
+
+  const now = new Date();
+  await getDatabase()
+    .insert(codingProblemBookmark)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      problemSlug,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [
+        codingProblemBookmark.userId,
+        codingProblemBookmark.problemSlug,
+      ],
+      set: { updatedAt: now },
+    });
+
+  return { bookmarked: true };
+}
+
+export async function removeCodingProblemBookmark(
+  userId: string,
+  problemSlug: string,
+) {
+  if (!getCodingProblem(problemSlug)) return null;
+
+  await getDatabase()
+    .delete(codingProblemBookmark)
+    .where(
+      and(
+        eq(codingProblemBookmark.userId, userId),
+        eq(codingProblemBookmark.problemSlug, problemSlug),
+      ),
+    );
+
+  return { bookmarked: false };
+}
 
 export async function getCodingCatalogProgress(userId: string | null) {
   if (!userId) {

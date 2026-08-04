@@ -4745,6 +4745,125 @@ h1 {
   background: rgba(255, 255, 255, 0.46);
 }
 
+.saved-problems {
+  margin-top: 20px;
+  padding: 27px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, rgba(238, 246, 237, 0.84), transparent 72%),
+    rgba(255, 255, 255, 0.6);
+}
+
+.saved-problems-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.saved-problems-heading .eyebrow {
+  margin-bottom: 7px;
+}
+
+.saved-problems-heading h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 29px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.saved-problems-heading div > p:last-child {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.saved-problems-heading > span {
+  flex: 0 0 auto;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.saved-problems-list {
+  margin-top: 20px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  list-style: none;
+}
+
+.saved-problems-list li {
+  min-width: 0;
+}
+
+.saved-problems-list a {
+  min-height: 64px;
+  padding: 11px 14px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  border: 1px solid rgba(23, 35, 30, 0.12);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.74);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.saved-problems-list a:hover {
+  border-color: rgba(40, 118, 82, 0.5);
+  background: white;
+}
+
+.saved-problems-list a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 2px;
+}
+
+.saved-problems-list a > span:first-child {
+  color: #77857d;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+}
+
+.saved-problems-list a > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+}
+
+.saved-problems-list strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.saved-problems-list small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.saved-problems-list a > span:last-child {
+  color: var(--accent);
+}
+
+.saved-problems-empty {
+  margin: 20px 0 0;
+  padding-top: 17px;
+  color: var(--muted);
+  border-top: 1px solid rgba(23, 35, 30, 0.1);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .practice-playground-entry .eyebrow {
   margin-bottom: 6px;
 }
@@ -4947,6 +5066,76 @@ h1 {
   background: #f8faf6;
   font-size: 11px;
   font-weight: 750;
+}
+
+.problem-bookmark-control {
+  min-height: 64px;
+  margin-top: 21px;
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.problem-bookmark-button {
+  min-height: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #405047;
+  border: 1px solid rgba(23, 35, 30, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 760;
+  cursor: pointer;
+  transition:
+    color 160ms ease-out,
+    border-color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.problem-bookmark-button svg {
+  width: 16px;
+  height: 16px;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.problem-bookmark-button:hover:not(:disabled) {
+  color: var(--accent-deep);
+  border-color: var(--accent);
+  background: #f2f6f0;
+}
+
+.problem-bookmark-button.is-bookmarked {
+  color: var(--accent-deep);
+  border-color: #a9c9b1;
+  background: #eef6ed;
+}
+
+.problem-bookmark-button.is-bookmarked svg {
+  fill: currentColor;
+}
+
+.problem-bookmark-button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 3px;
+}
+
+.problem-bookmark-button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.problem-bookmark-control [role="status"] {
+  min-height: 15px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .problem-brief > section {
@@ -7373,6 +7562,18 @@ footer {
     align-items: flex-start;
     flex-direction: column;
     gap: 18px;
+  }
+
+  .saved-problems {
+    padding: 21px 20px;
+  }
+
+  .saved-problems-heading {
+    gap: 16px;
+  }
+
+  .saved-problems-list {
+    grid-template-columns: 1fr;
   }
 
   .practice-playground-action {

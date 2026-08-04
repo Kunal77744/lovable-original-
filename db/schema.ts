@@ -439,6 +439,28 @@ export const codingSubmission = pgTable(
   ],
 );
 
+export const codingProblemBookmark = pgTable(
+  "coding_problem_bookmark",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_bookmark_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_bookmark_user_id_idx").on(table.userId),
+  ],
+);
+
 export const courseCertificate = pgTable(
   "course_certificate",
   {

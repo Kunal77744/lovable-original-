@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { getCodingCatalogProgress } from "@/db/coding-practice";
+import {
+  getCodingCatalogProgress,
+  getCodingProblemBookmarksForStudent,
+} from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
@@ -25,7 +28,12 @@ export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const progress = await getCodingCatalogProgress(session?.user.id ?? null);
+  const [progress, savedProblems] = await Promise.all([
+    getCodingCatalogProgress(session?.user.id ?? null),
+    session
+      ? getCodingProblemBookmarksForStudent(session.user.id)
+      : Promise.resolve([]),
+  ]);
   const completedSlugs = new Set(progress.completedSlugs);
   const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
     progress.completedSlugs,
@@ -139,6 +147,39 @@ export default async function PracticePage() {
               );
             })}
           </div>
+
+          {session ? (
+            <aside className="saved-problems" aria-labelledby="saved-problems-title">
+              <div className="saved-problems-heading">
+                <div>
+                  <p className="eyebrow">Private shortlist</p>
+                  <h3 id="saved-problems-title">Saved for later</h3>
+                  <p>Private to your account.</p>
+                </div>
+                <span>{savedProblems.length} saved</span>
+              </div>
+              {savedProblems.length > 0 ? (
+                <ul className="saved-problems-list">
+                  {savedProblems.map((problem) => (
+                    <li key={problem.slug}>
+                      <Link href={`/practice/${problem.slug}`}>
+                        <span>{String(problem.number).padStart(2, "0")}</span>
+                        <span>
+                          <strong>{problem.title}</strong>
+                          <small>{problem.skill}</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="saved-problems-empty">
+                  Nothing saved yet. Use Save for later on any problem.
+                </p>
+              )}
+            </aside>
+          ) : null}
 
           {session ? (
             <aside
