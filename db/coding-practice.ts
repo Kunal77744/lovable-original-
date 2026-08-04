@@ -625,6 +625,7 @@ export async function getCodingProblemForStudent(
   if (!userId) {
     return {
       code: problem.starterCode,
+      latestAcceptedCode: null,
       bestVerdict: null,
       attempts: [] as CodingProblemAttempt[],
       solutionNote: null,
@@ -633,7 +634,13 @@ export async function getCodingProblemForStudent(
   }
 
   const database = getDatabase();
-  const [progress, attempts, solutionNotes, testCaseSets] = await Promise.all([
+  const [
+    progress,
+    attempts,
+    latestAcceptedSubmissions,
+    solutionNotes,
+    testCaseSets,
+  ] = await Promise.all([
     database
       .select({
         code: codingProblemProgress.code,
@@ -666,6 +673,18 @@ export async function getCodingProblemForStudent(
       .orderBy(desc(codingSubmission.createdAt))
       .limit(8),
     database
+      .select({ code: codingSubmission.code })
+      .from(codingSubmission)
+      .where(
+        and(
+          eq(codingSubmission.userId, userId),
+          eq(codingSubmission.problemSlug, problemSlug),
+          eq(codingSubmission.verdict, "Accepted"),
+        ),
+      )
+      .orderBy(desc(codingSubmission.createdAt), desc(codingSubmission.id))
+      .limit(1),
+    database
       .select({
         content: codingProblemNote.content,
         updatedAt: codingProblemNote.updatedAt,
@@ -695,6 +714,7 @@ export async function getCodingProblemForStudent(
 
   return {
     code: progress[0]?.code ?? problem.starterCode,
+    latestAcceptedCode: latestAcceptedSubmissions[0]?.code ?? null,
     bestVerdict: progress[0]?.bestVerdict ?? null,
     attempts: attempts.map((attempt) => ({
       id: attempt.id,

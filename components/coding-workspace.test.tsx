@@ -590,6 +590,16 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
     expect(screen.getByText("Common mistake")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Private code review")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "What your Accepted source already shows",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Seen in your source")).toBeInTheDocument();
+    expect(screen.getByText("Checks proved")).toBeInTheDocument();
+    expect(screen.getByText("Keep testing")).toBeInTheDocument();
+    expect(screen.getByText("Only you")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         name: "Compare your plan with what passed.",
@@ -649,7 +659,8 @@ describe("CodingWorkspace", () => {
       <CodingWorkspace
         attempts={[]}
         bestVerdict="Accepted"
-        initialCode="function solve(input) { return input; }"
+        initialAcceptedCode="function solve(input) { const [a, b] = input.split(' ').map(Number); return String(a + b); }"
+        initialCode="function solve(input) { const [a, b] = input.split(' ').map(Number); return String(a + b); }"
         initialPracticeFeedback={null}
         isSignedIn
         isPracticeFeedbackEligible={false}
@@ -674,7 +685,8 @@ describe("CodingWorkspace", () => {
       <CodingWorkspace
         attempts={[]}
         bestVerdict="Accepted"
-        initialCode="function solve(input) { return input; }"
+        initialAcceptedCode="function solve(input) { const [a, b] = input.split(' ').map(Number); return String(a + b); }"
+        initialCode="function solve(input) { const [a, b] = input.split(' ').map(Number); return String(a + b); }"
         initialPracticeFeedback={null}
         isSignedIn
         isPracticeFeedbackEligible={false}
@@ -691,6 +703,46 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveClass("is-accepted");
     expect(status).toHaveTextContent("Accepted");
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Private code review")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      "Your source explicitly turns input text into numbers before adding the two values.",
+    );
+  });
+
+  it("keeps the private review hidden before Accepted and while signed out", () => {
+    const acceptedSource =
+      "function solve(input) { const [a, b] = input.split(' ').map(Number); return String(a + b); }";
+
+    const signedInView = render(
+      <CodingWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        initialAcceptedCode={null}
+        initialCode={acceptedSource}
+        initialPracticeFeedback={null}
+        isSignedIn
+        isPracticeFeedbackEligible={false}
+        problem={problem}
+      />,
+    );
+
+    expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+    signedInView.unmount();
+
+    render(
+      <CodingWorkspace
+        attempts={[]}
+        bestVerdict="Accepted"
+        initialAcceptedCode={acceptedSource}
+        initialCode={acceptedSource}
+        initialPracticeFeedback={null}
+        isSignedIn={false}
+        isPracticeFeedbackEligible={false}
+        problem={problem}
+      />,
+    );
+
+    expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
   });
 
   it("returns a learner who completes all six problems to the catalog", async () => {

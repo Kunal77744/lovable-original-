@@ -11,6 +11,7 @@ import {
   validateCodingTestCases,
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
+import { getCodingSolutionReview } from "@/lib/coding-solution-review";
 import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
@@ -23,6 +24,7 @@ type CodingWorkspaceProps = {
   attempts: CodingProblemAttempt[];
   bestVerdict: string | null;
   initialCode: string;
+  initialAcceptedCode?: string | null;
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
@@ -107,6 +109,7 @@ export function CodingWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
   initialCode,
+  initialAcceptedCode = null,
   initialCustomTestCases = [],
   initialPracticeFeedback,
   initialSolutionNote = null,
@@ -116,6 +119,7 @@ export function CodingWorkspace({
   problem,
 }: CodingWorkspaceProps) {
   const [code, setCode] = useState(initialCode);
+  const [acceptedCode, setAcceptedCode] = useState(initialAcceptedCode);
   const [attempts, setAttempts] = useState(initialAttempts);
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
   const [showPracticeFeedback, setShowPracticeFeedback] = useState(
@@ -160,6 +164,10 @@ export function CodingWorkspace({
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
     (runState.kind === "idle" && initialBestVerdict === "Accepted");
+  const acceptedReview =
+    isSignedIn && acceptedCode
+      ? getCodingSolutionReview(problem.slug, acceptedCode)
+      : null;
 
   useEffect(() => {
     return () => {
@@ -459,6 +467,7 @@ export function CodingWorkspace({
       }
 
       setBestVerdict(payload.bestVerdict);
+      if (payload.verdict === "Accepted") setAcceptedCode(code);
       setSaveState("saved");
       setAttempts((current) => [
         {
@@ -1003,6 +1012,37 @@ export function CodingWorkspace({
               <span>Common mistake</span>
               <p>{problem.acceptedExplanation.commonMistake}</p>
             </div>
+          </section>
+        ) : null}
+        {acceptedReview ? (
+          <section
+            className="accepted-code-review"
+            aria-labelledby={`accepted-code-review-${problem.slug}`}
+          >
+            <header>
+              <div>
+                <span>Private code review</span>
+                <h3 id={`accepted-code-review-${problem.slug}`}>
+                  What your Accepted source already shows
+                </h3>
+              </div>
+              <span className="accepted-code-review-badge">Only you</span>
+            </header>
+            <ol>
+              {acceptedReview.points.map((point, index) => (
+                <li className={`is-${point.kind}`} key={point.label}>
+                  <span aria-hidden="true">{index + 1}</span>
+                  <div>
+                    <strong>{point.label}</strong>
+                    <p>{point.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p className="accepted-code-review-note">
+              Built from your most recent Accepted source. No new attempt or
+              learner record was created.
+            </p>
           </section>
         ) : null}
         <div className="practice-recovery-cue">

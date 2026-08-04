@@ -8291,6 +8291,119 @@ h1 {
   color: #a9b7af;
 }
 
+.accepted-code-review {
+  margin-top: 20px;
+  padding-top: 19px;
+  border-top: 1px solid rgba(131, 221, 168, 0.24);
+}
+
+.accepted-code-review > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.accepted-code-review > header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.accepted-code-review > header > div > span {
+  color: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.accepted-code-review h3 {
+  max-width: 30ch;
+  margin: 0;
+  color: #f1f7f3;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 21px;
+  line-height: 1.18;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+
+.accepted-code-review-badge {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  color: #bde7cb;
+  border: 1px solid rgba(131, 221, 168, 0.3);
+  border-radius: 999px;
+  background: rgba(13, 31, 22, 0.38);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.accepted-code-review ol {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accepted-code-review li {
+  padding: 12px 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 11px;
+  border-top: 1px solid rgba(131, 221, 168, 0.12);
+}
+
+.accepted-code-review li > span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: #173f2c;
+  border-radius: 50%;
+  background: #8bd9a8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.accepted-code-review li.is-consideration > span {
+  color: #d8e7dd;
+  border: 1px solid #5f7569;
+  background: transparent;
+}
+
+.accepted-code-review li > div {
+  display: grid;
+  gap: 3px;
+}
+
+.accepted-code-review li strong {
+  color: #dce9e1;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.coding-result .accepted-code-review li p,
+.coding-result .accepted-code-review-note {
+  max-width: 64ch;
+  margin: 0;
+  color: #b8c7be;
+  font-size: 12px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.coding-result .accepted-code-review-note {
+  padding-top: 11px;
+  color: #91a49a;
+  border-top: 1px solid rgba(131, 221, 168, 0.12);
+  font-size: 10px;
+}
+
 .coding-result.is-wrong,
 .coding-result.is-error {
   border-color: #85504b;

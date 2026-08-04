@@ -39,10 +39,11 @@ vi.mock("@/db/coding-practice", () => ({
 
     return Promise.resolve(
       problem
-        ? {
+          ? {
             attempts: [],
             bestVerdict: null,
             code: problem.starterCode,
+            latestAcceptedCode: null,
             customTestCases: [],
             solutionNote: null,
           }
@@ -173,6 +174,7 @@ describe("practice problem metadata", () => {
       attempts: [],
       bestVerdict: null,
       code: problem.starterCode,
+      latestAcceptedCode: null,
       customTestCases: [
         { input: "19 23", expectedOutput: "42" },
         { input: "-5 8", expectedOutput: null },
@@ -223,6 +225,7 @@ describe("practice problem metadata", () => {
       ],
       bestVerdict: "Accepted",
       code: currentCode,
+      latestAcceptedCode: currentCode,
       customTestCases: [{ input: "19 23", expectedOutput: null }],
       solutionNote: null,
     });
@@ -257,6 +260,7 @@ describe("practice problem metadata", () => {
     );
     expect(screen.getByText("Past submission loaded")).toBeInTheDocument();
     expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Restore saved editor" }),
     ).toHaveAttribute("href", `/practice/${problem.slug}`);
@@ -275,6 +279,7 @@ describe("practice problem metadata", () => {
       attempts: [],
       bestVerdict: null,
       code: currentCode,
+      latestAcceptedCode: null,
       customTestCases: [],
       solutionNote: null,
     });
