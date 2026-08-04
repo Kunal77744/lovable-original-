@@ -124,7 +124,11 @@ export function LearnerProfile({
               <p className="course-kicker">Recent attempts</p>
               <h2>Practice history</h2>
             </div>
-            <span>{profile.attempts.length} shown</span>
+            {profile.attempts.length > 0 ? (
+              <Link href="/submissions">View all submissions</Link>
+            ) : (
+              <span>{profile.attempts.length} shown</span>
+            )}
           </div>
 
           {profile.attempts.length === 0 ? (
@@ -143,7 +147,7 @@ export function LearnerProfile({
                     {String(attempt.problemNumber).padStart(2, "0")}
                   </span>
                   <div>
-                    <Link href={`/practice/${attempt.problemSlug}`}>
+                    <Link href={`/submissions/${attempt.id}`}>
                       {attempt.problemTitle}
                     </Link>
                     <time dateTime={attempt.createdAt}>

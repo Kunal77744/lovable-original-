@@ -37,6 +37,16 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  coding_submission: [
+    "id",
+    "user_id",
+    "problem_slug",
+    "code",
+    "verdict",
+    "passed_tests",
+    "total_tests",
+    "created_at",
+  ],
   coding_problem_test_case_set: [
     "id",
     "user_id",
@@ -215,6 +225,7 @@ async function run() {
           'css_practice_feedback',
           'css_practice_progress',
           'coding_problem_test_case_set',
+          'coding_submission',
           'guided_project',
           'guided_project_feedback',
           'practice_feedback',

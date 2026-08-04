@@ -456,6 +456,7 @@ export const codingSubmission = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     problemSlug: text("problem_slug").notNull(),
+    code: text("code"),
     verdict: text("verdict").notNull(),
     passedTests: integer("passed_tests").notNull(),
     totalTests: integer("total_tests").notNull(),

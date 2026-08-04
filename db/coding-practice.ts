@@ -37,6 +37,14 @@ export type RecentCodingAttempt = CodingAttempt & {
   problemTitle: string;
 };
 
+export type CodingSubmissionHistoryItem = RecentCodingAttempt & {
+  hasSource: boolean;
+};
+
+export type CodingSubmissionHistoryDetail = CodingSubmissionHistoryItem & {
+  code: string | null;
+};
+
 export type SavedCodingProblem = {
   slug: string;
   number: number;
@@ -443,6 +451,97 @@ export async function getRecentCodingAttempts(
   });
 }
 
+export async function getCodingSubmissionHistoryForStudent(
+  userId: string,
+  limit = 50,
+): Promise<CodingSubmissionHistoryItem[]> {
+  const submissions = await getDatabase()
+    .select({
+      id: codingSubmission.id,
+      problemSlug: codingSubmission.problemSlug,
+      code: codingSubmission.code,
+      verdict: codingSubmission.verdict,
+      passedTests: codingSubmission.passedTests,
+      totalTests: codingSubmission.totalTests,
+      createdAt: codingSubmission.createdAt,
+    })
+    .from(codingSubmission)
+    .where(
+      and(
+        eq(codingSubmission.userId, userId),
+        inArray(
+          codingSubmission.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(desc(codingSubmission.createdAt), desc(codingSubmission.id))
+    .limit(Math.max(1, Math.min(limit, 50)));
+
+  return submissions.flatMap((submission) => {
+    const problem = getCodingProblem(submission.problemSlug);
+
+    return problem
+      ? [
+          {
+            id: submission.id,
+            problemSlug: submission.problemSlug,
+            problemNumber: problem.number,
+            problemTitle: problem.title,
+            verdict: submission.verdict,
+            passedTests: submission.passedTests,
+            totalTests: submission.totalTests,
+            createdAt: submission.createdAt.toISOString(),
+            hasSource: submission.code !== null,
+          },
+        ]
+      : [];
+  });
+}
+
+export async function getCodingSubmissionForStudent(
+  userId: string,
+  submissionId: string,
+): Promise<CodingSubmissionHistoryDetail | null> {
+  const [submission] = await getDatabase()
+    .select({
+      id: codingSubmission.id,
+      problemSlug: codingSubmission.problemSlug,
+      code: codingSubmission.code,
+      verdict: codingSubmission.verdict,
+      passedTests: codingSubmission.passedTests,
+      totalTests: codingSubmission.totalTests,
+      createdAt: codingSubmission.createdAt,
+    })
+    .from(codingSubmission)
+    .where(
+      and(
+        eq(codingSubmission.userId, userId),
+        eq(codingSubmission.id, submissionId),
+      ),
+    )
+    .limit(1);
+
+  if (!submission) return null;
+
+  const problem = getCodingProblem(submission.problemSlug);
+
+  if (!problem) return null;
+
+  return {
+    id: submission.id,
+    problemSlug: submission.problemSlug,
+    problemNumber: problem.number,
+    problemTitle: problem.title,
+    code: submission.code,
+    verdict: submission.verdict,
+    passedTests: submission.passedTests,
+    totalTests: submission.totalTests,
+    createdAt: submission.createdAt.toISOString(),
+    hasSource: submission.code !== null,
+  };
+}
+
 export async function getCodingProblemForStudent(
   userId: string | null,
   problemSlug: string,
@@ -635,6 +734,7 @@ export async function saveCodingSubmission(
       id: submissionId,
       userId,
       problemSlug,
+      code,
       verdict: result.verdict,
       passedTests: result.passedTests,
       totalTests: result.totalTests,

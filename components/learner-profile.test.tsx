@@ -72,6 +72,14 @@ describe("LearnerProfile", () => {
     expect(screen.getByText("Sum two numbers")).toBeInTheDocument();
     expect(screen.getByText("Accepted")).toBeInTheDocument();
     expect(screen.getByText("4/4 checks")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View all submissions" })).toHaveAttribute(
+      "href",
+      "/submissions",
+    );
+    expect(screen.getByRole("link", { name: "Sum two numbers" })).toHaveAttribute(
+      "href",
+      "/submissions/attempt-1",
+    );
     expect(
       screen.getByRole("link", { name: /Solve problem 02/ }),
     ).toHaveAttribute("href", "/practice/even-or-odd");

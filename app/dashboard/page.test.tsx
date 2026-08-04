@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardPage from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -38,6 +38,8 @@ vi.mock("@/components/sign-out-button", () => ({
 }));
 
 describe("DashboardPage", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getSession.mockResolvedValue({

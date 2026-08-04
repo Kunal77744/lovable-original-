@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
 import { metadata as settingsMetadata } from "./settings/page";
+import { metadata as submissionsMetadata } from "./submissions/page";
+import { metadata as submissionMetadata } from "./submissions/[submissionId]/page";
 
 vi.mock("@/lib/auth", () => ({
   auth: {
@@ -16,13 +18,26 @@ vi.mock("@/db/course", () => ({
   getLearnerSettingsForStudent: vi.fn(),
 }));
 
+vi.mock("@/db/coding-practice", () => ({
+  getCodingSubmissionHistoryForStudent: vi.fn(),
+  getCodingSubmissionForStudent: vi.fn(),
+}));
+
 describe("private learner routes", () => {
-  it("keeps settings and certificate pages out of search", () => {
+  it("keeps settings, certificate, and submission pages out of search", () => {
     expect(settingsMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
     expect(certificateMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
+    expect(submissionsMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
+    expect(submissionMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
@@ -36,6 +51,9 @@ describe("private learner routes", () => {
     );
     expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/certificate",
+    );
+    expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/submissions",
     );
   });
 });

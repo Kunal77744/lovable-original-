@@ -423,6 +423,10 @@ async function runJourney(baseUrl, databaseUrl) {
   let savedCertificateName = "";
   let savedCertificateId = "";
   let savedCertificateAwardedAt = "";
+  let learnerUserId = "";
+  let savedCodingSubmissionId = "";
+  let savedCodingSubmissionSource = "";
+  let revisedCodingDraft = "";
 
   async function request(path, options = {}, requestJar = jar) {
     const headers = new Headers(options.headers);
@@ -480,6 +484,7 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(response.status === 200, step, "Account creation did not succeed.");
     const payload = await response.json();
     assertStep(Boolean(payload.user?.id), step, "Account creation returned no user.");
+    learnerUserId = payload.user.id;
     assertStep(Boolean(jar.header()), step, "Account creation returned no session.");
   });
 
@@ -783,6 +788,85 @@ async function runJourney(baseUrl, databaseUrl) {
       );
     }
 
+    savedCodingSubmissionSource = `function solve(input) {
+  const [a, b] = input.trim().split(/\\s+/).map(Number);
+  return String(a + b);
+}
+// immutable submission ${runId}`;
+    const codingSubmissionResponse = await jsonRequest(
+      "/api/practice/sum-two-numbers",
+      {
+        mode: "submit",
+        code: savedCodingSubmissionSource,
+        outputs: ["13", "-5", "0", "1000"],
+      },
+    );
+    const codingSubmission = await codingSubmissionResponse.json();
+    assertStep(
+      codingSubmissionResponse.status === 200 &&
+        codingSubmission.verdict === "Accepted" &&
+        codingSubmission.passedTests === 4 &&
+        typeof codingSubmission.id === "string",
+      step,
+      "The JavaScript submission was not saved with an Accepted result.",
+    );
+    savedCodingSubmissionId = codingSubmission.id;
+
+    revisedCodingDraft = `function solve(input) {
+  return "draft ${runId}";
+}`;
+    const revisedCodingDraftResponse = await jsonRequest(
+      "/api/practice/sum-two-numbers",
+      { mode: "draft", code: revisedCodingDraft },
+    );
+    assertStep(
+      revisedCodingDraftResponse.status === 200,
+      step,
+      "The current JavaScript draft could not be revised after submission.",
+    );
+
+    const submissionPageResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+    );
+    const submissionPageHtml = await submissionPageResponse.text();
+    assertStep(
+      submissionPageResponse.status === 200 &&
+        submissionPageHtml.includes(savedCodingSubmissionSource) &&
+        !submissionPageHtml.includes(revisedCodingDraft),
+      step,
+      "The immutable JavaScript source snapshot changed with the current draft.",
+    );
+
+    const submissionSql = postgres(databaseUrl, {
+      connect_timeout: 5,
+      idle_timeout: 5,
+      max: 1,
+      onnotice: () => {},
+      prepare: false,
+    });
+    try {
+      const [savedSubmission] = await submissionSql`
+        select code
+        from coding_submission
+        where id = ${savedCodingSubmissionId}
+          and user_id = ${learnerUserId}
+      `;
+      const [currentProgress] = await submissionSql`
+        select code
+        from coding_problem_progress
+        where user_id = ${learnerUserId}
+          and problem_slug = 'sum-two-numbers'
+      `;
+      assertStep(
+        savedSubmission?.code === savedCodingSubmissionSource &&
+          currentProgress?.code === revisedCodingDraft,
+        step,
+        "The submission snapshot and current JavaScript draft were not stored independently.",
+      );
+    } finally {
+      await submissionSql.end({ timeout: 5 });
+    }
+
     const firstNoteResponse = await jsonRequest(
       `/api/lessons/${LESSON_SLUG}/notes`,
       { content: "Landmarks explain the purpose of each page region." },
@@ -1061,9 +1145,9 @@ async function runJourney(baseUrl, databaseUrl) {
       "The completed two-lesson milestone was not restored.",
     );
     assertStep(
-      /0\s*\/\s*6 Accepted/.test(text),
+      /1\s*\/\s*6 Accepted/.test(text),
       step,
-      "The JavaScript continuation was not ready after course completion.",
+      "The saved JavaScript submission was not restored after course completion.",
     );
 
     const workspaceResponse = await request(
@@ -1249,6 +1333,8 @@ async function runJourney(baseUrl, databaseUrl) {
       "/settings",
       "/certificate",
       "/playground",
+      "/submissions",
+      `/submissions/${savedCodingSubmissionId}`,
     ];
 
     for (const path of protectedPages) {
@@ -1472,6 +1558,18 @@ async function runJourney(baseUrl, databaseUrl) {
         interview.progress?.answers?.[0]?.rating === "ready",
       step,
       "The exact interview answer did not remain after sign in.",
+    );
+
+    const submissionPageResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+    );
+    const submissionPageHtml = await submissionPageResponse.text();
+    assertStep(
+      submissionPageResponse.status === 200 &&
+        submissionPageHtml.includes(savedCodingSubmissionSource) &&
+        !submissionPageHtml.includes(revisedCodingDraft),
+      step,
+      "The exact JavaScript submission snapshot did not return after sign in.",
     );
   });
 
@@ -1812,6 +1910,32 @@ async function runJourney(baseUrl, databaseUrl) {
           savedInterviewAnswer,
       step,
       "The isolation learner changed the original interview answer.",
+    );
+
+    const isolatedSubmissionResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+      {},
+      secondJar,
+    );
+    const isolatedSubmissionHtml = await isolatedSubmissionResponse.text();
+    assertStep(
+      isolatedSubmissionResponse.status === 404 &&
+        !isolatedSubmissionHtml.includes(savedCodingSubmissionSource) &&
+        !isolatedSubmissionHtml.includes(runId),
+      step,
+      "One learner could read another learner’s JavaScript submission snapshot.",
+    );
+
+    const originalSubmissionResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+    );
+    const originalSubmissionHtml = await originalSubmissionResponse.text();
+    assertStep(
+      originalSubmissionResponse.status === 200 &&
+        originalSubmissionHtml.includes(savedCodingSubmissionSource) &&
+        !originalSubmissionHtml.includes(revisedCodingDraft),
+      step,
+      "The isolation check changed the original JavaScript submission snapshot.",
     );
   });
 }
