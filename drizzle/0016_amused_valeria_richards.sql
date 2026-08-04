@@ -1,0 +1,1 @@
+ALTER TABLE "playground_file" ADD COLUMN "quick_checks" text DEFAULT '' NOT NULL;
