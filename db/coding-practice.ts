@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lt, or } from "drizzle-orm";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
@@ -41,16 +41,18 @@ export type CodingSubmissionHistoryItem = RecentCodingAttempt & {
   hasSource: boolean;
 };
 
+export type AdjacentCodingSubmission = {
+  id: string;
+  verdict: string;
+  passedTests: number;
+  totalTests: number;
+  createdAt: string;
+};
+
 export type CodingSubmissionHistoryDetail = CodingSubmissionHistoryItem & {
   code: string | null;
-  previousSubmission: {
-    id: string;
-    code: string | null;
-    verdict: string;
-    passedTests: number;
-    totalTests: number;
-    createdAt: string;
-  } | null;
+  previousSubmission: (AdjacentCodingSubmission & { code: string | null }) | null;
+  nextSubmission: AdjacentCodingSubmission | null;
 };
 
 export type SavedCodingProblem = {
@@ -536,31 +538,57 @@ export async function getCodingSubmissionForStudent(
 
   if (!problem) return null;
 
-  const [previousSubmission] = await getDatabase()
-    .select({
-      id: codingSubmission.id,
-      code: codingSubmission.code,
-      verdict: codingSubmission.verdict,
-      passedTests: codingSubmission.passedTests,
-      totalTests: codingSubmission.totalTests,
-      createdAt: codingSubmission.createdAt,
-    })
-    .from(codingSubmission)
-    .where(
-      and(
-        eq(codingSubmission.userId, userId),
-        eq(codingSubmission.problemSlug, submission.problemSlug),
-        or(
-          lt(codingSubmission.createdAt, submission.createdAt),
-          and(
-            eq(codingSubmission.createdAt, submission.createdAt),
-            lt(codingSubmission.id, submission.id),
+  const [[previousSubmission], [nextSubmission]] = await Promise.all([
+    getDatabase()
+      .select({
+        id: codingSubmission.id,
+        code: codingSubmission.code,
+        verdict: codingSubmission.verdict,
+        passedTests: codingSubmission.passedTests,
+        totalTests: codingSubmission.totalTests,
+        createdAt: codingSubmission.createdAt,
+      })
+      .from(codingSubmission)
+      .where(
+        and(
+          eq(codingSubmission.userId, userId),
+          eq(codingSubmission.problemSlug, submission.problemSlug),
+          or(
+            lt(codingSubmission.createdAt, submission.createdAt),
+            and(
+              eq(codingSubmission.createdAt, submission.createdAt),
+              lt(codingSubmission.id, submission.id),
+            ),
           ),
         ),
-      ),
-    )
-    .orderBy(desc(codingSubmission.createdAt), desc(codingSubmission.id))
-    .limit(1);
+      )
+      .orderBy(desc(codingSubmission.createdAt), desc(codingSubmission.id))
+      .limit(1),
+    getDatabase()
+      .select({
+        id: codingSubmission.id,
+        verdict: codingSubmission.verdict,
+        passedTests: codingSubmission.passedTests,
+        totalTests: codingSubmission.totalTests,
+        createdAt: codingSubmission.createdAt,
+      })
+      .from(codingSubmission)
+      .where(
+        and(
+          eq(codingSubmission.userId, userId),
+          eq(codingSubmission.problemSlug, submission.problemSlug),
+          or(
+            gt(codingSubmission.createdAt, submission.createdAt),
+            and(
+              eq(codingSubmission.createdAt, submission.createdAt),
+              gt(codingSubmission.id, submission.id),
+            ),
+          ),
+        ),
+      )
+      .orderBy(asc(codingSubmission.createdAt), asc(codingSubmission.id))
+      .limit(1),
+  ]);
 
   return {
     id: submission.id,
@@ -577,6 +605,12 @@ export async function getCodingSubmissionForStudent(
       ? {
           ...previousSubmission,
           createdAt: previousSubmission.createdAt.toISOString(),
+        }
+      : null,
+    nextSubmission: nextSubmission
+      ? {
+          ...nextSubmission,
+          createdAt: nextSubmission.createdAt.toISOString(),
         }
       : null,
   };

@@ -88,12 +88,13 @@ describe("SubmissionSnapshot", () => {
             totalTests: 4,
             createdAt: "2026-08-04T10:15:00.000Z",
           },
+          nextSubmission: null,
         }}
       />,
     );
     const snapshot = within(container);
 
-    expect(snapshot.getByText("Accepted")).toBeInTheDocument();
+    expect(snapshot.getAllByText("Accepted")).toHaveLength(2);
     expect(snapshot.getByText("4/4 checks passed")).toBeInTheDocument();
     expect(snapshot.getByLabelText("Submitted JavaScript source")).toHaveTextContent(
       "function sum",
@@ -109,6 +110,15 @@ describe("SubmissionSnapshot", () => {
         name: "Previous and selected JavaScript source comparison",
       }),
     ).toHaveTextContent("return a - b");
+    const attemptTrail = snapshot.getByRole("navigation", {
+      name: "Submission trail for Sum two numbers",
+    });
+    expect(
+      within(attemptTrail).getByRole("link", {
+        name: "Review earlier submission: Wrong Answer, 1 of 4 checks",
+      }),
+    ).toHaveAttribute("href", "/submissions/submission-0");
+    expect(within(attemptTrail).getByText("Latest saved try")).toBeInTheDocument();
     expect(
       snapshot.getByLabelText("Checks changed from 1 of 4 to 4 of 4"),
     ).toHaveTextContent("1/4 → 4/4");
@@ -127,6 +137,13 @@ describe("SubmissionSnapshot", () => {
           ...submissions[1],
           code: null,
           previousSubmission: null,
+          nextSubmission: {
+            id: "submission-2",
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-08-04T10:30:00.000Z",
+          },
         }}
       />,
     );
@@ -136,7 +153,29 @@ describe("SubmissionSnapshot", () => {
         name: "This earlier result has no source snapshot.",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Wrong Answer")).toBeInTheDocument();
+    expect(screen.getAllByText("Wrong Answer")).toHaveLength(2);
     expect(screen.getByText("2/4 checks passed")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Review later submission: Accepted, 4 of 4 checks",
+      }),
+    ).toHaveAttribute("href", "/submissions/submission-2");
+  });
+
+  it("stays uncluttered when a problem has only one saved try", () => {
+    render(
+      <SubmissionSnapshot
+        submission={{
+          ...submissions[0],
+          code: "function solve(input) { return input; }",
+          previousSubmission: null,
+          nextSubmission: null,
+        }}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("navigation", { name: /submission trail/i }),
+    ).not.toBeInTheDocument();
   });
 });

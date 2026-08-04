@@ -132,6 +132,7 @@ export function SubmissionSnapshot({
   submission: CodingSubmissionHistoryDetail;
 }) {
   const previousSubmission = submission.previousSubmission;
+  const nextSubmission = submission.nextSubmission;
   const comparison =
     submission.code !== null && previousSubmission?.code != null
       ? buildSubmissionLineDiff(previousSubmission.code, submission.code)
@@ -169,6 +170,67 @@ export function SubmissionSnapshot({
           </p>
         </div>
       </header>
+
+      {previousSubmission || nextSubmission ? (
+        <nav
+          className="submission-attempt-navigation"
+          aria-label={`Submission trail for ${submission.problemTitle}`}
+        >
+          <div className="submission-attempt-navigation-heading">
+            <p>Attempt trail</p>
+            <h2>Move through this problem&apos;s saved tries.</h2>
+          </div>
+          <div className="submission-attempt-navigation-links">
+            {previousSubmission ? (
+              <Link
+                href={`/submissions/${previousSubmission.id}`}
+                aria-label={`Review earlier submission: ${previousSubmission.verdict}, ${previousSubmission.passedTests} of ${previousSubmission.totalTests} checks`}
+              >
+                <span>
+                  <span aria-hidden="true">←</span> Earlier try
+                </span>
+                <strong>{previousSubmission.verdict}</strong>
+                <small>
+                  {previousSubmission.passedTests}/{previousSubmission.totalTests}{" "}
+                  checks · {formatSubmissionTime(previousSubmission.createdAt)}
+                </small>
+              </Link>
+            ) : (
+              <div className="is-unavailable">
+                <span>Earlier try</span>
+                <strong>First saved try</strong>
+              </div>
+            )}
+            <div className="is-selected" aria-current="page">
+              <span>Selected try</span>
+              <strong>{submission.verdict}</strong>
+              <small>
+                {submission.passedTests}/{submission.totalTests} checks
+              </small>
+            </div>
+            {nextSubmission ? (
+              <Link
+                href={`/submissions/${nextSubmission.id}`}
+                aria-label={`Review later submission: ${nextSubmission.verdict}, ${nextSubmission.passedTests} of ${nextSubmission.totalTests} checks`}
+              >
+                <span>
+                  Later try <span aria-hidden="true">→</span>
+                </span>
+                <strong>{nextSubmission.verdict}</strong>
+                <small>
+                  {nextSubmission.passedTests}/{nextSubmission.totalTests} checks ·{" "}
+                  {formatSubmissionTime(nextSubmission.createdAt)}
+                </small>
+              </Link>
+            ) : (
+              <div className="is-unavailable">
+                <span>Later try</span>
+                <strong>Latest saved try</strong>
+              </div>
+            )}
+          </div>
+        </nav>
+      ) : null}
 
       {comparison && comparisonSummary && previousSubmission ? (
         <section

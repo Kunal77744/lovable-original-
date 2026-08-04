@@ -80,6 +80,7 @@ describe("SubmissionPage", () => {
       hasSource: true,
       code: "function sum(a, b) { return a + b; }",
       previousSubmission: null,
+      nextSubmission: null,
     });
 
     render(
