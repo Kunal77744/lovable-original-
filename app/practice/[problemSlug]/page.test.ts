@@ -1,9 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getCodingProblemBookmarkForStudent,
   getCodingProblemForStudent,
   getPracticeFeedbackForStudent,
 } from "@/db/coding-practice";
+import { auth } from "@/lib/auth";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { capturePracticeProblemStarted } from "@/lib/product-analytics";
 import ProblemPage, { generateMetadata } from "./page";
@@ -15,7 +17,7 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/auth", () => ({
   auth: {
     api: {
-      getSession: vi.fn().mockResolvedValue(null),
+      getSession: vi.fn(),
     },
   },
 }));
@@ -27,6 +29,7 @@ vi.mock("@/lib/product-analytics", () => ({
 }));
 
 vi.mock("@/db/coding-practice", () => ({
+  getCodingProblemBookmarkForStudent: vi.fn(),
   getCodingProblemForStudent: vi.fn((_: string | null, problemSlug: string) => {
     const problem = CODING_PROBLEMS.find(
       (candidate) => candidate.slug === problemSlug,
@@ -45,7 +48,21 @@ vi.mock("@/db/coding-practice", () => ({
   getPracticeFeedbackForStudent: vi.fn(),
 }));
 
+const getSession = vi.mocked(auth.api.getSession);
+const getBookmark = vi.mocked(getCodingProblemBookmarkForStudent);
+const getPracticeFeedback = vi.mocked(getPracticeFeedbackForStudent);
+
 describe("practice problem metadata", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSession.mockResolvedValue(null);
+    getBookmark.mockResolvedValue(false);
+    getPracticeFeedback.mockResolvedValue({
+      isEligible: false,
+      feedback: null,
+    });
+  });
+
   it("renders distinct problem-specific previews for all six routes", async () => {
     const renderedMetadata = await Promise.all(
       CODING_PROBLEMS.map(async (problem) => ({
@@ -125,6 +142,9 @@ describe("practice problem metadata", () => {
         problem.slug,
       );
       expect(getPracticeFeedbackForStudent).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole("button", { name: `Save ${problem.title} for later` }),
+      ).not.toBeInTheDocument();
 
       cleanup();
     }
@@ -133,5 +153,30 @@ describe("practice problem metadata", () => {
     expect(capturePracticeProblemStarted).toHaveBeenCalledWith({
       problemSlug: CODING_PROBLEMS[0].slug,
     });
+  });
+
+  it("restores a signed-in learner's saved state without changing the main workspace", async () => {
+    const problem = CODING_PROBLEMS[0];
+    getSession.mockResolvedValue({
+      user: { id: "returning-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getBookmark.mockResolvedValue(true);
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: `Remove ${problem.title} from saved problems`,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(getBookmark).toHaveBeenCalledWith("returning-learner", problem.slug);
+    expect(getCodingProblemForStudent).toHaveBeenCalledWith(
+      "returning-learner",
+      problem.slug,
+    );
   });
 });

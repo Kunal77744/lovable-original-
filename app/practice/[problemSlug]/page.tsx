@@ -3,8 +3,10 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CodingWorkspace } from "@/components/coding-workspace";
+import { ProblemBookmarkButton } from "@/components/problem-bookmark-button";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
 import {
+  getCodingProblemBookmarkForStudent,
   getCodingProblemForStudent,
   getPracticeFeedbackForStudent,
 } from "@/db/coding-practice";
@@ -51,10 +53,12 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const studentState = await getCodingProblemForStudent(
-    session?.user.id ?? null,
-    problemSlug,
-  );
+  const [studentState, isBookmarked] = await Promise.all([
+    getCodingProblemForStudent(session?.user.id ?? null, problemSlug),
+    session
+      ? getCodingProblemBookmarkForStudent(session.user.id, problemSlug)
+      : Promise.resolve(false),
+  ]);
 
   if (!studentState) notFound();
 
@@ -98,6 +102,13 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
                 <span>JavaScript</span>
                 <span>1,000 ms</span>
               </div>
+              {session ? (
+                <ProblemBookmarkButton
+                  initialBookmarked={Boolean(isBookmarked)}
+                  problemSlug={problem.slug}
+                  problemTitle={problem.title}
+                />
+              ) : null}
             </div>
 
             <section>

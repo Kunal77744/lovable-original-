@@ -1,6 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getCodingCatalogProgress } from "@/db/coding-practice";
+import {
+  getCodingCatalogProgress,
+  getCodingProblemBookmarksForStudent,
+} from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import PracticePage from "./page";
 
@@ -18,14 +21,17 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/db/coding-practice", () => ({
   getCodingCatalogProgress: vi.fn(),
+  getCodingProblemBookmarksForStudent: vi.fn(),
 }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const getProgress = vi.mocked(getCodingCatalogProgress);
+const getBookmarks = vi.mocked(getCodingProblemBookmarksForStudent);
 
 describe("PracticePage progress", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getBookmarks.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -60,6 +66,8 @@ describe("PracticePage progress", () => {
       ),
     ).toBeInTheDocument();
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
+    expect(getBookmarks).toHaveBeenCalledWith("fresh-learner");
+    expect(screen.getByText("Nothing saved yet. Use Save for later on any problem.")).toBeInTheDocument();
   });
 
   it("restores a returning learner's saved Accepted total", async () => {
@@ -71,6 +79,14 @@ describe("PracticePage progress", () => {
       totalCount: 6,
       completedSlugs: ["sum-two-numbers", "reverse-a-word"],
     });
+    getBookmarks.mockResolvedValue([
+      {
+        slug: "reverse-a-word",
+        number: 5,
+        title: "Reverse a word",
+        skill: "String traversal",
+      },
+    ]);
 
     render(await PracticePage());
 
@@ -88,6 +104,11 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
+    expect(
+      screen.getByRole("link", {
+        name: /05\s*Reverse a word\s*String traversal/,
+      }),
+    ).toHaveAttribute("href", "/practice/reverse-a-word");
   });
 
   it("describes the catalog without implying personal progress when signed out", async () => {
@@ -113,6 +134,8 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Start step 1 of 6" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
     expect(getProgress).toHaveBeenCalledWith(null);
+    expect(getBookmarks).not.toHaveBeenCalled();
+    expect(screen.queryByText("Saved for later")).not.toBeInTheDocument();
   });
 
   it("shows one completed six-step outcome without inventing another step", async () => {

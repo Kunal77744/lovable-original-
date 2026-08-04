@@ -13,6 +13,7 @@ const requiredTables = [
   "course_assignment",
   "course_certificate",
   "course_feedback",
+  "coding_problem_bookmark",
   "coding_problem_progress",
   "coding_submission",
   "css_practice_attempt",
