@@ -334,6 +334,46 @@ describe("CodingWorkspace", () => {
     expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
   });
 
+  it("runs every private test case together without saving an attempt", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["42", "3", ""],
+      debugOutput: ["checking 19 23", "checking -5 8", "checking 0 0"],
+    });
+    renderWorkspace({ initialCustomTestCases: ["19 23", "-5 8", "0 0"] });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.click(screen.getByRole("button", { name: "Run all 3 cases" }));
+
+    expect(
+      await screen.findByText("Private test suite"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "3 private test cases finished locally. Review every output before you submit.",
+    );
+    expect(
+      screen.getByRole("list", { name: "Private test suite outputs" }),
+    ).toHaveTextContent("Case 1Input19 23Output42");
+    expect(
+      screen.getByRole("list", { name: "Private test suite outputs" }),
+    ).toHaveTextContent("Case 2Input-5 8Output3");
+    expect(
+      screen.getByRole("list", { name: "Private test suite outputs" }),
+    ).toHaveTextContent("Case 3Input0 0Output(empty)");
+    expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      ["19 23", "-5 8", "0 0"],
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("No saved submissions yet. Your first verdict will appear here."),
+    ).toBeInTheDocument();
+  });
+
   it("saves the current custom input privately without running or submitting it", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(

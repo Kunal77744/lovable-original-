@@ -7559,7 +7559,8 @@ h1 {
 
 .custom-test-save-action:focus-visible,
 .private-test-case button:focus-visible,
-.private-test-cases-save:focus-visible {
+.private-test-cases-save:focus-visible,
+.private-test-suite-run:focus-visible {
   outline: 3px solid rgba(131, 221, 168, 0.35);
   outline-offset: 3px;
 }
@@ -7614,6 +7615,31 @@ h1 {
   margin-top: 15px;
   display: grid;
   gap: 10px;
+}
+
+.private-test-suite-run {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 15px;
+  color: #dff5e7;
+  border: 1px solid #659978;
+  border-radius: 8px;
+  background: #1b2b23;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.private-test-suite-run:hover:not(:disabled) {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.private-test-suite-run:disabled {
+  opacity: 0.58;
+  cursor: wait;
 }
 
 .private-test-case {
@@ -8138,6 +8164,62 @@ h1 {
 
 .sample-output pre {
   color: #e8efeb;
+}
+
+.private-test-suite-results {
+  margin: 15px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  list-style: none;
+}
+
+.private-test-suite-results li {
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr);
+  border: 1px solid #34443c;
+  border-radius: 8px;
+  background: #111b17;
+}
+
+.private-test-suite-results li > span {
+  padding: 13px 10px;
+  display: grid;
+  place-items: center;
+  color: #91cca9;
+  border-right: 1px solid #34443c;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.private-test-suite-results li > div {
+  min-width: 0;
+  padding: 11px 12px;
+}
+
+.private-test-suite-results li > div + div {
+  border-left: 1px solid #34443c;
+}
+
+.coding-result .private-test-suite-results p {
+  margin: 0 0 6px;
+  color: #87968e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.private-test-suite-results pre {
+  margin: 0;
+  overflow: auto;
+  color: #e8efeb;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .debug-output {
@@ -11345,6 +11427,16 @@ footer {
 
   .private-test-case > div {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .private-test-suite-results li {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .private-test-suite-results li > div + div {
+    grid-column: 2;
+    border-top: 1px solid #34443c;
+    border-left: 0;
   }
 
   .accepted-continuation {

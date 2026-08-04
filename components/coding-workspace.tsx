@@ -77,6 +77,12 @@ type RunState =
     }
   | { kind: "custom"; message: string; output: string }
   | {
+      kind: "test-suite";
+      message: string;
+      results: { input: string; output: string }[];
+      debugOutput: string[];
+    }
+  | {
       kind: "verdict";
       message: string;
       verdict: "Accepted" | "Wrong Answer";
@@ -251,6 +257,40 @@ export function CodingWorkspace({
       kind: "custom",
       output: result.outputs[0] ?? "",
       message: "Custom input finished. Review the output before you submit.",
+    });
+  }
+
+  async function runPrivateTestSuite() {
+    if (customTestCases.length === 0) return;
+
+    setRunState({
+      kind: "running",
+      message: `Running ${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} in your browser…`,
+    });
+    const result = await runCodingSolution(code, customTestCases);
+
+    if (result.status === "timeout") {
+      setRunState({ kind: "timeout", message: result.message });
+      return;
+    }
+
+    if (result.status !== "finished") {
+      setRunState({
+        kind: "error",
+        message: result.message,
+        debugOutput: result.debugOutput,
+      });
+      return;
+    }
+
+    setRunState({
+      kind: "test-suite",
+      results: customTestCases.map((input, index) => ({
+        input,
+        output: result.outputs[index] ?? "",
+      })),
+      debugOutput: result.debugOutput,
+      message: `${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} finished locally. Review every output before you submit.`,
     });
   }
 
@@ -439,7 +479,9 @@ export function CodingWorkspace({
   }
 
   const visibleDebugOutput =
-    runState.kind === "sample" || runState.kind === "error"
+    runState.kind === "sample" ||
+    runState.kind === "test-suite" ||
+    runState.kind === "error"
       ? (runState.debugOutput ?? [])
       : [];
 
@@ -645,38 +687,50 @@ export function CodingWorkspace({
               </span>
             </div>
             {customTestCases.length > 0 ? (
-              <div className="private-test-case-list">
-                {customTestCases.map((savedInput, index) => (
-                  <div className="private-test-case" key={index}>
-                    <label htmlFor={`saved-test-case-${index}`}>
-                      Test case {index + 1}
-                    </label>
-                    <textarea
-                      id={`saved-test-case-${index}`}
-                      value={savedInput}
-                      onChange={(event) =>
-                        updateCustomTestCase(index, event.target.value)
-                      }
-                      spellCheck={false}
-                    />
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setCustomInput(savedInput)}
-                      >
-                        Use input
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void removeCustomTestCase(index)}
-                        disabled={testCaseSaveState === "saving"}
-                      >
-                        Remove
-                      </button>
+              <>
+                <button
+                  className="private-test-suite-run"
+                  type="button"
+                  onClick={runPrivateTestSuite}
+                  disabled={runState.kind === "running"}
+                >
+                  {runState.kind === "running"
+                    ? "Running test suite…"
+                    : `Run all ${customTestCases.length} ${customTestCases.length === 1 ? "case" : "cases"}`}
+                </button>
+                <div className="private-test-case-list">
+                  {customTestCases.map((savedInput, index) => (
+                    <div className="private-test-case" key={index}>
+                      <label htmlFor={`saved-test-case-${index}`}>
+                        Test case {index + 1}
+                      </label>
+                      <textarea
+                        id={`saved-test-case-${index}`}
+                        value={savedInput}
+                        onChange={(event) =>
+                          updateCustomTestCase(index, event.target.value)
+                        }
+                        spellCheck={false}
+                      />
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setCustomInput(savedInput)}
+                        >
+                          Use input
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void removeCustomTestCase(index)}
+                          disabled={testCaseSaveState === "saving"}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <p className="private-test-cases-empty">
                 No saved cases yet. Try an input above, then save it here.
@@ -728,15 +782,17 @@ export function CodingWorkspace({
                   : "Example differs"
                 : runState.kind === "custom"
                   ? "Custom run"
-                : runState.kind === "error"
-                  ? "Runner stopped"
-                  : runState.kind === "timeout"
-                    ? "Time limit exceeded"
-                  : runState.kind === "running"
-                    ? "Judging"
-                    : initialBestVerdict === "Accepted"
-                      ? "Accepted"
-                      : "Ready"}
+                  : runState.kind === "test-suite"
+                    ? "Private test suite"
+                    : runState.kind === "error"
+                      ? "Runner stopped"
+                      : runState.kind === "timeout"
+                        ? "Time limit exceeded"
+                        : runState.kind === "running"
+                          ? "Judging"
+                          : initialBestVerdict === "Accepted"
+                            ? "Accepted"
+                            : "Ready"}
           </span>
           {runState.kind === "verdict" ? (
             <strong>
@@ -750,6 +806,26 @@ export function CodingWorkspace({
             <span>Your output</span>
             <pre>{runState.output || "(empty)"}</pre>
           </div>
+        ) : null}
+        {runState.kind === "test-suite" ? (
+          <ol
+            className="private-test-suite-results"
+            aria-label="Private test suite outputs"
+          >
+            {runState.results.map((result, index) => (
+              <li key={`${index}-${result.input}`}>
+                <span>Case {index + 1}</span>
+                <div>
+                  <p>Input</p>
+                  <pre>{result.input}</pre>
+                </div>
+                <div>
+                  <p>Output</p>
+                  <pre>{result.output || "(empty)"}</pre>
+                </div>
+              </li>
+            ))}
+          </ol>
         ) : null}
         {visibleDebugOutput.length > 0 ? (
           <div className="debug-output">
