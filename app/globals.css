@@ -5490,6 +5490,141 @@ h1 {
     rgba(255, 255, 255, 0.6);
 }
 
+.mistake-review {
+  margin-top: 20px;
+  padding: 28px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.mistake-review-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.mistake-review-heading .eyebrow {
+  margin-bottom: 7px;
+}
+
+.mistake-review-heading h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 31px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.mistake-review-heading div > p:last-child {
+  max-width: 60ch;
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.mistake-review-heading > span {
+  flex: 0 0 auto;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.mistake-review-list {
+  margin: 23px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.mistake-review-list li {
+  min-height: 128px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 22px;
+  border-top: 1px solid rgba(23, 35, 30, 0.11);
+}
+
+.mistake-review-number {
+  display: grid;
+  gap: 5px;
+}
+
+.mistake-review-number span {
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.mistake-review-number small,
+.mistake-review-copy > span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.mistake-review-copy {
+  display: grid;
+  gap: 7px;
+}
+
+.mistake-review-copy strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.mistake-review-copy p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.mistake-review-list a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 760;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mistake-review-list a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.mistake-review-list a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.mistake-review-empty {
+  margin: 20px 0 0;
+  padding-top: 17px;
+  color: var(--muted);
+  border-top: 1px solid rgba(23, 35, 30, 0.1);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .saved-problems-heading {
   display: flex;
   align-items: flex-start;
@@ -9905,6 +10040,30 @@ footer {
 
   .saved-problems {
     padding: 21px 20px;
+  }
+
+  .mistake-review {
+    padding: 22px 20px;
+  }
+
+  .mistake-review-heading {
+    gap: 16px;
+  }
+
+  .mistake-review-list li {
+    padding: 18px 0;
+    grid-template-columns: 50px minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+  }
+
+  .mistake-review-number span {
+    font-size: 25px;
+  }
+
+  .mistake-review-list a {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .saved-problems-heading {

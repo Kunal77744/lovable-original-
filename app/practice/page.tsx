@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import {
   getCodingCatalogProgress,
+  getCodingMistakeReviewQueueForStudent,
   getCodingProblemBookmarksForStudent,
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
@@ -28,10 +29,13 @@ export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const [progress, savedProblems] = await Promise.all([
+  const [progress, savedProblems, reviewQueue] = await Promise.all([
     getCodingCatalogProgress(session?.user.id ?? null),
     session
       ? getCodingProblemBookmarksForStudent(session.user.id)
+      : Promise.resolve([]),
+    session
+      ? getCodingMistakeReviewQueueForStudent(session.user.id)
       : Promise.resolve([]),
   ]);
   const completedSlugs = new Set(progress.completedSlugs);
@@ -154,6 +158,57 @@ export default async function PracticePage() {
               );
             })}
           </div>
+
+          {session ? (
+            <aside
+              className="mistake-review"
+              aria-labelledby="mistake-review-title"
+            >
+              <div className="mistake-review-heading">
+                <div>
+                  <p className="eyebrow">Private review queue</p>
+                  <h3 id="mistake-review-title">Mistakes to revisit</h3>
+                  <p>
+                    Your latest saved verdict decides what stays here. An
+                    Accepted retry clears the concept.
+                  </p>
+                </div>
+                <span>
+                  {reviewQueue.length}{" "}
+                  {reviewQueue.length === 1 ? "concept" : "concepts"}
+                </span>
+              </div>
+
+              {reviewQueue.length > 0 ? (
+                <ol className="mistake-review-list">
+                  {reviewQueue.map((item) => (
+                    <li key={item.slug}>
+                      <div className="mistake-review-number">
+                        <span>{String(item.number).padStart(2, "0")}</span>
+                        <small>{item.skill}</small>
+                      </div>
+                      <div className="mistake-review-copy">
+                        <strong>{item.concept}</strong>
+                        <p>{item.recoveryHint}</p>
+                        <span>
+                          Latest attempt: {item.passedTests}/{item.totalTests}{" "}
+                          checks
+                        </span>
+                      </div>
+                      <Link href={`/practice/${item.slug}`}>
+                        Review {item.title} <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mistake-review-empty">
+                  No concepts waiting. A saved Wrong Answer adds one here;
+                  an Accepted retry clears it.
+                </p>
+              )}
+            </aside>
+          ) : null}
 
           {session ? (
             <aside className="saved-problems" aria-labelledby="saved-problems-title">

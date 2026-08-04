@@ -5,6 +5,10 @@ import {
   getNextUnfinishedCodingProblemSlug,
   gradeCodingOutputs,
 } from "@/lib/coding-problems";
+import {
+  buildCodingMistakeReviewQueue,
+  type CodingMistakeReviewItem,
+} from "@/lib/coding-review-queue";
 import type {
   PracticeFeedbackUsefulness,
   SavedPracticeFeedback,
@@ -39,6 +43,33 @@ export type SavedCodingProblem = {
   title: string;
   skill: string;
 };
+
+export async function getCodingMistakeReviewQueueForStudent(
+  userId: string,
+): Promise<CodingMistakeReviewItem[]> {
+  const attempts = await getDatabase()
+    .select({
+      id: codingSubmission.id,
+      problemSlug: codingSubmission.problemSlug,
+      verdict: codingSubmission.verdict,
+      passedTests: codingSubmission.passedTests,
+      totalTests: codingSubmission.totalTests,
+      createdAt: codingSubmission.createdAt,
+    })
+    .from(codingSubmission)
+    .where(
+      and(
+        eq(codingSubmission.userId, userId),
+        inArray(
+          codingSubmission.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(desc(codingSubmission.createdAt), desc(codingSubmission.id));
+
+  return buildCodingMistakeReviewQueue(attempts);
+}
 
 export async function saveCodingProblemTestCases(
   userId: string,
