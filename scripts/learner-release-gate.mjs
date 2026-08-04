@@ -825,6 +825,21 @@ async function runJourney(baseUrl, databaseUrl) {
       "The current JavaScript draft could not be revised after submission.",
     );
 
+    const codingWorkspaceResponse = await request(
+      "/practice/sum-two-numbers",
+    );
+    const codingWorkspaceHtml = await codingWorkspaceResponse.text();
+    assertStep(
+      codingWorkspaceResponse.status === 200 &&
+        codingWorkspaceHtml.includes(
+          `href="/submissions/${savedCodingSubmissionId}"`,
+        ) &&
+        codingWorkspaceHtml.includes("Review source") &&
+        codingWorkspaceHtml.includes(revisedCodingDraft),
+      step,
+      "The JavaScript workspace did not link its verdict to the saved source while preserving the current draft.",
+    );
+
     const submissionPageResponse = await request(
       `/submissions/${savedCodingSubmissionId}`,
     );

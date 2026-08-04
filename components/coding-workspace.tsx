@@ -13,12 +13,12 @@ import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
 } from "@/lib/product-analytics";
-import type { CodingAttempt } from "@/db/coding-practice";
+import type { CodingProblemAttempt } from "@/db/coding-practice";
 import type { SavedPracticeFeedback } from "@/lib/practice-feedback";
 import type { SavedPracticeSolutionNote } from "@/lib/practice-solution-note";
 
 type CodingWorkspaceProps = {
-  attempts: CodingAttempt[];
+  attempts: CodingProblemAttempt[];
   bestVerdict: string | null;
   initialCode: string;
   initialCustomTestCases?: string[];
@@ -54,6 +54,7 @@ type SubmissionResponse = {
   totalCount: number;
   nextProblemSlug: string | null;
   createdAt: string;
+  hasSource: boolean;
   isFirstAcceptedResult: boolean;
   error?: string;
 };
@@ -368,6 +369,7 @@ export function CodingWorkspace({
           passedTests: payload.passedTests,
           totalTests: payload.totalTests,
           createdAt: payload.createdAt,
+          hasSource: payload.hasSource,
         },
         ...current,
       ].slice(0, 8));
@@ -812,6 +814,17 @@ export function CodingWorkspace({
                     minute: "2-digit",
                   }).format(new Date(attempt.createdAt))}
                 </time>
+                {attempt.hasSource ? (
+                  <Link
+                    className="attempt-source-link"
+                    href={`/submissions/${attempt.id}`}
+                    aria-label={`Review source for attempt ${attempts.length - index}`}
+                  >
+                    Review source <span aria-hidden="true">→</span>
+                  </Link>
+                ) : (
+                  <span className="attempt-source-state">Result only</span>
+                )}
               </li>
             ))}
           </ol>

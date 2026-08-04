@@ -7987,7 +7987,7 @@ h1 {
 .attempt-history li {
   min-height: 45px;
   display: grid;
-  grid-template-columns: 36px minmax(100px, 1fr) 80px auto;
+  grid-template-columns: 36px minmax(100px, 1fr) 80px auto minmax(74px, auto);
   align-items: center;
   gap: 10px;
   color: #96a49d;
@@ -8005,6 +8005,36 @@ h1 {
 
 .attempt-wrong {
   color: #efaaa2;
+}
+
+.attempt-source-link,
+.attempt-source-state {
+  justify-self: end;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.attempt-source-link {
+  color: #91cca9;
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.attempt-source-link:hover {
+  color: #b8eccd;
+  text-decoration: underline;
+}
+
+.attempt-source-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #83dda8;
+  outline-offset: 3px;
+}
+
+.attempt-source-state {
+  color: #73827a;
+  font-weight: 600;
 }
 
 .attempt-history-empty {
@@ -11122,7 +11152,7 @@ footer {
   }
 
   .attempt-history li {
-    grid-template-columns: 28px minmax(88px, 1fr) auto;
+    grid-template-columns: 28px minmax(88px, 1fr) auto auto;
   }
 
   .attempt-history li time {

@@ -94,6 +94,7 @@ function submissionResponse(
       totalCount: 6,
       nextProblemSlug: verdict === "Accepted" ? "even-or-odd" : null,
       createdAt: "2026-07-26T22:30:00.000Z",
+      hasSource: true,
       isFirstAcceptedResult: verdict === "Accepted",
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
@@ -130,6 +131,64 @@ describe("CodingWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Clean starter loaded" }),
     ).toBeDisabled();
+  });
+
+  it("opens the private source snapshot behind a saved verdict", () => {
+    render(
+      <CodingWorkspace
+        attempts={[
+          {
+            id: "attempt-with-source",
+            verdict: "Wrong Answer",
+            passedTests: 3,
+            totalTests: 4,
+            createdAt: "2026-08-04T12:00:00.000Z",
+            hasSource: true,
+          },
+        ]}
+        bestVerdict="Wrong Answer"
+        initialCode="function solve(input) { return input; }"
+        initialPracticeFeedback={null}
+        isSignedIn
+        isPracticeFeedbackEligible={false}
+        problem={problem}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Review source for attempt 1" }),
+    ).toHaveAttribute("href", "/submissions/attempt-with-source");
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+  });
+
+  it("keeps an older verdict truthful when no source snapshot exists", () => {
+    render(
+      <CodingWorkspace
+        attempts={[
+          {
+            id: "legacy-result",
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-07-29T02:28:00.000Z",
+            hasSource: false,
+          },
+        ]}
+        bestVerdict="Accepted"
+        initialCode="function solve(input) { return input; }"
+        initialPracticeFeedback={null}
+        isSignedIn
+        isPracticeFeedbackEligible={false}
+        problem={problem}
+      />,
+    );
+
+    expect(screen.getByText("Result only")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /review source/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps edited code when the restore confirmation is cancelled", () => {

@@ -31,6 +31,10 @@ export type CodingAttempt = {
   createdAt: string;
 };
 
+export type CodingProblemAttempt = CodingAttempt & {
+  hasSource: boolean;
+};
+
 export type RecentCodingAttempt = CodingAttempt & {
   problemSlug: string;
   problemNumber: number;
@@ -630,7 +634,7 @@ export async function getCodingProblemForStudent(
     return {
       code: problem.starterCode,
       bestVerdict: null,
-      attempts: [] as CodingAttempt[],
+      attempts: [] as CodingProblemAttempt[],
       solutionNote: null,
       customTestCases: [] as string[],
     };
@@ -654,6 +658,7 @@ export async function getCodingProblemForStudent(
     database
       .select({
         id: codingSubmission.id,
+        code: codingSubmission.code,
         verdict: codingSubmission.verdict,
         passedTests: codingSubmission.passedTests,
         totalTests: codingSubmission.totalTests,
@@ -697,8 +702,12 @@ export async function getCodingProblemForStudent(
     code: progress[0]?.code ?? problem.starterCode,
     bestVerdict: progress[0]?.bestVerdict ?? null,
     attempts: attempts.map((attempt) => ({
-      ...attempt,
+      id: attempt.id,
+      verdict: attempt.verdict,
+      passedTests: attempt.passedTests,
+      totalTests: attempt.totalTests,
       createdAt: attempt.createdAt.toISOString(),
+      hasSource: attempt.code !== null,
     })),
     solutionNote: solutionNotes[0]
       ? {
@@ -832,6 +841,7 @@ export async function saveCodingSubmission(
     return {
       id: submissionId,
       ...result,
+      hasSource: true,
       bestVerdict,
       isFirstAcceptedResult,
       completedCount: completed.length,
