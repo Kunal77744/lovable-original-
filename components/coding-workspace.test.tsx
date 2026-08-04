@@ -220,6 +220,36 @@ describe("CodingWorkspace", () => {
     );
   });
 
+  it("runs editable custom input without saving an attempt", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["42"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Custom input"), {
+      target: { value: "19 23" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Run custom input" }));
+
+    expect(await screen.findByText("Custom run")).toBeInTheDocument();
+    expect(screen.getByText("42")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Custom input finished. Review the output before you submit.",
+    );
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      ["19 23"],
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("No saved submissions yet. Your first verdict will appear here."),
+    ).toBeInTheDocument();
+  });
+
   it("submits all outputs and renders a saved Accepted verdict", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
