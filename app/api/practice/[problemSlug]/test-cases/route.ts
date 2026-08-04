@@ -2,7 +2,10 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { saveCodingProblemTestCases } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
-import { validateCodingTestCaseInputs } from "@/lib/coding-test-cases";
+import {
+  buildLegacyCodingTestCases,
+  validateCodingTestCases,
+} from "@/lib/coding-test-cases";
 
 type RouteContext = {
   params: Promise<{ problemSlug: string }>;
@@ -29,11 +32,13 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const validation = validateCodingTestCaseInputs(
-    typeof body === "object" && body !== null && "inputs" in body
-      ? body.inputs
-      : null,
-  );
+  const submittedCases =
+    typeof body === "object" && body !== null && "cases" in body
+      ? body.cases
+      : typeof body === "object" && body !== null && "inputs" in body
+        ? buildLegacyCodingTestCases(body.inputs)
+        : null;
+  const validation = validateCodingTestCases(submittedCases);
 
   if (!validation.valid) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
@@ -43,7 +48,7 @@ export async function POST(request: Request, context: RouteContext) {
   const testCases = await saveCodingProblemTestCases(
     session.user.id,
     problemSlug,
-    validation.inputs,
+    validation.cases,
   );
 
   if (!testCases) {

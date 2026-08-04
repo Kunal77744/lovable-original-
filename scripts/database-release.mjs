@@ -52,6 +52,7 @@ const requiredColumns = {
     "user_id",
     "problem_slug",
     "inputs",
+    "expected_outputs",
     "created_at",
     "updated_at",
   ],

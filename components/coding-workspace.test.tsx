@@ -6,6 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { CodingTestCase } from "@/lib/coding-test-cases";
 import { CodingWorkspace } from "./coding-workspace";
 
 const runCodingSolution = vi.fn();
@@ -55,7 +56,7 @@ function renderWorkspace({
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
 }: {
-  initialCustomTestCases?: string[];
+  initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
     problemSlug: string;
     usefulness: "not_yet" | "somewhat" | "very";
@@ -318,12 +319,18 @@ describe("CodingWorkspace", () => {
   });
 
   it("restores private test cases without changing attempts or analytics", () => {
-    renderWorkspace({ initialCustomTestCases: ["19 23", "-5 8"] });
+    renderWorkspace({
+      initialCustomTestCases: [
+        { input: "19 23", expectedOutput: "42" },
+        { input: "-5 8", expectedOutput: null },
+      ],
+    });
 
     fireEvent.click(screen.getByText("Try your own input"));
 
     expect(screen.getByText("2/6")).toBeInTheDocument();
-    expect(screen.getByLabelText("Test case 1")).toHaveValue("19 23");
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("19 23");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("42");
     expect(screen.getByDisplayValue("-5 8")).toBeInTheDocument();
     expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
     expect(
@@ -341,7 +348,13 @@ describe("CodingWorkspace", () => {
       outputs: ["42", "3", ""],
       debugOutput: ["checking 19 23", "checking -5 8", "checking 0 0"],
     });
-    renderWorkspace({ initialCustomTestCases: ["19 23", "-5 8", "0 0"] });
+    renderWorkspace({
+      initialCustomTestCases: [
+        { input: "19 23", expectedOutput: "42" },
+        { input: "-5 8", expectedOutput: "4" },
+        { input: "0 0", expectedOutput: "" },
+      ],
+    });
 
     fireEvent.click(screen.getByText("Try your own input"));
     fireEvent.click(screen.getByRole("button", { name: "Run all 3 cases" }));
@@ -350,17 +363,17 @@ describe("CodingWorkspace", () => {
       await screen.findByText("Private test suite"),
     ).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
-      "3 private test cases finished locally. Review every output before you submit.",
+      "2 of 3 expected outputs matched.",
     );
     expect(
       screen.getByRole("list", { name: "Private test suite outputs" }),
-    ).toHaveTextContent("Case 1Input19 23Output42");
+    ).toHaveTextContent("Case 1Input19 23Output42Expected42Matched");
     expect(
       screen.getByRole("list", { name: "Private test suite outputs" }),
-    ).toHaveTextContent("Case 2Input-5 8Output3");
+    ).toHaveTextContent("Case 2Input-5 8Output3Expected4Mismatch");
     expect(
       screen.getByRole("list", { name: "Private test suite outputs" }),
-    ).toHaveTextContent("Case 3Input0 0Output(empty)");
+    ).toHaveTextContent("Case 3Input0 0Output(empty)Expected(empty)Matched");
     expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
     expect(runCodingSolution).toHaveBeenCalledWith(
       "function solve(input) { return input; }",
@@ -374,12 +387,42 @@ describe("CodingWorkspace", () => {
     ).toBeInTheDocument();
   });
 
+  it("reports an unchecked case separately from an expected empty output", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["", ""],
+      debugOutput: [],
+    });
+    renderWorkspace({
+      initialCustomTestCases: [
+        { input: "blank", expectedOutput: null },
+        { input: "empty", expectedOutput: "" },
+      ],
+    });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.click(screen.getByRole("button", { name: "Run all 2 cases" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "1 of 1 expected output matched. 1 case ran without an expectation.",
+    );
+    const results = screen.getByRole("list", {
+      name: "Private test suite outputs",
+    });
+    expect(results).toHaveTextContent(
+      "Case 1InputblankOutput(empty)ExpectedNot checkedNo expectation",
+    );
+    expect(results).toHaveTextContent(
+      "Case 2InputemptyOutput(empty)Expected(empty)Matched",
+    );
+  });
+
   it("saves the current custom input privately without running or submitting it", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
           testCases: {
-            inputs: ["19 23"],
+            cases: [{ input: "19 23", expectedOutput: null }],
             updatedAt: "2026-08-04T10:00:00.000Z",
           },
         }),
@@ -399,12 +442,14 @@ describe("CodingWorkspace", () => {
         "/api/practice/sum-two-numbers/test-cases",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ inputs: ["19 23"] }),
+          body: JSON.stringify({
+            cases: [{ input: "19 23", expectedOutput: null }],
+          }),
         }),
       ),
     );
     expect(await screen.findByText("1 private test case saved.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Test case 1")).toHaveValue("19 23");
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("19 23");
     expect(runCodingSolution).not.toHaveBeenCalled();
     expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
     expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
@@ -420,7 +465,7 @@ describe("CodingWorkspace", () => {
         new Response(
           JSON.stringify({
             testCases: {
-              inputs: ["21 21"],
+              cases: [{ input: "21 21", expectedOutput: "42" }],
               updatedAt: "2026-08-04T10:00:00.000Z",
             },
           }),
@@ -431,18 +476,24 @@ describe("CodingWorkspace", () => {
         new Response(
           JSON.stringify({
             testCases: {
-              inputs: [],
+              cases: [],
               updatedAt: "2026-08-04T10:01:00.000Z",
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         ),
       );
-    renderWorkspace({ initialCustomTestCases: ["19 23"] });
+    renderWorkspace({
+      initialCustomTestCases: [{ input: "19 23", expectedOutput: null }],
+    });
 
     fireEvent.click(screen.getByText("Try your own input"));
-    fireEvent.change(screen.getByLabelText("Test case 1"), {
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
       target: { value: "21 21" },
+    });
+    fireEvent.click(screen.getByLabelText("Check expected output"));
+    fireEvent.change(screen.getByLabelText("Expected output"), {
+      target: { value: "42" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
@@ -450,7 +501,11 @@ describe("CodingWorkspace", () => {
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
       "/api/practice/sum-two-numbers/test-cases",
-      expect.objectContaining({ body: JSON.stringify({ inputs: ["21 21"] }) }),
+      expect.objectContaining({
+        body: JSON.stringify({
+          cases: [{ input: "21 21", expectedOutput: "42" }],
+        }),
+      }),
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
@@ -459,7 +514,7 @@ describe("CodingWorkspace", () => {
     expect(fetchSpy).toHaveBeenNthCalledWith(
       2,
       "/api/practice/sum-two-numbers/test-cases",
-      expect.objectContaining({ body: JSON.stringify({ inputs: [] }) }),
+      expect.objectContaining({ body: JSON.stringify({ cases: [] }) }),
     );
     expect(screen.getByText("No saved cases yet. Try an input above, then save it here.")).toBeInTheDocument();
   });

@@ -13,6 +13,7 @@ import type {
   PracticeFeedbackUsefulness,
   SavedPracticeFeedback,
 } from "@/lib/practice-feedback";
+import type { CodingTestCase } from "@/lib/coding-test-cases";
 import { getDatabase } from "./index";
 import {
   codingProblemBookmark,
@@ -96,13 +97,13 @@ export async function getCodingMistakeReviewQueueForStudent(
 export async function saveCodingProblemTestCases(
   userId: string,
   problemSlug: string,
-  inputs: string[],
+  cases: CodingTestCase[],
 ) {
   if (!getCodingProblem(problemSlug)) return null;
 
   const database = getDatabase();
 
-  if (inputs.length === 0) {
+  if (cases.length === 0) {
     await database
       .delete(codingProblemTestCaseSet)
       .where(
@@ -112,9 +113,11 @@ export async function saveCodingProblemTestCases(
         ),
       );
 
-    return { inputs, updatedAt: new Date().toISOString() };
+    return { cases, updatedAt: new Date().toISOString() };
   }
 
+  const inputs = cases.map((testCase) => testCase.input);
+  const expectedOutputs = cases.map((testCase) => testCase.expectedOutput);
   const now = new Date();
   const [saved] = await database
     .insert(codingProblemTestCaseSet)
@@ -123,6 +126,7 @@ export async function saveCodingProblemTestCases(
       userId,
       problemSlug,
       inputs,
+      expectedOutputs,
       updatedAt: now,
     })
     .onConflictDoUpdate({
@@ -130,15 +134,19 @@ export async function saveCodingProblemTestCases(
         codingProblemTestCaseSet.userId,
         codingProblemTestCaseSet.problemSlug,
       ],
-      set: { inputs, updatedAt: now },
+      set: { inputs, expectedOutputs, updatedAt: now },
     })
     .returning({
       inputs: codingProblemTestCaseSet.inputs,
+      expectedOutputs: codingProblemTestCaseSet.expectedOutputs,
       updatedAt: codingProblemTestCaseSet.updatedAt,
     });
 
   return {
-    inputs: saved.inputs,
+    cases: saved.inputs.map((input, index) => ({
+      input,
+      expectedOutput: saved.expectedOutputs[index] ?? null,
+    })),
     updatedAt: saved.updatedAt.toISOString(),
   };
 }
@@ -636,7 +644,7 @@ export async function getCodingProblemForStudent(
       bestVerdict: null,
       attempts: [] as CodingProblemAttempt[],
       solutionNote: null,
-      customTestCases: [] as string[],
+      customTestCases: [] as CodingTestCase[],
     };
   }
 
@@ -687,7 +695,10 @@ export async function getCodingProblemForStudent(
       )
       .limit(1),
     database
-      .select({ inputs: codingProblemTestCaseSet.inputs })
+      .select({
+        inputs: codingProblemTestCaseSet.inputs,
+        expectedOutputs: codingProblemTestCaseSet.expectedOutputs,
+      })
       .from(codingProblemTestCaseSet)
       .where(
         and(
@@ -715,7 +726,11 @@ export async function getCodingProblemForStudent(
           updatedAt: solutionNotes[0].updatedAt.toISOString(),
         }
       : null,
-    customTestCases: testCaseSets[0]?.inputs ?? [],
+    customTestCases:
+      testCaseSets[0]?.inputs.map((input, index) => ({
+        input,
+        expectedOutput: testCaseSets[0]?.expectedOutputs[index] ?? null,
+      })) ?? [],
   };
 }
 

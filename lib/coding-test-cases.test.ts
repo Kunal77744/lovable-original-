@@ -1,28 +1,50 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildLegacyCodingTestCases,
+  MAX_CODING_TEST_CASE_EXPECTED_OUTPUT_LENGTH,
   MAX_CODING_TEST_CASE_INPUT_LENGTH,
-  validateCodingTestCaseInputs,
+  validateCodingTestCases,
 } from "./coding-test-cases";
 
 describe("coding test case validation", () => {
-  it("preserves exact bounded inputs", () => {
-    expect(validateCodingTestCaseInputs(["  19 23\n", "-8 3"])).toEqual({
+  it("preserves exact inputs, optional expectations, and empty output", () => {
+    expect(
+      validateCodingTestCases([
+        { input: "  19 23\n", expectedOutput: "42\n" },
+        { input: "-8 3", expectedOutput: null },
+        { input: "0 0", expectedOutput: "" },
+      ]),
+    ).toEqual({
       valid: true,
-      inputs: ["  19 23\n", "-8 3"],
+      cases: [
+        { input: "  19 23\n", expectedOutput: "42\n" },
+        { input: "-8 3", expectedOutput: null },
+        { input: "0 0", expectedOutput: "" },
+      ],
     });
   });
 
   it("allows deleting the complete saved set", () => {
-    expect(validateCodingTestCaseInputs([])).toEqual({
+    expect(validateCodingTestCases([])).toEqual({
       valid: true,
-      inputs: [],
+      cases: [],
     });
   });
 
-  it("rejects more than six inputs", () => {
+  it("converts legacy input-only saves without inventing expectations", () => {
+    expect(buildLegacyCodingTestCases(["19 23", "0 0"])).toEqual([
+      { input: "19 23", expectedOutput: null },
+      { input: "0 0", expectedOutput: null },
+    ]);
+  });
+
+  it("rejects more than six cases", () => {
     expect(
-      validateCodingTestCaseInputs(
-        Array.from({ length: 7 }, (_, index) => `${index} ${index + 1}`),
+      validateCodingTestCases(
+        Array.from({ length: 7 }, (_, index) => ({
+          input: `${index} ${index + 1}`,
+          expectedOutput: null,
+        })),
       ),
     ).toEqual({
       valid: false,
@@ -30,15 +52,36 @@ describe("coding test case validation", () => {
     });
   });
 
-  it("rejects blank, oversized, and duplicate cases", () => {
-    expect(validateCodingTestCaseInputs(["  "])).toMatchObject({ valid: false });
-    expect(
-      validateCodingTestCaseInputs([
-        "x".repeat(MAX_CODING_TEST_CASE_INPUT_LENGTH + 1),
-      ]),
-    ).toMatchObject({ valid: false });
-    expect(validateCodingTestCaseInputs(["4 9", "4 9"])).toMatchObject({
+  it("rejects malformed, blank, oversized, and duplicate cases", () => {
+    expect(validateCodingTestCases([{ input: "4 9" }])).toMatchObject({
       valid: false,
     });
+    expect(
+      validateCodingTestCases([{ input: "  ", expectedOutput: null }]),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateCodingTestCases([
+        {
+          input: "x".repeat(MAX_CODING_TEST_CASE_INPUT_LENGTH + 1),
+          expectedOutput: null,
+        },
+      ]),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateCodingTestCases([
+        {
+          input: "4 9",
+          expectedOutput: "x".repeat(
+            MAX_CODING_TEST_CASE_EXPECTED_OUTPUT_LENGTH + 1,
+          ),
+        },
+      ]),
+    ).toMatchObject({ valid: false });
+    expect(
+      validateCodingTestCases([
+        { input: "4 9", expectedOutput: null },
+        { input: "4 9", expectedOutput: "13" },
+      ]),
+    ).toMatchObject({ valid: false });
   });
 });

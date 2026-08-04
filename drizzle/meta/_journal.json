@@ -148,6 +148,13 @@
       "when": 1785840965561,
       "tag": "0020_sleepy_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785865978248,
+      "tag": "0021_mean_shockwave",
+      "breakpoints": true
     }
   ]
 }

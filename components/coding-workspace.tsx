@@ -7,8 +7,10 @@ import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   MAX_CODING_TEST_CASES,
-  validateCodingTestCaseInputs,
+  type CodingTestCase,
+  validateCodingTestCases,
 } from "@/lib/coding-test-cases";
+import { normalizeCodingOutput } from "@/lib/coding-problems";
 import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
@@ -21,7 +23,7 @@ type CodingWorkspaceProps = {
   attempts: CodingProblemAttempt[];
   bestVerdict: string | null;
   initialCode: string;
-  initialCustomTestCases?: string[];
+  initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
@@ -79,7 +81,12 @@ type RunState =
   | {
       kind: "test-suite";
       message: string;
-      results: { input: string; output: string }[];
+      results: {
+        input: string;
+        output: string;
+        expectedOutput: string | null;
+        passed: boolean | null;
+      }[];
       debugOutput: string[];
     }
   | {
@@ -267,7 +274,10 @@ export function CodingWorkspace({
       kind: "running",
       message: `Running ${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} in your browser…`,
     });
-    const result = await runCodingSolution(code, customTestCases);
+    const result = await runCodingSolution(
+      code,
+      customTestCases.map((testCase) => testCase.input),
+    );
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -283,21 +293,37 @@ export function CodingWorkspace({
       return;
     }
 
+    const results = customTestCases.map((testCase, index) => {
+      const output = result.outputs[index] ?? "";
+      return {
+        ...testCase,
+        output,
+        passed:
+          testCase.expectedOutput === null
+            ? null
+            : normalizeCodingOutput(output) ===
+              normalizeCodingOutput(testCase.expectedOutput),
+      };
+    });
+    const checkedResults = results.filter((testCase) => testCase.passed !== null);
+    const passedResults = checkedResults.filter((testCase) => testCase.passed);
+    const uncheckedCount = results.length - checkedResults.length;
+
     setRunState({
       kind: "test-suite",
-      results: customTestCases.map((input, index) => ({
-        input,
-        output: result.outputs[index] ?? "",
-      })),
+      results,
       debugOutput: result.debugOutput,
-      message: `${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} finished locally. Review every output before you submit.`,
+      message:
+        checkedResults.length === 0
+          ? `${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} finished locally. Add expected outputs to check them automatically.`
+          : `${passedResults.length} of ${checkedResults.length} expected ${checkedResults.length === 1 ? "output" : "outputs"} matched.${uncheckedCount > 0 ? ` ${uncheckedCount} ${uncheckedCount === 1 ? "case ran" : "cases ran"} without an expectation.` : ""}`,
     });
   }
 
-  async function persistCustomTestCases(nextInputs: string[]) {
+  async function persistCustomTestCases(nextCases: CodingTestCase[]) {
     if (!isSignedIn) return false;
 
-    const validation = validateCodingTestCaseInputs(nextInputs);
+    const validation = validateCodingTestCases(nextCases);
 
     if (!validation.valid) {
       setTestCaseSaveState("error");
@@ -314,11 +340,11 @@ export function CodingWorkspace({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inputs: validation.inputs }),
+          body: JSON.stringify({ cases: validation.cases }),
         },
       );
       const payload = (await response.json()) as {
-        testCases?: { inputs: string[] };
+        testCases?: { cases: CodingTestCase[] };
         error?: string;
       };
 
@@ -330,12 +356,12 @@ export function CodingWorkspace({
         return false;
       }
 
-      setCustomTestCases(payload.testCases.inputs);
+      setCustomTestCases(payload.testCases.cases);
       setTestCaseSaveState("saved");
       setTestCaseMessage(
-        payload.testCases.inputs.length === 0
+        payload.testCases.cases.length === 0
           ? "All private test cases removed."
-          : `${payload.testCases.inputs.length} private test ${payload.testCases.inputs.length === 1 ? "case" : "cases"} saved.`,
+          : `${payload.testCases.cases.length} private test ${payload.testCases.cases.length === 1 ? "case" : "cases"} saved.`,
       );
       return true;
     } catch {
@@ -348,19 +374,32 @@ export function CodingWorkspace({
   }
 
   async function saveCurrentCustomInput() {
-    if (customTestCases.includes(customInput)) {
+    if (customTestCases.some((testCase) => testCase.input === customInput)) {
       setTestCaseSaveState("error");
       setTestCaseMessage("That exact input is already saved.");
       return;
     }
 
-    await persistCustomTestCases([...customTestCases, customInput]);
+    await persistCustomTestCases([
+      ...customTestCases,
+      { input: customInput, expectedOutput: null },
+    ]);
   }
 
   function updateCustomTestCase(index: number, input: string) {
     setCustomTestCases((current) =>
-      current.map((savedInput, savedIndex) =>
-        savedIndex === index ? input : savedInput,
+      current.map((testCase, savedIndex) =>
+        savedIndex === index ? { ...testCase, input } : testCase,
+      ),
+    );
+    setTestCaseSaveState("unsaved");
+    setTestCaseMessage("Test case changes are not saved yet.");
+  }
+
+  function updateExpectedOutput(index: number, expectedOutput: string | null) {
+    setCustomTestCases((current) =>
+      current.map((testCase, savedIndex) =>
+        savedIndex === index ? { ...testCase, expectedOutput } : testCase,
       ),
     );
     setTestCaseSaveState("unsaved");
@@ -699,23 +738,58 @@ export function CodingWorkspace({
                     : `Run all ${customTestCases.length} ${customTestCases.length === 1 ? "case" : "cases"}`}
                 </button>
                 <div className="private-test-case-list">
-                  {customTestCases.map((savedInput, index) => (
+                  {customTestCases.map((testCase, index) => (
                     <div className="private-test-case" key={index}>
-                      <label htmlFor={`saved-test-case-${index}`}>
-                        Test case {index + 1}
-                      </label>
-                      <textarea
-                        id={`saved-test-case-${index}`}
-                        value={savedInput}
-                        onChange={(event) =>
-                          updateCustomTestCase(index, event.target.value)
-                        }
-                        spellCheck={false}
-                      />
-                      <div>
+                      <div className="private-test-case-input">
+                        <label htmlFor={`saved-test-case-${index}`}>
+                          Test case {index + 1} input
+                        </label>
+                        <textarea
+                          id={`saved-test-case-${index}`}
+                          value={testCase.input}
+                          onChange={(event) =>
+                            updateCustomTestCase(index, event.target.value)
+                          }
+                          spellCheck={false}
+                        />
+                      </div>
+                      <div className="private-test-case-expectation">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={testCase.expectedOutput !== null}
+                            onChange={(event) =>
+                              updateExpectedOutput(
+                                index,
+                                event.target.checked ? "" : null,
+                              )
+                            }
+                          />
+                          Check expected output
+                        </label>
+                        {testCase.expectedOutput !== null ? (
+                          <>
+                            <label htmlFor={`saved-test-output-${index}`}>
+                              Expected output
+                            </label>
+                            <textarea
+                              id={`saved-test-output-${index}`}
+                              value={testCase.expectedOutput}
+                              onChange={(event) =>
+                                updateExpectedOutput(index, event.target.value)
+                              }
+                              placeholder="Empty is a valid expected output"
+                              spellCheck={false}
+                            />
+                          </>
+                        ) : (
+                          <p>Run this input without an automatic check.</p>
+                        )}
+                      </div>
+                      <div className="private-test-case-actions">
                         <button
                           type="button"
-                          onClick={() => setCustomInput(savedInput)}
+                          onClick={() => setCustomInput(testCase.input)}
                         >
                           Use input
                         </button>
@@ -822,6 +896,21 @@ export function CodingWorkspace({
                 <div>
                   <p>Output</p>
                   <pre>{result.output || "(empty)"}</pre>
+                </div>
+                <div className={`private-test-suite-check is-${result.passed === null ? "unchecked" : result.passed ? "matched" : "mismatch"}`}>
+                  <p>Expected</p>
+                  <pre>
+                    {result.expectedOutput === null
+                      ? "Not checked"
+                      : result.expectedOutput || "(empty)"}
+                  </pre>
+                  <span>
+                    {result.passed === null
+                      ? "No expectation"
+                      : result.passed
+                        ? "Matched"
+                        : "Mismatch"}
+                  </span>
                 </div>
               </li>
             ))}

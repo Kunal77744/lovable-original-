@@ -9,6 +9,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import type { GuidedProjectCheck } from "@/lib/guided-project";
 
 export const user = pgTable(
@@ -531,6 +532,10 @@ export const codingProblemTestCaseSet = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     problemSlug: text("problem_slug").notNull(),
     inputs: jsonb("inputs").$type<string[]>().notNull(),
+    expectedOutputs: jsonb("expected_outputs")
+      .$type<(string | null)[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

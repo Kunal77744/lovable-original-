@@ -173,7 +173,10 @@ describe("practice problem metadata", () => {
       attempts: [],
       bestVerdict: null,
       code: problem.starterCode,
-      customTestCases: ["19 23", "-5 8"],
+      customTestCases: [
+        { input: "19 23", expectedOutput: "42" },
+        { input: "-5 8", expectedOutput: null },
+      ],
       solutionNote: null,
     });
 
@@ -220,7 +223,7 @@ describe("practice problem metadata", () => {
       ],
       bestVerdict: "Accepted",
       code: currentCode,
-      customTestCases: ["19 23"],
+      customTestCases: [{ input: "19 23", expectedOutput: null }],
       solutionNote: null,
     });
     getSubmission.mockResolvedValueOnce({

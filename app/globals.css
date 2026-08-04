@@ -7559,6 +7559,7 @@ h1 {
 
 .custom-test-save-action:focus-visible,
 .private-test-case button:focus-visible,
+.private-test-case input:focus-visible,
 .private-test-cases-save:focus-visible,
 .private-test-suite-run:focus-visible {
   outline: 3px solid rgba(131, 221, 168, 0.35);
@@ -7645,7 +7646,7 @@ h1 {
 .private-test-case {
   padding: 12px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 10px;
   border: 1px solid #34483d;
   border-radius: 8px;
@@ -7653,7 +7654,6 @@ h1 {
 }
 
 .private-test-case label {
-  grid-column: 1 / -1;
   color: #aebbb4;
   font-size: 10px;
   font-weight: 800;
@@ -7661,7 +7661,44 @@ h1 {
   letter-spacing: 0.08em;
 }
 
+.private-test-case-input,
+.private-test-case-expectation {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.private-test-case-expectation {
+  padding-left: 10px;
+  border-left: 1px solid #34483d;
+}
+
+.private-test-case-expectation > label:first-child {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #b9d9c5;
+  cursor: pointer;
+}
+
+.private-test-case-expectation input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #83dda8;
+}
+
+.private-test-case-expectation p {
+  margin: 5px 0 0;
+  color: #7f9087;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .private-test-case textarea {
+  width: 100%;
   min-height: 58px;
   padding: 10px;
   resize: vertical;
@@ -7680,9 +7717,10 @@ h1 {
   outline-offset: 1px;
 }
 
-.private-test-case > div {
-  display: grid;
-  align-content: end;
+.private-test-case-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
   gap: 6px;
 }
 
@@ -8177,7 +8215,7 @@ h1 {
 .private-test-suite-results li {
   overflow: hidden;
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 56px repeat(3, minmax(0, 1fr));
   border: 1px solid #34443c;
   border-radius: 8px;
   background: #111b17;
@@ -8220,6 +8258,29 @@ h1 {
   font-size: 11px;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.private-test-suite-check > span {
+  width: fit-content;
+  padding: 3px 7px;
+  display: inline-flex;
+  color: #b5c2ba;
+  border: 1px solid #46564e;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.private-test-suite-check.is-matched > span {
+  color: #a0e9bd;
+  border-color: #49755a;
+  background: rgba(131, 221, 168, 0.08);
+}
+
+.private-test-suite-check.is-mismatch > span {
+  color: #f1afa4;
+  border-color: #745047;
+  background: rgba(241, 175, 164, 0.07);
 }
 
 .debug-output {
@@ -11425,8 +11486,15 @@ footer {
     grid-template-columns: 1fr;
   }
 
-  .private-test-case > div {
-    grid-template-columns: 1fr 1fr;
+  .private-test-case-expectation {
+    padding-top: 10px;
+    padding-left: 0;
+    border-top: 1px solid #34483d;
+    border-left: 0;
+  }
+
+  .private-test-case-actions {
+    grid-column: 1;
   }
 
   .private-test-suite-results li {
