@@ -93,12 +93,17 @@ export default async function PracticePage() {
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
             {session ? (
-              <Link
-                className="practice-skill-record-link"
-                href="/practice/progress"
-              >
-                View private skill record <span aria-hidden="true">→</span>
-              </Link>
+              <div className="practice-progress-links">
+                <Link
+                  className="practice-skill-record-link"
+                  href="/practice/progress"
+                >
+                  View private skill record <span aria-hidden="true">→</span>
+                </Link>
+                <Link className="practice-activity-link" href="/practice/activity">
+                  View 28-day activity <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             ) : null}
           </aside>
         </section>
