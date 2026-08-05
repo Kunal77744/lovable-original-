@@ -11,6 +11,7 @@ type SiteNavProps = {
     | "lesson"
     | "project"
     | "practice"
+    | "practice-progress"
     | "settings"
     | "certificate"
     | "interview"
@@ -39,6 +40,7 @@ export function SiteNav({
     currentPage === "certificate" ||
     currentPage === "interview" ||
     currentPage === "playground" ||
+    currentPage === "practice-progress" ||
     studentSession;
 
   return (
@@ -57,6 +59,17 @@ export function SiteNav({
         >
           Practice
         </Link>
+        {inStudentSpace ? (
+          <Link
+            className="nav-link"
+            href="/practice/progress"
+            aria-current={
+              currentPage === "practice-progress" ? "page" : undefined
+            }
+          >
+            Skill record
+          </Link>
+        ) : null}
         <Link
           className="nav-link"
           href="/playground"
