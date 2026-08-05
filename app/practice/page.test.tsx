@@ -83,8 +83,8 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     expect(
-      screen.getByRole("link", { name: "Design stronger tests" }),
-    ).toHaveAttribute("href", "/practice/test-design");
+      screen.getByRole("link", { name: "Practice data structures" }),
+    ).toHaveAttribute("href", "/practice/data-structures");
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
   });
 
@@ -104,7 +104,7 @@ describe("PracticePage progress", () => {
       screen.queryByRole("link", { name: "Open the playground" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Design stronger tests" }),
+      screen.queryByRole("link", { name: "Practice data structures" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
