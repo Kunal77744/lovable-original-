@@ -6,6 +6,7 @@ import {
   getCodingCatalogProgress,
   getRecentCodingAttempts,
 } from "@/db/coding-practice";
+import { getCssPracticeCatalogProgress } from "@/db/css-practice";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { auth } from "@/lib/auth";
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Your private course and practice progress | Lovable Original",
   description:
-    "Review your saved course progress, quiz result, accepted JavaScript problems, and recent attempts in one private account view.",
+    "Review your saved course progress, accepted JavaScript problems, completed CSS challenges, and recent attempts in one private account view.",
   robots: {
     index: false,
     follow: false,
@@ -34,15 +35,17 @@ export default async function ProfilePage() {
     redirect("/account?mode=signin");
   }
 
-  const [course, practice, attempts, project] = await Promise.all([
+  const [course, practice, cssPractice, attempts, project] = await Promise.all([
     getOrCreateFirstCourseAssignment(session.user.id),
     getCodingCatalogProgress(session.user.id),
+    getCssPracticeCatalogProgress(session.user.id),
     getRecentCodingAttempts(session.user.id),
     getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
   ]);
   const profile = buildLearnerProfile({
     course,
     practice,
+    cssPractice,
     attempts,
     projectCompleted: project?.submission?.status === "completed",
   });

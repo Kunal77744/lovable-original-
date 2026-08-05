@@ -18,7 +18,18 @@ export const FIRST_LESSON = {
   estimatedMinutes: 18,
 } as const;
 
-export const FIRST_COURSE_LESSONS = [FIRST_LESSON] as const;
+export const SECOND_LESSON = {
+  id: "web-development-foundations-css-selectors-box-model",
+  slug: "css-selectors-box-model",
+  title: "Style a card without guessing",
+  description:
+    "Use CSS selectors and the box model to style a predictable learning card, then return to your saved practice after sign-in.",
+  moduleTitle: "Module 2 · CSS foundations",
+  position: 2,
+  estimatedMinutes: 16,
+} as const;
+
+export const FIRST_COURSE_LESSONS = [FIRST_LESSON, SECOND_LESSON] as const;
 
 export type QuizChoice = {
   id: string;
@@ -106,6 +117,67 @@ export const FIRST_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
     correctChoiceId: "meaning",
     explanation:
       "Semantic elements expose a meaningful structure to browsers, search engines, keyboards, and assistive technology.",
+  },
+] as const;
+
+export const SECOND_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
+  {
+    id: "class-selector",
+    prompt: "Which selector targets every element with class=\"learning-card\"?",
+    choices: [
+      { id: "class", label: ".learning-card" },
+      { id: "element", label: "learning-card" },
+      { id: "id", label: "#learning-card" },
+    ],
+    correctChoiceId: "class",
+    explanation:
+      "A leading dot targets a class, so .learning-card matches every element carrying that class name.",
+  },
+  {
+    id: "descendant-selector",
+    prompt: "What does .learning-card strong select?",
+    choices: [
+      {
+        id: "nested-strong",
+        label: "Every <strong> element inside .learning-card",
+      },
+      {
+        id: "both-classes",
+        label: "Elements with both learning-card and strong classes",
+      },
+      { id: "next-strong", label: "Only the next <strong> sibling" },
+    ],
+    correctChoiceId: "nested-strong",
+    explanation:
+      "The space creates a descendant selector: strong elements anywhere inside .learning-card are matched.",
+  },
+  {
+    id: "box-width",
+    prompt:
+      "With box-sizing: border-box, what does width: 280px include?",
+    choices: [
+      {
+        id: "whole-box",
+        label: "Content, padding, and border inside the declared width",
+      },
+      { id: "content-only", label: "Only the content width" },
+      { id: "margin", label: "Content, padding, border, and margin" },
+    ],
+    correctChoiceId: "whole-box",
+    explanation:
+      "border-box keeps padding and border inside the declared width; margin always remains outside it.",
+  },
+  {
+    id: "spacing-choice",
+    prompt: "Which property creates space between a card’s content and border?",
+    choices: [
+      { id: "padding", label: "padding" },
+      { id: "margin", label: "margin" },
+      { id: "outline", label: "outline" },
+    ],
+    correctChoiceId: "padding",
+    explanation:
+      "Padding creates inner space between content and border; margin separates the entire element from its neighbours.",
   },
 ] as const;
 
@@ -212,14 +284,35 @@ export const FIRST_LESSON_REVISION = {
 
 export type QuizAnswers = Record<string, string>;
 
-export function gradeFirstLessonQuiz(answers: QuizAnswers) {
+function getGradedLessonQuiz(lessonSlug: string) {
+  if (lessonSlug === FIRST_LESSON.slug) {
+    return FIRST_LESSON_QUIZ;
+  }
+
+  if (lessonSlug === SECOND_LESSON.slug) {
+    return SECOND_LESSON_QUIZ;
+  }
+
+  return null;
+}
+
+export function gradeLessonQuiz(lessonSlug: string, answers: QuizAnswers) {
+  const quiz = getGradedLessonQuiz(lessonSlug);
+
+  if (!quiz) {
+    return {
+      valid: false as const,
+      error: "Lesson not found.",
+    };
+  }
+
   const answeredQuestionIds = Object.keys(answers);
   const knownQuestionIds = new Set(
-    FIRST_LESSON_QUIZ.map((question) => question.id),
+    quiz.map((question) => question.id),
   );
 
   if (
-    answeredQuestionIds.length !== FIRST_LESSON_QUIZ.length ||
+    answeredQuestionIds.length !== quiz.length ||
     answeredQuestionIds.some((questionId) => !knownQuestionIds.has(questionId))
   ) {
     return {
@@ -228,24 +321,36 @@ export function gradeFirstLessonQuiz(answers: QuizAnswers) {
     };
   }
 
-  const correctCount = FIRST_LESSON_QUIZ.filter(
+  const correctCount = quiz.filter(
     (question) => answers[question.id] === question.correctChoiceId,
   ).length;
-  const score = Math.round((correctCount / FIRST_LESSON_QUIZ.length) * 100);
+  const score = Math.round((correctCount / quiz.length) * 100);
 
   return {
     valid: true as const,
     score,
     passed: score >= FIRST_LESSON_PASS_PERCENT,
     correctCount,
-    totalCount: FIRST_LESSON_QUIZ.length,
+    totalCount: quiz.length,
   };
 }
 
-export function getPublicFirstLessonQuiz(): readonly QuizQuestion[] {
-  return FIRST_LESSON_QUIZ.map(({ id, prompt, choices }) => ({
+export function gradeFirstLessonQuiz(answers: QuizAnswers) {
+  return gradeLessonQuiz(FIRST_LESSON.slug, answers);
+}
+
+export function getPublicLessonQuiz(
+  lessonSlug: string,
+): readonly QuizQuestion[] | null {
+  const quiz = getGradedLessonQuiz(lessonSlug);
+
+  return quiz?.map(({ id, prompt, choices }) => ({
     id,
     prompt,
     choices,
-  }));
+  })) ?? null;
+}
+
+export function getPublicFirstLessonQuiz(): readonly QuizQuestion[] {
+  return getPublicLessonQuiz(FIRST_LESSON.slug) ?? [];
 }

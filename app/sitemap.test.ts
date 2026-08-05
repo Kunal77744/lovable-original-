@@ -9,8 +9,11 @@ describe("public sitemap", () => {
       productionUrl,
       `${productionUrl}/about`,
       `${productionUrl}/courses/web-development-foundations`,
+      `${productionUrl}/learn/web-development-foundations/css-selectors-box-model`,
       `${productionUrl}/practice`,
       `${productionUrl}/learn/semantic-html`,
+      `${productionUrl}/learn/semantic-html-project`,
+      `${productionUrl}/learn/semantic-html-cheat-sheet`,
       `${productionUrl}/learn/beginner-javascript-practice`,
     ]);
   });

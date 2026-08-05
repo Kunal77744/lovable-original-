@@ -2,12 +2,80 @@ import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 
 import postgres from "postgres";
+import { elementTextByAttribute } from "./release-gate-html.mjs";
 
 const COURSE_TITLE = "Web Development Foundations";
 const COURSE_SLUG = "web-development-foundations";
 const LESSON_SLUG = "semantic-html";
+const SECOND_LESSON_SLUG = "css-selectors-box-model";
 const PROJECT_SLUG = "semantic-html-article";
 const LESSON_TITLE = "Build a page the browser understands";
+const SECOND_LESSON_TITLE = "Style a card without guessing";
+const CSS_CHALLENGES = [
+  {
+    slug: "class-selector",
+    title: "Select one card",
+    passedChecks: 3,
+    completedCss: (runId) => `.learning-card {
+  background: #ffffff;
+  color: #17231e;
+  --release-gate: "${runId}";
+}`,
+  },
+  {
+    slug: "descendant-selector",
+    title: "Scope the lesson count",
+    passedChecks: 3,
+    completedCss: (runId) => `.learning-card strong {
+  color: #175437;
+  font-weight: 700;
+  --release-gate: "${runId}";
+}`,
+  },
+  {
+    slug: "predictable-width",
+    title: "Keep the width predictable",
+    passedChecks: 3,
+    completedCss: (runId) => `.learning-card {
+  width: 280px;
+  box-sizing: border-box;
+  border: 2px solid #287652;
+  --release-gate: "${runId}";
+}`,
+  },
+  {
+    slug: "inside-and-between",
+    title: "Separate inside from between",
+    passedChecks: 3,
+    completedCss: (runId) => `.learning-card {
+  padding: 24px;
+  --release-gate: "${runId}";
+}
+
+.learning-card p { margin-top: 12px; }`,
+  },
+  {
+    slug: "link-hit-area",
+    title: "Build a clear link target",
+    passedChecks: 4,
+    completedCss: (runId) => `.learning-card .card-link {
+  display: inline-block;
+  padding: 12px 16px;
+  border-radius: 8px;
+  --release-gate: "${runId}";
+}`,
+  },
+  {
+    slug: "centered-card",
+    title: "Center a reusable card",
+    passedChecks: 3,
+    completedCss: (runId) => `.stage .learning-card {
+  max-width: 280px;
+  margin-inline: auto;
+  --release-gate: "${runId}";
+}`,
+  },
+];
 const INTERVIEW_DRILL_SLUG = "javascript-fundamentals";
 const INTERVIEW_QUESTION_SLUG = "const-let-var";
 const CERTIFICATE_TITLE = "Private course certificate";
@@ -17,6 +85,12 @@ const QUIZ_ANSWERS = {
   "article-choice": "standalone",
   "semantic-benefit": "meaning",
 };
+const SECOND_QUIZ_ANSWERS = {
+  "class-selector": "class",
+  "descendant-selector": "nested-strong",
+  "box-width": "whole-box",
+  "spacing-choice": "padding",
+};
 const DEFAULT_APP_URL = "http://127.0.0.1:3210";
 const DATABASE_PREFIX = "lovable_release_gate_";
 const WAIT_TIMEOUT_MS = 60_000;
@@ -24,8 +98,8 @@ const WAIT_TIMEOUT_MS = 60_000;
 const steps = [
   "Account creation",
   "Initial dashboard",
-  "Lesson workspace",
-  "Workspace save and checks",
+  "Two lesson workspaces",
+  "Two workspace saves and checks",
   "Quiz, project, feedback, certificate, and interview",
   "Saved learner state after reload",
   "Sign out",
@@ -181,15 +255,15 @@ function pageText(html) {
     .trim();
 }
 
+function attributeValue(tag, attribute) {
+  const match = tag.match(
+    new RegExp(`\\b${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i"),
+  );
+
+  return match?.[2]?.trim() ?? null;
+}
+
 function metaContent(html, name) {
-  const attributeValue = (tag, attribute) => {
-    const match = tag.match(
-      new RegExp(`\\b${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i"),
-    );
-
-    return match?.[2]?.trim() ?? null;
-  };
-
   return [...html.matchAll(/<meta\b[^>]*>/gi)]
     .map(([tag]) => ({
       name: attributeValue(tag, "name"),
@@ -197,6 +271,23 @@ function metaContent(html, name) {
     }))
     .filter((meta) => meta.name?.toLowerCase() === name.toLowerCase())
     .map((meta) => meta.content);
+}
+
+function streamedRedirectLocation(html) {
+  for (const [tag] of html.matchAll(/<meta\b[^>]*>/gi)) {
+    if (attributeValue(tag, "http-equiv")?.toLowerCase() !== "refresh") {
+      continue;
+    }
+
+    const content = attributeValue(tag, "content");
+    const location = content?.match(/^\s*\d+\s*;\s*url=(.+)$/i)?.[1];
+
+    if (location) {
+      return location.replace(/&amp;/gi, "&").trim();
+    }
+  }
+
+  return "";
 }
 
 function childOutput(env, args) {
@@ -268,7 +359,7 @@ async function waitForApp(baseUrl, child) {
 
 function startApp(appUrl, env) {
   const port = appUrl.port || "80";
-  return spawn(
+  const appProcess = spawn(
     process.execPath,
     [
       "node_modules/next/dist/bin/next",
@@ -281,9 +372,15 @@ function startApp(appUrl, env) {
     {
       detached: true,
       env,
-      stdio: "ignore",
+      stdio: ["ignore", "ignore", "pipe"],
     },
   );
+  appProcess.runtimeStderr = "";
+  appProcess.stderr.on("data", (chunk) => {
+    appProcess.runtimeStderr += chunk.toString();
+    appProcess.runtimeStderr = appProcess.runtimeStderr.slice(-4_000);
+  });
+  return appProcess;
 }
 
 async function stopApp(child) {
@@ -318,6 +415,8 @@ async function runJourney(baseUrl, databaseUrl) {
   const password = `${randomBytes(24).toString("hex")}Aa1!`;
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
+  let savedCssWorkspace = "";
+  const savedCssChallenges = new Map();
   let savedProjectHtml = "";
   let savedFeedbackComment = "";
   let savedLessonNote = "";
@@ -325,6 +424,10 @@ async function runJourney(baseUrl, databaseUrl) {
   let savedCertificateName = "";
   let savedCertificateId = "";
   let savedCertificateAwardedAt = "";
+  let learnerUserId = "";
+  let savedCodingSubmissionId = "";
+  let savedCodingSubmissionSource = "";
+  let revisedCodingDraft = "";
 
   async function request(path, options = {}, requestJar = jar) {
     const headers = new Headers(options.headers);
@@ -382,6 +485,7 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(response.status === 200, step, "Account creation did not succeed.");
     const payload = await response.json();
     assertStep(Boolean(payload.user?.id), step, "Account creation returned no user.");
+    learnerUserId = payload.user.id;
     assertStep(Boolean(jar.header()), step, "Account creation returned no session.");
   });
 
@@ -391,9 +495,9 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(response.status === 200, step, "Dashboard did not load.");
     assertStep(text.includes(COURSE_TITLE), step, "First course was not visible.");
     assertStep(
-      /0\s*\/\s*1 lessons/.test(text),
+      /Start here\s*·\s*34 minutes/.test(text),
       step,
-      "Initial progress was not 0/1.",
+      "Initial progress was not ready for both lessons.",
     );
     assertStep(
       text.includes("Certificate settings") &&
@@ -440,6 +544,73 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Starter code and five checks were not ready.",
     );
+
+    const secondLessonResponse = await request(
+      `/learn/${COURSE_SLUG}/${SECOND_LESSON_SLUG}`,
+    );
+    const secondLessonText = pageText(await secondLessonResponse.text());
+    assertStep(
+      secondLessonResponse.status === 200 &&
+        secondLessonText.includes(SECOND_LESSON_TITLE) &&
+        /75\s*%\s*to complete/.test(secondLessonText),
+      step,
+      "The second lesson and its recall check did not load.",
+    );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    assertStep(
+      secondWorkspaceResponse.status === 200,
+      step,
+      "The second lesson workspace did not load.",
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspace.saved === false &&
+        secondWorkspace.submission === null &&
+        typeof secondWorkspace.html === "string" &&
+        secondWorkspace.checks?.length === 4,
+      step,
+      "A fresh learner did not receive the four-check CSS workspace.",
+    );
+
+    const practicePageResponse = await request("/practice/css");
+    const practicePageText = pageText(await practicePageResponse.text());
+    assertStep(
+      practicePageResponse.status === 200 &&
+        practicePageText.includes("six saved challenges") &&
+        practicePageText.includes("Move from selector to reusable component."),
+      step,
+      "The six-challenge CSS practice path did not load.",
+    );
+
+    for (const challenge of CSS_CHALLENGES) {
+      const challengePageResponse = await request(
+        `/practice/css/${challenge.slug}`,
+      );
+      const challengePageText = pageText(await challengePageResponse.text());
+      assertStep(
+        challengePageResponse.status === 200 &&
+          challengePageText.includes(challenge.title) &&
+          challengePageText.includes("Check and save attempt"),
+        step,
+        `CSS practice challenge ${challenge.slug} did not load.`,
+      );
+
+      const challengeStateResponse = await request(
+        `/api/practice/css/${challenge.slug}`,
+      );
+      const challengeState = await challengeStateResponse.json();
+      assertStep(
+        challengeStateResponse.status === 200 &&
+          challengeState.bestVerdict === null &&
+          challengeState.attempts?.length === 0 &&
+          !challengeState.css.includes(runId),
+        step,
+        `A fresh learner inherited saved state for ${challenge.slug}.`,
+      );
+    }
 
     const noteResponse = await request(
       `/api/lessons/${LESSON_SLUG}/notes`,
@@ -540,6 +711,217 @@ async function runJourney(baseUrl, databaseUrl) {
     );
     savedWorkspaceHtml = passingDraft;
 
+    const failingCss = `.learning-card { width: 280px; }
+.learning-card strong { color: #175437; }`;
+    const failingCssResponse = await jsonRequest(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+      { html: failingCss },
+    );
+    const failingCssWorkspace = await failingCssResponse.json();
+    assertStep(
+      failingCssResponse.status === 200 &&
+        failingCssWorkspace.html === failingCss &&
+        failingCssWorkspace.submission?.status === "needs-revision" &&
+        failingCssWorkspace.submission?.passedChecks < 4,
+      step,
+      "The CSS revision result was not saved.",
+    );
+
+    savedCssWorkspace = `.learning-card {
+  width: 280px;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 2px solid #175437;
+}
+
+.learning-card strong {
+  color: #175437;
+}`;
+    const passingCssResponse = await jsonRequest(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+      { html: savedCssWorkspace },
+    );
+    const passingCssWorkspace = await passingCssResponse.json();
+    assertStep(
+      passingCssResponse.status === 200 &&
+        passingCssWorkspace.html === savedCssWorkspace &&
+        passingCssWorkspace.checks?.length === 4 &&
+        passingCssWorkspace.submission?.status === "completed" &&
+        passingCssWorkspace.submission?.passedChecks === 4 &&
+        passingCssWorkspace.checks.every((check) => check.passed === true),
+      step,
+      "The CSS workspace did not save a completed 4/4 result.",
+    );
+
+    const failingChallengeResponse = await jsonRequest(
+      `/api/practice/css/${CSS_CHALLENGES[0].slug}`,
+      { mode: "submit", css: ".learning-card { color: #17231e; }" },
+    );
+    const failingChallenge = await failingChallengeResponse.json();
+    assertStep(
+      failingChallengeResponse.status === 200 &&
+        failingChallenge.verdict === "Needs revision" &&
+        failingChallenge.passedChecks < failingChallenge.totalChecks,
+      step,
+      "The CSS practice challenge did not save deterministic revision feedback.",
+    );
+
+    for (const [index, challenge] of CSS_CHALLENGES.entries()) {
+      const savedCss = challenge.completedCss(runId);
+      savedCssChallenges.set(challenge.slug, savedCss);
+      const passingChallengeResponse = await jsonRequest(
+        `/api/practice/css/${challenge.slug}`,
+        { mode: "submit", css: savedCss },
+      );
+      const passingChallenge = await passingChallengeResponse.json();
+      assertStep(
+        passingChallengeResponse.status === 200 &&
+          passingChallenge.verdict === "Completed" &&
+          passingChallenge.passedChecks === challenge.passedChecks &&
+          passingChallenge.totalChecks === challenge.passedChecks &&
+          passingChallenge.completedCount === index + 1 &&
+          passingChallenge.totalCount === CSS_CHALLENGES.length &&
+          passingChallenge.nextChallengeSlug ===
+            (CSS_CHALLENGES[index + 1]?.slug ?? null) &&
+          passingChallenge.checks.every((check) => check.passed === true),
+        step,
+        `CSS practice challenge ${challenge.slug} did not save a completed result.`,
+      );
+    }
+
+    savedCodingSubmissionSource = `function solve(input) {
+  const [a, b] = input.trim().split(/\\s+/).map(Number);
+  return String(a + b);
+}
+// immutable submission ${runId}`;
+    const codingSubmissionResponse = await jsonRequest(
+      "/api/practice/sum-two-numbers",
+      {
+        mode: "submit",
+        code: savedCodingSubmissionSource,
+        outputs: ["13", "-5", "0", "1000"],
+      },
+    );
+    const codingSubmission = await codingSubmissionResponse.json();
+    assertStep(
+      codingSubmissionResponse.status === 200 &&
+        codingSubmission.verdict === "Accepted" &&
+        codingSubmission.passedTests === 4 &&
+        typeof codingSubmission.id === "string",
+      step,
+      "The JavaScript submission was not saved with an Accepted result.",
+    );
+    savedCodingSubmissionId = codingSubmission.id;
+
+    revisedCodingDraft = `function solve(input) {
+  return "draft ${runId}";
+}`;
+    const revisedCodingDraftResponse = await jsonRequest(
+      "/api/practice/sum-two-numbers",
+      { mode: "draft", code: revisedCodingDraft },
+    );
+    assertStep(
+      revisedCodingDraftResponse.status === 200,
+      step,
+      "The current JavaScript draft could not be revised after submission.",
+    );
+
+    const codingWorkspaceResponse = await request(
+      "/practice/sum-two-numbers",
+    );
+    const codingWorkspaceHtml = await codingWorkspaceResponse.text();
+    const renderedCodingDraft = elementTextByAttribute(codingWorkspaceHtml, {
+      tagName: "textarea",
+      attribute: "id",
+      value: "coding-solution",
+    });
+    assertStep(
+      codingWorkspaceResponse.status === 200 &&
+        codingWorkspaceHtml.includes(
+          `href="/submissions/${savedCodingSubmissionId}"`,
+        ) &&
+        codingWorkspaceHtml.includes("Review source") &&
+        renderedCodingDraft === revisedCodingDraft,
+      step,
+      "The JavaScript workspace did not link its verdict to the saved source while preserving the current draft.",
+    );
+
+    const submissionPageResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+    );
+    const submissionPageHtml = await submissionPageResponse.text();
+    const renderedSubmissionSource = elementTextByAttribute(
+      submissionPageHtml,
+      {
+        tagName: "pre",
+        attribute: "aria-label",
+        value: "Submitted JavaScript source",
+      },
+    );
+    assertStep(
+      submissionPageResponse.status === 200 &&
+        renderedSubmissionSource === savedCodingSubmissionSource &&
+        renderedSubmissionSource !== revisedCodingDraft &&
+        submissionPageHtml.includes(
+          `/practice/sum-two-numbers?submission=${savedCodingSubmissionId}`,
+        ) &&
+        submissionPageHtml.includes("Load this exact submission?"),
+      step,
+      "The immutable JavaScript source snapshot or its guarded editor action was not available.",
+    );
+
+    const reusedSubmissionResponse = await request(
+      `/practice/sum-two-numbers?submission=${savedCodingSubmissionId}`,
+    );
+    const reusedSubmissionHtml = await reusedSubmissionResponse.text();
+    const reusedSubmissionSource = elementTextByAttribute(
+      reusedSubmissionHtml,
+      {
+        tagName: "textarea",
+        attribute: "id",
+        value: "coding-solution",
+      },
+    );
+    assertStep(
+      reusedSubmissionResponse.status === 200 &&
+        reusedSubmissionSource === savedCodingSubmissionSource &&
+        reusedSubmissionSource !== revisedCodingDraft &&
+        reusedSubmissionHtml.includes("Past submission loaded") &&
+        reusedSubmissionHtml.includes("Restore saved editor"),
+      step,
+      "The past JavaScript submission was not loaded as a clearly unsaved editor copy.",
+    );
+
+    const submissionSql = postgres(databaseUrl, {
+      connect_timeout: 5,
+      idle_timeout: 5,
+      max: 1,
+      onnotice: () => {},
+      prepare: false,
+    });
+    try {
+      const [savedSubmission] = await submissionSql`
+        select code
+        from coding_submission
+        where id = ${savedCodingSubmissionId}
+          and user_id = ${learnerUserId}
+      `;
+      const [currentProgress] = await submissionSql`
+        select code
+        from coding_problem_progress
+        where user_id = ${learnerUserId}
+          and problem_slug = 'sum-two-numbers'
+      `;
+      assertStep(
+        savedSubmission?.code === savedCodingSubmissionSource &&
+          currentProgress?.code === revisedCodingDraft,
+        step,
+        "The submission snapshot and current JavaScript draft were not stored independently.",
+      );
+    } finally {
+      await submissionSql.end({ timeout: 5 });
+    }
+
     const firstNoteResponse = await jsonRequest(
       `/api/lessons/${LESSON_SLUG}/notes`,
       { content: "Landmarks explain the purpose of each page region." },
@@ -629,6 +1011,24 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(payload.passed === true, step, "Quiz result did not pass.");
     assertStep(payload.completed === true, step, "Lesson was not completed.");
     assertStep(payload.savedScore === 100, step, "Best score was not saved.");
+
+    const secondResponse = await jsonRequest(
+      `/api/lessons/${SECOND_LESSON_SLUG}/complete`,
+      { answers: SECOND_QUIZ_ANSWERS },
+    );
+    assertStep(
+      secondResponse.status === 200,
+      step,
+      "The second lesson recall check did not succeed.",
+    );
+    const secondPayload = await secondResponse.json();
+    assertStep(
+      secondPayload.passed === true &&
+        secondPayload.completed === true &&
+        secondPayload.savedScore === 100,
+      step,
+      "The second lesson was not completed with a saved 100% score.",
+    );
 
     const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
     const projectPageHtml = await projectPageResponse.text();
@@ -790,19 +1190,19 @@ async function runJourney(baseUrl, databaseUrl) {
     const text = pageText(html);
     assertStep(response.status === 200, step, "Reloaded dashboard did not load.");
     assertStep(
-      /1\s*\/\s*1 lessons/.test(text),
+      /Completed\s*·\s*2\s*\/\s*2 lessons/.test(text),
       step,
-      "Saved progress was not 1/1.",
+      "Saved progress was not 2/2.",
     );
     assertStep(
-      /Quiz score\s*·\s*100%/.test(text),
+      text.includes("HTML and CSS foundations complete"),
       step,
-      "Saved score was not 100%.",
+      "The completed two-lesson milestone was not restored.",
     );
     assertStep(
-      /aria-valuenow="100"/.test(html),
+      /1\s*\/\s*6 Accepted/.test(text),
       step,
-      "Progress percentage was not 100%.",
+      "The saved JavaScript submission was not restored after course completion.",
     );
 
     const workspaceResponse = await request(
@@ -818,6 +1218,36 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The exact assignment and completed result were not restored after reload.",
     );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspaceResponse.status === 200 &&
+        secondWorkspace.saved === true &&
+        secondWorkspace.html === savedCssWorkspace &&
+        secondWorkspace.submission?.status === "completed" &&
+        secondWorkspace.submission?.passedChecks === 4,
+      step,
+      "The exact CSS workspace and 4/4 result were not restored after reload.",
+    );
+
+    for (const challenge of CSS_CHALLENGES) {
+      const challengeStateResponse = await request(
+        `/api/practice/css/${challenge.slug}`,
+      );
+      const challengeState = await challengeStateResponse.json();
+      assertStep(
+        challengeStateResponse.status === 200 &&
+          challengeState.css === savedCssChallenges.get(challenge.slug) &&
+          challengeState.bestVerdict === "Completed" &&
+          challengeState.attempts?.[0]?.verdict === "Completed" &&
+          challengeState.attempts?.[0]?.passedChecks === challenge.passedChecks,
+        step,
+        `The exact saved state for ${challenge.slug} was not restored after reload.`,
+      );
+    }
 
     const feedbackResponse = await request(
       `/api/courses/${COURSE_SLUG}/feedback`,
@@ -900,20 +1330,93 @@ async function runJourney(baseUrl, databaseUrl) {
   });
 
   await runStep(8, async (step) => {
-    const response = await request(
+    const lessonResponse = await request(
       `/learn/${COURSE_SLUG}/${LESSON_SLUG}`,
     );
-    const location = response.headers.get("location") ?? "";
+    const lessonText = pageText(await lessonResponse.text());
     assertStep(
-      [302, 303, 307, 308].includes(response.status),
+      lessonResponse.status === 200 &&
+        lessonText.includes(LESSON_TITLE) &&
+        lessonText.includes("Full lesson · Free to read"),
       step,
-      "Protected lesson did not redirect after sign out.",
+      "The public lesson did not remain readable after sign out.",
     );
     assertStep(
-      location.includes("/account?mode=signin"),
+      !lessonText.includes(savedWorkspaceHtml) &&
+        !lessonText.includes(savedCssWorkspace) &&
+        !lessonText.includes(savedProjectHtml) &&
+        !lessonText.includes(savedLessonNote) &&
+        !lessonText.includes(savedFeedbackComment) &&
+        !lessonText.includes(savedInterviewAnswer) &&
+        !lessonText.includes(savedCertificateName),
       step,
-      "Protected lesson did not redirect to sign in.",
+      "The signed-out lesson exposed private learner data.",
     );
+
+    const secondLessonResponse = await request(
+      `/learn/${COURSE_SLUG}/${SECOND_LESSON_SLUG}`,
+    );
+    const secondLessonText = pageText(await secondLessonResponse.text());
+    assertStep(
+      secondLessonResponse.status === 200 &&
+        secondLessonText.includes(SECOND_LESSON_TITLE) &&
+        !secondLessonText.includes(savedCssWorkspace),
+      step,
+      "The second public lesson was unavailable or exposed saved CSS after sign out.",
+    );
+
+    for (const challenge of CSS_CHALLENGES) {
+      const challengePageResponse = await request(
+        `/practice/css/${challenge.slug}`,
+      );
+      const challengePageHtml = await challengePageResponse.text();
+      const challengePageText = pageText(challengePageHtml);
+      assertStep(
+        challengePageResponse.status === 200 &&
+          challengePageText.includes(challenge.title) &&
+          !challengePageHtml.includes(runId),
+        step,
+        `The signed-out ${challenge.slug} page exposed saved practice CSS.`,
+      );
+    }
+
+    const protectedPages = [
+      "/dashboard",
+      `/projects/${PROJECT_SLUG}`,
+      `/interview/${INTERVIEW_DRILL_SLUG}`,
+      "/profile",
+      "/settings",
+      "/certificate",
+      "/playground",
+      "/submissions",
+      `/submissions/${savedCodingSubmissionId}`,
+    ];
+
+    for (const path of protectedPages) {
+      const pageResponse = await request(path);
+      const html = await pageResponse.text();
+      const location =
+        pageResponse.headers.get("location") ?? streamedRedirectLocation(html);
+      const visibleText = pageText(html);
+      assertStep(
+        ([302, 303, 307, 308].includes(pageResponse.status) ||
+          (pageResponse.status === 200 &&
+            Boolean(streamedRedirectLocation(html)))) &&
+          location.includes("/account?mode=signin"),
+        step,
+        `Protected page ${path} did not redirect to sign in.`,
+      );
+      assertStep(
+        !html.includes(runId) &&
+          !visibleText.includes(savedLessonNote) &&
+          !visibleText.includes(savedFeedbackComment) &&
+          !visibleText.includes(savedInterviewAnswer) &&
+          !visibleText.includes(savedCertificateName),
+        step,
+        `Protected page ${path} exposed private learner data after sign out.`,
+      );
+    }
+
     const workspaceResponse = await request(
       `/api/lessons/${LESSON_SLUG}/workspace`,
     );
@@ -922,14 +1425,24 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Signed-out workspace access was not rejected.",
     );
-    const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
-    const projectLocation = projectPageResponse.headers.get("location") ?? "";
-    assertStep(
-      [302, 303, 307, 308].includes(projectPageResponse.status) &&
-        projectLocation.includes("/account?mode=signin"),
-      step,
-      "Protected project did not redirect to sign in.",
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
     );
+    assertStep(
+      secondWorkspaceResponse.status === 401,
+      step,
+      "Signed-out CSS workspace access was not rejected.",
+    );
+    for (const challenge of CSS_CHALLENGES) {
+      const challengeStateResponse = await request(
+        `/api/practice/css/${challenge.slug}`,
+      );
+      assertStep(
+        challengeStateResponse.status === 401,
+        step,
+        `Signed-out access to ${challenge.slug} state was not rejected.`,
+      );
+    }
     const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
     assertStep(
       projectResponse.status === 401,
@@ -964,15 +1477,6 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Signed-out certificate access was not rejected.",
     );
-    const certificatePageResponse = await request("/certificate");
-    assertStep(
-      [302, 303, 307, 308].includes(certificatePageResponse.status) &&
-        (certificatePageResponse.headers.get("location") ?? "").includes(
-          "/account?mode=signin",
-        ),
-      step,
-      "The signed-out certificate page did not redirect to sign in.",
-    );
     const interviewResponse = await request(
       `/api/interview/${INTERVIEW_DRILL_SLUG}`,
     );
@@ -999,7 +1503,7 @@ async function runJourney(baseUrl, databaseUrl) {
       "Dashboard did not load after sign in.",
     );
     assertStep(
-      /1\s*\/\s*1 lessons/.test(text) && /Quiz score\s*·\s*100%/.test(text),
+      /Completed\s*·\s*2\s*\/\s*2 lessons/.test(text),
       step,
       "Saved result did not remain after sign in.",
     );
@@ -1016,6 +1520,34 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Saved assignment and result did not remain after sign in.",
     );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspaceResponse.status === 200 &&
+        secondWorkspace.html === savedCssWorkspace &&
+        secondWorkspace.submission?.status === "completed" &&
+        secondWorkspace.submission?.passedChecks === 4,
+      step,
+      "The exact CSS workspace and 4/4 result did not remain after sign in.",
+    );
+
+    for (const challenge of CSS_CHALLENGES) {
+      const challengeStateResponse = await request(
+        `/api/practice/css/${challenge.slug}`,
+      );
+      const challengeState = await challengeStateResponse.json();
+      assertStep(
+        challengeStateResponse.status === 200 &&
+          challengeState.css === savedCssChallenges.get(challenge.slug) &&
+          challengeState.bestVerdict === "Completed" &&
+          challengeState.attempts?.[0]?.passedChecks === challenge.passedChecks,
+        step,
+        `The exact ${challenge.slug} state did not remain after sign in.`,
+      );
+    }
 
     const feedbackResponse = await request(
       `/api/courses/${COURSE_SLUG}/feedback`,
@@ -1081,6 +1613,26 @@ async function runJourney(baseUrl, databaseUrl) {
         interview.progress?.answers?.[0]?.rating === "ready",
       step,
       "The exact interview answer did not remain after sign in.",
+    );
+
+    const submissionPageResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+    );
+    const submissionPageHtml = await submissionPageResponse.text();
+    const restoredSubmissionSource = elementTextByAttribute(
+      submissionPageHtml,
+      {
+        tagName: "pre",
+        attribute: "aria-label",
+        value: "Submitted JavaScript source",
+      },
+    );
+    assertStep(
+      submissionPageResponse.status === 200 &&
+        restoredSubmissionSource === savedCodingSubmissionSource &&
+        restoredSubmissionSource !== revisedCodingDraft,
+      step,
+      "The exact JavaScript submission snapshot did not return after sign in.",
     );
   });
 
@@ -1188,6 +1740,75 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "One learner could read another learner’s artifact.",
     );
+
+    const secondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+      {},
+      secondJar,
+    );
+    const secondWorkspace = await secondWorkspaceResponse.json();
+    assertStep(
+      secondWorkspaceResponse.status === 200 &&
+        secondWorkspace.saved === false &&
+        secondWorkspace.submission === null &&
+        secondWorkspace.html !== savedCssWorkspace,
+      step,
+      "One learner could read another learner’s CSS workspace.",
+    );
+
+    const originalSecondWorkspaceResponse = await request(
+      `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
+    );
+    const originalSecondWorkspace = await originalSecondWorkspaceResponse.json();
+    assertStep(
+      originalSecondWorkspaceResponse.status === 200 &&
+        originalSecondWorkspace.html === savedCssWorkspace &&
+        originalSecondWorkspace.submission?.passedChecks === 4,
+      step,
+      "The isolation learner changed the original CSS workspace.",
+    );
+
+    for (const challenge of CSS_CHALLENGES) {
+      const isolationChallengeResponse = await request(
+        `/api/practice/css/${challenge.slug}`,
+        {},
+        secondJar,
+      );
+      const isolationChallenge = await isolationChallengeResponse.json();
+      assertStep(
+        isolationChallengeResponse.status === 200 &&
+          isolationChallenge.bestVerdict === null &&
+          isolationChallenge.attempts?.length === 0 &&
+          isolationChallenge.css !== savedCssChallenges.get(challenge.slug) &&
+          !isolationChallenge.css.includes(runId),
+        step,
+        `One learner could read another learner's ${challenge.slug} state.`,
+      );
+
+      const isolationDraft = `${isolationChallenge.css}\n/* isolation ${runId} */`;
+      const isolationSaveResponse = await jsonRequest(
+        `/api/practice/css/${challenge.slug}`,
+        { mode: "draft", css: isolationDraft },
+        secondJar,
+      );
+      assertStep(
+        isolationSaveResponse.status === 200,
+        step,
+        `The isolation learner could not save separate ${challenge.slug} work.`,
+      );
+
+      const originalChallengeResponse = await request(
+        `/api/practice/css/${challenge.slug}`,
+      );
+      const originalChallenge = await originalChallengeResponse.json();
+      assertStep(
+        originalChallengeResponse.status === 200 &&
+          originalChallenge.css === savedCssChallenges.get(challenge.slug) &&
+          originalChallenge.bestVerdict === "Completed",
+        step,
+        `Another learner changed the original ${challenge.slug} state.`,
+      );
+    }
 
     const noteResponse = await request(
       `/api/lessons/${LESSON_SLUG}/notes`,
@@ -1353,6 +1974,55 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "The isolation learner changed the original interview answer.",
     );
+
+    const isolatedSubmissionResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+      {},
+      secondJar,
+    );
+    const isolatedSubmissionHtml = await isolatedSubmissionResponse.text();
+    assertStep(
+      isolatedSubmissionResponse.status === 404 &&
+        !isolatedSubmissionHtml.includes(savedCodingSubmissionSource) &&
+        !isolatedSubmissionHtml.includes(runId),
+      step,
+      "One learner could read another learner’s JavaScript submission snapshot.",
+    );
+
+    const isolatedReuseResponse = await request(
+      `/practice/sum-two-numbers?submission=${savedCodingSubmissionId}`,
+      {},
+      secondJar,
+    );
+    const isolatedReuseHtml = await isolatedReuseResponse.text();
+    assertStep(
+      isolatedReuseResponse.status === 200 &&
+        !isolatedReuseHtml.includes(savedCodingSubmissionSource) &&
+        !isolatedReuseHtml.includes("Past submission loaded") &&
+        !isolatedReuseHtml.includes(runId),
+      step,
+      "One learner could load another learner’s JavaScript source into the editor.",
+    );
+
+    const originalSubmissionResponse = await request(
+      `/submissions/${savedCodingSubmissionId}`,
+    );
+    const originalSubmissionHtml = await originalSubmissionResponse.text();
+    const originalSubmissionSource = elementTextByAttribute(
+      originalSubmissionHtml,
+      {
+        tagName: "pre",
+        attribute: "aria-label",
+        value: "Submitted JavaScript source",
+      },
+    );
+    assertStep(
+      originalSubmissionResponse.status === 200 &&
+        originalSubmissionSource === savedCodingSubmissionSource &&
+        originalSubmissionSource !== revisedCodingDraft,
+      step,
+      "The isolation check changed the original JavaScript submission snapshot.",
+    );
   });
 }
 
@@ -1407,6 +2077,11 @@ async function main() {
     appProcess = startApp(appUrl, appEnv);
     await waitForApp(appUrl, appProcess);
     await runJourney(appUrl, isolatedDatabaseUrl);
+    if (appProcess.runtimeStderr.trim()) {
+      throw new Error(
+        "The local application emitted stderr during the learner journey.",
+      );
+    }
     console.log(`Learner release gate passed: ${steps.length}/${steps.length} checks.`);
     result = 0;
   } catch (error) {

@@ -13,8 +13,13 @@ const requiredTables = [
   "course_assignment",
   "course_certificate",
   "course_feedback",
+  "coding_problem_bookmark",
   "coding_problem_progress",
+  "coding_problem_test_case_set",
   "coding_submission",
+  "css_practice_attempt",
+  "css_practice_feedback",
+  "css_practice_progress",
   "early_access_signup",
   "guided_project",
   "guided_project_feedback",
@@ -25,12 +30,60 @@ const requiredTables = [
   "lesson_progress",
   "learner_setting",
   "playground_file",
+  "practice_feedback",
   "rate_limit",
   "session",
   "user",
   "verification",
 ];
 const requiredColumns = {
+  coding_submission: [
+    "id",
+    "user_id",
+    "problem_slug",
+    "code",
+    "verdict",
+    "passed_tests",
+    "total_tests",
+    "created_at",
+  ],
+  coding_problem_test_case_set: [
+    "id",
+    "user_id",
+    "problem_slug",
+    "inputs",
+    "expected_outputs",
+    "created_at",
+    "updated_at",
+  ],
+  css_practice_attempt: [
+    "id",
+    "user_id",
+    "challenge_slug",
+    "verdict",
+    "passed_checks",
+    "total_checks",
+    "created_at",
+  ],
+  css_practice_progress: [
+    "id",
+    "user_id",
+    "challenge_slug",
+    "css",
+    "best_verdict",
+    "completed_at",
+    "created_at",
+    "updated_at",
+  ],
+  css_practice_feedback: [
+    "id",
+    "user_id",
+    "path_slug",
+    "usefulness",
+    "comment",
+    "created_at",
+    "updated_at",
+  ],
   guided_project: [
     "id",
     "user_id",
@@ -50,6 +103,23 @@ const requiredColumns = {
     "user_id",
     "project_slug",
     "confidence",
+    "comment",
+    "created_at",
+    "updated_at",
+  ],
+  playground_file: [
+    "id",
+    "user_id",
+    "code",
+    "quick_checks",
+    "created_at",
+    "updated_at",
+  ],
+  practice_feedback: [
+    "id",
+    "user_id",
+    "problem_slug",
+    "usefulness",
     "comment",
     "created_at",
     "updated_at",
@@ -141,7 +211,9 @@ async function run() {
       from pg_catalog.pg_tables
       where schemaname = 'public'
     `;
-    const presentTables = new Set(tableResults.map(({ tablename }) => tablename));
+    const presentTables = new Set(
+      tableResults.map(({ tablename }) => tablename),
+    );
     const missingTables = requiredTables.filter(
       (tableName) => !presentTables.has(tableName),
     );
@@ -150,8 +222,15 @@ async function run() {
       from information_schema.columns
       where table_schema = 'public'
         and table_name in (
+          'css_practice_attempt',
+          'css_practice_feedback',
+          'css_practice_progress',
+          'coding_problem_test_case_set',
+          'coding_submission',
           'guided_project',
-          'guided_project_feedback'
+          'guided_project_feedback',
+          'practice_feedback',
+          'playground_file'
         )
     `;
     const presentColumns = new Set(

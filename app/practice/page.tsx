@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { getCodingCatalogProgress } from "@/db/coding-practice";
+import {
+  getCodingCatalogProgress,
+  getCodingMistakeReviewQueueForStudent,
+  getCodingProblemBookmarksForStudent,
+} from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
+import { buildCodingReviewSession } from "@/lib/coding-review-session";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +30,21 @@ export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const progress = await getCodingCatalogProgress(session?.user.id ?? null);
+  const [progress, savedProblems, reviewQueue] = await Promise.all([
+    getCodingCatalogProgress(session?.user.id ?? null),
+    session
+      ? getCodingProblemBookmarksForStudent(session.user.id)
+      : Promise.resolve([]),
+    session
+      ? getCodingMistakeReviewQueueForStudent(session.user.id)
+      : Promise.resolve([]),
+  ]);
   const completedSlugs = new Set(progress.completedSlugs);
+  const reviewSession = buildCodingReviewSession({
+    mistakes: reviewQueue,
+    bookmarks: savedProblems,
+    completedSlugs: progress.completedSlugs,
+  });
   const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
     progress.completedSlugs,
   );
@@ -102,10 +120,25 @@ export default async function PracticePage() {
               <h2 id="catalog-title">
                 Build from input handling to FizzBuzz.
               </h2>
+              <p className="problem-catalog-helper">
+                Each problem runs in browser-based JavaScript. Signed-in
+                attempts are saved to your account.
+              </p>
             </div>
-            <span aria-label={catalogProgressLabel}>
-              {catalogProgressLabel}
-            </span>
+            <div className="catalog-progress-summary">
+              <span aria-label={catalogProgressLabel}>
+                {catalogProgressLabel}
+              </span>
+              {session ? <p>Saved privately to your account</p> : null}
+              {session ? (
+                <Link
+                  className="catalog-submission-history-link"
+                  href="/submissions"
+                >
+                  Review saved submissions <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
+            </div>
           </div>
 
           <div className="problem-table" role="list">
@@ -139,6 +172,120 @@ export default async function PracticePage() {
               );
             })}
           </div>
+
+          {session ? (
+            <aside
+              className="practice-review-entry"
+              aria-labelledby="practice-review-entry-title"
+            >
+              <div>
+                <p className="eyebrow">Private review session</p>
+                <h3 id="practice-review-entry-title">
+                  Revisit up to three saved weak spots.
+                </h3>
+                <p>
+                  Unresolved Wrong Answers come first, then problems you saved
+                  for later. The order updates after your next result.
+                </p>
+              </div>
+              <div className="practice-review-entry-action">
+                <span>
+                  {reviewSession.length}{" "}
+                  {reviewSession.length === 1 ? "problem" : "problems"}
+                </span>
+                <Link href="/practice/review">
+                  {reviewSession.length > 0
+                    ? "Open review session"
+                    : "Check review status"}{" "}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </aside>
+          ) : null}
+
+          {session ? (
+            <aside
+              className="mistake-review"
+              aria-labelledby="mistake-review-title"
+            >
+              <div className="mistake-review-heading">
+                <div>
+                  <p className="eyebrow">Private review queue</p>
+                  <h3 id="mistake-review-title">Mistakes to revisit</h3>
+                  <p>
+                    Your latest saved verdict decides what stays here. An
+                    Accepted retry clears the concept.
+                  </p>
+                </div>
+                <span>
+                  {reviewQueue.length}{" "}
+                  {reviewQueue.length === 1 ? "concept" : "concepts"}
+                </span>
+              </div>
+
+              {reviewQueue.length > 0 ? (
+                <ol className="mistake-review-list">
+                  {reviewQueue.map((item) => (
+                    <li key={item.slug}>
+                      <div className="mistake-review-number">
+                        <span>{String(item.number).padStart(2, "0")}</span>
+                        <small>{item.skill}</small>
+                      </div>
+                      <div className="mistake-review-copy">
+                        <strong>{item.concept}</strong>
+                        <p>{item.recoveryHint}</p>
+                        <span>
+                          Latest attempt: {item.passedTests}/{item.totalTests}{" "}
+                          checks
+                        </span>
+                      </div>
+                      <Link href={`/practice/${item.slug}`}>
+                        Review {item.title} <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mistake-review-empty">
+                  No concepts waiting. A saved Wrong Answer adds one here;
+                  an Accepted retry clears it.
+                </p>
+              )}
+            </aside>
+          ) : null}
+
+          {session ? (
+            <aside className="saved-problems" aria-labelledby="saved-problems-title">
+              <div className="saved-problems-heading">
+                <div>
+                  <p className="eyebrow">Private shortlist</p>
+                  <h3 id="saved-problems-title">Saved for later</h3>
+                  <p>Private to your account.</p>
+                </div>
+                <span>{savedProblems.length} saved</span>
+              </div>
+              {savedProblems.length > 0 ? (
+                <ul className="saved-problems-list">
+                  {savedProblems.map((problem) => (
+                    <li key={problem.slug}>
+                      <Link href={`/practice/${problem.slug}`}>
+                        <span>{String(problem.number).padStart(2, "0")}</span>
+                        <span>
+                          <strong>{problem.title}</strong>
+                          <small>{problem.skill}</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="saved-problems-empty">
+                  Nothing saved yet. Use Save for later on any problem.
+                </p>
+              )}
+            </aside>
+          ) : null}
 
           {session ? (
             <aside
