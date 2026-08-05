@@ -22,6 +22,7 @@ type CssChallengeWorkspaceProps = {
   initialCss: string;
   initialPathFeedback?: SavedCssPathFeedback | null;
   isSignedIn: boolean;
+  isReviewSession?: boolean;
   isPathFeedbackEligible?: boolean;
   nextChallengeSlug: string | null;
 };
@@ -48,6 +49,7 @@ export function CssChallengeWorkspace({
   initialCss,
   initialPathFeedback = null,
   isSignedIn,
+  isReviewSession = false,
   isPathFeedbackEligible = false,
   nextChallengeSlug: initialNextChallengeSlug,
 }: CssChallengeWorkspaceProps) {
@@ -334,19 +336,36 @@ export function CssChallengeWorkspace({
             </p>
           )}
           {bestVerdict === "Completed" ? (
-            nextChallengeSlug ? (
-              <Link
-                className="css-next-challenge"
-                href={`/practice/css/${nextChallengeSlug}`}
-              >
-                Continue to the next unfinished challenge{" "}
-                <span aria-hidden="true">→</span>
-              </Link>
-            ) : (
-              <Link className="css-next-challenge" href="/practice/css">
-                Review the complete CSS path <span aria-hidden="true">→</span>
-              </Link>
-            )
+            <div
+              className={
+                isReviewSession
+                  ? "css-completed-actions is-review-session"
+                  : "css-completed-actions"
+              }
+            >
+              {isReviewSession ? (
+                <Link
+                  className="css-review-return-action"
+                  href="/practice/css/review"
+                >
+                  Return to refreshed review
+                </Link>
+              ) : null}
+              {nextChallengeSlug ? (
+                <Link
+                  className="css-next-challenge"
+                  href={`/practice/css/${nextChallengeSlug}`}
+                >
+                  Continue to the next unfinished challenge{" "}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : (
+                <Link className="css-next-challenge" href="/practice/css">
+                  Review the complete CSS path{" "}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              )}
+            </div>
           ) : null}
         </aside>
       </div>

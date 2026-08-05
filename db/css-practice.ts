@@ -9,6 +9,10 @@ import {
   type CssPathFeedbackUsefulness,
   type SavedCssPathFeedback,
 } from "@/lib/css-path-feedback";
+import {
+  buildCssReviewSession,
+  type CssReviewSessionItem,
+} from "@/lib/css-review-session";
 import { getDatabase } from "./index";
 import {
   cssPracticeAttempt,
@@ -27,6 +31,34 @@ export type CssPracticeAttempt = {
 const challengeSlugs = CSS_PRACTICE_CHALLENGES.map(
   (challenge) => challenge.slug,
 );
+
+export async function getCssReviewSessionForStudent(
+  userId: string,
+): Promise<CssReviewSessionItem[]> {
+  const latestAttempts = await getDatabase()
+    .selectDistinctOn([cssPracticeAttempt.challengeSlug], {
+      id: cssPracticeAttempt.id,
+      challengeSlug: cssPracticeAttempt.challengeSlug,
+      verdict: cssPracticeAttempt.verdict,
+      passedChecks: cssPracticeAttempt.passedChecks,
+      totalChecks: cssPracticeAttempt.totalChecks,
+      createdAt: cssPracticeAttempt.createdAt,
+    })
+    .from(cssPracticeAttempt)
+    .where(
+      and(
+        eq(cssPracticeAttempt.userId, userId),
+        inArray(cssPracticeAttempt.challengeSlug, challengeSlugs),
+      ),
+    )
+    .orderBy(
+      cssPracticeAttempt.challengeSlug,
+      desc(cssPracticeAttempt.createdAt),
+      desc(cssPracticeAttempt.id),
+    );
+
+  return buildCssReviewSession(latestAttempts);
+}
 
 export async function getCssPracticeCatalogProgress(userId: string | null) {
   if (!userId) {

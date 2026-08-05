@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { getCssPracticeCatalogProgress } from "@/db/css-practice";
+import {
+  getCssPracticeCatalogProgress,
+  getCssReviewSessionForStudent,
+} from "@/db/css-practice";
 import { auth } from "@/lib/auth";
 import {
   CSS_PRACTICE_CHALLENGE_COUNT,
@@ -20,7 +23,12 @@ export const metadata: Metadata = {
 
 export default async function CssPracticePage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const progress = await getCssPracticeCatalogProgress(session?.user.id ?? null);
+  const [progress, reviewSession] = await Promise.all([
+    getCssPracticeCatalogProgress(session?.user.id ?? null),
+    session
+      ? getCssReviewSessionForStudent(session.user.id)
+      : Promise.resolve([]),
+  ]);
   const completed = new Set(progress.completedSlugs);
   const primaryChallengeSlug =
     progress.nextChallengeSlug ?? CSS_PRACTICE_CHALLENGES[0].slug;
@@ -119,6 +127,36 @@ export default async function CssPracticePage() {
             );
           })}
         </div>
+
+        {session ? (
+          <aside
+            className="practice-review-entry"
+            aria-labelledby="css-review-entry-title"
+          >
+            <div>
+              <p className="eyebrow">Private CSS review</p>
+              <h3 id="css-review-entry-title">
+                Repair up to three saved weak spots.
+              </h3>
+              <p>
+                Your latest saved result decides what stays. Completing a
+                challenge clears it from the session automatically.
+              </p>
+            </div>
+            <div className="practice-review-entry-action">
+              <span>
+                {reviewSession.length}{" "}
+                {reviewSession.length === 1 ? "challenge" : "challenges"}
+              </span>
+              <Link href="/practice/css/review">
+                {reviewSession.length > 0
+                  ? "Open CSS review"
+                  : "Check review status"}{" "}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </aside>
+        ) : null}
       </section>
       <SiteFooter />
     </main>

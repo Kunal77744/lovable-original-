@@ -7030,6 +7030,42 @@ h1 {
   color: var(--ink);
 }
 
+.css-completed-actions {
+  margin-top: 18px;
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.css-review-return-action {
+  min-height: 44px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  color: #fff;
+  border-radius: 999px;
+  background: var(--accent);
+  font-size: 12px;
+  font-weight: 780;
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(40, 118, 82, 0.18);
+}
+
+.css-review-return-action:hover {
+  background: var(--accent-deep);
+}
+
+.css-review-return-action:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.css-completed-actions.is-review-session .css-next-challenge {
+  margin-top: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .saved-problems-heading {
   display: flex;
   align-items: flex-start;

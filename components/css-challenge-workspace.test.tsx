@@ -132,6 +132,60 @@ describe("CssChallengeWorkspace", () => {
     expect(captureCssPracticeCompleted).not.toHaveBeenCalled();
   });
 
+  it("returns a completed review attempt to the refreshed private session", async () => {
+    const completedCss = `.learning-card {
+      background: #ffffff;
+      color: #17231e;
+    }`;
+    const checks = gradeCssPracticeChallenge(challenge.slug, completedCss)!;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          id: "attempt-review-pass",
+          verdict: "Completed",
+          bestVerdict: "Completed",
+          checks,
+          passedChecks: 3,
+          totalChecks: 3,
+          completedCount: 1,
+          totalCount: 6,
+          nextChallengeSlug: "descendant-selector",
+          createdAt: "2026-08-05T00:00:00.000Z",
+          isFirstCompletedResult: true,
+        }),
+      }),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict="Needs revision"
+        challenge={{ slug: challenge.slug, title: challenge.title, checks }}
+        initialCss={completedCss}
+        isReviewSession
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check and save attempt" }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("link", { name: "Return to refreshed review" }),
+      ).toHaveAttribute("href", "/practice/css/review"),
+    );
+    expect(
+      screen.getByRole("link", {
+        name: /continue to the next unfinished challenge/i,
+      }),
+    ).toHaveAttribute("href", "/practice/css/descendant-selector");
+  });
+
   it("reveals concept-level recovery only after a saved failed attempt", async () => {
     const failedCss = `.learning-card { color: #17231e; }`;
     const checks = gradeCssPracticeChallenge(challenge.slug, failedCss)!;

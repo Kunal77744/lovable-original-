@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 type CssChallengePageProps = {
   params: Promise<{ challengeSlug: string }>;
+  searchParams?: Promise<{ review?: string | string[] }>;
 };
 
 export async function generateMetadata({
@@ -42,13 +43,17 @@ export async function generateMetadata({
 
 export default async function CssChallengePage({
   params,
+  searchParams,
 }: CssChallengePageProps) {
   const { challengeSlug } = await params;
+  const resolvedSearchParams = await searchParams;
   const challenge = getCssPracticeChallenge(challengeSlug);
 
   if (!challenge) notFound();
 
   const session = await auth.api.getSession({ headers: await headers() });
+  const isReviewSession =
+    Boolean(session) && resolvedSearchParams?.review === "1";
   const [studentState, catalogProgress] = await Promise.all([
     getCssPracticeChallengeForStudent(session?.user.id ?? null, challengeSlug),
     getCssPracticeCatalogProgress(session?.user.id ?? null),
@@ -74,7 +79,11 @@ export default async function CssChallengePage({
           className="problem-breadcrumbs"
           aria-label="CSS challenge navigation"
         >
-          <Link href="/practice/css">CSS practice</Link>
+          <Link
+            href={isReviewSession ? "/practice/css/review" : "/practice/css"}
+          >
+            {isReviewSession ? "Private CSS review" : "CSS practice"}
+          </Link>
           <span aria-hidden="true">/</span>
           <span aria-current="step">
             Step {challenge.number} of {CSS_PRACTICE_CHALLENGE_COUNT}
@@ -103,6 +112,7 @@ export default async function CssChallengePage({
           initialCss={studentState.css}
           initialPathFeedback={pathFeedbackState.feedback}
           isSignedIn={Boolean(session)}
+          isReviewSession={isReviewSession}
           isPathFeedbackEligible={pathFeedbackState.isEligible}
           nextChallengeSlug={catalogProgress.nextChallengeSlug}
         />
