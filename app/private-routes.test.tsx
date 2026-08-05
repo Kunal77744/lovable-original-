@@ -3,7 +3,7 @@ import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
 import { metadata as domLabMetadata } from "./practice/dom/page";
 import { metadata as settingsMetadata } from "./settings/page";
-import { metadata as dataStructuresMetadata } from "./practice/data-structures/page";
+import { metadata as functionsMetadata } from "./practice/functions/page";
 
 vi.mock("@/lib/auth", () => ({
   auth: {
@@ -28,7 +28,7 @@ describe("private learner routes", () => {
       index: false,
       follow: false,
     });
-    expect(domLabMetadata.robots).toEqual({
+    expect(functionsMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
@@ -44,7 +44,7 @@ describe("private learner routes", () => {
       "https://lovable-original-eight.vercel.app/certificate",
     );
     expect(urls).not.toContain(
-      "https://lovable-original-eight.vercel.app/practice/dom",
+      "https://lovable-original-eight.vercel.app/practice/functions",
     );
   });
 });

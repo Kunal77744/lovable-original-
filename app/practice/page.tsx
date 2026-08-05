@@ -181,18 +181,21 @@ export default async function PracticePage() {
           {session ? (
             <div className="practice-secondary-paths">
               <aside
-                className="practice-playground-entry practice-dom-lab-entry"
-                aria-label="Practice JavaScript DOM fundamentals"
+                className="practice-playground-entry practice-function-lab-entry"
+                aria-label="Practice JavaScript functions and scope"
               >
                 <div>
-                  <p className="eyebrow">Browser interface lab</p>
+                  <p className="eyebrow">Functions lab</p>
                   <p>
-                    Select elements, change text and classes, then respond to a
-                    click in four short exercises.
+                    Practice parameters, returns, local scope, and closures in
+                    four short browser exercises.
                   </p>
                 </div>
-                <Link className="practice-playground-action" href="/practice/dom">
-                  Practice DOM fundamentals <span aria-hidden="true">→</span>
+                <Link
+                  className="practice-playground-action"
+                  href="/practice/functions"
+                >
+                  Practice functions and scope <span aria-hidden="true">→</span>
                 </Link>
               </aside>
 
