@@ -96,6 +96,28 @@ export default async function PracticePage() {
         </section>
 
         <section className="problem-catalog" aria-labelledby="catalog-title">
+          {session ? (
+            <aside
+              className="practice-foundations-entry"
+              aria-label="JavaScript foundations warm-up"
+            >
+              <div>
+                <p className="eyebrow">New to JavaScript?</p>
+                <h2>Learn the three moves behind the problem path.</h2>
+                <p>
+                  Parse input, choose a branch, and build output in three guided
+                  browser exercises before your first judged attempt.
+                </p>
+              </div>
+              <Link
+                className="practice-foundations-action"
+                href="/practice/foundations"
+              >
+                Open the 10-minute warm-up <span aria-hidden="true">→</span>
+              </Link>
+            </aside>
+          ) : null}
+
           <div className="problem-catalog-heading">
             <div>
               <p className="eyebrow">Six-step path · JavaScript</p>
