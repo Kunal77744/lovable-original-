@@ -4,12 +4,14 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
+import { getCssPracticeCatalogProgress } from "@/db/css-practice";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { auth } from "@/lib/auth";
 import {
   getCodingProblem,
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
+import { getCssPracticeChallenge } from "@/lib/css-practice-challenges";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { LearnerMilestoneChecklist } from "@/components/learner-milestone-checklist";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -34,11 +36,13 @@ export default async function DashboardPage() {
     redirect("/account?mode=signin");
   }
 
-  const [firstCourse, practiceProgress, guidedProject] = await Promise.all([
-    getOrCreateFirstCourseAssignment(session.user.id),
-    getCodingCatalogProgress(session.user.id),
-    getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
-  ]);
+  const [firstCourse, practiceProgress, cssPracticeProgress, guidedProject] =
+    await Promise.all([
+      getOrCreateFirstCourseAssignment(session.user.id),
+      getCodingCatalogProgress(session.user.id),
+      getCssPracticeCatalogProgress(session.user.id),
+      getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
+    ]);
   const guidedProjectCompleted =
     guidedProject?.submission?.status === "completed";
   const guidedProjectStarted = Boolean(guidedProject?.saved);
@@ -48,6 +52,9 @@ export default async function DashboardPage() {
   );
   const nextProblem = nextProblemSlug
     ? getCodingProblem(nextProblemSlug)
+    : null;
+  const nextCssChallenge = cssPracticeProgress.nextChallengeSlug
+    ? getCssPracticeChallenge(cssPracticeProgress.nextChallengeSlug)
     : null;
   const firstName = session.user.name.trim().split(/\s+/)[0];
 
@@ -97,6 +104,17 @@ export default async function DashboardPage() {
                   number: nextProblem.number,
                   title: nextProblem.title,
                   href: `/practice/${nextProblem.slug}`,
+                }
+              : null,
+          }}
+          cssPractice={{
+            completedCount: cssPracticeProgress.completedCount,
+            totalCount: cssPracticeProgress.totalCount,
+            nextChallenge: nextCssChallenge
+              ? {
+                  number: nextCssChallenge.number,
+                  title: nextCssChallenge.title,
+                  href: `/practice/css/${nextCssChallenge.slug}`,
                 }
               : null,
           }}

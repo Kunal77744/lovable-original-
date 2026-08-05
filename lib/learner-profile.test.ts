@@ -176,7 +176,18 @@ describe("buildLearnerProfile", () => {
           "fizz-buzz",
         ],
       },
-      cssPractice: emptyCssPractice,
+      cssPractice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "class-selector",
+          "descendant-selector",
+          "predictable-width",
+          "inside-and-between",
+          "link-hit-area",
+          "centered-card",
+        ],
+      },
       attempts: [],
       projectCompleted: true,
     });
@@ -185,6 +196,49 @@ describe("buildLearnerProfile", () => {
       expect.objectContaining({
         label: "Review the course",
         href: "/learn/web-development-foundations/semantic-html#revision-pack",
+      }),
+    );
+  });
+
+  it("continues a JavaScript completer into the next CSS challenge", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "sum-two-numbers",
+          "even-or-odd",
+          "multiplication-table",
+          "largest-value",
+          "reverse-a-word",
+          "fizz-buzz",
+        ],
+      },
+      cssPractice: {
+        completedCount: 2,
+        totalCount: 6,
+        completedSlugs: ["class-selector", "descendant-selector"],
+      },
+      attempts: [],
+      projectCompleted: true,
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Complete CSS 03",
+        href: "/practice/css/predictable-width",
+        title: "Keep the width predictable",
       }),
     );
   });

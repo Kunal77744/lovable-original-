@@ -23,12 +23,22 @@ type LearnerMilestoneChecklistProps = {
       href: string;
     } | null;
   };
+  cssPractice: {
+    completedCount: number;
+    totalCount: number;
+    nextChallenge: {
+      number: number;
+      title: string;
+      href: string;
+    } | null;
+  };
 };
 
 export function LearnerMilestoneChecklist({
   course,
   project,
   practice,
+  cssPractice,
 }: LearnerMilestoneChecklistProps) {
   const practicePathCompleted =
     practice.totalCount > 0 &&
@@ -36,9 +46,19 @@ export function LearnerMilestoneChecklist({
   const completedMilestones =
     Number(course.completed) +
     Number(project.completed) +
-    Number(practicePathCompleted);
+    Number(practicePathCompleted) +
+    Number(
+      cssPractice.totalCount > 0 &&
+        cssPractice.completedCount === cssPractice.totalCount,
+    );
+  const cssPathCompleted =
+    cssPractice.totalCount > 0 &&
+    cssPractice.completedCount === cssPractice.totalCount;
   const nextProblemNumber = practice.nextProblem
     ? String(practice.nextProblem.number).padStart(2, "0")
+    : null;
+  const nextCssChallengeNumber = cssPractice.nextChallenge
+    ? String(cssPractice.nextChallenge.number).padStart(2, "0")
     : null;
 
   return (
@@ -50,16 +70,16 @@ export function LearnerMilestoneChecklist({
         <div>
           <p className="course-kicker">Your learning path</p>
           <h2 id="dashboard-learning-path-title">
-            Learn it. Build it. Prove it.
+            Learn it. Build it. Prove it. Style it.
           </h2>
           <p>
             Follow one connected route from the semantic HTML lesson to a saved
-            project, then into JavaScript practice.
+            project, then into JavaScript and CSS practice.
           </p>
         </div>
         <div className="dashboard-path-summary">
           <span>Milestones complete</span>
-          <strong>{completedMilestones}/3</strong>
+          <strong>{completedMilestones}/4</strong>
           <Link href="/profile">
             View learning record <span aria-hidden="true">→</span>
           </Link>
@@ -189,6 +209,53 @@ export function LearnerMilestoneChecklist({
               {practice.completedCount > 0
                 ? `Continue at problem ${nextProblemNumber}`
                 : "Start problem 01"}
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+        </li>
+
+        <li
+          className={
+            cssPathCompleted
+              ? "dashboard-milestone is-complete"
+              : practicePathCompleted
+                ? "dashboard-milestone is-current"
+                : "dashboard-milestone"
+          }
+          aria-current={
+            practicePathCompleted && !cssPathCompleted ? "step" : undefined
+          }
+        >
+          <span className="dashboard-milestone-marker" aria-hidden="true">
+            {cssPathCompleted ? "✓" : "04"}
+          </span>
+          <div className="dashboard-milestone-copy">
+            <span>
+              {cssPathCompleted
+                ? "Completed · 6/6 challenges"
+                : practicePathCompleted
+                  ? `${cssPractice.completedCount}/${cssPractice.totalCount} completed`
+                  : "After JavaScript practice"}
+            </span>
+            <h3>
+              {cssPractice.nextChallenge
+                ? `Complete CSS ${nextCssChallengeNumber}: ${cssPractice.nextChallenge.title}`
+                : "CSS foundations path complete"}
+            </h3>
+            <p>
+              {cssPractice.nextChallenge
+                ? "Apply selectors and the box model, then save the completed result."
+                : "Every CSS draft, attempt, and completed challenge is saved to your learner record."}
+            </p>
+          </div>
+          {practicePathCompleted && cssPractice.nextChallenge ? (
+            <Link
+              className="dashboard-path-action"
+              href={cssPractice.nextChallenge.href}
+            >
+              {cssPractice.completedCount > 0
+                ? `Continue at CSS ${nextCssChallengeNumber}`
+                : "Start CSS challenge 01"}
               <span aria-hidden="true">→</span>
             </Link>
           ) : null}

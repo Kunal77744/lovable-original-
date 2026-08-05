@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getCourse: vi.fn(),
   getPractice: vi.fn(),
+  getCssPractice: vi.fn(),
   getProject: vi.fn(),
 }));
 
@@ -27,6 +28,10 @@ vi.mock("@/db/course", () => ({
 
 vi.mock("@/db/coding-practice", () => ({
   getCodingCatalogProgress: mocks.getPractice,
+}));
+
+vi.mock("@/db/css-practice", () => ({
+  getCssPracticeCatalogProgress: mocks.getCssPractice,
 }));
 
 vi.mock("@/db/guided-project", () => ({
@@ -88,6 +93,12 @@ describe("DashboardPage", () => {
       totalCount: 6,
       completedSlugs: [],
     });
+    mocks.getCssPractice.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 6,
+      completedSlugs: [],
+      nextChallengeSlug: "class-selector",
+    });
     mocks.getProject.mockResolvedValue({
       submission: null,
     });
@@ -116,7 +127,7 @@ describe("DashboardPage", () => {
         name: "Solve problem 01: Sum two numbers",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("0/3")).toBeInTheDocument();
+    expect(screen.getByText("0/4")).toBeInTheDocument();
     expect(screen.getByText("Start here · 34 minutes")).toBeInTheDocument();
   });
 
@@ -176,7 +187,7 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue the field guide" }),
     ).toHaveAttribute("href", "/projects/semantic-html-article");
     expect(screen.getByText("Saved draft ready")).toBeInTheDocument();
-    expect(screen.getByText("1/3")).toBeInTheDocument();
+    expect(screen.getByText("1/4")).toBeInTheDocument();
   });
 
   it("points a returning learner to the exact next unfinished problem", async () => {
@@ -220,6 +231,62 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue at problem 02" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("1/6 Accepted")).toBeInTheDocument();
-    expect(screen.getByText("2/3")).toBeInTheDocument();
+    expect(screen.getByText("2/4")).toBeInTheDocument();
+  });
+
+  it("continues a JavaScript completer into the exact next CSS challenge", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 2,
+      progressPercent: 100,
+      courseCompleted: true,
+      nextLesson: {
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
+        completed: true,
+        quizScore: 100,
+      },
+    });
+    mocks.getProject.mockResolvedValue({
+      saved: true,
+      submission: {
+        status: "completed",
+        passedChecks: 6,
+        totalChecks: 6,
+      },
+    });
+    mocks.getPractice.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [
+        "sum-two-numbers",
+        "even-or-odd",
+        "multiplication-table",
+        "largest-value",
+        "reverse-a-word",
+        "fizz-buzz",
+      ],
+    });
+    mocks.getCssPractice.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 6,
+      completedSlugs: ["class-selector", "descendant-selector"],
+      nextChallengeSlug: "predictable-width",
+    });
+
+    render(await DashboardPage());
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Complete CSS 03: Keep the width predictable",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Continue at CSS 03" }),
+    ).toHaveAttribute("href", "/practice/css/predictable-width");
+    expect(screen.getByText("3/4")).toBeInTheDocument();
   });
 });
