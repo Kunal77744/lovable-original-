@@ -141,21 +141,39 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <aside
-              className="practice-playground-entry"
-              aria-label="Continue in the private playground"
-            >
-              <div>
-                <p className="eyebrow">Free coding</p>
-                <p>
-                  Take an idea beyond the fixed checks in one saved JavaScript
-                  file.
-                </p>
-              </div>
-              <Link className="practice-playground-action" href="/playground">
-                Open the playground <span aria-hidden="true">→</span>
-              </Link>
-            </aside>
+            <div className="practice-secondary-paths">
+              <aside
+                className="practice-playground-entry practice-dom-lab-entry"
+                aria-label="Practice JavaScript DOM fundamentals"
+              >
+                <div>
+                  <p className="eyebrow">Browser interface lab</p>
+                  <p>
+                    Select elements, change text and classes, then respond to a
+                    click in four short exercises.
+                  </p>
+                </div>
+                <Link className="practice-playground-action" href="/practice/dom">
+                  Practice DOM fundamentals <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+
+              <aside
+                className="practice-playground-entry"
+                aria-label="Continue in the private playground"
+              >
+                <div>
+                  <p className="eyebrow">Free coding</p>
+                  <p>
+                    Take an idea beyond the fixed checks in one saved JavaScript
+                    file.
+                  </p>
+                </div>
+                <Link className="practice-playground-action" href="/playground">
+                  Open the playground <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+            </div>
           ) : null}
         </section>
       </div>
