@@ -2,7 +2,6 @@ import { and, asc, eq } from "drizzle-orm";
 import {
   FIRST_COURSE,
   FIRST_COURSE_LESSONS,
-  FIRST_LESSON_PASS_PERCENT,
 } from "@/lib/first-course-content";
 import { getDefaultCertificateDisplayName } from "@/lib/learner-settings";
 import { buildCourseProgress } from "@/lib/course-progress";
@@ -22,6 +21,10 @@ import {
   gradeSemanticHtml,
   SEMANTIC_HTML_STARTER,
 } from "@/lib/semantic-html-workspace";
+import {
+  CSS_BOX_MODEL_STARTER,
+  gradeCssBoxModel,
+} from "@/lib/css-box-model-practice";
 
 async function ensureFirstCourse() {
   const database = getDatabase();
@@ -292,7 +295,9 @@ export async function saveFirstLessonQuizResult(
       },
     });
 
-  if (completed && bestScore >= FIRST_LESSON_PASS_PERCENT) {
+  const courseProgress = await getOrCreateFirstCourseAssignment(userId);
+
+  if (courseProgress.courseCompleted) {
     await database
       .insert(courseCertificate)
       .values({
@@ -368,42 +373,17 @@ export async function getFirstCourseCertificateForStudent(
   const database = getDatabase();
   await ensureFirstCourseAssignment(userId);
 
-  const [completedLesson] = await database
-    .select({
-      completedAt: lessonProgress.completedAt,
-      quizScore: lessonProgress.quizScore,
-    })
-    .from(courseAssignment)
-    .innerJoin(course, eq(courseAssignment.courseId, course.id))
-    .innerJoin(lesson, eq(lesson.courseId, course.id))
-    .innerJoin(
-      lessonProgress,
-      and(
-        eq(lessonProgress.lessonId, lesson.id),
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.status, "completed"),
-      ),
-    )
-    .where(
-      and(
-        eq(courseAssignment.userId, userId),
-        eq(course.id, FIRST_COURSE.id),
-      ),
-    )
-    .limit(1);
+  const courseProgress = await getOrCreateFirstCourseAssignment(userId);
+  const eligible = courseProgress.courseCompleted;
 
-  const eligible =
-    Boolean(completedLesson?.completedAt) &&
-    (completedLesson?.quizScore ?? 0) >= FIRST_LESSON_PASS_PERCENT;
-
-  if (eligible && completedLesson?.completedAt) {
+  if (eligible) {
     await database
       .insert(courseCertificate)
       .values({
         id: crypto.randomUUID(),
         userId,
         courseId: FIRST_COURSE.id,
-        awardedAt: completedLesson.completedAt,
+        awardedAt: new Date(),
       })
       .onConflictDoNothing();
   }
@@ -428,7 +408,7 @@ export async function getFirstCourseCertificateForStudent(
 
   return {
     eligible,
-    certificate: certificateRow
+    certificate: eligible && certificateRow
       ? {
           id: certificateRow.id,
           awardedAt: certificateRow.awardedAt.toISOString(),
@@ -458,6 +438,28 @@ async function getAssignedLessonId(userId: string, lessonSlug: string) {
   return assignedLesson?.id ?? null;
 }
 
+function getLessonPractice(lessonSlug: string, savedContent?: string) {
+  if (lessonSlug === "semantic-html") {
+    const html = savedContent ?? SEMANTIC_HTML_STARTER;
+
+    return {
+      html,
+      checks: gradeSemanticHtml(html),
+    };
+  }
+
+  if (lessonSlug === "css-selectors-box-model") {
+    const html = savedContent ?? CSS_BOX_MODEL_STARTER;
+
+    return {
+      html,
+      checks: gradeCssBoxModel(html),
+    };
+  }
+
+  return null;
+}
+
 export async function getFirstLessonArtifact(
   userId: string,
   lessonSlug: string,
@@ -482,8 +484,13 @@ export async function getFirstLessonArtifact(
       ),
     )
     .limit(1);
-  const html = artifact?.html ?? SEMANTIC_HTML_STARTER;
-  const checks = gradeSemanticHtml(html);
+  const practice = getLessonPractice(lessonSlug, artifact?.html);
+
+  if (!practice) {
+    return null;
+  }
+
+  const { html, checks } = practice;
   const passedChecks = checks.filter((check) => check.passed).length;
 
   return {
@@ -534,7 +541,13 @@ export async function saveFirstLessonArtifact(
         updatedAt: now,
       },
     });
-  const checks = gradeSemanticHtml(html);
+  const practice = getLessonPractice(lessonSlug, html);
+
+  if (!practice) {
+    return null;
+  }
+
+  const checks = practice.checks;
   const passedChecks = checks.filter((check) => check.passed).length;
 
   return {
@@ -674,19 +687,16 @@ export async function saveCourseFeedbackForStudent(
   comment: string | null,
 ) {
   const database = getDatabase();
+  const courseProgress = await getOrCreateFirstCourseAssignment(userId);
+
+  if (!courseProgress.courseCompleted) {
+    return null;
+  }
+
   const [completedCourse] = await database
     .select({ courseId: course.id })
     .from(courseAssignment)
     .innerJoin(course, eq(courseAssignment.courseId, course.id))
-    .innerJoin(lesson, eq(lesson.courseId, course.id))
-    .innerJoin(
-      lessonProgress,
-      and(
-        eq(lessonProgress.lessonId, lesson.id),
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.status, "completed"),
-      ),
-    )
     .where(
       and(eq(courseAssignment.userId, userId), eq(course.slug, courseSlug)),
     )

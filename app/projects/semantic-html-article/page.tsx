@@ -7,10 +7,15 @@ import {
   getGuidedProjectFeedbackForStudent,
   getGuidedProjectForStudent,
 } from "@/db/guided-project";
+import { getCodingCatalogProgress } from "@/db/coding-practice";
 import {
   GUIDED_PROJECT_SLUG,
   GUIDED_PROJECT_TITLE,
 } from "@/lib/guided-project";
+import {
+  getCodingProblem,
+  getNextUnfinishedCodingProblemSlug,
+} from "@/lib/coding-problems";
 import { auth } from "@/lib/auth";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
@@ -35,17 +40,34 @@ export default async function SemanticHtmlProjectPage() {
     redirect("/account?mode=signin");
   }
 
-  const [project, projectFeedback] = await Promise.all([
+  const [project, projectFeedback, practiceProgress] = await Promise.all([
     getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
     getGuidedProjectFeedbackForStudent(
       session.user.id,
       GUIDED_PROJECT_SLUG,
     ),
+    getCodingCatalogProgress(session.user.id),
   ]);
 
   if (!project) {
     redirect("/dashboard");
   }
+
+  const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
+    practiceProgress.completedSlugs,
+  );
+  const nextProblem = nextProblemSlug
+    ? getCodingProblem(nextProblemSlug)
+    : null;
+  const practiceContinuation = nextProblem
+    ? {
+        href: `/practice/${nextProblem.slug}`,
+        label: `Continue to JavaScript step ${String(nextProblem.number).padStart(2, "0")}: ${nextProblem.title}`,
+      }
+    : {
+        href: "/practice",
+        label: "Review the completed JavaScript path",
+      };
 
   return (
     <main className="project-page">
@@ -103,6 +125,7 @@ export default async function SemanticHtmlProjectPage() {
           projectSlug={GUIDED_PROJECT_SLUG}
           initialProject={project}
           initialFeedback={projectFeedback?.feedback ?? null}
+          practiceContinuation={practiceContinuation}
         />
       </section>
       <SiteFooter />

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import AccountPage from "./page";
+import AccountPage, { metadata } from "./page";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -34,7 +34,14 @@ describe("AccountPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Web Development Foundations")).toBeInTheDocument();
-    expect(screen.getByText(/18-minute semantic HTML lesson/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Create your student account to complete this two-lesson course: 18 minutes of semantic HTML and 16 minutes of CSS selectors and the box model, with saved results.",
+      ),
+    ).toBeInTheDocument();
+    expect(metadata.description).toBe(
+      "Create your student account to complete the two-lesson Web Development Foundations course.",
+    );
     expect(
       screen.getByText("Pass the four-question recall check at 75%"),
     ).toBeInTheDocument();
@@ -43,7 +50,7 @@ describe("AccountPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Sign back in anytime and your saved course work and JavaScript code will return.",
+        "Sign back in anytime and your saved course work, JavaScript code, and CSS practice will return.",
       ),
     ).toBeInTheDocument();
     expect(
