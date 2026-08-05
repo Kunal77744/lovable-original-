@@ -103,6 +103,9 @@ export default async function PracticePage() {
                 <Link className="practice-activity-link" href="/practice/activity">
                   View 28-day activity <span aria-hidden="true">→</span>
                 </Link>
+                <Link className="practice-progress-link" href="/practice/challenge">
+                  Try a 30-minute challenge <span aria-hidden="true">→</span>
+                </Link>
               </div>
             ) : null}
           </aside>
