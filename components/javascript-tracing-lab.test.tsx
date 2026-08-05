@@ -11,7 +11,16 @@ describe("JavaScriptTracingLab", () => {
     expect(screen.getByText("Trace 1 of 4")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Check prediction" })).toBeDisabled();
     expect(screen.queryByText("Correct. Here is the exact trace.")).not.toBeInTheDocument();
-    expect(screen.getByText("No attempt or score is saved.")).toBeInTheDocument();
+    expect(screen.getByText("Your answer stays local. Completion saves privately.")).toBeInTheDocument();
+  });
+
+  it("resumes at the first exercise not completed by this account", () => {
+    render(
+      <JavaScriptTracingLab completedExerciseIds={["assignment-order"]} />,
+    );
+
+    expect(screen.getByText("Trace 2 of 4")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "1");
   });
 
   it("gives a bounded cue after a wrong prediction", () => {
@@ -64,4 +73,3 @@ describe("JavaScriptTracingLab", () => {
     );
   });
 });
-

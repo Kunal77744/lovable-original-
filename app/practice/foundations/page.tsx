@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { JavaScriptFoundationsWarmup } from "@/components/javascript-foundations-warmup";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,9 @@ export default async function JavaScriptFoundationsPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/foundations");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "foundations");
 
   return (
     <main>
@@ -49,7 +52,7 @@ export default async function JavaScriptFoundationsPage() {
           </p>
         </header>
 
-        <JavaScriptFoundationsWarmup />
+        <JavaScriptFoundationsWarmup completedExerciseIds={completedExerciseIds} />
 
         <aside className="foundations-boundary" aria-label="Warm-up boundaries">
           <div>
@@ -64,8 +67,8 @@ export default async function JavaScriptFoundationsPage() {
           </div>
           <div>
             <span>03</span>
-            <strong>No new record</strong>
-            <p>Opening or running the warm-up saves no code, attempt, or progress.</p>
+            <strong>Private completion</strong>
+            <p>Your code stays local; completed exercises return after sign-in.</p>
           </div>
         </aside>
       </div>

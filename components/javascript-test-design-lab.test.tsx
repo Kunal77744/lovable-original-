@@ -14,7 +14,7 @@ describe("JavaScriptTestDesignLab", () => {
       screen.queryByText("This test exposes the defect."),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText("No answer, attempt, or score is saved."),
+      screen.getByText("Your answer stays local. Completion saves privately."),
     ).toBeInTheDocument();
   });
 

@@ -37,7 +37,7 @@ describe("JavaScriptAlgorithmEfficiencyLab", () => {
     expect(screen.getByRole("button", { name: "Next decision" })).toBeInTheDocument();
   });
 
-  it("completes all four decisions without saving a learner record", () => {
+  it("completes all four decisions and offers judged practice next", () => {
     render(<JavaScriptAlgorithmEfficiencyLab />);
 
     const choices = [

@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import { JAVASCRIPT_TEST_DESIGN_EXERCISES } from "@/lib/javascript-test-design";
+import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
 type ResultState = "idle" | "wrong" | "correct";
+const exerciseIds = JAVASCRIPT_TEST_DESIGN_EXERCISES.map((exercise) => exercise.id);
 
-export function JavaScriptTestDesignLab() {
-  const [exerciseIndex, setExerciseIndex] = useState(0);
+export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
+  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
   const [selectedInput, setSelectedInput] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
-  const [completedCount, setCompletedCount] = useState(0);
+  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
 
   const exercise = JAVASCRIPT_TEST_DESIGN_EXERCISES[exerciseIndex] ?? null;
 
@@ -19,7 +21,8 @@ export function JavaScriptTestDesignLab() {
 
     if (selectedInput === exercise.correctInput) {
       setResultState("correct");
-      setCompletedCount((count) => Math.max(count, exercise.number));
+      setCompletedIds((current) => new Set(current).add(exercise.id));
+      void saveJavaScriptLabExercise("test-design", exercise.id);
       return;
     }
 
@@ -27,7 +30,7 @@ export function JavaScriptTestDesignLab() {
   }
 
   function continueLab() {
-    setExerciseIndex((index) => index + 1);
+    setExerciseIndex(getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], exerciseIndex));
     setSelectedInput("");
     setResultState("idle");
   }
@@ -65,6 +68,7 @@ export function JavaScriptTestDesignLab() {
   const selectedChoice = exercise.choices.find(
     (choice) => choice.input === selectedInput,
   );
+  const completedCount = completedIds.size;
   const progress =
     (completedCount / JAVASCRIPT_TEST_DESIGN_EXERCISES.length) * 100;
 
@@ -177,7 +181,7 @@ export function JavaScriptTestDesignLab() {
                 Check this test
               </button>
             )}
-            <span>No answer, attempt, or score is saved.</span>
+            <span>Your answer stays local. Completion saves privately.</span>
           </div>
         </div>
       </div>

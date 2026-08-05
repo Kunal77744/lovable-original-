@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DebuggingLab } from "@/components/debugging-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,9 @@ export default async function JavaScriptDebuggingLabPage() {
 
   if (!session) {
     redirect("/account?mode=signin");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "debugging");
 
   return (
     <>
@@ -44,11 +47,11 @@ export default async function JavaScriptDebuggingLabPage() {
             <aside aria-label="Debugging lab boundaries">
               <span>3 defects · about 12 minutes</span>
               <p>
-                This lab creates no saved attempt, progress, or analytics record.
+                Code stays local. Completed repairs save privately to your account.
               </p>
             </aside>
           </header>
-          <DebuggingLab />
+          <DebuggingLab completedExerciseIds={completedExerciseIds} />
         </section>
       </main>
       <SiteFooter />

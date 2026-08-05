@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import PracticePage from "./page";
 
@@ -19,13 +20,25 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/db/coding-practice", () => ({
   getCodingCatalogProgress: vi.fn(),
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: vi.fn(),
+}));
 
 const getSession = vi.mocked(auth.api.getSession);
 const getProgress = vi.mocked(getCodingCatalogProgress);
+const getLabProgress = vi.mocked(getJavaScriptLabCatalogProgress);
 
 describe("PracticePage progress", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getLabProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 30,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 1,
+    });
   });
 
   afterEach(() => {
@@ -83,7 +96,7 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     const privateLabLinks: Array<[RegExp, string]> = [
-      [/Warm up the three moves/, "/practice/foundations"],
+      [/Continue JavaScript foundations, exercise 1/, "/practice/foundations"],
       [/Trace values/, "/practice/tracing"],
       [/Repair defects/, "/practice/debugging"],
       [/Find edge cases/, "/practice/test-design"],
@@ -98,6 +111,7 @@ describe("PracticePage progress", () => {
       expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
     }
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
+    expect(getLabProgress).toHaveBeenCalledWith("returning-learner");
   });
 
   it("describes the catalog without implying personal progress when signed out", async () => {

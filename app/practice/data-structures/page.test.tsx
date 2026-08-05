@@ -19,6 +19,7 @@ vi.mock("@/lib/auth", () => ({
     },
   },
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const redirectMock = vi.mocked(redirect);
@@ -53,7 +54,7 @@ describe("JavaScriptDataStructuresPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Structure 1 of 4")).toBeInTheDocument();
     expect(
-      screen.getByText(/No code, answer, or progress is saved\./),
+      screen.getByText(/Code stays local. Completed exercises save privately\./),
     ).toBeInTheDocument();
   });
 

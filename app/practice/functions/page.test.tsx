@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: vi.fn() } },
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const redirectMock = vi.mocked(redirect);
@@ -46,7 +47,7 @@ describe("JavaScriptFunctionsPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Function idea 1 of 4")).toBeInTheDocument();
-    expect(screen.getByText(/No code, answer, or progress is saved\./)).toBeInTheDocument();
+    expect(screen.getByText(/Code stays local. Completed exercises save privately\./)).toBeInTheDocument();
   });
 
   it("keeps the private route out of search", () => {

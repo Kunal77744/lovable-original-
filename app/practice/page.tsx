@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
@@ -54,7 +55,10 @@ export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const progress = await getCodingCatalogProgress(session?.user.id ?? null);
+  const [progress, labProgress] = await Promise.all([
+    getCodingCatalogProgress(session?.user.id ?? null),
+    session ? getJavaScriptLabCatalogProgress(session.user.id) : Promise.resolve(null),
+  ]);
   const completedSlugs = new Set(progress.completedSlugs);
   const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
     progress.completedSlugs,
@@ -196,18 +200,24 @@ export default async function PracticePage() {
                   <h2 id="learning-map-title">Choose the skill you need next.</h2>
                 </div>
                 <p>
-                  Short browser-only labs give recovery after a miss and reveal
-                  teaching only after you succeed.
+                  Short browser-only labs give recovery after a miss. Saved
+                  completion records practice, not judged mastery.
                 </p>
               </div>
 
               <Link
                 className="practice-learning-start"
-                href="/practice/foundations"
+                href={labProgress?.nextHref ?? "/practice/foundations"}
               >
                 <span>
-                  <small>Start here · 10 minutes</small>
-                  <strong>Warm up the three moves behind the problem path.</strong>
+                  <small>
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 30} exercises
+                  </small>
+                  <strong>
+                    {labProgress?.nextLabTitle
+                      ? `Continue ${labProgress.nextLabTitle}, exercise ${labProgress.nextExerciseNumber}.`
+                      : "Review the private JavaScript labs."}
+                  </strong>
                 </span>
                 <span aria-hidden="true">→</span>
               </Link>

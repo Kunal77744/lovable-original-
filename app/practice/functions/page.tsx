@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptFunctionsScopeLab } from "@/components/javascript-functions-scope-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,9 @@ export default async function JavaScriptFunctionsPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/functions");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "functions");
 
   return (
     <main className="function-lab-page">
@@ -48,11 +51,11 @@ export default async function JavaScriptFunctionsPage() {
           <aside aria-label="Functions and scope lab format">
             <strong>4 function ideas</strong>
             <span>12 local checks</span>
-            <p>Browser-only practice. No code, answer, or progress is saved.</p>
+            <p>Code stays local. Completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptFunctionsScopeLab />
+        <JavaScriptFunctionsScopeLab completedExerciseIds={completedExerciseIds} />
       </div>
       <SiteFooter />
     </main>

@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ALGORITHM_EFFICIENCY_EXERCISES } from "@/lib/javascript-algorithm-efficiency";
+import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
 type ResultState = "idle" | "wrong" | "correct";
+const exerciseIds = ALGORITHM_EFFICIENCY_EXERCISES.map((exercise) => exercise.id);
 
-export function JavaScriptAlgorithmEfficiencyLab() {
-  const [exerciseIndex, setExerciseIndex] = useState(0);
+export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
+  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
   const [selectedApproachId, setSelectedApproachId] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
-  const [completedCount, setCompletedCount] = useState(0);
+  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
   const exercise = ALGORITHM_EFFICIENCY_EXERCISES[exerciseIndex] ?? null;
 
   function checkApproach() {
@@ -18,7 +20,8 @@ export function JavaScriptAlgorithmEfficiencyLab() {
 
     if (selectedApproachId === exercise.correctApproachId) {
       setResultState("correct");
-      setCompletedCount((count) => Math.max(count, exercise.number));
+      setCompletedIds((current) => new Set(current).add(exercise.id));
+      void saveJavaScriptLabExercise("efficiency", exercise.id);
       return;
     }
 
@@ -26,7 +29,7 @@ export function JavaScriptAlgorithmEfficiencyLab() {
   }
 
   function continueLab() {
-    setExerciseIndex((index) => index + 1);
+    setExerciseIndex(getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], exerciseIndex));
     setSelectedApproachId("");
     setResultState("idle");
   }
@@ -63,6 +66,7 @@ export function JavaScriptAlgorithmEfficiencyLab() {
   const selectedApproach = exercise.approaches.find(
     (approach) => approach.id === selectedApproachId,
   );
+  const completedCount = completedIds.size;
   const progress =
     (completedCount / ALGORITHM_EFFICIENCY_EXERCISES.length) * 100;
 
@@ -172,7 +176,7 @@ export function JavaScriptAlgorithmEfficiencyLab() {
               Check this approach
             </button>
           )}
-          <span>No answer, score, or learner record is saved.</span>
+          <span>Your answer stays local. Completion saves privately.</span>
         </div>
       </div>
     </section>

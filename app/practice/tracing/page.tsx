@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { JavaScriptTracingLab } from "@/components/javascript-tracing-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,9 @@ export default async function JavaScriptTracingPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/tracing");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "tracing");
 
   return (
     <main className="tracing-page">
@@ -50,14 +53,13 @@ export default async function JavaScriptTracingPage() {
           <aside aria-label="Tracing lab format">
             <strong>4 traces</strong>
             <span>About 8 minutes</span>
-            <p>Browser-only practice. No answer, attempt, or score is saved.</p>
+            <p>Answers stay local. Completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptTracingLab />
+        <JavaScriptTracingLab completedExerciseIds={completedExerciseIds} />
       </div>
       <SiteFooter />
     </main>
   );
 }
-

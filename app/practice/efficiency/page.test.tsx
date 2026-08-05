@@ -22,6 +22,7 @@ vi.mock("@/lib/auth", () => ({
     },
   },
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
 
 const getSession = vi.mocked(auth.api.getSession);
 

@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FOUNDATION_EXERCISES } from "@/lib/javascript-foundations";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -12,16 +17,32 @@ type CheckState =
   | { kind: "failed"; message: string; passedChecks: number }
   | { kind: "error"; message: string };
 
-export function JavaScriptFoundationsWarmup() {
-  const [exerciseIndex, setExerciseIndex] = useState(0);
-  const exercise = JAVASCRIPT_FOUNDATION_EXERCISES[exerciseIndex];
-  const [code, setCode] = useState(exercise.starterCode);
+type JavaScriptFoundationsWarmupProps = {
+  completedExerciseIds?: string[];
+};
+
+const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
+  (exercise) => exercise.slug,
+);
+
+export function JavaScriptFoundationsWarmup({
+  completedExerciseIds = [],
+}: JavaScriptFoundationsWarmupProps) {
+  const [completedIds, setCompletedIds] = useState(completedExerciseIds);
+  const [exerciseIndex, setExerciseIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
+  );
+  const exercise = JAVASCRIPT_FOUNDATION_EXERCISES[exerciseIndex] ?? null;
+  const [code, setCode] = useState(
+    exercise?.starterCode ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].starterCode,
+  );
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: "Complete the missing logic, then run three private browser checks.",
   });
 
   async function runChecks() {
+    if (!exercise) return;
     setCheckState({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
@@ -42,9 +63,13 @@ export function JavaScriptFoundationsWarmup() {
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      setCompletedIds((current) =>
+        current.includes(exercise.slug) ? current : [...current, exercise.slug],
+      );
+      void saveJavaScriptLabExercise("foundations", exercise.slug);
       setCheckState({
         kind: "passed",
-        message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
+        message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Exercise progress saved.`,
       });
       return;
     }
@@ -57,6 +82,7 @@ export function JavaScriptFoundationsWarmup() {
   }
 
   function resetExercise() {
+    if (!exercise) return;
     setCode(exercise.starterCode);
     setCheckState({
       kind: "idle",
@@ -65,15 +91,40 @@ export function JavaScriptFoundationsWarmup() {
   }
 
   function continueWarmup() {
-    const nextExercise = JAVASCRIPT_FOUNDATION_EXERCISES[exerciseIndex + 1];
-    if (!nextExercise) return;
+    if (!exercise) return;
+    const nextCompletedIds = completedIds.includes(exercise.slug)
+      ? completedIds
+      : [...completedIds, exercise.slug];
+    const nextIndex = getNextIncompleteExerciseIndex(
+      exerciseIds,
+      nextCompletedIds,
+      exerciseIndex,
+    );
+    const nextExercise = JAVASCRIPT_FOUNDATION_EXERCISES[nextIndex];
+    if (!nextExercise) {
+      setExerciseIndex(JAVASCRIPT_FOUNDATION_EXERCISES.length);
+      return;
+    }
 
-    setExerciseIndex((current) => current + 1);
+    setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
     setCheckState({
       kind: "idle",
       message: "Complete the missing logic, then run three private browser checks.",
     });
+  }
+
+  if (!exercise) {
+    return (
+      <section className="foundations-complete" aria-label="Foundations warm-up complete">
+        <p className="eyebrow">Warm-up complete · saved to your account</p>
+        <h2>Three moves ready for judged practice.</h2>
+        <p>Your parsing, branching, and loop exercises will remain complete after sign-in.</p>
+        <Link className="foundations-run" href="/practice/sum-two-numbers">
+          Start problem 01 <span aria-hidden="true">→</span>
+        </Link>
+      </section>
+    );
   }
 
   const isPassed = checkState.kind === "passed";
@@ -118,7 +169,7 @@ export function JavaScriptFoundationsWarmup() {
               className={
                 index === exerciseIndex
                   ? "is-current"
-                  : index < exerciseIndex
+                  : completedIds.includes(item.slug)
                     ? "is-complete"
                     : undefined
               }
@@ -135,7 +186,7 @@ export function JavaScriptFoundationsWarmup() {
       <div className="foundations-editor">
         <div className="foundations-editor-bar">
           <span>foundations.js</span>
-          <span>Local practice only</span>
+            <span>Completion saves privately</span>
         </div>
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
         <textarea

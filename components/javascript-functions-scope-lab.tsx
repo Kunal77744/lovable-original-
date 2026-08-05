@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
+import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -15,15 +16,18 @@ type CheckState =
 const readyMessage =
   "Finish the missing function logic, then run three private browser checks.";
 
-export function JavaScriptFunctionsScopeLab() {
-  const [exerciseIndex, setExerciseIndex] = useState(0);
+const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map((exercise) => exercise.slug);
+
+export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
+  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
   const exercise = JAVASCRIPT_FUNCTION_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode);
+  const [code, setCode] = useState(exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode);
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
-  const [completedCount, setCompletedCount] = useState(0);
+  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const completedCount = completedIds.size;
 
   async function runChecks() {
     if (!exercise) return;
@@ -48,7 +52,8 @@ export function JavaScriptFunctionsScopeLab() {
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      setCompletedCount(exercise.number);
+      setCompletedIds((current) => new Set(current).add(exercise.slug));
+      void saveJavaScriptLabExercise("functions", exercise.slug);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -72,14 +77,19 @@ export function JavaScriptFunctionsScopeLab() {
   }
 
   function continueLab() {
-    const nextExercise = JAVASCRIPT_FUNCTION_EXERCISES[exerciseIndex + 1];
+    const nextIndex = getNextIncompleteExerciseIndex(
+      exerciseIds,
+      [...completedIds],
+      exerciseIndex,
+    );
+    const nextExercise = JAVASCRIPT_FUNCTION_EXERCISES[nextIndex];
 
     if (!nextExercise) {
       setExerciseIndex(JAVASCRIPT_FUNCTION_EXERCISES.length);
       return;
     }
 
-    setExerciseIndex((current) => current + 1);
+    setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
@@ -264,7 +274,7 @@ export function JavaScriptFunctionsScopeLab() {
 
           <p className="function-lab-privacy">
             Code, checks, answers, and progress stay in this browser tab. No
-            attempt, score, or learner record is saved.
+            code stays in this browser; completed exercises save privately.
           </p>
         </div>
       </div>

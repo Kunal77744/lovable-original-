@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: vi.fn() } },
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
 
 vi.mock("@/components/debugging-lab", () => ({
   DebuggingLab: () => <section aria-label="Debugging workbench" />,
@@ -38,7 +39,7 @@ describe("JavaScriptDebuggingLabPage", () => {
     render(await DebuggingPage());
 
     expect(screen.getByRole("heading", { name: "Find the defect. Prove the repair." })).toBeInTheDocument();
-    expect(screen.getByText(/creates no saved attempt, progress, or analytics record/)).toBeInTheDocument();
+    expect(screen.getByText(/Completed repairs save privately/)).toBeInTheDocument();
     expect(screen.getByLabelText("Debugging workbench")).toBeInTheDocument();
   });
 

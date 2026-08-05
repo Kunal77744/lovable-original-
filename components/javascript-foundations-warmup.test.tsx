@@ -30,6 +30,17 @@ describe("JavaScriptFoundationsWarmup", () => {
     ).toHaveAttribute("aria-current", "step");
   });
 
+  it("resumes at the first exercise not completed by this account", () => {
+    render(
+      <JavaScriptFoundationsWarmup completedExerciseIds={["parse-and-sum"]} />,
+    );
+
+    expect(screen.getByText("Warm-up 2 of 3")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Warm-up concepts" }).querySelector("li"),
+    ).toHaveClass("is-complete");
+  });
+
   it("shows bounded recovery after a failed local run", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
@@ -59,7 +70,7 @@ describe("JavaScriptFoundationsWarmup", () => {
       fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
     });
 
-    expect(screen.getByText("Passed 3 of 3 checks.")).toBeInTheDocument();
+    expect(screen.getByText("Passed 3 of 3 checks. Exercise progress saved.")).toBeInTheDocument();
     expect(screen.getByText("Keep this:")).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Continue to warm-up 2" }),

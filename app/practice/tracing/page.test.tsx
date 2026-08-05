@@ -19,6 +19,7 @@ vi.mock("@/lib/auth", () => ({
     },
   },
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const redirectMock = vi.mocked(redirect);
@@ -50,11 +51,10 @@ describe("JavaScriptTracingPage", () => {
       screen.getByRole("heading", { name: "Read the code before you run it." }),
     ).toBeInTheDocument();
     expect(screen.getByText("Trace 1 of 4")).toBeInTheDocument();
-    expect(screen.getByText("No attempt or score is saved.")).toBeInTheDocument();
+    expect(screen.getByText("Answers stay local. Completed exercises save privately.")).toBeInTheDocument();
   });
 
   it("keeps the private route out of search", () => {
     expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 });
-

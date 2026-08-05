@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptDomLab } from "@/components/javascript-dom-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,9 @@ export default async function JavaScriptDomPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/dom");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "dom");
 
   return (
     <main className="dom-lab-page">
@@ -50,11 +53,11 @@ export default async function JavaScriptDomPage() {
           <aside aria-label="DOM lab format">
             <strong>4 DOM moves</strong>
             <span>12 local checks</span>
-            <p>Browser-only practice. No code, answer, or progress is saved.</p>
+            <p>Code stays local. Completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptDomLab />
+        <JavaScriptDomLab completedExerciseIds={completedExerciseIds} />
       </div>
       <SiteFooter />
     </main>

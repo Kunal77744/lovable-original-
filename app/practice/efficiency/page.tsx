@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptAlgorithmEfficiencyLab } from "@/components/javascript-algorithm-efficiency-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,9 @@ export default async function AlgorithmEfficiencyPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/efficiency");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "efficiency");
 
   return (
     <main className="efficiency-page">
@@ -47,11 +50,11 @@ export default async function AlgorithmEfficiencyPage() {
           <aside aria-label="Algorithm efficiency lab format">
             <strong>4 decisions</strong>
             <span>About 12 minutes</span>
-            <p>Browser-only practice. No answer, score, or progress is saved.</p>
+            <p>Answers stay local. Completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptAlgorithmEfficiencyLab />
+        <JavaScriptAlgorithmEfficiencyLab completedExerciseIds={completedExerciseIds} />
       </div>
       <SiteFooter />
     </main>

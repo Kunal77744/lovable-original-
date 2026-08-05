@@ -7,6 +7,7 @@ import {
   gradeDebuggingDrill,
   JAVASCRIPT_DEBUGGING_DRILLS,
 } from "@/lib/debugging-lab";
+import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
 type LabState =
   | { kind: "idle"; message: string }
@@ -14,17 +15,19 @@ type LabState =
   | { kind: "failed"; message: string; passedChecks: number }
   | { kind: "passed"; message: string }
   | { kind: "error"; message: string };
+const exerciseIds = JAVASCRIPT_DEBUGGING_DRILLS.map((exercise) => exercise.slug);
 
-export function DebuggingLab() {
-  const [drillIndex, setDrillIndex] = useState(0);
-  const drill = JAVASCRIPT_DEBUGGING_DRILLS[drillIndex];
-  const [source, setSource] = useState(drill.starterCode);
-  const [completedCount, setCompletedCount] = useState(0);
+export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
+  const [drillIndex, setDrillIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
+  const drill = JAVASCRIPT_DEBUGGING_DRILLS[drillIndex] ?? null;
+  const [source, setSource] = useState(drill?.starterCode ?? "");
+  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
   const [labState, setLabState] = useState<LabState>({
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
   });
-  const isLastDrill = drillIndex === JAVASCRIPT_DEBUGGING_DRILLS.length - 1;
+  const completedCount = completedIds.size;
+  const isLastDrill = completedCount === JAVASCRIPT_DEBUGGING_DRILLS.length;
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
@@ -35,6 +38,7 @@ export function DebuggingLab() {
   }
 
   async function runChecks() {
+    if (!drill) return;
     setLabState({
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
@@ -59,7 +63,8 @@ export function DebuggingLab() {
       return;
     }
 
-    setCompletedCount((current) => Math.max(current, drillIndex + 1));
+    setCompletedIds((current) => new Set(current).add(drill.slug));
+    void saveJavaScriptLabExercise("debugging", drill.slug);
     setLabState({
       kind: "passed",
       message: `All ${grade.totalChecks} checks passed. You found the defect.`,
@@ -67,7 +72,7 @@ export function DebuggingLab() {
   }
 
   function openNextDrill() {
-    const nextIndex = drillIndex + 1;
+    const nextIndex = getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], drillIndex);
     const nextDrill = JAVASCRIPT_DEBUGGING_DRILLS[nextIndex];
     setDrillIndex(nextIndex);
     setSource(nextDrill.starterCode);
@@ -75,6 +80,15 @@ export function DebuggingLab() {
       kind: "idle",
       message: "Read the new brief, inspect the code, then run all three checks.",
     });
+  }
+
+  if (!drill) {
+    return (
+      <section className="debugging-result is-passed" aria-labelledby="debugging-complete-title">
+        <div><span>Debugging lab complete</span><strong id="debugging-complete-title">All three saved repairs are complete.</strong></div>
+        <Link href="/practice/sum-two-numbers">Start judged practice</Link>
+      </section>
+    );
   }
 
   return (

@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { useState } from "react";
 import { JAVASCRIPT_TRACE_EXERCISES } from "@/lib/javascript-tracing";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type ResultState = "idle" | "wrong" | "correct";
+const exerciseIds = JAVASCRIPT_TRACE_EXERCISES.map((exercise) => exercise.id);
 
-export function JavaScriptTracingLab() {
-  const [exerciseIndex, setExerciseIndex] = useState(0);
+export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
+  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
   const [selectedOutput, setSelectedOutput] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
-  const [completedCount, setCompletedCount] = useState(0);
+  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
 
   const exercise = JAVASCRIPT_TRACE_EXERCISES[exerciseIndex] ?? null;
   const complete = exercise === null;
@@ -20,7 +26,8 @@ export function JavaScriptTracingLab() {
 
     if (selectedOutput === exercise.correctOutput) {
       setResultState("correct");
-      setCompletedCount((count) => Math.max(count, exercise.number));
+      setCompletedIds((current) => new Set(current).add(exercise.id));
+      void saveJavaScriptLabExercise("tracing", exercise.id);
       return;
     }
 
@@ -28,7 +35,7 @@ export function JavaScriptTracingLab() {
   }
 
   function continueTracing() {
-    setExerciseIndex((index) => index + 1);
+    setExerciseIndex(getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], exerciseIndex));
     setSelectedOutput("");
     setResultState("idle");
   }
@@ -58,6 +65,7 @@ export function JavaScriptTracingLab() {
     );
   }
 
+  const completedCount = completedIds.size;
   const progress = (completedCount / JAVASCRIPT_TRACE_EXERCISES.length) * 100;
 
   return (
@@ -153,11 +161,10 @@ export function JavaScriptTracingLab() {
                 Check prediction
               </button>
             )}
-            <span>No attempt or score is saved.</span>
+            <span>Your answer stays local. Completion saves privately.</span>
           </div>
         </div>
       </div>
     </section>
   );
 }
-

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptDataStructuresLab } from "@/components/javascript-data-structures-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,9 @@ export default async function JavaScriptDataStructuresPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/data-structures");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "data-structures");
 
   return (
     <main className="data-lab-page">
@@ -49,11 +52,11 @@ export default async function JavaScriptDataStructuresPage() {
           <aside aria-label="Data-structures lab format">
             <strong>4 structures</strong>
             <span>12 local checks</span>
-            <p>Browser-only practice. No code, answer, or progress is saved.</p>
+            <p>Code stays local. Completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptDataStructuresLab />
+        <JavaScriptDataStructuresLab completedExerciseIds={completedExerciseIds} />
       </div>
       <SiteFooter />
     </main>

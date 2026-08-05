@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptTestDesignLab } from "@/components/javascript-test-design-lab";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,9 @@ export default async function JavaScriptTestDesignPage() {
 
   if (!session) {
     redirect("/account?mode=signin&next=/practice/test-design");
+    return null;
   }
+  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "test-design");
 
   return (
     <main className="test-design-page">
@@ -49,11 +52,11 @@ export default async function JavaScriptTestDesignPage() {
           <aside aria-label="Test-design lab format">
             <strong>4 tests</strong>
             <span>About 10 minutes</span>
-            <p>Browser-only practice. No answer, attempt, or score is saved.</p>
+            <p>Answers stay local. Completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptTestDesignLab />
+        <JavaScriptTestDesignLab completedExerciseIds={completedExerciseIds} />
       </div>
       <SiteFooter />
     </main>

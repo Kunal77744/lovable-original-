@@ -14,6 +14,7 @@ vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/lib/auth", () => ({
   auth: { api: { getSession: vi.fn() } },
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
 
 vi.mock("@/components/javascript-foundations-warmup", () => ({
   JavaScriptFoundationsWarmup: () => (
@@ -42,7 +43,7 @@ describe("JavaScriptFoundationsPage", () => {
     expect(
       screen.getByRole("region", { name: "JavaScript foundations workbench" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("No new record")).toBeInTheDocument();
+    expect(screen.getByText("Private completion")).toBeInTheDocument();
   });
 
   it("redirects signed-out visitors before the private route renders", async () => {
