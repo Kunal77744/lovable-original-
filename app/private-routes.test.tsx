@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
-import { metadata as codingActivityMetadata } from "./practice/activity/page";
+import { metadata as domLabMetadata } from "./practice/dom/page";
 import { metadata as settingsMetadata } from "./settings/page";
 import { metadata as dataStructuresMetadata } from "./practice/data-structures/page";
 
@@ -28,7 +28,7 @@ describe("private learner routes", () => {
       index: false,
       follow: false,
     });
-    expect(dataStructuresMetadata.robots).toEqual({
+    expect(domLabMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
@@ -44,7 +44,7 @@ describe("private learner routes", () => {
       "https://lovable-original-eight.vercel.app/certificate",
     );
     expect(urls).not.toContain(
-      "https://lovable-original-eight.vercel.app/practice/data-structures",
+      "https://lovable-original-eight.vercel.app/practice/dom",
     );
   });
 });
