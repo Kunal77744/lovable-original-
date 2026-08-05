@@ -47,6 +47,7 @@ describe("CssChallengeWorkspace", () => {
             challenge.slug,
             challenge.starterCss,
           )!,
+          successTakeaway: challenge.successTakeaway,
         }}
         initialCss={challenge.starterCss}
         isSignedIn={false}
@@ -65,6 +66,11 @@ describe("CssChallengeWorkspace", () => {
     expect(
       screen.getByRole("link", { name: "Create account" }),
     ).toHaveAttribute("href", "/account");
+    expect(
+      screen.queryByRole("heading", {
+        name: challenge.successTakeaway.concept,
+      }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Did this path make CSS clearer?" }),
     ).not.toBeInTheDocument();
@@ -102,12 +108,18 @@ describe("CssChallengeWorkspace", () => {
           slug: challenge.slug,
           title: challenge.title,
           checks: gradeCssPracticeChallenge(challenge.slug, completedCss)!,
+          successTakeaway: challenge.successTakeaway,
         }}
         initialCss={completedCss}
         isSignedIn
         nextChallengeSlug="class-selector"
       />,
     );
+    expect(
+      screen.queryByRole("heading", {
+        name: challenge.successTakeaway.concept,
+      }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Check and save attempt" }),
@@ -124,6 +136,14 @@ describe("CssChallengeWorkspace", () => {
       }),
     );
     expect(screen.getAllByText("Completed")).toHaveLength(2);
+    expect(
+      screen.getByRole("heading", {
+        name: challenge.successTakeaway.concept,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(challenge.successTakeaway.explanation),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", {
         name: /continue to the next unfinished challenge/i,
@@ -162,7 +182,12 @@ describe("CssChallengeWorkspace", () => {
       <CssChallengeWorkspace
         attempts={[]}
         bestVerdict="Needs revision"
-        challenge={{ slug: challenge.slug, title: challenge.title, checks }}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks,
+          successTakeaway: challenge.successTakeaway,
+        }}
         initialCss={completedCss}
         isReviewSession
         isSignedIn
@@ -215,6 +240,7 @@ describe("CssChallengeWorkspace", () => {
           slug: challenge.slug,
           title: challenge.title,
           checks,
+          successTakeaway: challenge.successTakeaway,
         }}
         initialCss={failedCss}
         isSignedIn
@@ -271,6 +297,7 @@ describe("CssChallengeWorkspace", () => {
           slug: challenge.slug,
           title: challenge.title,
           checks,
+          successTakeaway: challenge.successTakeaway,
         }}
         initialCss={completedCss}
         isSignedIn
@@ -308,7 +335,12 @@ describe("CssChallengeWorkspace", () => {
       <CssChallengeWorkspace
         attempts={[]}
         bestVerdict="Completed"
-        challenge={{ slug: challenge.slug, title: challenge.title, checks }}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks,
+          successTakeaway: challenge.successTakeaway,
+        }}
         initialCss={completedCss}
         initialPathFeedback={{
           pathSlug: "css-selectors-box-model",
@@ -329,6 +361,11 @@ describe("CssChallengeWorkspace", () => {
       ),
     ).toHaveValue("The selector checks helped.");
     expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: challenge.successTakeaway.concept,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("does not recapture a CSS path completion on a repeat completed visit", async () => {
@@ -361,7 +398,12 @@ describe("CssChallengeWorkspace", () => {
       <CssChallengeWorkspace
         attempts={[]}
         bestVerdict="Completed"
-        challenge={{ slug: challenge.slug, title: challenge.title, checks }}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks,
+          successTakeaway: challenge.successTakeaway,
+        }}
         initialCss={completedCss}
         isSignedIn
         nextChallengeSlug={null}

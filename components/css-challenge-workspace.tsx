@@ -18,6 +18,10 @@ type CssChallengeWorkspaceProps = {
     slug: string;
     title: string;
     checks: CssChallengeCheck[];
+    successTakeaway: {
+      concept: string;
+      explanation: string;
+    };
   };
   initialCss: string;
   initialPathFeedback?: SavedCssPathFeedback | null;
@@ -279,6 +283,21 @@ export function CssChallengeWorkspace({
           ) : null}
         </p>
       </div>
+
+      {bestVerdict === "Completed" ? (
+        <section
+          className="css-success-takeaway"
+          aria-labelledby={`css-success-takeaway-${challenge.slug}`}
+        >
+          <div>
+            <span>Concept unlocked</span>
+            <h3 id={`css-success-takeaway-${challenge.slug}`}>
+              {challenge.successTakeaway.concept}
+            </h3>
+          </div>
+          <p>{challenge.successTakeaway.explanation}</p>
+        </section>
+      ) : null}
 
       <div className="css-challenge-feedback">
         <div className="css-check-list">

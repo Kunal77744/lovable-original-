@@ -108,7 +108,12 @@ export default async function CssChallengePage({
         <CssChallengeWorkspace
           attempts={studentState.attempts}
           bestVerdict={studentState.bestVerdict}
-          challenge={{ slug: challenge.slug, title: challenge.title, checks }}
+          challenge={{
+            slug: challenge.slug,
+            title: challenge.title,
+            checks,
+            successTakeaway: challenge.successTakeaway,
+          }}
           initialCss={studentState.css}
           initialPathFeedback={pathFeedbackState.feedback}
           isSignedIn={Boolean(session)}

@@ -22,6 +22,10 @@ export type CssPracticeChallenge = {
   difficulty: CssChallengeDifficulty;
   brief: string;
   outcome: string;
+  successTakeaway: {
+    concept: string;
+    explanation: string;
+  };
   starterCss: string;
   requirements: CssChallengeRequirement[];
 };
@@ -40,6 +44,11 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
     brief:
       "Use the card class instead of styling every article on the page. Give this component its own surface and readable text color.",
     outcome: "Only the learning card gets a white surface and dark text.",
+    successTakeaway: {
+      concept: "Classes keep component styles local",
+      explanation:
+        "Tying the surface and text color to .learning-card makes the rule reusable without changing every article on the page.",
+    },
     starterCss: `/* Target the learning card by its class. */
 
 `,
@@ -86,6 +95,11 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
     brief:
       "Make the count stand out without changing every strong element. Scope the rule to strong text inside the learning card.",
     outcome: "The lesson count becomes green and bold while other emphasis stays unchanged.",
+    successTakeaway: {
+      concept: "Descendant selectors narrow emphasis",
+      explanation:
+        "Combining the card and strong selectors changes emphasis only inside this component, while other strong text keeps its own style.",
+    },
     starterCss: `.learning-card {
   color: #17231e;
 }
@@ -135,6 +149,11 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
     brief:
       "Keep padding and the border inside a declared 280px width. The card should not grow when its inner space is added.",
     outcome: "The finished card stays 280px wide, including padding and border.",
+    successTakeaway: {
+      concept: "Border box makes width inclusive",
+      explanation:
+        "With border-box sizing, the browser counts padding and border inside the declared 280px instead of adding them outside it.",
+    },
     starterCss: `.learning-card {
   width: 280px;
   padding: 24px;
@@ -187,6 +206,11 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
     brief:
       "Use padding for space inside the card and margin for space before the supporting paragraph. Keep the two jobs separate.",
     outcome: "The card has 24px inner space and the paragraph starts 12px below its heading.",
+    successTakeaway: {
+      concept: "Padding and margin solve different spacing",
+      explanation:
+        "Padding moves content inward from the card edge, while the paragraph margin creates separation between neighboring content.",
+    },
     starterCss: `.learning-card {
   width: 280px;
   box-sizing: border-box;
@@ -240,6 +264,11 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
     brief:
       "Turn the card link into a clear target without changing links elsewhere. Give the nested class its own box.",
     outcome: "The card link gets an inline block, comfortable padding, and rounded corners.",
+    successTakeaway: {
+      concept: "Box the link before spacing it",
+      explanation:
+        "Inline-block lets padding and rounded corners form a stable clickable box while the scoped selector keeps other links unchanged.",
+    },
     starterCss: `/* Target only the link inside the learning card. */
 .learning-card .card-link {
   color: #ffffff;
@@ -300,6 +329,11 @@ export const CSS_PRACTICE_CHALLENGES: CssPracticeChallenge[] = [
     brief:
       "Center the card inside its stage while keeping the rule local to this component. Preserve a predictable maximum width.",
     outcome: "The stage card centers itself and never grows beyond 280px.",
+    successTakeaway: {
+      concept: "A fluid card can still have a ceiling",
+      explanation:
+        "A full-width card can shrink with its stage, stop at a readable maximum, and share leftover inline space equally to stay centered.",
+    },
     starterCss: `.stage .learning-card {
   width: 100%;
   /* Keep the card narrow and center it. */

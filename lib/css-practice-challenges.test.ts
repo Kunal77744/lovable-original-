@@ -57,6 +57,22 @@ describe("CSS practice challenge catalog", () => {
     },
   );
 
+  it("gives every completed challenge a distinct, code-free teaching takeaway", () => {
+    const takeaways = CSS_PRACTICE_CHALLENGES.map(
+      (challenge) => challenge.successTakeaway,
+    );
+
+    expect(new Set(takeaways.map((takeaway) => takeaway.concept)).size).toBe(6);
+
+    for (const takeaway of takeaways) {
+      expect(takeaway.concept.length).toBeGreaterThan(20);
+      expect(takeaway.explanation.length).toBeGreaterThan(70);
+      expect(`${takeaway.concept} ${takeaway.explanation}`).not.toMatch(
+        /(?:background|color|width|box-sizing|border|padding|margin|display|border-radius)\s*:/i,
+      );
+    }
+  });
+
   it("gives every failed check distinct recovery guidance without finished code", () => {
     const failedChecks = CSS_PRACTICE_CHALLENGES.flatMap((challenge) =>
       gradeCssPracticeChallenge(challenge.slug, "/* try again */") ?? [],

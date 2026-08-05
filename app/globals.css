@@ -9551,6 +9551,47 @@ h1 {
   text-underline-offset: 3px;
 }
 
+.css-success-takeaway {
+  padding: 20px 30px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 28px;
+  border-bottom: 1px solid rgba(131, 221, 168, 0.2);
+  background: rgba(13, 31, 22, 0.42);
+}
+
+.css-success-takeaway > div {
+  display: grid;
+  gap: 4px;
+}
+
+.css-success-takeaway span {
+  color: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.css-success-takeaway h3 {
+  margin: 0;
+  color: #edf5f0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.css-success-takeaway p {
+  max-width: 62ch;
+  margin: 0;
+  color: #b9c6bf;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .css-challenge-feedback {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
@@ -11463,6 +11504,11 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .css-success-takeaway {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
   .css-check-list {
     border-right: 0;
     border-bottom: 1px solid #31423a;
@@ -11916,6 +11962,10 @@ footer {
     align-items: flex-start;
     flex-direction: column;
     gap: 10px;
+  }
+
+  .css-success-takeaway {
+    padding: 20px 24px;
   }
 
   .learn-entry-hero {
