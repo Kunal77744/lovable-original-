@@ -179,19 +179,23 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <div className="practice-extension-list">
+            <div className="practice-secondary-paths">
               <aside
-                className="practice-debugging-entry"
-                aria-label="Practice finding JavaScript defects"
+                className="practice-playground-entry practice-tracing-entry"
+                aria-label="Practice reading JavaScript"
               >
                 <div>
-                  <p className="eyebrow">Debugging lab</p>
+                  <p className="eyebrow">Read before you write</p>
                   <p>
-                    Repair three almost-correct programs with browser-only checks.
+                    Predict four outputs, trace the values, and learn how to
+                    reason through code without running it.
                   </p>
                 </div>
-                <Link className="practice-extension-action" href="/practice/debugging">
-                  Repair the first defect <span aria-hidden="true">→</span>
+                <Link
+                  className="practice-playground-action"
+                  href="/practice/tracing"
+                >
+                  Open the tracing lab <span aria-hidden="true">→</span>
                 </Link>
               </aside>
 
@@ -206,7 +210,7 @@ export default async function PracticePage() {
                     file.
                   </p>
                 </div>
-                <Link className="practice-extension-action" href="/playground">
+                <Link className="practice-playground-action" href="/playground">
                   Open the playground <span aria-hidden="true">→</span>
                 </Link>
               </aside>
