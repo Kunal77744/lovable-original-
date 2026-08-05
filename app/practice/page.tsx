@@ -181,21 +181,21 @@ export default async function PracticePage() {
           {session ? (
             <div className="practice-secondary-paths">
               <aside
-                className="practice-playground-entry practice-tracing-entry"
-                aria-label="Practice reading JavaScript"
+                className="practice-playground-entry practice-test-design-entry"
+                aria-label="Practice JavaScript test design"
               >
                 <div>
-                  <p className="eyebrow">Read before you write</p>
+                  <p className="eyebrow">Testing lab</p>
                   <p>
-                    Predict four outputs, trace the values, and learn how to
-                    reason through code without running it.
+                    Find the edge case that breaks an almost-correct JavaScript
+                    solution.
                   </p>
                 </div>
                 <Link
                   className="practice-playground-action"
-                  href="/practice/tracing"
+                  href="/practice/test-design"
                 >
-                  Open the tracing lab <span aria-hidden="true">→</span>
+                  Design stronger tests <span aria-hidden="true">→</span>
                 </Link>
               </aside>
 
