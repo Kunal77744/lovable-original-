@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
+import { metadata as codingActivityMetadata } from "./practice/activity/page";
 import { metadata as settingsMetadata } from "./settings/page";
 
 vi.mock("@/lib/auth", () => ({
@@ -17,12 +18,16 @@ vi.mock("@/db/course", () => ({
 }));
 
 describe("private learner routes", () => {
-  it("keeps settings and certificate pages out of search", () => {
+  it("keeps settings, certificate, and coding activity pages out of search", () => {
     expect(settingsMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
     expect(certificateMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
+    expect(codingActivityMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
@@ -36,6 +41,9 @@ describe("private learner routes", () => {
     );
     expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/certificate",
+    );
+    expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/practice/activity",
     );
   });
 });

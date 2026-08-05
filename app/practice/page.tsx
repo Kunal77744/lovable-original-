@@ -92,6 +92,11 @@ export default async function PracticePage() {
                   : "Complete all six steps. Accepted results stay attached to your account."
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
+            {session ? (
+              <Link className="practice-activity-link" href="/practice/activity">
+                View 28-day activity <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
           </aside>
         </section>
 

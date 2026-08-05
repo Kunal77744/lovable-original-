@@ -8954,3 +8954,424 @@ footer {
     transition: none;
   }
 }
+
+.practice-activity-link {
+  width: fit-content;
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.practice-activity-link:hover {
+  color: #0f432b;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.practice-activity-link:focus-visible,
+.coding-activity-primary-action:focus-visible,
+.coding-activity-next a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 4px;
+}
+
+.coding-activity-shell {
+  background:
+    radial-gradient(circle at 86% 7%, rgba(40, 118, 82, 0.12), transparent 25%),
+    var(--paper);
+}
+
+.coding-activity-layout {
+  width: min(1120px, calc(100% - 48px));
+  margin-inline: auto;
+  padding: 88px 0 112px;
+}
+
+.coding-activity-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.55fr);
+  align-items: end;
+  gap: 84px;
+}
+
+.coding-activity-heading {
+  max-width: 740px;
+}
+
+.coding-activity-heading h1 {
+  max-width: 10ch;
+  margin: 14px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(54px, 6.2vw, 82px);
+  line-height: 0.98;
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.coding-activity-heading > p:not(.eyebrow) {
+  max-width: 57ch;
+  margin: 27px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.coding-activity-primary-action {
+  width: fit-content;
+  min-height: 46px;
+  margin-top: 32px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  color: white;
+  border-radius: 9px 9px 9px 3px;
+  background: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.coding-activity-primary-action:hover {
+  background: #0f432b;
+}
+
+.coding-activity-summary {
+  padding: 30px;
+  color: white;
+  border-radius: 18px 18px 5px 18px;
+  background: var(--ink);
+  box-shadow: 0 24px 60px rgba(23, 35, 30, 0.16);
+}
+
+.coding-activity-summary > p {
+  margin: 0;
+  color: #a9b8b0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.coding-activity-summary > strong {
+  margin-top: 15px;
+  display: block;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 76px;
+  line-height: 0.9;
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.coding-activity-summary > span {
+  margin-top: 10px;
+  display: block;
+  color: #cbd5cf;
+  font-size: 13px;
+}
+
+.coding-activity-summary dl {
+  margin: 28px 0 0;
+  padding-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.coding-activity-summary dt {
+  color: #91a098;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coding-activity-summary dd {
+  margin: 7px 0 0;
+  font-size: 22px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.coding-activity-calendar {
+  margin-top: 80px;
+  padding: 42px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 21px 21px 7px 21px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 24px 64px rgba(23, 35, 30, 0.08);
+}
+
+.coding-activity-calendar-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.48fr);
+  align-items: end;
+  gap: 48px;
+}
+
+.coding-activity-calendar-heading h2 {
+  margin: 11px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(34px, 4vw, 48px);
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.coding-activity-calendar-heading > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.coding-activity-grid {
+  margin-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.coding-activity-day {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 9px;
+  display: flex;
+  align-items: flex-end;
+  color: #748079;
+  border: 1px solid #d8dfd7;
+  border-radius: 9px 9px 3px 9px;
+  background: #edf0ea;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.coding-activity-day.intensity-1 {
+  color: #2b6246;
+  border-color: #c2d9c5;
+  background: #dcebdc;
+}
+
+.coding-activity-day.intensity-2 {
+  color: #18462f;
+  border-color: #a4c9ad;
+  background: #bcdabf;
+}
+
+.coding-activity-day.intensity-3 {
+  color: white;
+  border-color: #4c956b;
+  background: #4f996e;
+}
+
+.coding-activity-day.intensity-4 {
+  color: white;
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.coding-activity-day.is-today {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.coding-activity-range {
+  margin-top: 17px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.coding-activity-detail {
+  margin-top: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 14px 14px 5px 14px;
+  background: #e9eee8;
+}
+
+.coding-activity-detail dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.coding-activity-detail dl > div {
+  min-width: 0;
+  padding: 27px 28px;
+  border-right: 1px solid rgba(23, 35, 30, 0.12);
+}
+
+.coding-activity-detail dl > div:last-child {
+  border-right: 0;
+}
+
+.coding-activity-detail dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.coding-activity-detail dd {
+  margin: 11px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.coding-activity-detail p {
+  max-width: 31ch;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.coding-activity-next {
+  margin-top: 24px;
+  padding: 40px 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 54px;
+  color: white;
+  border-radius: 19px 19px 6px 19px;
+  background: var(--ink);
+}
+
+.coding-activity-next .eyebrow {
+  color: #9fd9b8;
+}
+
+.coding-activity-next h2 {
+  margin: 10px 0 0;
+  color: white;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(31px, 4vw, 44px);
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.coding-activity-next p:not(.eyebrow) {
+  max-width: 62ch;
+  margin: 15px 0 0;
+  color: #cbd5cf;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.coding-activity-next a {
+  min-height: 44px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.coding-activity-next a:hover {
+  border-color: white;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 800px) {
+  .coding-activity-layout {
+    padding-top: 64px;
+  }
+
+  .coding-activity-hero,
+  .coding-activity-calendar-heading,
+  .coding-activity-next {
+    grid-template-columns: 1fr;
+  }
+
+  .coding-activity-hero {
+    gap: 48px;
+  }
+
+  .coding-activity-summary {
+    max-width: 520px;
+  }
+
+  .coding-activity-calendar-heading,
+  .coding-activity-next {
+    align-items: start;
+    gap: 24px;
+  }
+
+  .coding-activity-detail dl {
+    grid-template-columns: 1fr;
+  }
+
+  .coding-activity-detail dl > div {
+    border-right: 0;
+    border-bottom: 1px solid rgba(23, 35, 30, 0.12);
+  }
+
+  .coding-activity-detail dl > div:last-child {
+    border-bottom: 0;
+  }
+
+  .coding-activity-next a {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 560px) {
+  .coding-activity-layout {
+    width: min(100% - 32px, 1120px);
+    padding: 48px 0 80px;
+  }
+
+  .coding-activity-heading h1 {
+    font-size: clamp(48px, 15vw, 62px);
+  }
+
+  .coding-activity-primary-action,
+  .coding-activity-next a {
+    width: 100%;
+  }
+
+  .coding-activity-calendar {
+    margin-top: 60px;
+    padding: 28px 20px;
+  }
+
+  .coding-activity-grid {
+    gap: 6px;
+  }
+
+  .coding-activity-day {
+    padding: 6px;
+    border-radius: 7px 7px 2px 7px;
+    font-size: 9px;
+  }
+
+  .coding-activity-next {
+    padding: 34px 26px;
+  }
+}
