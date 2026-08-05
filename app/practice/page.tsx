@@ -179,26 +179,7 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <div className="practice-secondary-paths">
-              <aside
-                className="practice-playground-entry practice-function-lab-entry"
-                aria-label="Practice JavaScript functions and scope"
-              >
-                <div>
-                  <p className="eyebrow">Functions lab</p>
-                  <p>
-                    Practice parameters, returns, local scope, and closures in
-                    four short browser exercises.
-                  </p>
-                </div>
-                <Link
-                  className="practice-playground-action"
-                  href="/practice/functions"
-                >
-                  Practice functions and scope <span aria-hidden="true">→</span>
-                </Link>
-              </aside>
-
+            <div className="practice-learning-entries">
               <aside
                 className="practice-playground-entry"
                 aria-label="Continue in the private playground"
@@ -212,6 +193,24 @@ export default async function PracticePage() {
                 </div>
                 <Link className="practice-playground-action" href="/playground">
                   Open the playground <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+              <aside
+                className="practice-efficiency-entry"
+                aria-label="Practice algorithm efficiency"
+              >
+                <div>
+                  <p className="eyebrow">Algorithm thinking</p>
+                  <p>
+                    Compare two approaches and learn how their work grows with
+                    the input.
+                  </p>
+                </div>
+                <Link
+                  className="practice-playground-action"
+                  href="/practice/efficiency"
+                >
+                  Open the efficiency lab <span aria-hidden="true">→</span>
                 </Link>
               </aside>
             </div>
