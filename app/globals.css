@@ -5040,6 +5040,444 @@ h1 {
   box-shadow: 0 20px 48px rgba(23, 35, 30, 0.08);
 }
 
+.practice-foundations-entry {
+  margin-bottom: 56px;
+  padding: 34px 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 48px;
+  color: #eef4ef;
+  border: 1px solid #26342e;
+  border-radius: 17px 17px 5px 17px;
+  background: #17231e;
+  box-shadow: 0 22px 52px rgba(23, 35, 30, 0.16);
+}
+
+.practice-foundations-entry .eyebrow {
+  color: #91cca9;
+}
+
+.practice-foundations-entry h2 {
+  max-width: 620px;
+  margin: 10px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(30px, 3.5vw, 44px);
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.practice-foundations-entry p:last-child {
+  max-width: 58ch;
+  margin: 16px 0 0;
+  color: #aebbb4;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.practice-foundations-action {
+  min-height: 46px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #dff5e7;
+  border: 1px solid #659978;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.practice-foundations-action:hover {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.practice-foundations-action:active {
+  background: #83dda8;
+}
+
+.practice-foundations-action:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+}
+
+.foundations-shell {
+  width: min(1184px, calc(100% - 48px));
+  margin-inline: auto;
+  padding: 34px 0 104px;
+}
+
+.foundations-hero {
+  padding: 62px 0 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.62fr);
+  align-items: end;
+  gap: 72px;
+}
+
+.foundations-hero h1 {
+  max-width: 770px;
+  font-size: clamp(52px, 6.2vw, 82px);
+}
+
+.foundations-hero > p {
+  max-width: 50ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.foundations-workbench {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.72fr) minmax(540px, 1.28fr);
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 18px 18px 6px 18px;
+  background: var(--surface);
+  box-shadow: 0 26px 62px rgba(23, 35, 30, 0.13);
+}
+
+.foundations-lesson {
+  padding: 42px;
+}
+
+.foundations-step-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.foundations-step-row strong {
+  padding: 6px 9px;
+  color: var(--accent-deep);
+  border: 1px solid #c9dfcf;
+  border-radius: 999px;
+  background: #eef6ed;
+  font-size: 10px;
+}
+
+.foundations-lesson h2 {
+  margin: 20px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(38px, 4vw, 52px);
+  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.foundations-prompt {
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.foundations-contract {
+  margin: 30px 0 0;
+  display: grid;
+  gap: 18px;
+}
+
+.foundations-contract div {
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+
+.foundations-contract dt,
+.foundations-example > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.foundations-contract dd {
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.foundations-example {
+  margin-top: 26px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f4f7f2;
+}
+
+.foundations-example > div {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.foundations-example code {
+  color: var(--ink);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+}
+
+.foundations-example div > span {
+  color: var(--accent);
+}
+
+.foundations-path {
+  margin: 32px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  list-style: none;
+}
+
+.foundations-path li {
+  padding: 12px;
+  display: grid;
+  gap: 5px;
+  color: #87928c;
+  border-top: 2px solid #d9e0da;
+}
+
+.foundations-path li.is-current {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.foundations-path li.is-complete {
+  color: var(--accent-deep);
+  border-color: #83b99b;
+}
+
+.foundations-path span {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.foundations-path strong {
+  font-size: 11px;
+}
+
+.foundations-editor {
+  min-width: 0;
+  color: #eef4ef;
+  border-left: 1px solid #31423a;
+  background: #17231e;
+}
+
+.foundations-editor-bar {
+  min-height: 48px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #aebbb4;
+  border-bottom: 1px solid #31423a;
+  background: #1d2b25;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+}
+
+.foundations-editor label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.foundations-editor textarea {
+  width: 100%;
+  min-height: 430px;
+  margin: 0;
+  padding: 28px;
+  display: block;
+  resize: vertical;
+  color: #eef4ef;
+  border: 0;
+  border-bottom: 1px solid #31423a;
+  outline: none;
+  background: #111b17;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.75;
+  tab-size: 2;
+}
+
+.foundations-editor textarea:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(102, 220, 157, 0.38);
+}
+
+.foundations-actions {
+  padding: 18px 22px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-bottom: 1px solid #31423a;
+  background: #1a2721;
+}
+
+.foundations-reset,
+.foundations-run {
+  min-height: 44px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.foundations-reset {
+  color: #cbd6d0;
+  border: 1px solid #52635a;
+  background: transparent;
+}
+
+.foundations-run {
+  color: #10231a;
+  border: 1px solid #83dda8;
+  background: #83dda8;
+  text-decoration: none;
+}
+
+.foundations-reset:hover:not(:disabled) {
+  border-color: #83dda8;
+}
+
+.foundations-run:hover:not(:disabled) {
+  background: #a0e9bd;
+}
+
+.foundations-reset:focus-visible,
+.foundations-run:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+}
+
+.foundations-reset:disabled,
+.foundations-run:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.foundations-result {
+  min-height: 126px;
+  margin: 22px;
+  padding: 20px;
+  border: 1px solid #3c4b44;
+  border-radius: 10px;
+  background: #1d2b25;
+}
+
+.foundations-result > div {
+  display: grid;
+  gap: 8px;
+}
+
+.foundations-result span {
+  color: #91cca9;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.foundations-result strong {
+  color: #c9d3cd;
+  font-size: 12px;
+}
+
+.foundations-result p {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  color: #aebbb4;
+  border-top: 1px solid #34443c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.foundations-result.is-passed {
+  border-color: #4b8f68;
+  background: #1b3428;
+}
+
+.foundations-result.is-passed span {
+  color: #83dda8;
+}
+
+.foundations-result.is-failed,
+.foundations-result.is-error {
+  border-color: #85504b;
+}
+
+.foundations-result.is-failed > div > span,
+.foundations-result.is-error > div > span {
+  color: #efaaa2;
+}
+
+.foundations-boundary {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.foundations-boundary > div {
+  padding: 25px;
+}
+
+.foundations-boundary > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.foundations-boundary span {
+  color: var(--accent);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+}
+
+.foundations-boundary strong {
+  margin-top: 10px;
+  display: block;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.foundations-boundary p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 .practice-playground-entry {
   padding: 22px 24px;
   display: flex;
@@ -7591,6 +8029,24 @@ footer {
     max-width: 620px;
   }
 
+  .foundations-hero,
+  .foundations-workbench {
+    grid-template-columns: 1fr;
+  }
+
+  .foundations-hero {
+    gap: 32px;
+  }
+
+  .foundations-hero > p {
+    max-width: 62ch;
+  }
+
+  .foundations-editor {
+    border-top: 1px solid #31423a;
+    border-left: 0;
+  }
+
   .coding-problem-layout {
     grid-template-columns: 1fr;
   }
@@ -7800,8 +8256,7 @@ footer {
   .practice-hero,
   .problem-catalog,
   .coding-problem-shell,
-  .challenge-shell,
-  .debugging-shell,
+  .foundations-shell,
   .settings-shell,
   .certificate-shell,
   .certificate-locked-shell {
@@ -8093,14 +8548,59 @@ footer {
     gap: 18px;
   }
 
-  .practice-debugging-entry {
-    padding: 20px;
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 18px;
+  .practice-foundations-entry {
+    padding: 28px 24px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 24px;
   }
 
-  .practice-extension-action {
+  .practice-foundations-action {
+    width: 100%;
+  }
+
+  .foundations-shell {
+    padding: 18px 0 72px;
+  }
+
+  .foundations-hero {
+    padding: 40px 0 38px;
+  }
+
+  .foundations-hero h1 {
+    font-size: clamp(45px, 13.5vw, 60px);
+  }
+
+  .foundations-lesson {
+    padding: 32px 24px;
+  }
+
+  .foundations-editor textarea {
+    min-height: 420px;
+    padding: 22px 18px;
+    font-size: 12px;
+  }
+
+  .foundations-actions {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .foundations-result {
+    margin: 16px;
+  }
+
+  .foundations-boundary {
+    grid-template-columns: 1fr;
+  }
+
+  .foundations-boundary > div + div {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .practice-playground-action {
     width: 100%;
   }
 

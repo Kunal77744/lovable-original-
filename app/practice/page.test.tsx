@@ -83,14 +83,8 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     expect(
-      screen.getByRole("link", { name: "View 28-day activity" }),
-    ).toHaveAttribute("href", "/practice/activity");
-    expect(
-      screen.getByRole("link", { name: "Try a 30-minute challenge" }),
-    ).toHaveAttribute("href", "/practice/challenge");
-    expect(
-      screen.getByRole("link", { name: "Repair the first defect" }),
-    ).toHaveAttribute("href", "/practice/debugging");
+      screen.getByRole("link", { name: "Open the 10-minute warm-up" }),
+    ).toHaveAttribute("href", "/practice/foundations");
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
   });
 
@@ -110,16 +104,7 @@ describe("PracticePage progress", () => {
       screen.queryByRole("link", { name: "Open the playground" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "View private skill record" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "View 28-day activity" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Try a 30-minute challenge" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Repair the first defect" }),
+      screen.queryByRole("link", { name: "Open the 10-minute warm-up" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
