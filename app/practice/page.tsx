@@ -21,6 +21,35 @@ export const metadata: Metadata = {
   },
 };
 
+const PRACTICE_LAB_GROUPS = [
+  {
+    label: "Reason about code",
+    description: "Read, repair, and test small programs before you rely on a judge.",
+    labs: [
+      { href: "/practice/tracing", title: "Trace values", meta: "4 predictions" },
+      { href: "/practice/debugging", title: "Repair defects", meta: "3 drills" },
+      { href: "/practice/test-design", title: "Find edge cases", meta: "4 decisions" },
+    ],
+  },
+  {
+    label: "Build with JavaScript",
+    description: "Strengthen the language and browser skills behind larger solutions.",
+    labs: [
+      { href: "/practice/data-structures", title: "Use data structures", meta: "4 exercises" },
+      { href: "/practice/functions", title: "Practice functions and scope", meta: "4 exercises" },
+      { href: "/practice/dom", title: "Work with the DOM", meta: "4 exercises" },
+    ],
+  },
+  {
+    label: "Solve with intent",
+    description: "Choose a better approach, then bring it into a focused judged set.",
+    labs: [
+      { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
+      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "3 problems" },
+    ],
+  },
+] as const;
+
 export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -95,16 +124,16 @@ export default async function PracticePage() {
             {session ? (
               <div className="practice-progress-links">
                 <Link
-                  className="practice-skill-record-link"
+                  className="practice-progress-link practice-skill-record-link"
                   href="/practice/progress"
                 >
                   View private skill record <span aria-hidden="true">→</span>
                 </Link>
-                <Link className="practice-activity-link" href="/practice/activity">
+                <Link
+                  className="practice-progress-link practice-activity-link"
+                  href="/practice/activity"
+                >
                   View 28-day activity <span aria-hidden="true">→</span>
-                </Link>
-                <Link className="practice-progress-link" href="/practice/challenge">
-                  Try a 30-minute challenge <span aria-hidden="true">→</span>
                 </Link>
               </div>
             ) : null}
@@ -112,28 +141,6 @@ export default async function PracticePage() {
         </section>
 
         <section className="problem-catalog" aria-labelledby="catalog-title">
-          {session ? (
-            <aside
-              className="practice-foundations-entry"
-              aria-label="JavaScript foundations warm-up"
-            >
-              <div>
-                <p className="eyebrow">New to JavaScript?</p>
-                <h2>Learn the three moves behind the problem path.</h2>
-                <p>
-                  Parse input, choose a branch, and build output in three guided
-                  browser exercises before your first judged attempt.
-                </p>
-              </div>
-              <Link
-                className="practice-foundations-action"
-                href="/practice/foundations"
-              >
-                Open the 10-minute warm-up <span aria-hidden="true">→</span>
-              </Link>
-            </aside>
-          ) : null}
-
           <div className="problem-catalog-heading">
             <div>
               <p className="eyebrow">Six-step path · JavaScript</p>
@@ -179,41 +186,64 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <div className="practice-learning-entries">
-              <aside
-                className="practice-playground-entry"
-                aria-label="Continue in the private playground"
-              >
+            <section
+              className="practice-learning-map"
+              aria-labelledby="learning-map-title"
+            >
+              <div className="practice-learning-map-heading">
                 <div>
-                  <p className="eyebrow">Free coding</p>
-                  <p>
-                    Take an idea beyond the fixed checks in one saved JavaScript
-                    file.
-                  </p>
+                  <p className="eyebrow">Private practice labs</p>
+                  <h2 id="learning-map-title">Choose the skill you need next.</h2>
                 </div>
-                <Link className="practice-playground-action" href="/playground">
+                <p>
+                  Short browser-only labs give recovery after a miss and reveal
+                  teaching only after you succeed.
+                </p>
+              </div>
+
+              <Link
+                className="practice-learning-start"
+                href="/practice/foundations"
+              >
+                <span>
+                  <small>Start here · 10 minutes</small>
+                  <strong>Warm up the three moves behind the problem path.</strong>
+                </span>
+                <span aria-hidden="true">→</span>
+              </Link>
+
+              <div className="practice-learning-groups">
+                {PRACTICE_LAB_GROUPS.map((group) => (
+                  <section className="practice-learning-group" key={group.label}>
+                    <div>
+                      <h3>{group.label}</h3>
+                      <p>{group.description}</p>
+                    </div>
+                    <div className="practice-learning-links">
+                      {group.labs.map((lab) => (
+                        <Link href={lab.href} key={lab.href}>
+                          <span>
+                            <strong>{lab.title}</strong>
+                            <small>{lab.meta}</small>
+                          </span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+
+              <div className="practice-learning-playground">
+                <p>
+                  <strong>Need a blank canvas?</strong> Keep one private JavaScript
+                  file outside the fixed exercises.
+                </p>
+                <Link href="/playground">
                   Open the playground <span aria-hidden="true">→</span>
                 </Link>
-              </aside>
-              <aside
-                className="practice-efficiency-entry"
-                aria-label="Practice algorithm efficiency"
-              >
-                <div>
-                  <p className="eyebrow">Algorithm thinking</p>
-                  <p>
-                    Compare two approaches and learn how their work grows with
-                    the input.
-                  </p>
-                </div>
-                <Link
-                  className="practice-playground-action"
-                  href="/practice/efficiency"
-                >
-                  Open the efficiency lab <span aria-hidden="true">→</span>
-                </Link>
-              </aside>
-            </div>
+              </div>
+            </section>
           ) : null}
         </section>
       </div>

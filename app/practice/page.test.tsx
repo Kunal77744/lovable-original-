@@ -82,9 +82,21 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
-    expect(
-      screen.getByRole("link", { name: "Open the efficiency lab" }),
-    ).toHaveAttribute("href", "/practice/efficiency");
+    const privateLabLinks: Array<[RegExp, string]> = [
+      [/Warm up the three moves/, "/practice/foundations"],
+      [/Trace values/, "/practice/tracing"],
+      [/Repair defects/, "/practice/debugging"],
+      [/Find edge cases/, "/practice/test-design"],
+      [/Use data structures/, "/practice/data-structures"],
+      [/Practice functions and scope/, "/practice/functions"],
+      [/Work with the DOM/, "/practice/dom"],
+      [/Compare efficiency/, "/practice/efficiency"],
+      [/Take the 30-minute challenge/, "/practice/challenge"],
+    ];
+
+    for (const [name, href] of privateLabLinks) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
+    }
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
   });
 
@@ -104,7 +116,7 @@ describe("PracticePage progress", () => {
       screen.queryByRole("link", { name: "Open the playground" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Open the efficiency lab" }),
+      screen.queryByRole("heading", { name: "Choose the skill you need next." }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
