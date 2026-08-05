@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
 import { metadata as settingsMetadata } from "./settings/page";
+import { metadata as testDesignMetadata } from "./practice/test-design/page";
 
 vi.mock("@/lib/auth", () => ({
   auth: {
@@ -26,6 +27,10 @@ describe("private learner routes", () => {
       index: false,
       follow: false,
     });
+    expect(testDesignMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
   });
 
   it("excludes private settings and certificate routes from the sitemap", () => {
@@ -36,6 +41,9 @@ describe("private learner routes", () => {
     );
     expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/certificate",
+    );
+    expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/practice/test-design",
     );
   });
 });
