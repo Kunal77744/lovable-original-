@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
@@ -21,11 +22,43 @@ export const metadata: Metadata = {
   },
 };
 
+const PRACTICE_LAB_GROUPS = [
+  {
+    label: "Reason about code",
+    description: "Read, repair, and test small programs before you rely on a judge.",
+    labs: [
+      { href: "/practice/tracing", title: "Trace values", meta: "4 predictions" },
+      { href: "/practice/debugging", title: "Repair defects", meta: "3 drills" },
+      { href: "/practice/test-design", title: "Find edge cases", meta: "4 decisions" },
+    ],
+  },
+  {
+    label: "Build with JavaScript",
+    description: "Strengthen the language and browser skills behind larger solutions.",
+    labs: [
+      { href: "/practice/data-structures", title: "Use data structures", meta: "4 exercises" },
+      { href: "/practice/functions", title: "Practice functions and scope", meta: "4 exercises" },
+      { href: "/practice/dom", title: "Work with the DOM", meta: "4 exercises" },
+    ],
+  },
+  {
+    label: "Solve with intent",
+    description: "Choose a better approach, then bring it into a focused judged set.",
+    labs: [
+      { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
+      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "3 problems" },
+    ],
+  },
+] as const;
+
 export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const progress = await getCodingCatalogProgress(session?.user.id ?? null);
+  const [progress, labProgress] = await Promise.all([
+    getCodingCatalogProgress(session?.user.id ?? null),
+    session ? getJavaScriptLabCatalogProgress(session.user.id) : Promise.resolve(null),
+  ]);
   const completedSlugs = new Set(progress.completedSlugs);
   const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
     progress.completedSlugs,
@@ -92,6 +125,22 @@ export default async function PracticePage() {
                   : "Complete all six steps. Accepted results stay attached to your account."
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
+            {session ? (
+              <div className="practice-progress-links">
+                <Link
+                  className="practice-progress-link practice-skill-record-link"
+                  href="/practice/progress"
+                >
+                  View private skill record <span aria-hidden="true">→</span>
+                </Link>
+                <Link
+                  className="practice-progress-link practice-activity-link"
+                  href="/practice/activity"
+                >
+                  View 28-day activity <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            ) : null}
           </aside>
         </section>
 
@@ -141,21 +190,70 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <aside
-              className="practice-playground-entry"
-              aria-label="Continue in the private playground"
+            <section
+              className="practice-learning-map"
+              aria-labelledby="learning-map-title"
             >
-              <div>
-                <p className="eyebrow">Free coding</p>
+              <div className="practice-learning-map-heading">
+                <div>
+                  <p className="eyebrow">Private practice labs</p>
+                  <h2 id="learning-map-title">Choose the skill you need next.</h2>
+                </div>
                 <p>
-                  Take an idea beyond the fixed checks in one saved JavaScript
-                  file.
+                  Short browser-only labs give recovery after a miss. Saved
+                  completion records practice, not judged mastery.
                 </p>
               </div>
-              <Link className="practice-playground-action" href="/playground">
-                Open the playground <span aria-hidden="true">→</span>
+
+              <Link
+                className="practice-learning-start"
+                href={labProgress?.nextHref ?? "/practice/foundations"}
+              >
+                <span>
+                  <small>
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 30} exercises
+                  </small>
+                  <strong>
+                    {labProgress?.nextLabTitle
+                      ? `Continue ${labProgress.nextLabTitle}, exercise ${labProgress.nextExerciseNumber}.`
+                      : "Review the private JavaScript labs."}
+                  </strong>
+                </span>
+                <span aria-hidden="true">→</span>
               </Link>
-            </aside>
+
+              <div className="practice-learning-groups">
+                {PRACTICE_LAB_GROUPS.map((group) => (
+                  <section className="practice-learning-group" key={group.label}>
+                    <div>
+                      <h3>{group.label}</h3>
+                      <p>{group.description}</p>
+                    </div>
+                    <div className="practice-learning-links">
+                      {group.labs.map((lab) => (
+                        <Link href={lab.href} key={lab.href}>
+                          <span>
+                            <strong>{lab.title}</strong>
+                            <small>{lab.meta}</small>
+                          </span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+
+              <div className="practice-learning-playground">
+                <p>
+                  <strong>Need a blank canvas?</strong> Keep one private JavaScript
+                  file outside the fixed exercises.
+                </p>
+                <Link href="/playground">
+                  Open the playground <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </section>
           ) : null}
         </section>
       </div>
