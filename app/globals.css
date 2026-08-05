@@ -4734,7 +4734,6 @@ h1 {
 }
 
 .practice-playground-entry {
-  margin-top: 20px;
   padding: 22px 24px;
   display: flex;
   align-items: center;
@@ -4743,6 +4742,36 @@ h1 {
   border: 1px solid rgba(23, 35, 30, 0.12);
   border-radius: 13px;
   background: rgba(255, 255, 255, 0.46);
+}
+
+.practice-extension-list {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 14px;
+}
+
+.practice-debugging-entry {
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  border: 1px solid rgba(40, 118, 82, 0.24);
+  border-radius: 13px 13px 4px 13px;
+  background: #eef5ed;
+}
+
+.practice-debugging-entry .eyebrow {
+  margin-bottom: 6px;
+}
+
+.practice-debugging-entry > div > p:last-child {
+  max-width: 45ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .practice-playground-entry .eyebrow {
@@ -4757,7 +4786,7 @@ h1 {
   line-height: 1.55;
 }
 
-.practice-playground-action {
+.practice-extension-action {
   min-height: 44px;
   padding: 0 17px;
   display: inline-flex;
@@ -4777,18 +4806,299 @@ h1 {
     color 160ms ease-out;
 }
 
-.practice-playground-action:hover {
+.practice-extension-action:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.practice-playground-action:active {
+.practice-extension-action:active {
   background: rgba(40, 118, 82, 0.08);
 }
 
-.practice-playground-action:focus-visible {
+.practice-extension-action:focus-visible {
   outline: 3px solid rgba(40, 118, 82, 0.27);
   outline-offset: 3px;
+}
+
+.debugging-shell {
+  width: min(1080px, calc(100% - 48px));
+  margin-inline: auto;
+  padding: 72px 0 112px;
+}
+
+.debugging-hero {
+  margin-bottom: 44px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  align-items: end;
+  gap: 72px;
+}
+
+.debugging-hero h1 {
+  max-width: 720px;
+  margin: 0;
+  font-size: clamp(48px, 6vw, 76px);
+  text-wrap: balance;
+}
+
+.debugging-hero > div > p:last-child {
+  max-width: 57ch;
+  margin: 26px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.debugging-hero aside {
+  padding: 23px 24px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 14px 14px 4px 14px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.debugging-hero aside span {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 780;
+}
+
+.debugging-hero aside p {
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.debugging-workbench {
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.17);
+  border-radius: 19px 19px 6px 19px;
+  background: var(--surface);
+  box-shadow: 0 24px 58px rgba(23, 35, 30, 0.1);
+}
+
+.debugging-workbench-heading {
+  padding: 34px 36px 31px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 36px;
+}
+
+.debugging-workbench-heading .eyebrow {
+  margin-bottom: 10px;
+}
+
+.debugging-workbench-heading h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(34px, 4vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.debugging-workbench-heading > div:first-child > p:last-child {
+  max-width: 62ch;
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.debugging-progress {
+  min-width: 154px;
+  text-align: right;
+}
+
+.debugging-progress span,
+.debugging-progress small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.debugging-progress strong {
+  display: block;
+  margin: 3px 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.debugging-editor {
+  border-block: 1px solid rgba(255, 255, 255, 0.08);
+  background: #17231e;
+}
+
+.debugging-editor-bar {
+  min-height: 43px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #acc1b6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.debugging-editor label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.debugging-editor textarea {
+  width: 100%;
+  min-height: 340px;
+  padding: 30px 32px;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  background: #17231e;
+  color: #e7f0e9;
+  font: 14px/1.72 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  tab-size: 2;
+}
+
+.debugging-editor textarea:focus-visible {
+  box-shadow: inset 0 0 0 3px rgba(102, 220, 157, 0.42);
+}
+
+.debugging-action-row {
+  min-height: 82px;
+  padding: 17px 24px 17px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.debugging-action-row p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.debugging-action-row button,
+.debugging-takeaway button,
+.debugging-takeaway a {
+  min-height: 44px;
+  padding: 0 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--accent-deep);
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 780;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.debugging-action-row button:hover:not(:disabled),
+.debugging-takeaway button:hover,
+.debugging-takeaway a:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.debugging-action-row button:active:not(:disabled),
+.debugging-takeaway button:active,
+.debugging-takeaway a:active {
+  transform: translateY(1px);
+}
+
+.debugging-action-row button:focus-visible,
+.debugging-takeaway button:focus-visible,
+.debugging-takeaway a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.debugging-action-row button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.debugging-result {
+  min-height: 132px;
+  padding: 27px 32px 31px;
+  background: #f7f8f3;
+}
+
+.debugging-result > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.debugging-result > div:first-child span,
+.debugging-cue span,
+.debugging-takeaway span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.debugging-result > div:first-child strong {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.debugging-result.is-passed {
+  background: #eef6ed;
+}
+
+.debugging-result.is-failed {
+  background: #faf5e9;
+}
+
+.debugging-cue {
+  max-width: 65ch;
+  margin: 20px 0 0;
+  color: #5d4b21;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.debugging-cue span {
+  margin-right: 11px;
+  color: #806927;
+}
+
+.debugging-takeaway {
+  margin-top: 24px;
+  padding-top: 22px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  border-top: 1px solid rgba(40, 118, 82, 0.2);
+}
+
+.debugging-takeaway p {
+  max-width: 61ch;
+  margin: 7px 0 0;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.55;
 }
 
 .problem-row {
@@ -6951,6 +7261,19 @@ footer {
     gap: 52px;
   }
 
+  .practice-extension-list,
+  .debugging-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .debugging-hero {
+    gap: 36px;
+  }
+
+  .debugging-hero aside {
+    max-width: 620px;
+  }
+
   .practice-progress-card {
     max-width: 620px;
   }
@@ -7164,6 +7487,7 @@ footer {
   .practice-hero,
   .problem-catalog,
   .coding-problem-shell,
+  .debugging-shell,
   .settings-shell,
   .certificate-shell,
   .certificate-locked-shell {
@@ -7375,8 +7699,63 @@ footer {
     gap: 18px;
   }
 
-  .practice-playground-action {
+  .practice-debugging-entry {
+    padding: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .practice-extension-action {
     width: 100%;
+  }
+
+  .debugging-shell {
+    padding: 48px 0 80px;
+  }
+
+  .debugging-hero {
+    margin-bottom: 32px;
+  }
+
+  .debugging-hero h1 {
+    font-size: clamp(45px, 14vw, 62px);
+  }
+
+  .debugging-workbench-heading {
+    padding: 27px 24px;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .debugging-progress {
+    text-align: left;
+  }
+
+  .debugging-editor textarea {
+    min-height: 390px;
+    padding: 25px 20px;
+    font-size: 12px;
+  }
+
+  .debugging-action-row,
+  .debugging-takeaway {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .debugging-action-row {
+    padding: 20px 24px;
+  }
+
+  .debugging-action-row button,
+  .debugging-takeaway button,
+  .debugging-takeaway a {
+    width: 100%;
+  }
+
+  .debugging-result {
+    padding: 25px 24px 28px;
   }
 
   .problem-row {
