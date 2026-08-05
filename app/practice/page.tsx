@@ -141,21 +141,42 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <aside
-              className="practice-playground-entry"
-              aria-label="Continue in the private playground"
-            >
-              <div>
-                <p className="eyebrow">Free coding</p>
-                <p>
-                  Take an idea beyond the fixed checks in one saved JavaScript
-                  file.
-                </p>
-              </div>
-              <Link className="practice-playground-action" href="/playground">
-                Open the playground <span aria-hidden="true">→</span>
-              </Link>
-            </aside>
+            <div className="practice-secondary-paths">
+              <aside
+                className="practice-playground-entry practice-tracing-entry"
+                aria-label="Practice reading JavaScript"
+              >
+                <div>
+                  <p className="eyebrow">Read before you write</p>
+                  <p>
+                    Predict four outputs, trace the values, and learn how to
+                    reason through code without running it.
+                  </p>
+                </div>
+                <Link
+                  className="practice-playground-action"
+                  href="/practice/tracing"
+                >
+                  Open the tracing lab <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+
+              <aside
+                className="practice-playground-entry"
+                aria-label="Continue in the private playground"
+              >
+                <div>
+                  <p className="eyebrow">Free coding</p>
+                  <p>
+                    Take an idea beyond the fixed checks in one saved JavaScript
+                    file.
+                  </p>
+                </div>
+                <Link className="practice-playground-action" href="/playground">
+                  Open the playground <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+            </div>
           ) : null}
         </section>
       </div>
