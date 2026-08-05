@@ -4690,6 +4690,29 @@ h1 {
   line-height: 1.55;
 }
 
+.practice-skill-record-link {
+  width: fit-content;
+  min-height: 44px;
+  margin-top: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 780;
+  text-decoration: none;
+}
+
+.practice-skill-record-link:hover {
+  color: var(--accent-deep);
+}
+
+.practice-skill-record-link:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 3px;
+}
+
 .problem-catalog {
   padding: 68px 0 112px;
 }

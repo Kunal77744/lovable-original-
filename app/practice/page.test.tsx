@@ -51,6 +51,9 @@ describe("PracticePage progress", () => {
     expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
       "Accepted 0 of 6",
     );
+    expect(
+      screen.getByRole("link", { name: "View private skill record" }),
+    ).toHaveAttribute("href", "/practice/progress");
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
   });
 
@@ -96,6 +99,9 @@ describe("PracticePage progress", () => {
     expect(screen.getByLabelText("6 problems")).toHaveTextContent("6 problems");
     expect(
       screen.queryByRole("link", { name: "Open the playground" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "View private skill record" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
