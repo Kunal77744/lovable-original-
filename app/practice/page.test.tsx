@@ -5,6 +5,7 @@ import {
   getCodingMistakeReviewQueueForStudent,
   getCodingProblemBookmarksForStudent,
 } from "@/db/coding-practice";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import PracticePage from "./page";
 
@@ -25,17 +26,29 @@ vi.mock("@/db/coding-practice", () => ({
   getCodingMistakeReviewQueueForStudent: vi.fn(),
   getCodingProblemBookmarksForStudent: vi.fn(),
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: vi.fn(),
+}));
 
 const getSession = vi.mocked(auth.api.getSession);
 const getProgress = vi.mocked(getCodingCatalogProgress);
 const getReviewQueue = vi.mocked(getCodingMistakeReviewQueueForStudent);
 const getBookmarks = vi.mocked(getCodingProblemBookmarksForStudent);
+const getLabProgress = vi.mocked(getJavaScriptLabCatalogProgress);
 
 describe("PracticePage progress", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getBookmarks.mockResolvedValue([]);
     getReviewQueue.mockResolvedValue([]);
+    getLabProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 30,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 1,
+    });
   });
 
   afterEach(() => {
@@ -72,9 +85,13 @@ describe("PracticePage progress", () => {
         "Each problem runs in browser-based JavaScript. Signed-in attempts are saved to your account.",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "View private skill record" }),
+    ).toHaveAttribute("href", "/practice/progress");
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
     expect(getBookmarks).toHaveBeenCalledWith("fresh-learner");
     expect(getReviewQueue).toHaveBeenCalledWith("fresh-learner");
+    expect(getLabProgress).toHaveBeenCalledWith("fresh-learner");
     expect(
       screen.getByRole("link", { name: "Check review status" }),
     ).toHaveAttribute("href", "/practice/review");
@@ -129,6 +146,21 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
+    const privateLabLinks: Array<[RegExp, string]> = [
+      [/Continue JavaScript foundations, exercise 1/, "/practice/foundations"],
+      [/Trace values/, "/practice/tracing"],
+      [/Repair defects/, "/practice/debugging"],
+      [/Find edge cases/, "/practice/test-design"],
+      [/Use data structures/, "/practice/data-structures"],
+      [/Practice functions and scope/, "/practice/functions"],
+      [/Work with the DOM/, "/practice/dom"],
+      [/Compare efficiency/, "/practice/efficiency"],
+      [/Take the 30-minute challenge/, "/practice/challenge"],
+    ];
+
+    for (const [name, href] of privateLabLinks) {
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
+    }
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
     expect(
       screen.getByRole("link", {
@@ -149,6 +181,7 @@ describe("PracticePage progress", () => {
     expect(document.querySelector(".mistake-review")).not.toHaveTextContent(
       /function solve|learner code/i,
     );
+    expect(getLabProgress).toHaveBeenCalledWith("returning-learner");
   });
 
   it("describes the catalog without implying personal progress when signed out", async () => {
@@ -172,6 +205,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.queryByRole("link", { name: "Review saved submissions" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Choose the skill you need next." }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start step 1 of 6" }),
@@ -179,6 +215,7 @@ describe("PracticePage progress", () => {
     expect(getProgress).toHaveBeenCalledWith(null);
     expect(getBookmarks).not.toHaveBeenCalled();
     expect(getReviewQueue).not.toHaveBeenCalled();
+    expect(getLabProgress).not.toHaveBeenCalled();
     expect(screen.queryByText("Saved for later")).not.toBeInTheDocument();
     expect(screen.queryByText("Mistakes to revisit")).not.toBeInTheDocument();
     expect(screen.queryByText("Private review session")).not.toBeInTheDocument();
