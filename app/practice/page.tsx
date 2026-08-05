@@ -157,21 +157,38 @@ export default async function PracticePage() {
           </div>
 
           {session ? (
-            <aside
-              className="practice-playground-entry"
-              aria-label="Continue in the private playground"
-            >
-              <div>
-                <p className="eyebrow">Free coding</p>
-                <p>
-                  Take an idea beyond the fixed checks in one saved JavaScript
-                  file.
-                </p>
-              </div>
-              <Link className="practice-playground-action" href="/playground">
-                Open the playground <span aria-hidden="true">→</span>
-              </Link>
-            </aside>
+            <div className="practice-extension-list">
+              <aside
+                className="practice-debugging-entry"
+                aria-label="Practice finding JavaScript defects"
+              >
+                <div>
+                  <p className="eyebrow">Debugging lab</p>
+                  <p>
+                    Repair three almost-correct programs with browser-only checks.
+                  </p>
+                </div>
+                <Link className="practice-extension-action" href="/practice/debugging">
+                  Repair the first defect <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+
+              <aside
+                className="practice-playground-entry"
+                aria-label="Continue in the private playground"
+              >
+                <div>
+                  <p className="eyebrow">Free coding</p>
+                  <p>
+                    Take an idea beyond the fixed checks in one saved JavaScript
+                    file.
+                  </p>
+                </div>
+                <Link className="practice-extension-action" href="/playground">
+                  Open the playground <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+            </div>
           ) : null}
         </section>
       </div>

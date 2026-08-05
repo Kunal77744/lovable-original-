@@ -88,6 +88,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Try a 30-minute challenge" }),
     ).toHaveAttribute("href", "/practice/challenge");
+    expect(
+      screen.getByRole("link", { name: "Repair the first defect" }),
+    ).toHaveAttribute("href", "/practice/debugging");
     expect(getProgress).toHaveBeenCalledWith("returning-learner");
   });
 
@@ -114,6 +117,9 @@ describe("PracticePage progress", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Try a 30-minute challenge" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Repair the first defect" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
     expect(
