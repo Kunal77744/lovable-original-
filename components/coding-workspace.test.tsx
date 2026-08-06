@@ -270,13 +270,41 @@ describe("CodingWorkspace", () => {
       runnerStatus: "error",
       message: "Define a function named solve(input).",
       label: "Runner stopped",
+      recoveryLabel: "Check the required function",
+      recoveryGuidance:
+        "Keep solve(input) at the top level and return the final answer from it. Then run the example again.",
+    },
+    {
+      runnerStatus: "error",
+      message: "Unexpected token '}'",
+      label: "Runner stopped",
+      recoveryLabel: "Check the syntax",
+      recoveryGuidance:
+        "Inspect the line before the reported token for an unmatched quote, bracket, parenthesis, or comma.",
+    },
+    {
+      runnerStatus: "error",
+      message: "missingValue is not defined",
+      label: "Runner stopped",
+      recoveryLabel: "Trace the first missing value",
+      recoveryGuidance:
+        "Find the first named value in the message, then check where it should be created before it is used.",
     },
     {
       runnerStatus: "timeout",
       message: "Time limit exceeded after 1,000 ms.",
       label: "Time limit exceeded",
+      recoveryLabel: "Check the stopping condition",
+      recoveryGuidance:
+        "Try the smallest input first. Make sure every loop changes the value that eventually stops it.",
     },
-  ])("announces a $runnerStatus result", async ({ runnerStatus, message, label }) => {
+  ])("announces a $runnerStatus result with recovery", async ({
+    runnerStatus,
+    message,
+    label,
+    recoveryLabel,
+    recoveryGuidance,
+  }) => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     runCodingSolution.mockResolvedValue({
       status: runnerStatus,
@@ -288,6 +316,8 @@ describe("CodingWorkspace", () => {
 
     const status = screen.getByRole("status");
     await waitFor(() => expect(status).toHaveTextContent(`${label}${message}`));
+    expect(status).toHaveTextContent(recoveryLabel);
+    expect(status).toHaveTextContent(recoveryGuidance);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
