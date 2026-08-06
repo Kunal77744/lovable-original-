@@ -75,12 +75,38 @@ export function CodingWorkspace({
       : "You can run the example now. Sign in to submit and save progress.",
   });
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestCode = useRef(initialCode);
+  const hasPendingDraft = useRef(false);
 
   useEffect(() => {
+    function savePendingDraftBeforeLeave() {
+      if (!isSignedIn || !hasPendingDraft.current) return;
+
+      if (draftTimer.current) {
+        clearTimeout(draftTimer.current);
+        draftTimer.current = null;
+      }
+
+      if (typeof navigator.sendBeacon !== "function") return;
+
+      const queued = navigator.sendBeacon(
+        `/api/practice/${problem.slug}`,
+        new Blob(
+          [JSON.stringify({ mode: "draft", code: latestCode.current })],
+          { type: "application/json" },
+        ),
+      );
+
+      if (queued) hasPendingDraft.current = false;
+    }
+
+    window.addEventListener("pagehide", savePendingDraftBeforeLeave);
+
     return () => {
+      window.removeEventListener("pagehide", savePendingDraftBeforeLeave);
       if (draftTimer.current) clearTimeout(draftTimer.current);
     };
-  }, []);
+  }, [isSignedIn, problem.slug]);
 
   async function saveDraft(nextCode: string) {
     if (!isSignedIn) return;
@@ -98,7 +124,10 @@ export function CodingWorkspace({
         return;
       }
 
-      setSaveState("saved");
+      if (latestCode.current === nextCode) {
+        hasPendingDraft.current = false;
+        setSaveState("saved");
+      }
     } catch {
       setSaveState("error");
     }
@@ -107,11 +136,25 @@ export function CodingWorkspace({
   function updateCode(nextCode: string) {
     setCode(nextCode);
     setSaveState("unsaved");
+    latestCode.current = nextCode;
+    hasPendingDraft.current = true;
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
+      draftTimer.current = null;
       void saveDraft(nextCode);
     }, 700);
+  }
+
+  function saveDraftNow() {
+    if (!isSignedIn || !hasPendingDraft.current) return;
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    void saveDraft(latestCode.current);
   }
 
   async function runExample() {
@@ -263,6 +306,7 @@ export function CodingWorkspace({
           aria-label="JavaScript solution"
           value={code}
           onChange={(event) => updateCode(event.target.value)}
+          onBlur={saveDraftNow}
           spellCheck={false}
         />
       </div>
