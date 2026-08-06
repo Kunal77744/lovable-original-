@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ProjectFeedback } from "@/components/project-feedback";
+import { SemanticHtmlRepairDrill } from "@/components/semantic-html-repair-drill";
 import {
   getEmptyGuidedProjectChecks,
   type GuidedProjectRecord,
@@ -15,12 +16,17 @@ type GuidedProjectWorkspaceProps = {
   projectSlug: string;
   initialProject: GuidedProjectRecord;
   initialFeedback: SavedProjectFeedback | null;
+  practiceContinuation: {
+    href: string;
+    label: string;
+  };
 };
 
 export function GuidedProjectWorkspace({
   projectSlug,
   initialProject,
   initialFeedback,
+  practiceContinuation,
 }: GuidedProjectWorkspaceProps) {
   const [html, setHtml] = useState(initialProject.html);
   const [project, setProject] = useState(initialProject);
@@ -52,6 +58,7 @@ export function GuidedProjectWorkspace({
     Boolean(project.submission && html !== project.html);
   const isComplete =
     project.submission?.status === "completed" && !hasUnreviewedChanges;
+  const firstFailedCheck = checks.find((check) => !check.passed);
 
   async function persist(action: "save" | "submit") {
     setRequestState(action === "save" ? "saving" : "submitting");
@@ -215,6 +222,13 @@ export function GuidedProjectWorkspace({
               </article>
             ))}
           </div>
+          {project.submission && firstFailedCheck && !isComplete ? (
+            <SemanticHtmlRepairDrill
+              editorId="guided-project-editor"
+              failedCheck={firstFailedCheck}
+              key={firstFailedCheck.id}
+            />
+          ) : null}
         </div>
 
         <aside className="project-actions" aria-label="Save and review project">
@@ -257,8 +271,8 @@ export function GuidedProjectWorkspace({
             {message}
           </p>
           {isComplete ? (
-            <Link href="/dashboard">
-              View saved progress
+            <Link href={practiceContinuation.href}>
+              {practiceContinuation.label}
               <span aria-hidden="true">→</span>
             </Link>
           ) : null}

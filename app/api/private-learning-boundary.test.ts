@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as courseDb from "@/db/course";
 import * as projectDb from "@/db/guided-project";
+import * as practiceDb from "@/db/coding-practice";
+import * as labProgressDb from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import { GET as getCertificate } from "./certificate/route";
 import {
@@ -24,6 +26,11 @@ import {
   GET as getProjectFeedback,
   POST as saveProjectFeedback,
 } from "./projects/[projectSlug]/feedback/route";
+import {
+  GET as getPracticeFeedback,
+  POST as savePracticeFeedback,
+} from "./practice/feedback/route";
+import { POST as saveLabProgress } from "./practice/labs/[labSlug]/progress/route";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -54,6 +61,12 @@ vi.mock("@/db/guided-project", () => ({
   getGuidedProjectFeedbackForStudent: vi.fn(),
   saveGuidedProjectFeedbackForStudent: vi.fn(),
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({ saveJavaScriptLabExerciseCompletion: vi.fn() }));
+
+vi.mock("@/db/coding-practice", () => ({
+  getPracticeFeedbackForStudent: vi.fn(),
+  savePracticeFeedbackForStudent: vi.fn(),
+}));
 
 const getSession = vi.mocked(auth.api.getSession);
 
@@ -73,6 +86,7 @@ describe("signed-out private learning boundary", () => {
     const projectContext = {
       params: Promise.resolve({ projectSlug: "semantic-html-article" }),
     };
+    const labContext = { params: Promise.resolve({ labSlug: "tracing" }) };
     const request = new Request("http://localhost/private", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -95,10 +109,17 @@ describe("signed-out private learning boundary", () => {
         projectContext,
       ),
       saveProjectFeedback(request.clone(), projectContext),
+      getPracticeFeedback(
+        new Request(
+          "http://localhost/api/practice/feedback?problemSlug=sum-two-numbers",
+        ),
+      ),
+      savePracticeFeedback(request.clone()),
+      saveLabProgress(request.clone(), labContext),
     ]);
 
     expect(responses.map((response) => response.status)).toEqual(
-      Array(12).fill(401),
+      Array(15).fill(401),
     );
     expect(courseDb.getFirstLessonNote).not.toHaveBeenCalled();
     expect(courseDb.saveFirstLessonNote).not.toHaveBeenCalled();
@@ -116,5 +137,8 @@ describe("signed-out private learning boundary", () => {
     expect(
       projectDb.saveGuidedProjectFeedbackForStudent,
     ).not.toHaveBeenCalled();
+    expect(practiceDb.getPracticeFeedbackForStudent).not.toHaveBeenCalled();
+    expect(practiceDb.savePracticeFeedbackForStudent).not.toHaveBeenCalled();
+    expect(labProgressDb.saveJavaScriptLabExerciseCompletion).not.toHaveBeenCalled();
   });
 });

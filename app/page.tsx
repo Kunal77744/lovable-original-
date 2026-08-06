@@ -5,17 +5,17 @@ const learningLoop = [
   {
     number: "01",
     title: "Learn the structure",
-    copy: "Three focused sections show how semantic HTML gives a page meaning before styling begins.",
+    copy: "Read three focused sections, build a saved article page, and pass the four-question recall check.",
   },
   {
     number: "02",
-    title: "Check your recall",
-    copy: "A four-question quiz tests the choices that make a page clearer for browsers and people.",
+    title: "Build the field guide",
+    copy: "Save a private semantic HTML field guide, review six checks, and revise until the structure holds.",
   },
   {
     number: "03",
-    title: "Complete the course",
-    copy: "Build and save your page, pass at 75%, and return to your best score and progress from the dashboard.",
+    title: "Keep coding",
+    copy: "Continue through six ordered JavaScript problems and return to the next unfinished step.",
   },
 ];
 
@@ -62,9 +62,9 @@ export default function Home() {
               Lovable Original helps you build a page the browser understands.
             </h1>
             <p className="hero-lede">
-              In one 18-minute semantic HTML lesson, build and save an article
-              page, check your recall with four questions, and keep your course
-              result.
+              Start with one 18-minute semantic HTML lesson. Then build and save
+              a private field guide, revise it against six clear checks, and
+              continue through six beginner JavaScript problems.
             </p>
             <Link
               className="primary-action"
@@ -74,8 +74,8 @@ export default function Home() {
               <ArrowIcon />
             </Link>
             <p className="launch-note">
-              One focused lesson. One practical result. Your best quiz score
-              stays with your free student account.
+              Read the full lesson before signup. A free account saves your
+              course, project, and practice progress.
             </p>
             <p className="spelling-note">
               Searched for &quot;Loveable Original&quot;? You&apos;re in the

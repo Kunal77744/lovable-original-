@@ -1,5 +1,6 @@
 import type { RecentCodingAttempt } from "@/db/coding-practice";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { CSS_PRACTICE_CHALLENGES } from "@/lib/css-practice-challenges";
 import {
   GUIDED_PROJECT_SLUG,
   GUIDED_PROJECT_TITLE,
@@ -40,6 +41,7 @@ export type LearnerProfileAction = {
 export type LearnerProfileViewModel = {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
+  cssPractice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   quizScore: number | null;
   isFreshLearner: boolean;
@@ -49,11 +51,13 @@ export type LearnerProfileViewModel = {
 export function buildLearnerProfile({
   course,
   practice,
+  cssPractice,
   attempts,
   projectCompleted,
 }: {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
+  cssPractice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   projectCompleted: boolean;
 }): LearnerProfileViewModel {
@@ -61,6 +65,7 @@ export function buildLearnerProfile({
   const isFreshLearner =
     course.completedLessons === 0 &&
     practice.completedCount === 0 &&
+    cssPractice.completedCount === 0 &&
     attempts.length === 0 &&
     quizScore === null;
 
@@ -70,6 +75,7 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -89,6 +95,7 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -112,6 +119,7 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -128,9 +136,36 @@ export function buildLearnerProfile({
     };
   }
 
+  const completedCssSlugs = new Set(cssPractice.completedSlugs);
+  const nextCssChallenge = CSS_PRACTICE_CHALLENGES.find(
+    (challenge) => !completedCssSlugs.has(challenge.slug),
+  );
+
+  if (nextCssChallenge) {
+    return {
+      course,
+      practice,
+      cssPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: `Complete CSS ${String(nextCssChallenge.number).padStart(2, "0")}`,
+        href: `/practice/css/${nextCssChallenge.slug}`,
+        kicker:
+          cssPractice.completedCount === 0
+            ? "Finish the coding path"
+            : "Continue your CSS practice",
+        title: nextCssChallenge.title,
+        description: `Practice ${nextCssChallenge.skill.toLowerCase()} and keep the completed result on this record.`,
+      },
+    };
+  }
+
   return {
     course,
     practice,
+    cssPractice,
     attempts,
     quizScore,
     isFreshLearner,

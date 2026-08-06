@@ -12,7 +12,7 @@ import sitemap from "./sitemap";
 afterEach(cleanup);
 
 describe("public product promise", () => {
-  it("keeps the homepage focused on the live first course", () => {
+  it("connects the homepage to the live lesson, project, and practice path", () => {
     render(<Home />);
 
     expect(
@@ -24,14 +24,14 @@ describe("public product promise", () => {
       "/learn/web-development-foundations/semantic-html",
     );
     expect(
-      screen.getByText(/build and save an article page/i),
+      screen.getByText(/private field guide, revise it against six clear checks/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/real projects|interview practice/i),
-    ).not.toBeInTheDocument();
+      screen.getByText(/six ordered JavaScript problems/i),
+    ).toBeInTheDocument();
   });
 
-  it("distinguishes the live course from planned breadth on About", () => {
+  it("lists the guided project as live on About", () => {
     render(<AboutPage />);
 
     expect(
@@ -60,11 +60,17 @@ describe("public product promise", () => {
       screen.getByText(/private saved JavaScript playground/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/six beginner JavaScript problems/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/six beginner JavaScript problems/i),
+    ).not.toHaveLength(0);
     expect(
-      screen.getByText(/guided semantic HTML field-guide project/i),
+      screen.getByText(/private semantic HTML field-guide project/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/saved drafts/i)).toHaveTextContent(
+      /six-check review/i,
+    );
+    expect(
+      screen.queryByText(/planned next|not live yet/i),
+    ).not.toBeInTheDocument();
   });
 
   it("describes only live capability in page and share metadata", () => {
@@ -87,14 +93,14 @@ describe("public product promise", () => {
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.",
+          "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
         alt:
-          "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.",
+          "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
@@ -110,18 +116,40 @@ describe("public product promise", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /build a semantic article page in 18 minutes/i,
+        name: /one beginner path from page structure to working code/i,
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /read the full lesson/i }),
+      screen.getByRole("link", { name: /start the beginner path/i }),
     ).toHaveAttribute(
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
-    expect(screen.getByText("75% to pass")).toBeInTheDocument();
-    expect(screen.getByText("Four recall questions")).toBeInTheDocument();
-    expect(screen.getByText("1 saved page")).toBeInTheDocument();
+    expect(
+      screen.getByText(/six JavaScript problems and six CSS challenges/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 saved builds")).toBeInTheDocument();
+    expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
+    expect(screen.getByText("6 + 6 + 6")).toBeInTheDocument();
+    expect(
+      screen.getByText("Project checks, JS problems, and CSS challenges"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/private semantic HTML field guide/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/six ordered beginner problems/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /preview the guided project/i }),
+    ).toHaveAttribute("href", "/learn/semantic-html-project");
+    expect(
+      screen.getByRole("link", { name: /see the JavaScript path/i }),
+    ).toHaveAttribute("href", "/learn/beginner-javascript-practice");
+    expect(
+      screen.getByRole("link", { name: /see the CSS path/i }),
+    ).toHaveAttribute("href", "/practice/css");
+    expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
     expect(screen.queryByText(/AI tutor|certificate/i)).not.toBeInTheDocument();
   });
 

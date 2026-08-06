@@ -51,6 +51,10 @@ describe("GuidedProjectWorkspace", () => {
         projectSlug="semantic-html-article"
         initialProject={starterProject}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 
@@ -106,6 +110,10 @@ describe("GuidedProjectWorkspace", () => {
         projectSlug="semantic-html-article"
         initialProject={starterProject}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 
@@ -121,6 +129,65 @@ describe("GuidedProjectWorkspace", () => {
     );
     expect(screen.getByRole("button", { name: "Save draft" })).toBeEnabled();
     expect(screen.getByText("Unsaved")).toBeInTheDocument();
+  });
+
+  it("turns the first failed review check into a focused repair drill", () => {
+    const checks = getEmptyGuidedProjectChecks().map((check) => ({
+      ...check,
+      passed: check.id !== "article-introduction",
+    }));
+
+    render(
+      <GuidedProjectWorkspace
+        projectSlug="semantic-html-article"
+        initialProject={{
+          ...starterProject,
+          saved: true,
+          submission: {
+            status: "needs-revision",
+            checks,
+            passedChecks: 5,
+            totalChecks: 6,
+            submittedAt: "2026-07-29T10:00:00.000Z",
+          },
+        }}
+        initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Lead with the topic before the introduction.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Your review flagged:/),
+    ).toHaveTextContent("Open with a clear topic and introduction");
+
+    fireEvent.click(screen.getByLabelText(/Repair 2/));
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(
+      screen.getByText(
+        "Not yet. Put the article's single h1 before its opening paragraph.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/Repair 1/));
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(
+      screen.getByText(
+        "Correct. The h1 names the topic before the opening paragraph develops it.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /Use this pattern in field-guide.html/,
+      }),
+    ).toHaveAttribute("href", "#guided-project-editor");
   });
 
   it("shows a completed review and preserves a revision path", async () => {
@@ -166,6 +233,10 @@ describe("GuidedProjectWorkspace", () => {
         projectSlug="semantic-html-article"
         initialProject={{ ...starterProject, html: completeHtml }}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/multiplication-table",
+          label: "Continue to JavaScript step 03: Multiplication table",
+        }}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Submit for review" }));
@@ -183,8 +254,10 @@ describe("GuidedProjectWorkspace", () => {
       screen.getByRole("button", { name: "Submit updated project" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /View saved progress/ }),
-    ).toHaveAttribute("href", "/dashboard");
+      screen.getByRole("link", {
+        name: /Continue to JavaScript step 03: Multiplication table/,
+      }),
+    ).toHaveAttribute("href", "/practice/multiplication-table");
     expect(
       screen.getByRole("heading", {
         name: "What felt confusing while you built this?",
@@ -212,6 +285,10 @@ describe("GuidedProjectWorkspace", () => {
           html: '<img src="https://example.com/track.png"><script>alert(1)</script>',
         }}
         initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
       />,
     );
 

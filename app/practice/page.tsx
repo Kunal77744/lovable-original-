@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { getCodingCatalogProgress } from "@/db/coding-practice";
+import {
+  getCodingCatalogProgress,
+  getCodingMistakeReviewQueueForStudent,
+  getCodingProblemBookmarksForStudent,
+} from "@/db/coding-practice";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
+import { buildCodingReviewSession } from "@/lib/coding-review-session";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +27,55 @@ export const metadata: Metadata = {
   },
 };
 
+const PRACTICE_LAB_GROUPS = [
+  {
+    label: "Reason about code",
+    description: "Read, repair, and test small programs before you rely on a judge.",
+    labs: [
+      { href: "/practice/tracing", title: "Trace values", meta: "4 predictions" },
+      { href: "/practice/debugging", title: "Repair defects", meta: "3 drills" },
+      { href: "/practice/test-design", title: "Find edge cases", meta: "4 decisions" },
+    ],
+  },
+  {
+    label: "Build with JavaScript",
+    description: "Strengthen the language and browser skills behind larger solutions.",
+    labs: [
+      { href: "/practice/data-structures", title: "Use data structures", meta: "4 exercises" },
+      { href: "/practice/functions", title: "Practice functions and scope", meta: "4 exercises" },
+      { href: "/practice/dom", title: "Work with the DOM", meta: "4 exercises" },
+    ],
+  },
+  {
+    label: "Solve with intent",
+    description: "Choose a better approach, then bring it into a focused judged set.",
+    labs: [
+      { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
+      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "3 problems" },
+    ],
+  },
+] as const;
+
 export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const progress = await getCodingCatalogProgress(session?.user.id ?? null);
+  const [progress, savedProblems, reviewQueue, labProgress] = await Promise.all([
+    getCodingCatalogProgress(session?.user.id ?? null),
+    session
+      ? getCodingProblemBookmarksForStudent(session.user.id)
+      : Promise.resolve([]),
+    session
+      ? getCodingMistakeReviewQueueForStudent(session.user.id)
+      : Promise.resolve([]),
+    session ? getJavaScriptLabCatalogProgress(session.user.id) : Promise.resolve(null),
+  ]);
   const completedSlugs = new Set(progress.completedSlugs);
+  const reviewSession = buildCodingReviewSession({
+    mistakes: reviewQueue,
+    bookmarks: savedProblems,
+    completedSlugs: progress.completedSlugs,
+  });
   const nextProblemSlug = getNextUnfinishedCodingProblemSlug(
     progress.completedSlugs,
   );
@@ -92,6 +141,22 @@ export default async function PracticePage() {
                   : "Complete all six steps. Accepted results stay attached to your account."
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
+            {session ? (
+              <div className="practice-progress-links">
+                <Link
+                  className="practice-progress-link practice-skill-record-link"
+                  href="/practice/progress"
+                >
+                  View private skill record <span aria-hidden="true">→</span>
+                </Link>
+                <Link
+                  className="practice-progress-link practice-activity-link"
+                  href="/practice/activity"
+                >
+                  View 28-day activity <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            ) : null}
           </aside>
         </section>
 
@@ -102,10 +167,25 @@ export default async function PracticePage() {
               <h2 id="catalog-title">
                 Build from input handling to FizzBuzz.
               </h2>
+              <p className="problem-catalog-helper">
+                Each problem runs in browser-based JavaScript. Signed-in
+                attempts are saved to your account.
+              </p>
             </div>
-            <span aria-label={catalogProgressLabel}>
-              {catalogProgressLabel}
-            </span>
+            <div className="catalog-progress-summary">
+              <span aria-label={catalogProgressLabel}>
+                {catalogProgressLabel}
+              </span>
+              {session ? <p>Saved privately to your account</p> : null}
+              {session ? (
+                <Link
+                  className="catalog-submission-history-link"
+                  href="/submissions"
+                >
+                  Review saved submissions <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
+            </div>
           </div>
 
           <div className="problem-table" role="list">
@@ -142,20 +222,183 @@ export default async function PracticePage() {
 
           {session ? (
             <aside
-              className="practice-playground-entry"
-              aria-label="Continue in the private playground"
+              className="practice-review-entry"
+              aria-labelledby="practice-review-entry-title"
             >
               <div>
-                <p className="eyebrow">Free coding</p>
+                <p className="eyebrow">Private review session</p>
+                <h3 id="practice-review-entry-title">
+                  Revisit up to three saved weak spots.
+                </h3>
                 <p>
-                  Take an idea beyond the fixed checks in one saved JavaScript
-                  file.
+                  Unresolved Wrong Answers come first, then problems you saved
+                  for later. The order updates after your next result.
                 </p>
               </div>
-              <Link className="practice-playground-action" href="/playground">
-                Open the playground <span aria-hidden="true">→</span>
-              </Link>
+              <div className="practice-review-entry-action">
+                <span>
+                  {reviewSession.length}{" "}
+                  {reviewSession.length === 1 ? "problem" : "problems"}
+                </span>
+                <Link href="/practice/review">
+                  {reviewSession.length > 0
+                    ? "Open review session"
+                    : "Check review status"}{" "}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
             </aside>
+          ) : null}
+
+          {session ? (
+            <aside
+              className="mistake-review"
+              aria-labelledby="mistake-review-title"
+            >
+              <div className="mistake-review-heading">
+                <div>
+                  <p className="eyebrow">Private review queue</p>
+                  <h3 id="mistake-review-title">Mistakes to revisit</h3>
+                  <p>
+                    Your latest saved verdict decides what stays here. An
+                    Accepted retry clears the concept.
+                  </p>
+                </div>
+                <span>
+                  {reviewQueue.length}{" "}
+                  {reviewQueue.length === 1 ? "concept" : "concepts"}
+                </span>
+              </div>
+
+              {reviewQueue.length > 0 ? (
+                <ol className="mistake-review-list">
+                  {reviewQueue.map((item) => (
+                    <li key={item.slug}>
+                      <div className="mistake-review-number">
+                        <span>{String(item.number).padStart(2, "0")}</span>
+                        <small>{item.skill}</small>
+                      </div>
+                      <div className="mistake-review-copy">
+                        <strong>{item.concept}</strong>
+                        <p>{item.recoveryHint}</p>
+                        <span>
+                          Latest attempt: {item.passedTests}/{item.totalTests}{" "}
+                          checks
+                        </span>
+                      </div>
+                      <Link href={`/practice/${item.slug}`}>
+                        Review {item.title} <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mistake-review-empty">
+                  No concepts waiting. A saved Wrong Answer adds one here;
+                  an Accepted retry clears it.
+                </p>
+              )}
+            </aside>
+          ) : null}
+
+          {session ? (
+            <aside className="saved-problems" aria-labelledby="saved-problems-title">
+              <div className="saved-problems-heading">
+                <div>
+                  <p className="eyebrow">Private shortlist</p>
+                  <h3 id="saved-problems-title">Saved for later</h3>
+                  <p>Private to your account.</p>
+                </div>
+                <span>{savedProblems.length} saved</span>
+              </div>
+              {savedProblems.length > 0 ? (
+                <ul className="saved-problems-list">
+                  {savedProblems.map((problem) => (
+                    <li key={problem.slug}>
+                      <Link href={`/practice/${problem.slug}`}>
+                        <span>{String(problem.number).padStart(2, "0")}</span>
+                        <span>
+                          <strong>{problem.title}</strong>
+                          <small>{problem.skill}</small>
+                        </span>
+                        <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="saved-problems-empty">
+                  Nothing saved yet. Use Save for later on any problem.
+                </p>
+              )}
+            </aside>
+          ) : null}
+
+          {session ? (
+            <section
+              className="practice-learning-map"
+              aria-labelledby="learning-map-title"
+            >
+              <div className="practice-learning-map-heading">
+                <div>
+                  <p className="eyebrow">Private practice labs</p>
+                  <h2 id="learning-map-title">Choose the skill you need next.</h2>
+                </div>
+                <p>
+                  Short browser-only labs give recovery after a miss. Saved
+                  completion records practice, not judged mastery.
+                </p>
+              </div>
+
+              <Link
+                className="practice-learning-start"
+                href={labProgress?.nextHref ?? "/practice/foundations"}
+              >
+                <span>
+                  <small>
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 30} exercises
+                  </small>
+                  <strong>
+                    {labProgress?.nextLabTitle
+                      ? `Continue ${labProgress.nextLabTitle}, exercise ${labProgress.nextExerciseNumber}.`
+                      : "Review the private JavaScript labs."}
+                  </strong>
+                </span>
+                <span aria-hidden="true">→</span>
+              </Link>
+
+              <div className="practice-learning-groups">
+                {PRACTICE_LAB_GROUPS.map((group) => (
+                  <section className="practice-learning-group" key={group.label}>
+                    <div>
+                      <h3>{group.label}</h3>
+                      <p>{group.description}</p>
+                    </div>
+                    <div className="practice-learning-links">
+                      {group.labs.map((lab) => (
+                        <Link href={lab.href} key={lab.href}>
+                          <span>
+                            <strong>{lab.title}</strong>
+                            <small>{lab.meta}</small>
+                          </span>
+                          <span aria-hidden="true">→</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+
+              <div className="practice-learning-playground">
+                <p>
+                  <strong>Need a blank canvas?</strong> Keep one private JavaScript
+                  file outside the fixed exercises.
+                </p>
+                <Link href="/playground">
+                  Open the playground <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </section>
           ) : null}
         </section>
       </div>
