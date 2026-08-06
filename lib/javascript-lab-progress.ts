@@ -103,6 +103,29 @@ export const JAVASCRIPT_LABS = [
 
 export type JavaScriptLabSlug = (typeof JAVASCRIPT_LABS)[number]["slug"];
 
+export type JavaScriptLabProgressState =
+  | "complete"
+  | "in-progress"
+  | "not-started";
+
+export type JavaScriptLabCatalogProgress = {
+  completedCount: number;
+  totalCount: number;
+  nextLabSlug: JavaScriptLabSlug | null;
+  nextLabTitle: string | null;
+  nextHref: string;
+  nextExerciseNumber: number | null;
+  labs: Array<{
+    slug: JavaScriptLabSlug;
+    title: string;
+    href: string;
+    completedCount: number;
+    totalCount: number;
+    nextExerciseNumber: number | null;
+    state: JavaScriptLabProgressState;
+  }>;
+};
+
 export function getJavaScriptLab(labSlug: string) {
   return JAVASCRIPT_LABS.find((lab) => lab.slug === labSlug) ?? null;
 }
@@ -133,6 +156,55 @@ export function getNextIncompleteExerciseIndex(
   }
 
   return exerciseIds.length;
+}
+
+export function buildJavaScriptLabCatalogProgress(
+  completedExercises: ReadonlyArray<{
+    labSlug: string;
+    exerciseId: string;
+  }>,
+): JavaScriptLabCatalogProgress {
+  const completedKeys = new Set(
+    completedExercises
+      .filter((row) => isJavaScriptLabExercise(row.labSlug, row.exerciseId))
+      .map((row) => `${row.labSlug}:${row.exerciseId}`),
+  );
+  const labs = JAVASCRIPT_LABS.map((lab) => {
+    const completedCount = lab.exerciseIds.filter((exerciseId) =>
+      completedKeys.has(`${lab.slug}:${exerciseId}`),
+    ).length;
+    const nextExerciseIndex = lab.exerciseIds.findIndex(
+      (exerciseId) => !completedKeys.has(`${lab.slug}:${exerciseId}`),
+    );
+
+    return {
+      slug: lab.slug,
+      title: lab.title,
+      href: lab.href,
+      completedCount,
+      totalCount: lab.exerciseIds.length,
+      nextExerciseNumber:
+        nextExerciseIndex === -1 ? null : nextExerciseIndex + 1,
+      state: (
+        completedCount === lab.exerciseIds.length
+          ? "complete"
+          : completedCount > 0
+            ? "in-progress"
+            : "not-started"
+      ) satisfies JavaScriptLabProgressState,
+    };
+  });
+  const nextLab = labs.find((lab) => lab.state !== "complete") ?? null;
+
+  return {
+    completedCount: completedKeys.size,
+    totalCount: labs.reduce((count, lab) => count + lab.totalCount, 0),
+    nextLabSlug: nextLab?.slug ?? null,
+    nextLabTitle: nextLab?.title ?? null,
+    nextHref: nextLab?.href ?? "/practice/foundations",
+    nextExerciseNumber: nextLab?.nextExerciseNumber ?? null,
+    labs,
+  };
 }
 
 export function saveJavaScriptLabExercise(

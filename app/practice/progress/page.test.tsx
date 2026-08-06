@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
     throw new Error(`REDIRECT:${path}`);
   }),
   getRecord: vi.fn(),
+  getLabProgress: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -29,6 +30,9 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/db/coding-skill-record", () => ({
   getCodingSkillRecordForStudent: mocks.getRecord,
 }));
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: mocks.getLabProgress,
+}));
 
 describe("PracticeProgressPage", () => {
   beforeEach(() => {
@@ -36,6 +40,25 @@ describe("PracticeProgressPage", () => {
     mocks.getRecord.mockResolvedValue({
       completedSlugs: [],
       attempts: [],
+    });
+    mocks.getLabProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 50,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 1,
+      labs: [
+        {
+          slug: "foundations",
+          title: "JavaScript foundations",
+          href: "/practice/foundations",
+          completedCount: 0,
+          totalCount: 3,
+          nextExerciseNumber: 1,
+          state: "not-started",
+        },
+      ],
     });
   });
 
@@ -50,6 +73,7 @@ describe("PracticeProgressPage", () => {
       "REDIRECT:/account?mode=signin",
     );
     expect(mocks.getRecord).not.toHaveBeenCalled();
+    expect(mocks.getLabProgress).not.toHaveBeenCalled();
   });
 
   it("loads only the signed-in learner record", async () => {
@@ -60,12 +84,16 @@ describe("PracticeProgressPage", () => {
     render(await PracticeProgressPage());
 
     expect(mocks.getRecord).toHaveBeenCalledWith("learner-1");
+    expect(mocks.getLabProgress).toHaveBeenCalledWith("learner-1");
     expect(
       screen.getByRole("heading", {
         name: "See the skill behind every verdict.",
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Your saved practice record" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start problem 01" })).toHaveAttribute(
       "href",
       "/practice/sum-two-numbers",

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildJavaScriptLabCatalogProgress,
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
   isJavaScriptLabExercise,
@@ -42,5 +43,39 @@ describe("JavaScript lab progress catalog", () => {
     expect(getFirstIncompleteExerciseIndex(ids, ["one"])).toBe(1);
     expect(getNextIncompleteExerciseIndex(ids, ["one", "two"], 0)).toBe(2);
     expect(getFirstIncompleteExerciseIndex(ids, ids)).toBe(3);
+  });
+
+  it("builds one honest private record across every saved lab", () => {
+    const foundations = JAVASCRIPT_LABS[0];
+    const tracing = JAVASCRIPT_LABS[1];
+    const progress = buildJavaScriptLabCatalogProgress([
+      ...foundations.exerciseIds.map((exerciseId) => ({
+        labSlug: foundations.slug,
+        exerciseId,
+      })),
+      { labSlug: tracing.slug, exerciseId: tracing.exerciseIds[0] },
+      { labSlug: "unknown", exerciseId: "borrowed-result" },
+    ]);
+
+    expect(progress.completedCount).toBe(foundations.exerciseIds.length + 1);
+    expect(progress.totalCount).toBe(50);
+    expect(progress.nextLabSlug).toBe("tracing");
+    expect(progress.nextExerciseNumber).toBe(2);
+    expect(progress.labs).toHaveLength(13);
+    expect(progress.labs[0]).toMatchObject({
+      state: "complete",
+      completedCount: foundations.exerciseIds.length,
+      nextExerciseNumber: null,
+    });
+    expect(progress.labs[1]).toMatchObject({
+      state: "in-progress",
+      completedCount: 1,
+      nextExerciseNumber: 2,
+    });
+    expect(progress.labs[2]).toMatchObject({
+      state: "not-started",
+      completedCount: 0,
+      nextExerciseNumber: 1,
+    });
   });
 });
