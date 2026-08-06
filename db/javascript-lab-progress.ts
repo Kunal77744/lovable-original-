@@ -2,6 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import {
   buildJavaScriptLabCatalogProgress,
   getJavaScriptLab,
+  isJavaScriptLabExercise,
   JAVASCRIPT_LABS,
 } from "@/lib/javascript-lab-progress";
 import { getDatabase } from "./index";

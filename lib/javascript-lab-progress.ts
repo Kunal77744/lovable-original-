@@ -176,6 +176,12 @@ export function buildJavaScriptLabCatalogProgress(
     const nextExerciseIndex = lab.exerciseIds.findIndex(
       (exerciseId) => !completedKeys.has(`${lab.slug}:${exerciseId}`),
     );
+    const state: JavaScriptLabProgressState =
+      completedCount === lab.exerciseIds.length
+        ? "complete"
+        : completedCount > 0
+          ? "in-progress"
+          : "not-started";
 
     return {
       slug: lab.slug,
@@ -185,13 +191,7 @@ export function buildJavaScriptLabCatalogProgress(
       totalCount: lab.exerciseIds.length,
       nextExerciseNumber:
         nextExerciseIndex === -1 ? null : nextExerciseIndex + 1,
-      state: (
-        completedCount === lab.exerciseIds.length
-          ? "complete"
-          : completedCount > 0
-            ? "in-progress"
-            : "not-started"
-      ) satisfies JavaScriptLabProgressState,
+      state,
     };
   });
   const nextLab = labs.find((lab) => lab.state !== "complete") ?? null;
