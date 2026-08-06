@@ -4,6 +4,7 @@ import { JAVASCRIPT_DEBUGGING_DRILLS } from "./debugging-lab";
 import { JAVASCRIPT_DOM_EXERCISES } from "./javascript-dom-exercises";
 import { JAVASCRIPT_FOUNDATION_EXERCISES } from "./javascript-foundations";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "./javascript-functions-scope";
+import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "./javascript-linked-lists";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "./javascript-recursion";
 import { JAVASCRIPT_SEARCH_SORT_EXERCISES } from "./javascript-search-sort";
 import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "./javascript-stacks-queues";
@@ -66,6 +67,14 @@ export const JAVASCRIPT_LABS = [
     title: "Stacks and queues",
     href: "/practice/stacks-queues",
     exerciseIds: JAVASCRIPT_STACKS_QUEUES_EXERCISES.map(
+      (exercise) => exercise.slug,
+    ),
+  },
+  {
+    slug: "linked-lists",
+    title: "Linked-list fundamentals",
+    href: "/practice/linked-lists",
+    exerciseIds: JAVASCRIPT_LINKED_LIST_EXERCISES.map(
       (exercise) => exercise.slug,
     ),
   },

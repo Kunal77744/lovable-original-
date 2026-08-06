@@ -46,6 +46,7 @@ const PRACTICE_LAB_GROUPS = [
       { href: "/practice/recursion", title: "Practice recursion", meta: "4 exercises" },
       { href: "/practice/search-sort", title: "Search and sort values", meta: "4 exercises" },
       { href: "/practice/stacks-queues", title: "Use stacks and queues", meta: "4 exercises" },
+      { href: "/practice/linked-lists", title: "Follow linked lists", meta: "4 exercises" },
       { href: "/practice/dom", title: "Work with the DOM", meta: "4 exercises" },
     ],
   },
@@ -359,7 +360,7 @@ export default async function PracticePage() {
               >
                 <span>
                   <small>
-                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 42} exercises
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 46} exercises
                   </small>
                   <strong>
                     {labProgress?.nextLabTitle
