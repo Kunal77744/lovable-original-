@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import {
   MAX_CSS_PATH_FEEDBACK_COMMENT_LENGTH,
   type CssPathFeedbackUsefulness,
@@ -26,6 +26,10 @@ export function CssPathFeedback({ initialFeedback }: CssPathFeedbackProps) {
     initialFeedback?.usefulness ?? "",
   );
   const [comment, setComment] = useState(initialFeedback?.comment ?? "");
+  const latestUsefulness = useRef<CssPathFeedbackUsefulness | "">(
+    initialFeedback?.usefulness ?? "",
+  );
+  const latestComment = useRef(initialFeedback?.comment ?? "");
   const [savedFeedback, setSavedFeedback] = useState(initialFeedback);
   const [message, setMessage] = useState<string | null>(
     initialFeedback
@@ -42,19 +46,24 @@ export function CssPathFeedback({ initialFeedback }: CssPathFeedbackProps) {
     setMessage(null);
     setIsError(false);
 
-    if (!usefulness) {
+    if (!latestUsefulness.current) {
       setIsError(true);
       setMessage("Choose how useful the CSS path felt.");
       return;
     }
 
+    const submittedUsefulness = latestUsefulness.current;
+    const submittedComment = latestComment.current;
     setIsSaving(true);
 
     try {
       const response = await fetch("/api/practice/css/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usefulness, comment }),
+        body: JSON.stringify({
+          usefulness: submittedUsefulness,
+          comment: submittedComment,
+        }),
       });
       const payload = (await response.json()) as {
         feedback?: SavedCssPathFeedback;
@@ -70,11 +79,25 @@ export function CssPathFeedback({ initialFeedback }: CssPathFeedbackProps) {
       }
 
       setSavedFeedback(payload.feedback);
+      captureCssPathFeedbackSubmitted(payload.feedback.usefulness);
+
+      if (
+        latestUsefulness.current !== submittedUsefulness ||
+        latestComment.current !== submittedComment
+      ) {
+        setMessage(
+          "Your earlier response is saved. Newer changes are still unsaved.",
+        );
+        return;
+      }
+
+      latestUsefulness.current = payload.feedback.usefulness;
+      latestComment.current = payload.feedback.comment;
+      setUsefulness(payload.feedback.usefulness);
       setComment(payload.feedback.comment);
       setMessage(
         "Thanks. Your private response is saved, and you can revise it anytime.",
       );
-      captureCssPathFeedbackSubmitted(payload.feedback.usefulness);
     } catch {
       setIsError(true);
       setMessage(
@@ -109,7 +132,10 @@ export function CssPathFeedback({ initialFeedback }: CssPathFeedbackProps) {
                   name="css-path-usefulness"
                   value={choice.value}
                   checked={usefulness === choice.value}
-                  onChange={() => setUsefulness(choice.value)}
+                  onChange={() => {
+                    latestUsefulness.current = choice.value;
+                    setUsefulness(choice.value);
+                  }}
                 />
                 <span>{choice.label}</span>
               </label>
@@ -126,7 +152,10 @@ export function CssPathFeedback({ initialFeedback }: CssPathFeedbackProps) {
             value={comment}
             maxLength={MAX_CSS_PATH_FEEDBACK_COMMENT_LENGTH}
             rows={3}
-            onChange={(event) => setComment(event.target.value)}
+            onChange={(event) => {
+              latestComment.current = event.target.value;
+              setComment(event.target.value);
+            }}
             placeholder="One detail about the challenges, checks, or explanations"
           />
           <span

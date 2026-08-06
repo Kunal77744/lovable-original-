@@ -81,4 +81,86 @@ describe("CssBoxModelWorkspace", () => {
     );
     expect(screen.getByLabelText("4 of 4 checks pass")).toBeInTheDocument();
   });
+
+  it("keeps newer CSS visibly unsaved when an older save finishes", async () => {
+    const submittedCss = `.learning-card {
+      width: 280px;
+      box-sizing: border-box;
+    }`;
+    const newerCss = `${submittedCss}\n.learning-card { padding: 24px; }`;
+    const savedChecks = gradeCssBoxModel(submittedCss);
+    let resolveResponse!: (value: {
+      ok: boolean;
+      json: () => Promise<WorkspaceResponseFixture>;
+    }) => void;
+    type WorkspaceResponseFixture = {
+      html: string;
+      checks: typeof savedChecks;
+      saved: boolean;
+      updatedAt: string;
+      submission: {
+        status: "needs-revision";
+        passedChecks: number;
+        totalChecks: number;
+        submittedAt: string;
+      };
+    };
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise((resolve) => {
+        resolveResponse = resolve;
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+      />,
+    );
+
+    const editor = screen.getByLabelText("Card CSS");
+    fireEvent.change(editor, { target: { value: submittedCss } });
+    fireEvent.click(screen.getByRole("button", { name: "Check and save CSS" }));
+    fireEvent.change(editor, { target: { value: newerCss } });
+
+    expect(screen.getByRole("button", { name: "Saving…" })).toBeDisabled();
+
+    resolveResponse({
+      ok: true,
+      json: async () => ({
+        html: submittedCss,
+        checks: savedChecks,
+        saved: true,
+        updatedAt: "2026-08-06T21:00:00.000Z",
+        submission: {
+          status: "needs-revision",
+          passedChecks: savedChecks.filter((check) => check.passed).length,
+          totalChecks: savedChecks.length,
+          submittedAt: "2026-08-06T21:00:00.000Z",
+        },
+      }),
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Your submitted result is saved. Newer CSS changes are still unsaved.",
+        ),
+      ).toBeInTheDocument(),
+    );
+    expect(editor).toHaveValue(newerCss);
+    expect(screen.getByText("Changes not saved")).toBeInTheDocument();
+    expect(screen.getByText("Previous result")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Check and save again" }),
+    ).toBeEnabled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lessons/css-selectors-box-model/workspace",
+      expect.objectContaining({ body: JSON.stringify({ html: submittedCss }) }),
+    );
+  });
 });

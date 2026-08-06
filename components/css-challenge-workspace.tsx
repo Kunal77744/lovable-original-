@@ -81,6 +81,10 @@ export function CssChallengeWorkspace({
   );
   const [submitting, setSubmitting] = useState(false);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestCss = useRef(initialCss);
+  const draftSaveInFlight = useRef(false);
+  const queuedDraft = useRef<string | null>(null);
+  const submittingRef = useRef(false);
   const previewDocument = useMemo(() => buildCssChallengePreview(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
   const hasSavedAttempt = attempts.length > 0;
@@ -94,6 +98,12 @@ export function CssChallengeWorkspace({
   async function saveDraft(nextCss: string) {
     if (!isSignedIn) return;
 
+    if (draftSaveInFlight.current || submittingRef.current) {
+      queuedDraft.current = nextCss;
+      return;
+    }
+
+    draftSaveInFlight.current = true;
     setSaveState("saving");
     try {
       const response = await fetch(`/api/practice/css/${challenge.slug}`, {
@@ -102,13 +112,30 @@ export function CssChallengeWorkspace({
         body: JSON.stringify({ mode: "draft", css: nextCss }),
       });
 
-      setSaveState(response.ok ? "saved" : "error");
+      if (!response.ok) {
+        if (latestCss.current === nextCss) setSaveState("error");
+        return;
+      }
+
+      if (latestCss.current === nextCss) {
+        setSaveState("saved");
+        setStatus("Draft saved. Submit to refresh the checks.");
+      }
     } catch {
-      setSaveState("error");
+      if (latestCss.current === nextCss) setSaveState("error");
+    } finally {
+      draftSaveInFlight.current = false;
+      const nextDraft = queuedDraft.current;
+      queuedDraft.current = null;
+
+      if (nextDraft !== null && nextDraft !== nextCss) {
+        void saveDraft(nextDraft);
+      }
     }
   }
 
   function updateCss(nextCss: string) {
+    latestCss.current = nextCss;
     setCss(nextCss);
     setSaveState("unsaved");
     setStatus(
@@ -129,6 +156,15 @@ export function CssChallengeWorkspace({
       return;
     }
 
+    if (draftSaveInFlight.current) return;
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    const submittedCss = latestCss.current;
+    submittingRef.current = true;
     setSubmitting(true);
     setStatus("Checking the selectors and box-model rules…");
 
@@ -136,7 +172,7 @@ export function CssChallengeWorkspace({
       const response = await fetch(`/api/practice/css/${challenge.slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "submit", css }),
+        body: JSON.stringify({ mode: "submit", css: submittedCss }),
       });
       const payload = (await response.json()) as AttemptResponse;
 
@@ -151,7 +187,6 @@ export function CssChallengeWorkspace({
       setChecks(payload.checks);
       setBestVerdict(payload.bestVerdict);
       setNextChallengeSlug(payload.nextChallengeSlug);
-      setSaveState("saved");
       setAttempts((current) =>
         [
           {
@@ -164,11 +199,19 @@ export function CssChallengeWorkspace({
           ...current,
         ].slice(0, 8),
       );
-      setStatus(
-        payload.verdict === "Completed"
-          ? `${challenge.title} is complete. Your CSS and result are saved.`
-          : `${payload.passedChecks} of ${payload.totalChecks} checks pass. This attempt is saved with exact feedback below.`,
-      );
+      if (latestCss.current !== submittedCss) {
+        setSaveState("unsaved");
+        setStatus(
+          "Your attempt is saved. Newer CSS changes are still unsaved and unchecked.",
+        );
+      } else {
+        setSaveState("saved");
+        setStatus(
+          payload.verdict === "Completed"
+            ? `${challenge.title} is complete. Your CSS and result are saved.`
+            : `${payload.passedChecks} of ${payload.totalChecks} checks pass. This attempt is saved with exact feedback below.`,
+        );
+      }
 
       if (
         payload.verdict === "Completed" &&
@@ -187,7 +230,14 @@ export function CssChallengeWorkspace({
         "The attempt could not be saved. Check your connection and try again.",
       );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
+
+      const nextDraft = queuedDraft.current;
+      queuedDraft.current = null;
+      if (nextDraft !== null && nextDraft !== submittedCss) {
+        void saveDraft(nextDraft);
+      }
     }
   }
 
@@ -265,7 +315,7 @@ export function CssChallengeWorkspace({
           className="submit-code-action"
           type="button"
           onClick={submitAttempt}
-          disabled={submitting}
+          disabled={submitting || saveState === "saving"}
         >
           {submitting ? "Checking CSS…" : "Check and save attempt"}
         </button>

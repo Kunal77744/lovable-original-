@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -24,6 +25,7 @@ vi.mock("@/lib/product-analytics", () => ({
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   captureCssPracticeCompleted.mockReset();
   captureCssPathFeedbackSubmitted.mockReset();
   vi.restoreAllMocks();
@@ -150,6 +152,151 @@ describe("CssChallengeWorkspace", () => {
       }),
     ).toHaveAttribute("href", "/practice/css/descendant-selector");
     expect(captureCssPracticeCompleted).not.toHaveBeenCalled();
+  });
+
+  it("serializes delayed draft saves and confirms only the latest CSS", async () => {
+    vi.useFakeTimers();
+    const firstCss = ".learning-card { color: #17231e; }";
+    const latestCss = ".learning-card { color: #287652; }";
+    let resolveFirst!: (value: Response) => void;
+    let resolveLatest!: (value: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(
+        new Promise<Response>((resolve) => {
+          resolveFirst = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise<Response>((resolve) => {
+          resolveLatest = resolve;
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution");
+    fireEvent.change(editor, { target: { value: firstCss } });
+    await vi.advanceTimersByTimeAsync(700);
+    fireEvent.change(editor, { target: { value: latestCss } });
+    await vi.advanceTimersByTimeAsync(700);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolveFirst(new Response(JSON.stringify({ savedAt: "first" })));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/api/practice/css/class-selector",
+      expect.objectContaining({
+        body: JSON.stringify({ mode: "draft", css: latestCss }),
+      }),
+    );
+    expect(screen.getByText("Saving…")).toBeInTheDocument();
+
+    await act(async () => {
+      resolveLatest(new Response(JSON.stringify({ savedAt: "latest" })));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByText("Draft saved. Submit to refresh the checks."),
+    ).toBeInTheDocument();
+    expect(editor).toHaveValue(latestCss);
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+
+  it("keeps newer CSS visibly unchecked when an older attempt finishes", async () => {
+    const submittedCss = `.learning-card {
+      background: #ffffff;
+      color: #17231e;
+    }`;
+    const newerCss = `${submittedCss}\n.learning-card { padding: 16px; }`;
+    const checks = gradeCssPracticeChallenge(challenge.slug, submittedCss)!;
+    let resolveAttempt!: (value: Response) => void;
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveAttempt = resolve;
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={submittedCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check and save attempt" }),
+    );
+    fireEvent.change(editor, { target: { value: newerCss } });
+
+    resolveAttempt(
+      new Response(
+        JSON.stringify({
+          id: "attempt-delayed",
+          verdict: "Completed",
+          bestVerdict: "Completed",
+          checks,
+          passedChecks: 3,
+          totalChecks: 3,
+          completedCount: 1,
+          totalCount: 6,
+          nextChallengeSlug: "descendant-selector",
+          createdAt: "2026-08-06T21:00:00.000Z",
+          isFirstCompletedResult: true,
+        }),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Your attempt is saved. Newer CSS changes are still unsaved and unchecked.",
+        ),
+      ).toBeInTheDocument(),
+    );
+    expect(editor).toHaveValue(newerCss);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/practice/css/class-selector",
+      expect.objectContaining({
+        body: JSON.stringify({ mode: "submit", css: submittedCss }),
+      }),
+    );
   });
 
   it("returns a completed review attempt to the refreshed private session", async () => {
