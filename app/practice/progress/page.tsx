@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { CodingSkillRecord } from "@/components/coding-skill-record";
 import { getCodingSkillRecordForStudent } from "@/db/coding-skill-record";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import { buildCodingSkillRecord } from "@/lib/coding-skill-record";
 import { SiteFooter, SiteNav } from "../../site-chrome";
@@ -28,7 +29,10 @@ export default async function PracticeProgressPage() {
     redirect("/account?mode=signin");
   }
 
-  const snapshot = await getCodingSkillRecordForStudent(session.user.id);
+  const [snapshot, labProgress] = await Promise.all([
+    getCodingSkillRecordForStudent(session.user.id),
+    getJavaScriptLabCatalogProgress(session.user.id),
+  ]);
   const record = buildCodingSkillRecord(snapshot);
 
   return (
@@ -40,7 +44,7 @@ export default async function PracticeProgressPage() {
         tabIndex={-1}
         aria-labelledby="skill-record-title"
       >
-        <CodingSkillRecord record={record} />
+        <CodingSkillRecord record={record} labProgress={labProgress} />
       </section>
       <SiteFooter />
     </main>

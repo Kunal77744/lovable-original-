@@ -37,9 +37,38 @@ const record = {
   ],
 };
 
+const labProgress = {
+  completedCount: 5,
+  totalCount: 7,
+  nextLabSlug: "tracing" as const,
+  nextLabTitle: "Code tracing",
+  nextHref: "/practice/tracing",
+  nextExerciseNumber: 3,
+  labs: [
+    {
+      slug: "foundations" as const,
+      title: "JavaScript foundations",
+      href: "/practice/foundations",
+      completedCount: 3,
+      totalCount: 3,
+      nextExerciseNumber: null,
+      state: "complete" as const,
+    },
+    {
+      slug: "tracing" as const,
+      title: "Code tracing",
+      href: "/practice/tracing",
+      completedCount: 2,
+      totalCount: 4,
+      nextExerciseNumber: 3,
+      state: "in-progress" as const,
+    },
+  ],
+};
+
 describe("CodingSkillRecord", () => {
   it("shows private skill evidence and one recommended action", () => {
-    render(<CodingSkillRecord record={record} />);
+    render(<CodingSkillRecord record={record} labProgress={labProgress} />);
 
     expect(
       screen.getByRole("heading", {
@@ -58,5 +87,17 @@ describe("CodingSkillRecord", () => {
       "href",
       "/practice/sum-two-numbers",
     );
+    expect(
+      screen.getByRole("heading", { name: "Your saved practice record" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("5/7")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Review JavaScript foundations" }),
+    ).toHaveAttribute("href", "/practice/foundations");
+    expect(
+      screen.getByRole("link", {
+        name: "Continue Code tracing at exercise 3",
+      }),
+    ).toHaveAttribute("href", "/practice/tracing");
   });
 });

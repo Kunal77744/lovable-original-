@@ -3,10 +3,20 @@ import type {
   CodingSkillRecord as CodingSkillRecordViewModel,
   CodingSkillState,
 } from "@/lib/coding-skill-record";
+import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
 
 const stateLabels: Record<CodingSkillState, string> = {
   accepted: "Accepted",
   retry: "Retry",
+  "not-started": "Not started",
+};
+
+const labStateLabels: Record<
+  JavaScriptLabCatalogProgress["labs"][number]["state"],
+  string
+> = {
+  complete: "Complete",
+  "in-progress": "In progress",
   "not-started": "Not started",
 };
 
@@ -23,8 +33,10 @@ function formatPracticeDate(createdAt: string | null) {
 
 export function CodingSkillRecord({
   record,
+  labProgress,
 }: {
   record: CodingSkillRecordViewModel;
+  labProgress: JavaScriptLabCatalogProgress;
 }) {
   return (
     <div className="skill-record-layout">
@@ -138,6 +150,63 @@ export function CodingSkillRecord({
                   : skill.state === "accepted"
                     ? "Review"
                     : "Start"}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section
+        className="skill-record-labs"
+        aria-labelledby="skill-record-labs-title"
+      >
+        <div className="skill-record-labs-heading">
+          <div>
+            <p className="eyebrow">Thirteen private labs</p>
+            <h2 id="skill-record-labs-title">Your saved practice record</h2>
+          </div>
+          <div className="skill-record-labs-summary">
+            <strong>
+              {labProgress.completedCount}/{labProgress.totalCount}
+            </strong>
+            <span>exercises complete</span>
+          </div>
+          <p>
+            Lab completion records guided practice, not judged mastery. Open
+            any lab to return to its first unfinished exercise.
+          </p>
+        </div>
+
+        <ol className="skill-record-lab-list">
+          {labProgress.labs.map((lab, index) => (
+            <li className={`is-${lab.state}`} key={lab.slug}>
+              <span className="skill-record-lab-number">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="skill-record-lab-name">
+                <h3>{lab.title}</h3>
+                <span>
+                  {lab.completedCount}/{lab.totalCount} exercises
+                </span>
+              </div>
+              <div className="skill-record-lab-state">
+                <strong>{labStateLabels[lab.state]}</strong>
+                <span>
+                  {lab.nextExerciseNumber
+                    ? `Next: exercise ${lab.nextExerciseNumber}`
+                    : "All exercises saved"}
+                </span>
+              </div>
+              <Link
+                href={lab.href}
+                aria-label={
+                  lab.state === "complete"
+                    ? `Review ${lab.title}`
+                    : `Continue ${lab.title} at exercise ${lab.nextExerciseNumber}`
+                }
+              >
+                {lab.state === "complete" ? "Review" : "Continue"}
                 <span aria-hidden="true">→</span>
               </Link>
             </li>
