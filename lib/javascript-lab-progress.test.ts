@@ -7,19 +7,22 @@ import {
 } from "./javascript-lab-progress";
 
 describe("JavaScript lab progress catalog", () => {
-  it("defines 34 unique exercises across nine private labs", () => {
+  it("defines 38 unique exercises across ten private labs", () => {
     const keys = JAVASCRIPT_LABS.flatMap((lab) =>
       lab.exerciseIds.map((exerciseId) => `${lab.slug}:${exerciseId}`),
     );
-    expect(JAVASCRIPT_LABS).toHaveLength(9);
-    expect(keys).toHaveLength(34);
-    expect(new Set(keys)).toHaveLength(34);
+    expect(JAVASCRIPT_LABS).toHaveLength(10);
+    expect(keys).toHaveLength(38);
+    expect(new Set(keys)).toHaveLength(38);
   });
 
   it("rejects unknown lab and exercise combinations", () => {
     expect(isJavaScriptLabExercise("tracing", "assignment-order")).toBe(true);
     expect(isJavaScriptLabExercise("tracing", "parse-input")).toBe(false);
     expect(isJavaScriptLabExercise("recursion", "stop-at-the-base-case")).toBe(
+      true,
+    );
+    expect(isJavaScriptLabExercise("search-sort", "scan-for-first-match")).toBe(
       true,
     );
     expect(isJavaScriptLabExercise("unknown", "assignment-order")).toBe(false);
