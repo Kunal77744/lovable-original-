@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ProjectFeedback } from "@/components/project-feedback";
 import {
   getEmptyGuidedProjectChecks,
@@ -23,6 +23,7 @@ export function GuidedProjectWorkspace({
   initialFeedback,
 }: GuidedProjectWorkspaceProps) {
   const [html, setHtml] = useState(initialProject.html);
+  const htmlRef = useRef(initialProject.html);
   const [project, setProject] = useState(initialProject);
   const [requestState, setRequestState] = useState<
     "idle" | "saving" | "submitting" | "error"
@@ -54,6 +55,8 @@ export function GuidedProjectWorkspace({
     project.submission?.status === "completed" && !hasUnreviewedChanges;
 
   async function persist(action: "save" | "submit") {
+    const submittedHtml = htmlRef.current;
+
     setRequestState(action === "save" ? "saving" : "submitting");
     setMessage(
       action === "save"
@@ -65,7 +68,7 @@ export function GuidedProjectWorkspace({
       const response = await fetch(`/api/projects/${projectSlug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, html }),
+        body: JSON.stringify({ action, html: submittedHtml }),
       });
       const payload = (await response.json()) as GuidedProjectRecord & {
         error?: string;
@@ -84,7 +87,11 @@ export function GuidedProjectWorkspace({
       setRequestState("idle");
 
       if (action === "save") {
-        setMessage("Saved privately to your account.");
+        setMessage(
+          htmlRef.current === submittedHtml
+            ? "Saved privately to your account."
+            : "Your saved draft is safe. Newer changes are still unsaved.",
+        );
         return;
       }
 
@@ -97,6 +104,13 @@ export function GuidedProjectWorkspace({
           projectSlug,
           passedCheckCount: payload.submission.passedChecks,
         });
+      }
+
+      if (htmlRef.current !== submittedHtml) {
+        setMessage(
+          "Your submitted review is saved. Newer changes are still unsaved and unreviewed.",
+        );
+        return;
       }
 
       setMessage(
@@ -168,8 +182,11 @@ export function GuidedProjectWorkspace({
             id="guided-project-editor"
             value={html}
             onChange={(event) => {
-              setHtml(event.target.value);
-              setRequestState("idle");
+              htmlRef.current = event.target.value;
+              setHtml(htmlRef.current);
+              setRequestState((current) =>
+                current === "error" ? "idle" : current,
+              );
               setMessage("You have unsaved changes.");
             }}
             spellCheck={false}
