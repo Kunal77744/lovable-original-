@@ -4,6 +4,7 @@ import { JAVASCRIPT_DEBUGGING_DRILLS } from "./debugging-lab";
 import { JAVASCRIPT_DOM_EXERCISES } from "./javascript-dom-exercises";
 import { JAVASCRIPT_FOUNDATION_EXERCISES } from "./javascript-foundations";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "./javascript-functions-scope";
+import { JAVASCRIPT_RECURSION_EXERCISES } from "./javascript-recursion";
 import { JAVASCRIPT_TEST_DESIGN_EXERCISES } from "./javascript-test-design";
 import { JAVASCRIPT_TRACE_EXERCISES } from "./javascript-tracing";
 
@@ -43,6 +44,12 @@ export const JAVASCRIPT_LABS = [
     title: "Functions and scope",
     href: "/practice/functions",
     exerciseIds: JAVASCRIPT_FUNCTION_EXERCISES.map((exercise) => exercise.slug),
+  },
+  {
+    slug: "recursion",
+    title: "Recursion fundamentals",
+    href: "/practice/recursion",
+    exerciseIds: JAVASCRIPT_RECURSION_EXERCISES.map((exercise) => exercise.slug),
   },
   {
     slug: "dom",
