@@ -19555,3 +19555,403 @@ footer {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
+.judge-basics-shell {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 34px 0 76px;
+}
+
+.judge-basics-hero {
+  margin-top: 34px;
+  padding: 56px 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.68fr);
+  align-items: end;
+  gap: 70px;
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 24px 24px 7px 24px;
+  background:
+    radial-gradient(circle at 84% 17%, rgba(102, 220, 157, 0.24), transparent 25%),
+    linear-gradient(135deg, #fbfcf7 0%, #eef4ea 100%);
+  box-shadow: 0 28px 72px rgba(23, 35, 30, 0.08);
+}
+
+.judge-basics-hero h1 {
+  max-width: 700px;
+  margin: 10px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(46px, 6vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.judge-basics-hero > p {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.judge-trace {
+  margin-top: 22px;
+  padding: 50px 54px 54px;
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 7px 22px 22px 22px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.judge-trace-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.judge-trace-heading h2,
+.judge-checkpoint h2 {
+  margin: 8px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(34px, 4.5vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+.judge-trace-steps {
+  margin: 34px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
+}
+
+.judge-trace-steps li {
+  position: relative;
+  min-width: 0;
+  padding: 21px 19px;
+  display: grid;
+  gap: 8px;
+  border-block: 1px solid rgba(23, 35, 30, 0.13);
+  border-left: 1px solid rgba(23, 35, 30, 0.13);
+  background: #f6f7f2;
+}
+
+.judge-trace-steps li:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.judge-trace-steps li:last-child {
+  border-right: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 0 12px 12px 0;
+  background: #eaf3e8;
+}
+
+.judge-trace-steps li:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  z-index: 1;
+  right: -10px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 50%;
+  background: white;
+  color: var(--accent-deep);
+  font-size: 11px;
+  transform: translateY(-50%);
+}
+
+.judge-trace-steps span,
+.judge-rules article > span,
+.judge-answer-feedback > span {
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.judge-trace-steps small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.judge-trace-steps code {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: clamp(14px, 1.7vw, 18px);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.judge-code-card {
+  margin-top: 22px;
+  overflow: hidden;
+  border-radius: 14px 14px 5px 14px;
+  background: #17231e;
+  box-shadow: 0 20px 40px rgba(23, 35, 30, 0.16);
+}
+
+.judge-code-bar {
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  color: #a9b9b0;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.judge-code-card pre,
+.judge-checkpoint-copy pre {
+  margin: 0;
+  overflow-x: auto;
+}
+
+.judge-code-card pre {
+  padding: 27px 30px 31px;
+  color: #eff8f0;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.judge-rules {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.judge-rules article {
+  padding: 21px;
+  border: 1px solid rgba(23, 35, 30, 0.11);
+  border-radius: 12px 12px 4px 12px;
+  background: rgba(246, 247, 242, 0.65);
+}
+
+.judge-rules h3 {
+  margin: 10px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.judge-rules p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.judge-checkpoint {
+  margin-top: 22px;
+  padding: 50px 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.78fr);
+  gap: 52px;
+  border-radius: 22px 7px 22px 22px;
+  background: #17231e;
+  color: #f4f7f0;
+  box-shadow: 0 28px 64px rgba(23, 35, 30, 0.16);
+}
+
+.judge-checkpoint-copy > p:not(.eyebrow) {
+  max-width: 55ch;
+  margin: 18px 0 0;
+  color: #b9c5be;
+  line-height: 1.65;
+}
+
+.judge-checkpoint-copy pre {
+  margin-top: 25px;
+  padding: 23px 25px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px 12px 4px 12px;
+  background: #0e1813;
+  color: #dff5e5;
+  font-size: 13px;
+  line-height: 1.72;
+}
+
+.judge-answer-panel {
+  align-self: stretch;
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 14px 14px 5px 14px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.judge-answer-panel fieldset {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  border: 0;
+}
+
+.judge-answer-panel legend {
+  margin-bottom: 14px;
+  color: #c1cec7;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.judge-answer-panel label {
+  min-height: 51px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px 9px 3px 9px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.judge-answer-panel label:has(input:checked) {
+  border-color: #66dc9d;
+  background: rgba(102, 220, 157, 0.11);
+}
+
+.judge-answer-panel input {
+  accent-color: #66dc9d;
+}
+
+.judge-answer-panel label span {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.judge-check-button {
+  width: 100%;
+  margin-top: 18px;
+  border: 0;
+  cursor: pointer;
+}
+
+.judge-check-button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.judge-answer-status {
+  margin-top: 18px;
+}
+
+.judge-answer-feedback {
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.judge-answer-feedback strong,
+.judge-answer-feedback h3 {
+  display: block;
+  margin: 0;
+  color: white;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.judge-answer-feedback h3 {
+  margin-top: 8px;
+}
+
+.judge-answer-feedback p {
+  margin: 10px 0 0;
+  color: #bac7c0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.judge-answer-feedback .primary-action {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.judge-privacy-note {
+  margin: 18px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+@media (max-width: 820px) {
+  .judge-basics-hero,
+  .judge-checkpoint {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .judge-basics-hero,
+  .judge-trace,
+  .judge-checkpoint {
+    padding: 36px 30px;
+  }
+
+  .judge-trace-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .judge-trace-steps li,
+  .judge-trace-steps li:first-child,
+  .judge-trace-steps li:last-child {
+    border: 1px solid rgba(23, 35, 30, 0.13);
+    border-radius: 8px;
+  }
+
+  .judge-trace-steps li::after {
+    display: none !important;
+  }
+
+  .judge-rules {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .judge-basics-shell {
+    width: min(100% - 24px, 1120px);
+    padding-bottom: 48px;
+  }
+
+  .judge-basics-hero {
+    margin-top: 22px;
+  }
+
+  .judge-basics-hero,
+  .judge-trace,
+  .judge-checkpoint {
+    padding: 29px 22px;
+  }
+
+  .judge-trace-steps {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .judge-code-card pre,
+  .judge-checkpoint-copy pre {
+    padding: 20px;
+    font-size: 11px;
+  }
+
+  .judge-answer-panel {
+    padding: 20px;
+  }
+}

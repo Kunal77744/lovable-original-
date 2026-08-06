@@ -92,6 +92,28 @@ describe("SemanticHtmlProjectPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("teaches a fresh learner how judging works after project completion", async () => {
+    getProject.mockResolvedValue({
+      html: "<header></header><main><article></article></main><footer></footer>",
+      saved: true,
+      updatedAt: "2026-08-06T08:00:00.000Z",
+      hasUnreviewedChanges: false,
+      submission: {
+        status: "completed",
+        checks: [],
+        passedChecks: 6,
+        totalChecks: 6,
+        submittedAt: "2026-08-06T08:00:00.000Z",
+      },
+    });
+
+    render(await SemanticHtmlProjectPage());
+
+    expect(
+      screen.getByRole("link", { name: "Learn how JavaScript judging works" }),
+    ).toHaveAttribute("href", "/practice/judge-basics");
+  });
+
   it("names the exact unfinished JavaScript step after project completion", async () => {
     getPracticeProgress.mockResolvedValue({
       completedCount: 2,

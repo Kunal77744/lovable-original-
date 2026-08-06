@@ -59,7 +59,12 @@ export default async function SemanticHtmlProjectPage() {
   const nextProblem = nextProblemSlug
     ? getCodingProblem(nextProblemSlug)
     : null;
-  const practiceContinuation = nextProblem
+  const practiceContinuation = practiceProgress.completedCount === 0
+    ? {
+        href: "/practice/judge-basics",
+        label: "Learn how JavaScript judging works",
+      }
+    : nextProblem
     ? {
         href: `/practice/${nextProblem.slug}`,
         label: `Continue to JavaScript step ${String(nextProblem.number).padStart(2, "0")}: ${nextProblem.title}`,

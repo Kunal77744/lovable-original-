@@ -69,8 +69,8 @@ describe("PracticePage progress", () => {
 
     expect(screen.getByText("Accepted 0 of 6")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Continue at step 1 of 6" }),
-    ).toHaveAttribute("href", "/practice/sum-two-numbers");
+      screen.getByRole("link", { name: "Learn how the judge works" }),
+    ).toHaveAttribute("href", "/practice/judge-basics");
     expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
       "Accepted 0 of 6",
     );
