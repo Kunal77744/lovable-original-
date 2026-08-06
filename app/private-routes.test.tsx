@@ -12,6 +12,7 @@ import { metadata as functionsMetadata } from "./practice/functions/page";
 import { metadata as progressMetadata } from "./practice/progress/page";
 import { metadata as recursionMetadata } from "./practice/recursion/page";
 import { metadata as searchSortMetadata } from "./practice/search-sort/page";
+import { metadata as stacksQueuesMetadata } from "./practice/stacks-queues/page";
 import { metadata as testDesignMetadata } from "./practice/test-design/page";
 import { metadata as tracingMetadata } from "./practice/tracing/page";
 import { metadata as settingsMetadata } from "./settings/page";
@@ -68,6 +69,7 @@ describe("private learner routes", () => {
       progressMetadata,
       recursionMetadata,
       searchSortMetadata,
+      stacksQueuesMetadata,
     ];
 
     for (const metadata of privatePracticeMetadata) {
@@ -104,6 +106,7 @@ describe("private learner routes", () => {
       "progress",
       "recursion",
       "search-sort",
+      "stacks-queues",
     ];
 
     for (const path of privatePracticePaths) {

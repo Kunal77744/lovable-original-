@@ -43,7 +43,7 @@ describe("PracticePage progress", () => {
     getReviewQueue.mockResolvedValue([]);
     getLabProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 38,
+      totalCount: 42,
       nextLabSlug: "foundations",
       nextLabTitle: "JavaScript foundations",
       nextHref: "/practice/foundations",
@@ -155,6 +155,7 @@ describe("PracticePage progress", () => {
       [/Practice functions and scope/, "/practice/functions"],
       [/Practice recursion/, "/practice/recursion"],
       [/Search and sort values/, "/practice/search-sort"],
+      [/Use stacks and queues/, "/practice/stacks-queues"],
       [/Work with the DOM/, "/practice/dom"],
       [/Compare efficiency/, "/practice/efficiency"],
       [/Take the 30-minute challenge/, "/practice/challenge"],

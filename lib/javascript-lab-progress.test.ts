@@ -7,13 +7,13 @@ import {
 } from "./javascript-lab-progress";
 
 describe("JavaScript lab progress catalog", () => {
-  it("defines 38 unique exercises across ten private labs", () => {
+  it("defines 42 unique exercises across eleven private labs", () => {
     const keys = JAVASCRIPT_LABS.flatMap((lab) =>
       lab.exerciseIds.map((exerciseId) => `${lab.slug}:${exerciseId}`),
     );
-    expect(JAVASCRIPT_LABS).toHaveLength(10);
-    expect(keys).toHaveLength(38);
-    expect(new Set(keys)).toHaveLength(38);
+    expect(JAVASCRIPT_LABS).toHaveLength(11);
+    expect(keys).toHaveLength(42);
+    expect(new Set(keys)).toHaveLength(42);
   });
 
   it("rejects unknown lab and exercise combinations", () => {
@@ -23,6 +23,9 @@ describe("JavaScript lab progress catalog", () => {
       true,
     );
     expect(isJavaScriptLabExercise("search-sort", "scan-for-first-match")).toBe(
+      true,
+    );
+    expect(isJavaScriptLabExercise("stacks-queues", "remove-the-newest-item")).toBe(
       true,
     );
     expect(isJavaScriptLabExercise("unknown", "assignment-order")).toBe(false);
