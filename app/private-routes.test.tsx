@@ -9,6 +9,7 @@ import { metadata as domLabMetadata } from "./practice/dom/page";
 import { metadata as efficiencyMetadata } from "./practice/efficiency/page";
 import { metadata as foundationsMetadata } from "./practice/foundations/page";
 import { metadata as functionsMetadata } from "./practice/functions/page";
+import { metadata as linkedListsMetadata } from "./practice/linked-lists/page";
 import { metadata as progressMetadata } from "./practice/progress/page";
 import { metadata as recursionMetadata } from "./practice/recursion/page";
 import { metadata as searchSortMetadata } from "./practice/search-sort/page";
@@ -70,6 +71,7 @@ describe("private learner routes", () => {
       recursionMetadata,
       searchSortMetadata,
       stacksQueuesMetadata,
+      linkedListsMetadata,
     ];
 
     for (const metadata of privatePracticeMetadata) {
@@ -107,6 +109,7 @@ describe("private learner routes", () => {
       "recursion",
       "search-sort",
       "stacks-queues",
+      "linked-lists",
     ];
 
     for (const path of privatePracticePaths) {
