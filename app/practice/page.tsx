@@ -91,10 +91,16 @@ export default async function PracticePage() {
     ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
     : `${progress.totalCount} problems`;
   const primaryActionLabel = session
-    ? nextProblemSlug
+    ? progress.completedCount === 0
+      ? "Learn how the judge works"
+      : nextProblemSlug
       ? `Continue at step ${primaryProblem.number} of ${progress.totalCount}`
       : "Review the six-step path"
     : `Start step 1 of ${progress.totalCount}`;
+  const primaryActionHref =
+    session && progress.completedCount === 0
+      ? "/practice/judge-basics"
+      : `/practice/${primaryProblem.slug}`;
 
   return (
     <main>
@@ -111,7 +117,7 @@ export default async function PracticePage() {
             </p>
             <Link
               className="primary-action"
-              href={`/practice/${primaryProblem.slug}`}
+              href={primaryActionHref}
             >
               {primaryActionLabel} <span aria-hidden="true">→</span>
             </Link>
