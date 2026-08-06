@@ -48,6 +48,7 @@ describe("PracticePage progress", () => {
       nextLabTitle: "JavaScript foundations",
       nextHref: "/practice/foundations",
       nextExerciseNumber: 1,
+      labs: [],
     });
   });
 
