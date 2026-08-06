@@ -16,6 +16,10 @@ describe("public product promise", () => {
     render(<Home />);
 
     expect(
+      screen.getByRole("heading", { name: /learn coding by doing/i }),
+    ).toBeInTheDocument();
+
+    expect(
       screen.getByRole("link", {
         name: /start web development foundations/i,
       }),
@@ -24,14 +28,20 @@ describe("public product promise", () => {
       "/learn/web-development-foundations/semantic-html",
     );
     expect(
-      screen.getByText(/private field guide, revise it against six clear checks/i),
+      screen.getByText(/take a short lesson, build and check real work/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/six ordered JavaScript problems/i),
+      screen.getByText("Path preview · step 1 of 3"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/build and check a guided project/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/six browser-run JavaScript problems/i),
     ).toBeInTheDocument();
   });
 
-  it("lists the guided project as live on About", () => {
+  it("frames the live lesson, project, and practice as one path on About", () => {
     render(<AboutPage />);
 
     expect(
@@ -43,13 +53,16 @@ describe("public product promise", () => {
       "/learn/web-development-foundations/semantic-html",
     );
     expect(
-      screen.getByText(/the first focused course is live now/i),
+      screen.getByText(/the first learner path is live now/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/one complete 18-minute semantic HTML lesson/i),
+      screen.getByText(/take a short lesson, build and check real work/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/lesson-bound semantic HTML tutor/i),
+      screen.getByText(/read one complete 18-minute semantic HTML lesson/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/a lesson-bound semantic HTML tutor/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/private course certificate/i)).toBeInTheDocument();
     expect(screen.getByText(/private learner profile/i)).toBeInTheDocument();
@@ -60,14 +73,11 @@ describe("public product promise", () => {
       screen.getByText(/private saved JavaScript playground/i),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByText(/six beginner JavaScript problems/i),
-    ).not.toHaveLength(0);
+      screen.getAllByText(/six browser-run JavaScript problems/i),
+    ).toHaveLength(2);
     expect(
-      screen.getByText(/private semantic HTML field-guide project/i),
+      screen.getByText(/private semantic HTML field guide/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/saved drafts/i)).toHaveTextContent(
-      /six-check review/i,
-    );
     expect(
       screen.queryByText(/planned next|not live yet/i),
     ).not.toBeInTheDocument();
@@ -81,8 +91,8 @@ describe("public product promise", () => {
       socialImageAlt,
     });
 
-    expect(publicMetadata).toContain("Web Development Foundations");
-    expect(publicMetadata).toContain("Build and save a semantic HTML page");
+    expect(publicMetadata).toContain("Learn coding by doing");
+    expect(publicMetadata).toContain("18-minute semantic HTML lesson");
     expect(publicMetadata).not.toMatch(
       /real projects|interview practice|flashcards|certificates|AI tutor/i,
     );
@@ -106,7 +116,7 @@ describe("public product promise", () => {
     expect(rootMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
         alt:
-          "Lovable Original Web Development Foundations: learn semantic HTML, build and save a page, and check your recall.",
+          "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and six JavaScript problems.",
       }),
     ]);
   });
