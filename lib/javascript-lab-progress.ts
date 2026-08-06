@@ -6,6 +6,7 @@ import { JAVASCRIPT_FOUNDATION_EXERCISES } from "./javascript-foundations";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "./javascript-functions-scope";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "./javascript-recursion";
 import { JAVASCRIPT_SEARCH_SORT_EXERCISES } from "./javascript-search-sort";
+import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "./javascript-stacks-queues";
 import { JAVASCRIPT_TEST_DESIGN_EXERCISES } from "./javascript-test-design";
 import { JAVASCRIPT_TRACE_EXERCISES } from "./javascript-tracing";
 
@@ -57,6 +58,14 @@ export const JAVASCRIPT_LABS = [
     title: "Searching and sorting",
     href: "/practice/search-sort",
     exerciseIds: JAVASCRIPT_SEARCH_SORT_EXERCISES.map(
+      (exercise) => exercise.slug,
+    ),
+  },
+  {
+    slug: "stacks-queues",
+    title: "Stacks and queues",
+    href: "/practice/stacks-queues",
+    exerciseIds: JAVASCRIPT_STACKS_QUEUES_EXERCISES.map(
       (exercise) => exercise.slug,
     ),
   },
