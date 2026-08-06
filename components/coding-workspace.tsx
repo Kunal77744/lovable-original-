@@ -106,6 +106,53 @@ type RunState =
   | { kind: "timeout"; message: string }
   | { kind: "error"; message: string; debugOutput?: string[] };
 
+type RunnerRecovery = {
+  label: string;
+  guidance: string;
+};
+
+function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
+  if (runState.kind === "timeout") {
+    return {
+      label: "Check the stopping condition",
+      guidance:
+        "Try the smallest input first. Make sure every loop changes the value that eventually stops it.",
+    };
+  }
+
+  if (runState.kind !== "error") return null;
+
+  if (/function named solve|solve\(input\)/i.test(runState.message)) {
+    return {
+      label: "Check the required function",
+      guidance:
+        "Keep solve(input) at the top level and return the final answer from it. Then run the example again.",
+    };
+  }
+
+  if (/unexpected token|unexpected end|unterminated|missing[ )\]}]/i.test(runState.message)) {
+    return {
+      label: "Check the syntax",
+      guidance:
+        "Inspect the line before the reported token for an unmatched quote, bracket, parenthesis, or comma.",
+    };
+  }
+
+  if (/not defined|cannot access|cannot read|is not a function/i.test(runState.message)) {
+    return {
+      label: "Trace the first missing value",
+      guidance:
+        "Find the first named value in the message, then check where it should be created before it is used.",
+    };
+  }
+
+  return {
+    label: "Reduce the failing step",
+    guidance:
+      "Run the example again after checking one operation at a time, starting where the message first points.",
+  };
+}
+
 export function CodingWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
@@ -170,6 +217,7 @@ export function CodingWorkspace({
     isSignedIn && acceptedCode
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
+  const runnerRecovery = getRunnerRecovery(runState);
 
   useEffect(() => {
     return () => {
@@ -935,6 +983,12 @@ export function CodingWorkspace({
           <div className="debug-output">
             <span>Debug console · local only</span>
             <pre>{visibleDebugOutput.join("\n")}</pre>
+          </div>
+        ) : null}
+        {runnerRecovery ? (
+          <div className="runner-recovery">
+            <span>{runnerRecovery.label}</span>
+            <p>{runnerRecovery.guidance}</p>
           </div>
         ) : null}
         {runState.kind === "verdict" && runState.verdict === "Accepted" ? (

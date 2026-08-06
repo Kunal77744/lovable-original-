@@ -8480,12 +8480,14 @@ h1 {
 }
 
 .coding-result.is-wrong,
-.coding-result.is-error {
+.coding-result.is-error,
+.coding-result.is-timeout {
   border-color: #85504b;
 }
 
 .coding-result.is-wrong > div:first-child span,
-.coding-result.is-error > div:first-child span {
+.coding-result.is-error > div:first-child span,
+.coding-result.is-timeout > div:first-child span {
   color: #efaaa2;
 }
 
@@ -8512,6 +8514,29 @@ h1 {
   max-width: 64ch;
   margin: 0;
   color: #d5dfd9;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.runner-recovery {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(239, 170, 162, 0.22);
+}
+
+.runner-recovery > span {
+  display: block;
+  color: #efaaa2;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.coding-result .runner-recovery > p {
+  max-width: 58ch;
+  margin: 7px 0 0;
+  color: #c3cec8;
   font-size: 12px;
   line-height: 1.55;
 }
