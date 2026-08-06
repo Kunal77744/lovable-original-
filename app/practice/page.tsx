@@ -43,6 +43,7 @@ const PRACTICE_LAB_GROUPS = [
     labs: [
       { href: "/practice/data-structures", title: "Use data structures", meta: "4 exercises" },
       { href: "/practice/functions", title: "Practice functions and scope", meta: "4 exercises" },
+      { href: "/practice/recursion", title: "Practice recursion", meta: "4 exercises" },
       { href: "/practice/dom", title: "Work with the DOM", meta: "4 exercises" },
     ],
   },
@@ -356,7 +357,7 @@ export default async function PracticePage() {
               >
                 <span>
                   <small>
-                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 30} exercises
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 34} exercises
                   </small>
                   <strong>
                     {labProgress?.nextLabTitle
