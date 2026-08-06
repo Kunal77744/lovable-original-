@@ -55,6 +55,7 @@ const PRACTICE_LAB_GROUPS = [
     description: "Choose a better approach, then bring it into a focused judged set.",
     labs: [
       { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
+      { href: "/practice/algorithm-patterns", title: "Implement algorithm patterns", meta: "4 exercises" },
       { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "3 problems" },
     ],
   },
@@ -366,7 +367,7 @@ export default async function PracticePage() {
               >
                 <span>
                   <small>
-                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 46} exercises
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 50} exercises
                   </small>
                   <strong>
                     {labProgress?.nextLabTitle

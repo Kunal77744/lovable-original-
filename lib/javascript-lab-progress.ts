@@ -1,4 +1,5 @@
 import { ALGORITHM_EFFICIENCY_EXERCISES } from "./javascript-algorithm-efficiency";
+import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "./javascript-algorithm-patterns";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "./javascript-data-structures";
 import { JAVASCRIPT_DEBUGGING_DRILLS } from "./debugging-lab";
 import { JAVASCRIPT_DOM_EXERCISES } from "./javascript-dom-exercises";
@@ -89,6 +90,14 @@ export const JAVASCRIPT_LABS = [
     title: "Algorithm efficiency",
     href: "/practice/efficiency",
     exerciseIds: ALGORITHM_EFFICIENCY_EXERCISES.map((exercise) => exercise.id),
+  },
+  {
+    slug: "algorithm-patterns",
+    title: "Algorithm patterns",
+    href: "/practice/algorithm-patterns",
+    exerciseIds: JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES.map(
+      (exercise) => exercise.slug,
+    ),
   },
 ] as const;
 
