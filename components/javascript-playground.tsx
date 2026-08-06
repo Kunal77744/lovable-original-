@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   type PlaygroundCheckResult,
   runPlaygroundChecks,
@@ -36,9 +36,12 @@ export function JavaScriptPlayground({
   initialUpdatedAt,
 }: JavaScriptPlaygroundProps) {
   const [code, setCode] = useState(initialCode);
+  const latestCode = useRef(initialCode);
+  const saveRequestPending = useRef(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(initialUpdatedAt ? "saved" : "unsaved");
+  const [isSaving, setIsSaving] = useState(false);
   const [runState, setRunState] = useState<RunState>({
     kind: "ready",
     output: [],
@@ -79,23 +82,40 @@ export function JavaScriptPlayground({
   }
 
   async function saveFile() {
+    if (saveRequestPending.current) return;
+
+    const submittedCode = latestCode.current;
+    saveRequestPending.current = true;
+    setIsSaving(true);
     setSaveState("saving");
 
     try {
       const response = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, quickChecks: checkSource }),
+        body: JSON.stringify({
+          code: submittedCode,
+          quickChecks: checkSource,
+        }),
       });
 
       if (!response.ok) {
-        setSaveState("error");
+        setSaveState(
+          latestCode.current === submittedCode ? "error" : "unsaved",
+        );
         return;
       }
 
-      setSaveState("saved");
+      setSaveState(
+        latestCode.current === submittedCode ? "saved" : "unsaved",
+      );
     } catch {
-      setSaveState("error");
+      setSaveState(
+        latestCode.current === submittedCode ? "error" : "unsaved",
+      );
+    } finally {
+      saveRequestPending.current = false;
+      setIsSaving(false);
     }
   }
 
@@ -132,6 +152,7 @@ export function JavaScriptPlayground({
   }
 
   function updateCode(nextCode: string) {
+    latestCode.current = nextCode;
     setCode(nextCode);
     setSaveState("unsaved");
   }
@@ -210,9 +231,9 @@ export function JavaScriptPlayground({
           className="playground-save"
           type="button"
           onClick={saveFile}
-          disabled={saveState === "saving" || code.length === 0}
+          disabled={isSaving || code.length === 0}
         >
-          {saveState === "saving" ? "Saving file…" : "Save file"}
+          {isSaving ? "Saving file…" : "Save file"}
         </button>
       </div>
 

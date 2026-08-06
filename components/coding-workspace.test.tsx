@@ -316,6 +316,107 @@ describe("CodingWorkspace", () => {
     );
   });
 
+  it("saves the exact latest draft when the editor loses focus", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ savedAt: "now" })));
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const latestCode = "function solve(input) { return input.trim(); }";
+
+    fireEvent.change(editor, { target: { value: latestCode } });
+    fireEvent.blur(editor);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/practice/sum-two-numbers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: latestCode }),
+      }),
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("queues the exact pending draft when the learner leaves immediately", async () => {
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const latestCode = "function solve(input) { return input.toUpperCase(); }";
+
+    try {
+      renderWorkspace();
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "JavaScript solution" }),
+        { target: { value: latestCode } },
+      );
+      fireEvent(window, new Event("pagehide"));
+
+      expect(sendBeacon).toHaveBeenCalledTimes(1);
+      const [url, body] = sendBeacon.mock.calls[0];
+      expect(url).toBe("/api/practice/sum-two-numbers");
+      expect(body).toBeInstanceOf(Blob);
+      expect((body as Blob).type).toBe("application/json");
+      const payload = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error);
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(body as Blob);
+      });
+      expect(JSON.parse(payload)).toEqual({ mode: "draft", code: latestCode });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
+  });
+
+  it("keeps a signed-out draft local when the learner leaves", () => {
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    try {
+      renderWorkspace({ isSignedIn: false });
+      const editor = screen.getByRole("textbox", {
+        name: "JavaScript solution",
+      });
+      fireEvent.change(editor, {
+        target: { value: "function solve(input) { return input.trim(); }" },
+      });
+      fireEvent.blur(editor);
+      fireEvent(window, new Event("pagehide"));
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(screen.getByText("Local only")).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
+  });
+
   it("runs editable custom input without saving an attempt", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",

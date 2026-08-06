@@ -242,6 +242,72 @@ describe("JavaScriptPlayground", () => {
     expect(saveStatus).toHaveTextContent("Saved to your account");
   });
 
+  it("keeps newer code unsaved when an older save finishes", async () => {
+    const savedVersion = "console.log('saved version');";
+    const newerVersion = "console.log('newer unsaved version');";
+    let finishFirstSave: ((response: Response) => void) | undefined;
+    vi.spyOn(globalThis, "fetch").mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishFirstSave = resolve;
+      }),
+    ).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          file: {
+            code: newerVersion,
+            updatedAt: "2026-08-06T16:30:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    render(
+      <JavaScriptPlayground
+        initialCode={savedVersion}
+        initialQuickChecks=""
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "JavaScript file" }), {
+      target: { value: newerVersion },
+    });
+
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Saving file…" })).toBeDisabled();
+
+    await act(async () => {
+      finishFirstSave?.(
+        new Response(
+          JSON.stringify({
+            file: {
+              code: savedVersion,
+              updatedAt: "2026-08-06T16:29:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save file" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenLastCalledWith(
+        "/api/playground",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ code: newerVersion, quickChecks: "" }),
+        }),
+      ),
+    );
+    expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
+  });
+
   it.each([
     {
       name: "the server rejects the save",
