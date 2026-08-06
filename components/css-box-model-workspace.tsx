@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   buildCssBoxModelPreview,
   type CssPracticeCheck,
@@ -37,8 +37,10 @@ export function CssBoxModelWorkspace({
   isSignedIn = true,
 }: CssBoxModelWorkspaceProps) {
   const [css, setCss] = useState(initialCss);
+  const latestCss = useRef(initialCss);
   const [checks, setChecks] = useState(initialChecks);
   const [hasSubmitted, setHasSubmitted] = useState(initiallySaved);
+  const [isSaving, setIsSaving] = useState(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(initiallySaved ? "saved" : "unsaved");
@@ -61,6 +63,9 @@ export function CssBoxModelWorkspace({
       return;
     }
 
+    const submittedCss = latestCss.current;
+
+    setIsSaving(true);
     setSaveState("saving");
     setMessage("Checking the selectors and saving your CSS…");
 
@@ -68,7 +73,7 @@ export function CssBoxModelWorkspace({
       const response = await fetch(`/api/lessons/${lessonSlug}/workspace`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: css }),
+        body: JSON.stringify({ html: submittedCss }),
       });
       const payload = (await response.json()) as WorkspaceResponse;
 
@@ -80,6 +85,15 @@ export function CssBoxModelWorkspace({
 
       setChecks(payload.checks);
       setHasSubmitted(true);
+
+      if (latestCss.current !== submittedCss) {
+        setSaveState("unsaved");
+        setMessage(
+          "Your submitted result is saved. Newer CSS changes are still unsaved.",
+        );
+        return;
+      }
+
       setSaveState("saved");
       setMessage(
         payload.submission?.status === "completed"
@@ -89,6 +103,8 @@ export function CssBoxModelWorkspace({
     } catch {
       setSaveState("error");
       setMessage("The CSS could not be saved. Check your connection and try again.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -155,7 +171,8 @@ export function CssBoxModelWorkspace({
             id="css-box-model-editor"
             value={css}
             onChange={(event) => {
-              setCss(event.target.value);
+              latestCss.current = event.target.value;
+              setCss(latestCss.current);
               setSaveState("unsaved");
               setMessage("You have unsaved changes.");
             }}
@@ -208,9 +225,9 @@ export function CssBoxModelWorkspace({
             className="lesson-primary-action"
             type="button"
             onClick={savePractice}
-            disabled={saveState === "saving"}
+            disabled={isSaving}
           >
-            {saveState === "saving"
+            {isSaving
               ? "Saving…"
               : hasSubmitted
                 ? "Check and save again"

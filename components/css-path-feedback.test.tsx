@@ -106,4 +106,61 @@ describe("CssPathFeedback", () => {
     );
     expect(fetchMock).toHaveBeenCalledOnce();
   });
+
+  it("keeps newer feedback edits intact when an older save finishes", async () => {
+    let resolveSave!: (value: Response) => void;
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<CssPathFeedback initialFeedback={null} />);
+    fireEvent.click(screen.getByRole("radio", { name: "Somewhat" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "The selector checks helped." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save response" }));
+
+    fireEvent.click(screen.getByRole("radio", { name: "Very useful" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "The recovery prompts helped even more." },
+    });
+
+    resolveSave(
+      new Response(
+        JSON.stringify({
+          feedback: {
+            pathSlug: "css-selectors-box-model",
+            usefulness: "somewhat",
+            comment: "The selector checks helped.",
+            updatedAt: "2026-08-06T21:00:00.000Z",
+          },
+        }),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Your earlier response is saved. Newer changes are still unsaved.",
+        ),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("radio", { name: "Very useful" })).toBeChecked();
+    expect(screen.getByRole("textbox")).toHaveValue(
+      "The recovery prompts helped even more.",
+    );
+    expect(screen.getByRole("button", { name: "Update response" })).toBeEnabled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/practice/css/feedback",
+      expect.objectContaining({
+        body: JSON.stringify({
+          usefulness: "somewhat",
+          comment: "The selector checks helped.",
+        }),
+      }),
+    );
+  });
 });
