@@ -125,6 +125,43 @@ describe("PracticePage progress", () => {
     expect(screen.getByText("No concepts waiting. A saved Wrong Answer adds one here; an Accepted retry clears it.")).toBeInTheDocument();
   });
 
+  it("offers mixed review after three completed labs without replacing exact resume", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "review-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 1,
+      totalCount: 6,
+      completedSlugs: ["sum-two-numbers"],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 12,
+      totalCount: 55,
+      nextLabSlug: "test-design",
+      nextLabTitle: "Test design",
+      nextHref: "/practice/test-design?exercise=1",
+      nextExerciseNumber: 1,
+      labs: [
+        { slug: "foundations", title: "Foundations", href: "/practice/foundations", completedCount: 4, totalCount: 4, nextExerciseNumber: null, state: "complete" },
+        { slug: "tracing", title: "Tracing", href: "/practice/tracing", completedCount: 4, totalCount: 4, nextExerciseNumber: null, state: "complete" },
+        { slug: "debugging", title: "Debugging", href: "/practice/debugging", completedCount: 4, totalCount: 4, nextExerciseNumber: null, state: "complete" },
+        { slug: "test-design", title: "Test design", href: "/practice/test-design", completedCount: 0, totalCount: 4, nextExerciseNumber: 1, state: "not-started" },
+      ],
+    });
+
+    render(await PracticePage());
+
+    expect(
+      screen.getByRole("link", {
+        name: /Continue Test design, exercise 1/,
+      }),
+    ).toHaveAttribute("href", "/practice/test-design?exercise=1");
+    expect(
+      screen.getByRole("link", { name: "Start mixed review" }),
+    ).toHaveAttribute("href", "/practice/mixed-review");
+    expect(screen.getByText(/does not change judged mastery/)).toBeInTheDocument();
+  });
+
   it("restores a returning learner's saved Accepted total", async () => {
     getSession.mockResolvedValue({
       user: { id: "returning-learner" },

@@ -16,6 +16,7 @@ import {
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
 import { buildCodingReviewSession } from "@/lib/coding-review-session";
+import { buildJavaScriptMixedReviewSession } from "@/lib/javascript-mixed-review";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -102,6 +103,9 @@ export default async function PracticePage() {
     labProgress,
     progress.completedCount,
   );
+  const mixedReviewItems = labProgress
+    ? buildJavaScriptMixedReviewSession(labProgress.labs)
+    : [];
   const foundationsStarted = (foundationsEntry?.completedCount ?? 0) > 0;
   const primaryActionLabel = session
     ? foundationsEntry
@@ -407,6 +411,24 @@ export default async function PracticePage() {
                 </span>
                 <span aria-hidden="true">→</span>
               </Link>
+
+              {mixedReviewItems.length > 0 ? (
+                <aside className="practice-mixed-review-entry">
+                  <div>
+                    <small>Mixed recall · completed labs only</small>
+                    <strong>
+                      Bring {mixedReviewItems.length} JavaScript concepts back at once.
+                    </strong>
+                    <p>
+                      One browser-only session mixes teaching you already
+                      unlocked. It does not change judged mastery or saved progress.
+                    </p>
+                  </div>
+                  <Link href="/practice/mixed-review">
+                    Start mixed review <span aria-hidden="true">→</span>
+                  </Link>
+                </aside>
+              ) : null}
 
               <div className="practice-learning-groups">
                 {PRACTICE_LAB_GROUPS.map((group) => (

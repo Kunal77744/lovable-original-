@@ -11,6 +11,7 @@ import { metadata as foundationsMetadata } from "./practice/foundations/page";
 import { metadata as functionsMetadata } from "./practice/functions/page";
 import { metadata as judgeBasicsMetadata } from "./practice/judge-basics/page";
 import { metadata as linkedListsMetadata } from "./practice/linked-lists/page";
+import { metadata as mixedReviewMetadata } from "./practice/mixed-review/page";
 import { metadata as progressMetadata } from "./practice/progress/page";
 import { metadata as recursionMetadata } from "./practice/recursion/page";
 import { metadata as searchSortMetadata } from "./practice/search-sort/page";
@@ -95,6 +96,7 @@ describe("private learner routes", () => {
       searchSortMetadata,
       stacksQueuesMetadata,
       linkedListsMetadata,
+      mixedReviewMetadata,
       treesGraphsMetadata,
     ];
 
@@ -147,6 +149,7 @@ describe("private learner routes", () => {
       "search-sort",
       "stacks-queues",
       "linked-lists",
+      "mixed-review",
       "trees-graphs",
     ];
 

@@ -23,6 +23,7 @@ describe("public sitemap", () => {
     "/profile",
     "/interview/javascript-fundamentals",
     "/playground",
+    "/practice/mixed-review",
     "/projects",
     "/projects/semantic-html-article",
     "/projects/javascript-expense-report",
