@@ -1,8 +1,22 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptTestDesignLab } from "./javascript-test-design-lab";
 
+const saveJavaScriptLabExercise = vi.fn();
+
+vi.mock("@/lib/javascript-lab-progress", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
+  return {
+    ...actual,
+    saveJavaScriptLabExercise: (...args: unknown[]) => saveJavaScriptLabExercise(...args),
+  };
+});
+
 describe("JavaScriptTestDesignLab", () => {
+  beforeEach(() => {
+    saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
+  });
   afterEach(() => cleanup());
 
   it("starts with one unanswered test and no defect explanation", () => {
@@ -32,13 +46,13 @@ describe("JavaScriptTestDesignLab", () => {
     );
   });
 
-  it("reveals expected and faulty outputs only after the breaking case", () => {
+  it("reveals expected and faulty outputs only after the breaking case", async () => {
     render(<JavaScriptTestDesignLab />);
 
     fireEvent.click(screen.getByRole("radio", { name: /Input 12 3/ }));
     fireEvent.click(screen.getByRole("button", { name: "Check this test" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(await screen.findByRole("status")).toHaveTextContent(
       "This test exposes the defect.",
     );
     expect(screen.getByRole("status")).toHaveTextContent("Expected15");
@@ -49,7 +63,7 @@ describe("JavaScriptTestDesignLab", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("finishes after four breaking tests and links to judged practice", () => {
+  it("finishes after four breaking tests and links to judged practice", async () => {
     render(<JavaScriptTestDesignLab />);
 
     for (const answer of ["12 3", "-3", "3\\n-8 -3 -5", "15"]) {
@@ -60,7 +74,7 @@ describe("JavaScriptTestDesignLab", () => {
       );
       fireEvent.click(screen.getByRole("button", { name: "Check this test" }));
       fireEvent.click(
-        screen.getByRole("button", {
+        await screen.findByRole("button", {
           name: answer === "15" ? "Finish the lab" : "Next test",
         }),
       );
@@ -71,5 +85,21 @@ describe("JavaScriptTestDesignLab", () => {
       "href",
       "/practice/sum-two-numbers",
     );
+  });
+
+  it("does not reveal teaching or advance when completion cannot be saved", async () => {
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptTestDesignLab />);
+
+    fireEvent.click(screen.getByRole("radio", { name: /Input 12 3/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Check this test" }));
+
+    expect(
+      await screen.findByText(
+        "That test is correct, but completion could not be saved.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.queryByText("This test exposes the defect.")).not.toBeInTheDocument();
   });
 });

@@ -24,6 +24,7 @@ describe("JavaScriptAlgorithmPatternsLab", () => {
   beforeEach(() => {
     runCodingSolution.mockReset();
     saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
   });
   afterEach(cleanup);
 
@@ -67,6 +68,27 @@ describe("JavaScriptAlgorithmPatternsLab", () => {
       "algorithm-patterns",
       "count-with-a-frequency-map",
     );
+  });
+
+  it("keeps the exercise retryable when completion cannot be saved", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["2", "3", "0"],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptAlgorithmPatternsLab />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
+    expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
   it("shows code-free recovery after failure and no teaching", async () => {

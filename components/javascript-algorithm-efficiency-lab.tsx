@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ALGORITHM_EFFICIENCY_EXERCISES } from "@/lib/javascript-algorithm-efficiency";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
-type ResultState = "idle" | "wrong" | "correct";
+type ResultState = "idle" | "saving" | "save-error" | "wrong" | "correct";
 const exerciseIds = ALGORITHM_EFFICIENCY_EXERCISES.map((exercise) => exercise.id);
 
 export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
@@ -15,13 +15,19 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
   const exercise = ALGORITHM_EFFICIENCY_EXERCISES[exerciseIndex] ?? null;
 
-  function checkApproach() {
+  async function checkApproach() {
     if (!exercise || !selectedApproachId) return;
 
     if (selectedApproachId === exercise.correctApproachId) {
+      setResultState("saving");
+      const saveResponse = await saveJavaScriptLabExercise("efficiency", exercise.id);
+      if (!saveResponse?.ok) {
+        setResultState("save-error");
+        return;
+      }
+
       setResultState("correct");
       setCompletedIds((current) => new Set(current).add(exercise.id));
-      void saveJavaScriptLabExercise("efficiency", exercise.id);
       return;
     }
 
@@ -106,7 +112,7 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
           </div>
         </div>
 
-        <fieldset disabled={resultState === "correct"}>
+        <fieldset disabled={resultState === "correct" || resultState === "saving"}>
           <legend>Which approach keeps the work lower as the input grows?</legend>
           <div className="efficiency-approaches">
             {exercise.approaches.map((approach, index) => (
@@ -116,7 +122,7 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
                   name="efficiency-approach"
                   onChange={() => {
                     setSelectedApproachId(approach.id);
-                    if (resultState === "wrong") setResultState("idle");
+                    if (resultState === "wrong" || resultState === "save-error") setResultState("idle");
                   }}
                   type="radio"
                   value={approach.id}
@@ -146,6 +152,13 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
           </div>
         ) : null}
 
+        {resultState === "save-error" ? (
+          <div className="efficiency-feedback is-wrong" role="status">
+            <strong>That answer is correct, but completion could not be saved.</strong>
+            <p>Check this approach again to retry.</p>
+          </div>
+        ) : null}
+
         {resultState === "correct" && selectedApproach ? (
           <div className="efficiency-feedback is-correct" role="status">
             <div>
@@ -169,11 +182,11 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
             </button>
           ) : (
             <button
-              disabled={!selectedApproachId}
+              disabled={!selectedApproachId || resultState === "saving"}
               onClick={checkApproach}
               type="button"
             >
-              Check this approach
+              {resultState === "saving" ? "Saving completion…" : "Check this approach"}
             </button>
           )}
           <span>Your answer stays local. Completion saves privately.</span>

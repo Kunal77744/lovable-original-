@@ -45,8 +45,16 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
+      const saveResponse = await saveJavaScriptLabExercise("dom", exercise.slug);
+      if (!saveResponse?.ok) {
+        setCheckState({
+          kind: "error",
+          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+        });
+        return;
+      }
+
       setCompletedIds((current) => new Set(current).add(exercise.slug));
-      void saveJavaScriptLabExercise("dom", exercise.slug);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${result.checks.length} checks.`,

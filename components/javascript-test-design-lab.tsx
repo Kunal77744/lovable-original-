@@ -5,7 +5,7 @@ import { useState } from "react";
 import { JAVASCRIPT_TEST_DESIGN_EXERCISES } from "@/lib/javascript-test-design";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
-type ResultState = "idle" | "wrong" | "correct";
+type ResultState = "idle" | "saving" | "save-error" | "wrong" | "correct";
 const exerciseIds = JAVASCRIPT_TEST_DESIGN_EXERCISES.map((exercise) => exercise.id);
 
 export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
@@ -16,13 +16,19 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
 
   const exercise = JAVASCRIPT_TEST_DESIGN_EXERCISES[exerciseIndex] ?? null;
 
-  function checkTest() {
+  async function checkTest() {
     if (!exercise || !selectedInput) return;
 
     if (selectedInput === exercise.correctInput) {
+      setResultState("saving");
+      const saveResponse = await saveJavaScriptLabExercise("test-design", exercise.id);
+      if (!saveResponse?.ok) {
+        setResultState("save-error");
+        return;
+      }
+
       setResultState("correct");
       setCompletedIds((current) => new Set(current).add(exercise.id));
-      void saveJavaScriptLabExercise("test-design", exercise.id);
       return;
     }
 
@@ -112,7 +118,7 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
           <h2 id="test-design-exercise-title">{exercise.title}</h2>
           <p className="test-design-problem">{exercise.problem}</p>
 
-          <fieldset disabled={resultState === "correct"}>
+          <fieldset disabled={resultState === "correct" || resultState === "saving"}>
             <legend>Which test proves this solution is wrong?</legend>
             <div className="test-design-choices">
               {exercise.choices.map((choice) => (
@@ -123,7 +129,7 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
                     name="test-input"
                     onChange={() => {
                       setSelectedInput(choice.input);
-                      if (resultState === "wrong") setResultState("idle");
+                      if (resultState === "wrong" || resultState === "save-error") setResultState("idle");
                     }}
                     type="radio"
                     value={choice.input}
@@ -141,6 +147,13 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
             <div className="test-design-feedback is-wrong" role="status">
               <strong>That case still passes.</strong>
               <p>{exercise.recoveryCue}</p>
+            </div>
+          ) : null}
+
+          {resultState === "save-error" ? (
+            <div className="test-design-feedback is-wrong" role="status">
+              <strong>That test is correct, but completion could not be saved.</strong>
+              <p>Check this test again to retry.</p>
             </div>
           ) : null}
 
@@ -174,11 +187,11 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
               </button>
             ) : (
               <button
-                disabled={!selectedInput}
+                disabled={!selectedInput || resultState === "saving"}
                 onClick={checkTest}
                 type="button"
               >
-                Check this test
+                {resultState === "saving" ? "Saving completion…" : "Check this test"}
               </button>
             )}
             <span>Your answer stays local. Completion saves privately.</span>

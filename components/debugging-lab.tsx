@@ -63,8 +63,16 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
       return;
     }
 
+    const saveResponse = await saveJavaScriptLabExercise("debugging", drill.slug);
+    if (!saveResponse?.ok) {
+      setLabState({
+        kind: "error",
+        message: "The checks passed, but completion could not be saved. Run them again to retry.",
+      });
+      return;
+    }
+
     setCompletedIds((current) => new Set(current).add(drill.slug));
-    void saveJavaScriptLabExercise("debugging", drill.slug);
     setLabState({
       kind: "passed",
       message: `All ${grade.totalChecks} checks passed. You found the defect.`,

@@ -54,8 +54,16 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      const saveResponse = await saveJavaScriptLabExercise("data-structures", exercise.slug);
+      if (!saveResponse?.ok) {
+        setCheckState({
+          kind: "error",
+          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+        });
+        return;
+      }
+
       setCompletedIds((current) => new Set(current).add(exercise.slug));
-      void saveJavaScriptLabExercise("data-structures", exercise.slug);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,

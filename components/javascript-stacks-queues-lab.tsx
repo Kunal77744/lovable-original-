@@ -68,8 +68,16 @@ export function JavaScriptStacksQueuesLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      const saveResponse = await saveJavaScriptLabExercise("stacks-queues", exercise.slug);
+      if (!saveResponse?.ok) {
+        setCheckState({
+          kind: "error",
+          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+        });
+        return;
+      }
+
       setCompletedIds((current) => new Set(current).add(exercise.slug));
-      void saveJavaScriptLabExercise("stacks-queues", exercise.slug);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,

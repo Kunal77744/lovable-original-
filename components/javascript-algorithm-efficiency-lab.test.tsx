@@ -1,8 +1,22 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptAlgorithmEfficiencyLab } from "./javascript-algorithm-efficiency-lab";
 
+const saveJavaScriptLabExercise = vi.fn();
+
+vi.mock("@/lib/javascript-lab-progress", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
+  return {
+    ...actual,
+    saveJavaScriptLabExercise: (...args: unknown[]) => saveJavaScriptLabExercise(...args),
+  };
+});
+
 describe("JavaScriptAlgorithmEfficiencyLab", () => {
+  beforeEach(() => {
+    saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
+  });
   afterEach(() => cleanup());
 
   it("starts with teaching hidden and the primary action disabled", () => {
@@ -25,19 +39,19 @@ describe("JavaScriptAlgorithmEfficiencyLab", () => {
     expect(screen.queryByText(/O\(1\) means/)).not.toBeInTheDocument();
   });
 
-  it("reveals the explanation only after the stronger approach", () => {
+  it("reveals the explanation only after the stronger approach", async () => {
     render(<JavaScriptAlgorithmEfficiencyLab />);
 
     fireEvent.click(screen.getByRole("radio", { name: /Use the id key/ }));
     fireEvent.click(screen.getByRole("button", { name: "Check this approach" }));
 
-    expect(screen.getByText("Better growth")).toBeInTheDocument();
+    expect(await screen.findByText("Better growth")).toBeInTheDocument();
     expect(screen.getByText(/O\(1\) means/)).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "1");
     expect(screen.getByRole("button", { name: "Next decision" })).toBeInTheDocument();
   });
 
-  it("completes all four decisions and offers judged practice next", () => {
+  it("completes all four decisions and offers judged practice next", async () => {
     render(<JavaScriptAlgorithmEfficiencyLab />);
 
     const choices = [
@@ -51,7 +65,7 @@ describe("JavaScriptAlgorithmEfficiencyLab", () => {
       fireEvent.click(screen.getByRole("radio", { name: choice }));
       fireEvent.click(screen.getByRole("button", { name: "Check this approach" }));
       fireEvent.click(
-        screen.getByRole("button", {
+        await screen.findByRole("button", {
           name: index === choices.length - 1 ? "Finish the lab" : "Next decision",
         }),
       );
@@ -63,5 +77,22 @@ describe("JavaScriptAlgorithmEfficiencyLab", () => {
       "href",
       "/practice/sum-two-numbers",
     );
+  });
+
+  it("keeps correct progress unsaved and retryable when the account save fails", async () => {
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptAlgorithmEfficiencyLab />);
+
+    fireEvent.click(screen.getByRole("radio", { name: /Use the id key/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Check this approach" }));
+
+    expect(
+      await screen.findByText(
+        "That answer is correct, but completion could not be saved.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.queryByText("Better growth")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Check this approach" })).toBeEnabled();
   });
 });

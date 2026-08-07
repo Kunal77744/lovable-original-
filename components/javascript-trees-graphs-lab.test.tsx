@@ -24,6 +24,7 @@ describe("JavaScriptTreesGraphsLab", () => {
   beforeEach(() => {
     runCodingSolution.mockReset();
     saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
   });
   afterEach(cleanup);
 
@@ -68,6 +69,27 @@ describe("JavaScriptTreesGraphsLab", () => {
       "walk-a-tree-depth-first",
     );
     expect(screen.getByText("Passed 3 of 3 checks.")).toBeInTheDocument();
+  });
+
+  it("keeps the exercise retryable when completion cannot be saved", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["A B D E C", "1 2 4 3", "root"],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptTreesGraphsLab />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
+    expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
   it("shows recovery after failure and teaching only after success", async () => {

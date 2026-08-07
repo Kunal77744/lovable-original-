@@ -3,13 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DebuggingLab } from "./debugging-lab";
 
 const runCodingSolution = vi.fn();
+const saveJavaScriptLabExercise = vi.fn();
 
 vi.mock("@/lib/coding-runner", () => ({
   runCodingSolution: (...args: unknown[]) => runCodingSolution(...args),
 }));
 
+vi.mock("@/lib/javascript-lab-progress", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
+  return {
+    ...actual,
+    saveJavaScriptLabExercise: (...args: unknown[]) => saveJavaScriptLabExercise(...args),
+  };
+});
+
 describe("DebuggingLab", () => {
-  beforeEach(() => runCodingSolution.mockReset());
+  beforeEach(() => {
+    runCodingSolution.mockReset();
+    saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
+  });
   afterEach(cleanup);
 
   it("runs the learner's local repair against three browser checks", async () => {
@@ -66,5 +79,25 @@ describe("DebuggingLab", () => {
     expect(screen.getByRole("heading", { name: "Reset the total" })).toBeInTheDocument();
     expect(screen.getByText("Browser only")).toBeInTheDocument();
     expect(screen.getByLabelText("1 of 3 defects repaired")).toBeInTheDocument();
+  });
+
+  it("does not count a repaired defect until its account save succeeds", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["Even", "Odd", "Even"],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<DebuggingLab />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+
+    expect(
+      await screen.findByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("0 of 3 defects repaired")).toBeInTheDocument();
+    expect(screen.queryByText("Defect repaired")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
   });
 });

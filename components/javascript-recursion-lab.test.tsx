@@ -24,6 +24,7 @@ describe("JavaScriptRecursionLab", () => {
   beforeEach(() => {
     runCodingSolution.mockReset();
     saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
   });
   afterEach(cleanup);
 
@@ -125,5 +126,24 @@ describe("JavaScriptRecursionLab", () => {
     expect(
       screen.getByRole("link", { name: "Start judged practice" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
+  });
+
+  it("keeps passing checks retryable when their completion does not save", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["Go", "3, 2, 1, Go", "6, 5, 4, 3, 2, 1, Go"],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptRecursionLab />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+
+    expect(
+      await screen.findByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 });

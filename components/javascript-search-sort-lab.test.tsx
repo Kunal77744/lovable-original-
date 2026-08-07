@@ -24,6 +24,7 @@ describe("JavaScriptSearchSortLab", () => {
   beforeEach(() => {
     runCodingSolution.mockReset();
     saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
   });
   afterEach(cleanup);
 
@@ -65,6 +66,27 @@ describe("JavaScriptSearchSortLab", () => {
       "search-sort",
       "scan-for-first-match",
     );
+  });
+
+  it("keeps the exercise retryable when completion cannot be saved", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["1", "0", "-1"],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptSearchSortLab />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
+    expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
   it("shows code-free recovery after a failed or stopped run", async () => {

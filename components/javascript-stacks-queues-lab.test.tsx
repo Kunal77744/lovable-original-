@@ -24,6 +24,7 @@ describe("JavaScriptStacksQueuesLab", () => {
   beforeEach(() => {
     runCodingSolution.mockReset();
     saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
   });
   afterEach(cleanup);
 
@@ -67,6 +68,27 @@ describe("JavaScriptStacksQueuesLab", () => {
       "stacks-queues",
       "remove-the-newest-item",
     );
+  });
+
+  it("keeps the exercise retryable when completion cannot be saved", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["red", "red", "two"],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptStacksQueuesLab />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
+    expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
   it("shows code-free recovery only after a failed or stopped run", async () => {

@@ -9,7 +9,7 @@ import {
   saveJavaScriptLabExercise,
 } from "@/lib/javascript-lab-progress";
 
-type ResultState = "idle" | "wrong" | "correct";
+type ResultState = "idle" | "saving" | "save-error" | "wrong" | "correct";
 const exerciseIds = JAVASCRIPT_TRACE_EXERCISES.map((exercise) => exercise.id);
 
 export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
@@ -21,13 +21,19 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
   const exercise = JAVASCRIPT_TRACE_EXERCISES[exerciseIndex] ?? null;
   const complete = exercise === null;
 
-  function checkPrediction() {
+  async function checkPrediction() {
     if (!exercise || !selectedOutput) return;
 
     if (selectedOutput === exercise.correctOutput) {
+      setResultState("saving");
+      const saveResponse = await saveJavaScriptLabExercise("tracing", exercise.id);
+      if (!saveResponse?.ok) {
+        setResultState("save-error");
+        return;
+      }
+
       setResultState("correct");
       setCompletedIds((current) => new Set(current).add(exercise.id));
-      void saveJavaScriptLabExercise("tracing", exercise.id);
       return;
     }
 
@@ -102,7 +108,7 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
           <h2 id="trace-exercise-title">{exercise.title}</h2>
           <p>{exercise.prompt}</p>
 
-          <fieldset disabled={resultState === "correct"}>
+          <fieldset disabled={resultState === "correct" || resultState === "saving"}>
             <legend>Choose the console output</legend>
             <div className="tracing-choices">
               {exercise.choices.map((choice) => (
@@ -112,7 +118,7 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
                     name="trace-output"
                     onChange={() => {
                       setSelectedOutput(choice);
-                      if (resultState === "wrong") setResultState("idle");
+                      if (resultState === "wrong" || resultState === "save-error") setResultState("idle");
                     }}
                     type="radio"
                     value={choice}
@@ -127,6 +133,13 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
             <div className="tracing-feedback is-wrong" role="status">
               <strong>Not yet. Trace one value at a time.</strong>
               <p>{exercise.recoveryCue}</p>
+            </div>
+          ) : null}
+
+          {resultState === "save-error" ? (
+            <div className="tracing-feedback is-wrong" role="status">
+              <strong>That prediction is correct, but completion could not be saved.</strong>
+              <p>Check the prediction again to retry.</p>
             </div>
           ) : null}
 
@@ -154,11 +167,11 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
               </button>
             ) : (
               <button
-                disabled={!selectedOutput}
+                disabled={!selectedOutput || resultState === "saving"}
                 onClick={checkPrediction}
                 type="button"
               >
-                Check prediction
+                {resultState === "saving" ? "Saving completion…" : "Check prediction"}
               </button>
             )}
             <span>Your answer stays local. Completion saves privately.</span>

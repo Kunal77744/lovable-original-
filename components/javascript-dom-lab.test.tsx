@@ -3,13 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptDomLab } from "./javascript-dom-lab";
 
 const runDomLabCode = vi.fn();
+const saveJavaScriptLabExercise = vi.fn();
 
 vi.mock("@/lib/dom-lab-runner", () => ({
   runDomLabCode: (...args: unknown[]) => runDomLabCode(...args),
 }));
 
+vi.mock("@/lib/javascript-lab-progress", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
+  return {
+    ...actual,
+    saveJavaScriptLabExercise: (...args: unknown[]) => saveJavaScriptLabExercise(...args),
+  };
+});
+
 describe("JavaScriptDomLab", () => {
-  beforeEach(() => runDomLabCode.mockReset());
+  beforeEach(() => {
+    runDomLabCode.mockReset();
+    saveJavaScriptLabExercise.mockReset();
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: true });
+  });
   afterEach(cleanup);
 
   it("starts with an unfinished selector exercise and four ordered moves", () => {
@@ -46,6 +59,27 @@ describe("JavaScriptDomLab", () => {
       "select-an-element",
     );
     expect(screen.getByText("Passed 3 of 3 checks.")).toBeInTheDocument();
+  });
+
+  it("keeps the exercise retryable when completion cannot be saved", async () => {
+    runDomLabCode.mockResolvedValue({
+      status: "finished",
+      checks: [true, true, true],
+    });
+    saveJavaScriptLabExercise.mockResolvedValue({ ok: false });
+    render(<JavaScriptDomLab />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByText(
+        "The checks passed, but completion could not be saved. Run them again to retry.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
+    expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
   it("shows one code-free recovery cue only after a failed run", async () => {
