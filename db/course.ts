@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import {
   FIRST_COURSE,
   FIRST_COURSE_LESSONS,
@@ -140,6 +140,39 @@ export async function getOrCreateFirstCourseAssignment(userId: string) {
     title: assignment.title,
     description: assignment.description,
     status: assignment.status,
+    ...progress,
+  };
+}
+
+export async function getFirstCourseProgressSummary(userId: string) {
+  const lessonIds = FIRST_COURSE_LESSONS.map((courseLesson) => courseLesson.id);
+  const progressRows = await getDatabase()
+    .select({
+      lessonId: lessonProgress.lessonId,
+      progressStatus: lessonProgress.status,
+      quizScore: lessonProgress.quizScore,
+    })
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        inArray(lessonProgress.lessonId, lessonIds),
+      ),
+    );
+  const progressByLesson = new Map(
+    progressRows.map((row) => [row.lessonId, row]),
+  );
+  const progress = buildCourseProgress(
+    FIRST_COURSE_LESSONS.map((courseLesson) => ({
+      ...courseLesson,
+      progressStatus:
+        progressByLesson.get(courseLesson.id)?.progressStatus ?? null,
+      quizScore: progressByLesson.get(courseLesson.id)?.quizScore ?? null,
+    })),
+  );
+
+  return {
+    slug: FIRST_COURSE.slug,
     ...progress,
   };
 }

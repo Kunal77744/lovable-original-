@@ -164,6 +164,9 @@ describe("ProfilePage", () => {
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
+    expect(
+      screen.getByRole("link", { name: /View private projects/ }),
+    ).toHaveAttribute("href", "/projects");
   });
 
   it("restores distinct JavaScript and CSS totals for a returning learner", async () => {

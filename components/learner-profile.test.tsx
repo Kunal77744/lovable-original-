@@ -86,6 +86,9 @@ describe("LearnerProfile", () => {
     expect(screen.getAllByRole("link", { name: /Solve problem 02/ })).toHaveLength(
       1,
     );
+    expect(
+      screen.getByRole("link", { name: /View private projects/ }),
+    ).toHaveAttribute("href", "/projects");
   });
 
   it("gives a fresh learner one accurate first step", () => {
@@ -146,7 +149,7 @@ describe("LearnerProfile", () => {
     );
     expect(freshState.getByText("Not started")).toBeInTheDocument();
     expect(freshState.getByText("Not attempted")).toBeInTheDocument();
-    expect(freshState.getAllByRole("link")).toHaveLength(1);
+    expect(freshState.getAllByRole("link")).toHaveLength(2);
     expect(
       freshState.getByRole("link", { name: /Start the course/ }),
     ).toHaveAttribute(

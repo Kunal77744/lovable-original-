@@ -95,6 +95,29 @@ export async function getGuidedProjectForStudent(
       };
 }
 
+export async function getGuidedProjectSummary(
+  userId: string,
+  projectSlug: string,
+) {
+  if (!isGuidedProjectSlug(projectSlug)) return null;
+
+  const project = await findGuidedProject(userId, projectSlug);
+
+  if (!project) {
+    return { state: "not-started" as const, passedChecks: 0 };
+  }
+
+  const record = projectResponse(project);
+  const completed =
+    record.submission?.status === "completed" &&
+    !record.hasUnreviewedChanges;
+
+  return {
+    state: completed ? ("completed" as const) : ("in-progress" as const),
+    passedChecks: record.submission?.passedChecks ?? 0,
+  };
+}
+
 export async function saveGuidedProjectDraft(
   userId: string,
   projectSlug: string,

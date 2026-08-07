@@ -42,6 +42,10 @@ export function LearnerProfile({
             <strong>Private by default.</strong>
             Only you can open this learning record.
           </p>
+          <Link className="profile-project-link" href="/projects">
+            View private projects
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </header>
 
