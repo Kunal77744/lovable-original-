@@ -49,9 +49,18 @@ export default async function WebFoundationsReviewPage() {
   return (
     <main>
       <SiteNav currentPage="course" studentSession />
-      <div className="mixed-review-shell foundations-review-shell" id="main-content" tabIndex={-1}>
-        <nav className="problem-breadcrumbs" aria-label="Foundations review navigation">
-          <Link href="/courses/web-development-foundations">Web Development Foundations</Link>
+      <div
+        className="mixed-review-shell foundations-review-shell"
+        id="main-content"
+        tabIndex={-1}
+      >
+        <nav
+          className="problem-breadcrumbs"
+          aria-label="Foundations review navigation"
+        >
+          <Link href="/courses/web-development-foundations">
+            Web Development Foundations
+          </Link>
           <span aria-hidden="true">/</span>
           <span>Spaced review</span>
         </nav>
@@ -61,12 +70,15 @@ export default async function WebFoundationsReviewPage() {
             <p className="eyebrow">Private spaced review · completed lessons</p>
             <h1>Bring HTML and CSS foundations back before you build.</h1>
             <p>
-              Recall four decisions from your two lessons. Each answer returns
-              one authored explanation, then your next review date adapts to the result.
+              Recall four decisions from your completed course. Each answer
+              returns one authored explanation, then your next review date
+              adapts to the result.
             </p>
           </div>
           <aside aria-label="Foundations review boundaries">
-            <strong>{WEB_FOUNDATIONS_REVIEW_ITEMS.length} lesson concepts</strong>
+            <strong>
+              {WEB_FOUNDATIONS_REVIEW_ITEMS.length} lesson concepts
+            </strong>
             <span>
               {savedResult && !reviewDue
                 ? `Next review ${formatWebFoundationsReviewDueDate(savedResult.nextDueAt)}`
@@ -81,7 +93,9 @@ export default async function WebFoundationsReviewPage() {
         </header>
 
         {course.courseCompleted ? (
-          <WebFoundationsReview initialResult={reviewDue ? null : savedResult} />
+          <WebFoundationsReview
+            initialResult={reviewDue ? null : savedResult}
+          />
         ) : (
           <section
             className="mixed-review-locked"
@@ -89,16 +103,13 @@ export default async function WebFoundationsReviewPage() {
           >
             <p className="eyebrow">Finish the lesson path first</p>
             <h2 id="foundations-review-locked-title">
-              Complete both lessons to build your review set.
+              Complete all three lessons to build your review set.
             </h2>
             <p>
-              This session recalls only concepts you have already completed. Your
-              exact next lesson is ready below.
+              This session recalls only concepts you have already completed.
+              Your exact next lesson is ready below.
             </p>
-            <Link
-              className="primary-action"
-              href={nextLessonHref}
-            >
+            <Link className="primary-action" href={nextLessonHref}>
               {nextLessonLabel} <span aria-hidden="true">→</span>
             </Link>
           </section>

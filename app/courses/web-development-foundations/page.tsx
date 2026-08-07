@@ -5,7 +5,7 @@ import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 const courseDescription =
   "Follow one beginner coding path through semantic HTML, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
 const courseShareImageAlt =
-  "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
+  "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
@@ -45,7 +45,7 @@ const courseSteps = [
     number: "01",
     label: "Lessons",
     title: "Build the structure, then style it.",
-    copy: "Read the public HTML and CSS lessons, save two practice builds, and pass four questions per lesson at 75%.",
+    copy: "Read three public HTML and CSS lessons, save three practice builds, and pass four questions per lesson at 75%.",
     href: "/learn/web-development-foundations/semantic-html",
     linkLabel: "Open the first lesson",
   },
@@ -111,14 +111,17 @@ export default function WebDevelopmentFoundationsPage() {
       <SiteNav currentPage="course" />
 
       <main id="main-content" tabIndex={-1}>
-        <section className="course-overview-hero" aria-labelledby="course-title">
+        <section
+          className="course-overview-hero"
+          aria-labelledby="course-title"
+        >
           <div className="course-overview-copy">
             <p className="eyebrow">Web Development Foundations</p>
             <h1 id="course-title">
               One beginner path from page structure to working code.
             </h1>
             <p className="course-overview-lede">
-              Read two practical lessons, build a reviewed semantic HTML field
+              Read three practical lessons, build a reviewed semantic HTML field
               guide, then keep practicing through six JavaScript problems and
               six CSS challenges. Your next unfinished step waits when you
               return.
@@ -131,7 +134,7 @@ export default function WebDevelopmentFoundationsPage() {
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              Two lessons · Six-check project · Six JavaScript + six CSS
+              Three lessons · Six-check project · Six JavaScript + six CSS
               challenges
             </p>
           </div>
@@ -145,7 +148,10 @@ export default function WebDevelopmentFoundationsPage() {
               </span>
             </figcaption>
             <div className="course-build-stage">
-              <div className="course-code-panel" aria-label="Semantic HTML code">
+              <div
+                className="course-code-panel"
+                aria-label="Semantic HTML code"
+              >
                 <span>&lt;main&gt;</span>
                 <span className="code-indent">&lt;article&gt;</span>
                 <span className="code-indent-two">
@@ -179,11 +185,11 @@ export default function WebDevelopmentFoundationsPage() {
 
         <section className="course-proof-strip" aria-label="Course facts">
           <div>
-            <strong>34 minutes</strong>
-            <span>Two focused lessons</span>
+            <strong>51 minutes</strong>
+            <span>Three focused lessons</span>
           </div>
           <div>
-            <strong>2 saved builds</strong>
+            <strong>3 saved builds</strong>
             <span>HTML and CSS practice</span>
           </div>
           <div>

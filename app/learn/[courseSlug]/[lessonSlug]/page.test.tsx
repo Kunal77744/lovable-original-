@@ -83,8 +83,8 @@ describe("public lesson access", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Check your mental model." }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("heading", { name: "Check your mental model." }),
+    ).not.toHaveLength(0);
     expect(screen.getByText("Full lesson · Free to read")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -124,6 +124,34 @@ describe("public lesson access", () => {
     expect(metadata.openGraph?.description).toBe(metadata.description);
     expect(metadata.twitter?.description).toBe(metadata.description);
     expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
+
+  it("renders the complete responsive CSS lesson without private reads", async () => {
+    render(
+      await LessonPage({
+        params: Promise.resolve({
+          courseSlug: "web-development-foundations",
+          lessonSlug: "responsive-css-grid",
+        }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Build a layout that adapts" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Layout describes a relationship, not a screen size.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Make one resource grid adapt." }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { name: "Check your mental model." }),
+    ).not.toHaveLength(0);
+    expect(getStudentLesson).not.toHaveBeenCalled();
+    expect(getArtifact).not.toHaveBeenCalled();
   });
 
   it("records an anonymous lesson start from the stable founder-warm entry", async () => {

@@ -1,8 +1,5 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import {
-  FIRST_COURSE,
-  FIRST_COURSE_LESSONS,
-} from "@/lib/first-course-content";
+import { FIRST_COURSE, FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { getDefaultCertificateDisplayName } from "@/lib/learner-settings";
 import { buildCourseProgress } from "@/lib/course-progress";
 import { getDatabase } from "./index";
@@ -25,6 +22,10 @@ import {
   CSS_BOX_MODEL_STARTER,
   gradeCssBoxModel,
 } from "@/lib/css-box-model-practice";
+import {
+  gradeResponsiveCss,
+  RESPONSIVE_CSS_STARTER,
+} from "@/lib/responsive-css-practice";
 
 async function ensureFirstCourse() {
   const database = getDatabase();
@@ -210,10 +211,7 @@ export async function getFirstCourseLessonForStudent(
       ),
     )
     .where(
-      and(
-        eq(courseAssignment.userId, userId),
-        eq(course.slug, courseSlug),
-      ),
+      and(eq(courseAssignment.userId, userId), eq(course.slug, courseSlug)),
     )
     .orderBy(asc(lesson.position));
 
@@ -441,14 +439,15 @@ export async function getFirstCourseCertificateForStudent(
 
   return {
     eligible,
-    certificate: eligible && certificateRow
-      ? {
-          id: certificateRow.id,
-          awardedAt: certificateRow.awardedAt.toISOString(),
-          displayName: settings.certificateDisplayName,
-          courseTitle: FIRST_COURSE.title,
-        }
-      : null,
+    certificate:
+      eligible && certificateRow
+        ? {
+            id: certificateRow.id,
+            awardedAt: certificateRow.awardedAt.toISOString(),
+            displayName: settings.certificateDisplayName,
+            courseTitle: FIRST_COURSE.title,
+          }
+        : null,
   };
 }
 
@@ -487,6 +486,15 @@ function getLessonPractice(lessonSlug: string, savedContent?: string) {
     return {
       html,
       checks: gradeCssBoxModel(html),
+    };
+  }
+
+  if (lessonSlug === "responsive-css-grid") {
+    const html = savedContent ?? RESPONSIVE_CSS_STARTER;
+
+    return {
+      html,
+      checks: gradeResponsiveCss(html),
     };
   }
 
@@ -600,10 +608,7 @@ export async function saveFirstLessonArtifact(
   };
 }
 
-export async function getFirstLessonNote(
-  userId: string,
-  lessonSlug: string,
-) {
+export async function getFirstLessonNote(userId: string, lessonSlug: string) {
   const database = getDatabase();
   const lessonId = await getAssignedLessonId(userId, lessonSlug);
 
@@ -618,10 +623,7 @@ export async function getFirstLessonNote(
     })
     .from(lessonNote)
     .where(
-      and(
-        eq(lessonNote.userId, userId),
-        eq(lessonNote.lessonId, lessonId),
-      ),
+      and(eq(lessonNote.userId, userId), eq(lessonNote.lessonId, lessonId)),
     )
     .limit(1);
 

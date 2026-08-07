@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CssBoxModelLessonContent } from "@/components/css-box-model-lesson-content";
 import { CssBoxModelWorkspace } from "@/components/css-box-model-workspace";
+import { ResponsiveCssLayoutLessonContent } from "@/components/responsive-css-layout-lesson-content";
+import { ResponsiveCssLayoutWorkspace } from "@/components/responsive-css-layout-workspace";
 import { LessonNotes } from "@/components/lesson-notes";
 import { LessonProgressRail } from "@/components/lesson-progress-rail";
 import { LessonQuiz } from "@/components/lesson-quiz";
@@ -28,8 +30,14 @@ import {
   FIRST_LESSON,
   FIRST_LESSON_PASS_PERCENT,
   SECOND_LESSON,
+  THIRD_LESSON,
   getPublicLessonQuiz,
 } from "@/lib/first-course-content";
+import {
+  gradeResponsiveCss,
+  RESPONSIVE_CSS_STARTER,
+  type ResponsiveCssCheck,
+} from "@/lib/responsive-css-practice";
 import {
   gradeSemanticHtml,
   SEMANTIC_HTML_STARTER,
@@ -47,12 +55,17 @@ type LessonPageProps = {
   }>;
 };
 
-export async function generateMetadata({ params }: LessonPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: LessonPageProps): Promise<Metadata> {
   const { lessonSlug } = await params;
-  const courseLesson = FIRST_COURSE_LESSONS.find((item) => item.slug === lessonSlug);
+  const courseLesson = FIRST_COURSE_LESSONS.find(
+    (item) => item.slug === lessonSlug,
+  );
   const title = `${courseLesson?.title ?? "Lesson"} | Lovable Original`;
   const description = courseLesson?.description;
-  const isCssLesson = lessonSlug === SECOND_LESSON.slug;
+  const isCssLesson =
+    lessonSlug === SECOND_LESSON.slug || lessonSlug === THIRD_LESSON.slug;
 
   return {
     title,
@@ -61,7 +74,7 @@ export async function generateMetadata({ params }: LessonPageProps): Promise<Met
       ? {
           openGraph: {
             type: "website" as const,
-            url: `/learn/${FIRST_COURSE.slug}/${SECOND_LESSON.slug}`,
+            url: `/learn/${FIRST_COURSE.slug}/${lessonSlug}`,
             title,
             description,
             images: ["/opengraph-image"],
@@ -115,12 +128,17 @@ export default async function LessonPage({
       }
     : null;
   const studentLesson = session
-    ? await getFirstCourseLessonForStudent(session.user.id, courseSlug, lessonSlug)
+    ? await getFirstCourseLessonForStudent(
+        session.user.id,
+        courseSlug,
+        lessonSlug,
+      )
     : publicLesson;
 
   if (!studentLesson) notFound();
 
   const isSemanticLesson = studentLesson.lessonSlug === FIRST_LESSON.slug;
+  const isResponsiveLesson = studentLesson.lessonSlug === THIRD_LESSON.slug;
   const [workspace, lessonNote, courseFeedback] = session
     ? await Promise.all([
         getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
@@ -136,11 +154,17 @@ export default async function LessonPage({
               checks: gradeSemanticHtml(SEMANTIC_HTML_STARTER),
               saved: false,
             }
-          : {
-              html: CSS_BOX_MODEL_STARTER,
-              checks: gradeCssBoxModel(CSS_BOX_MODEL_STARTER),
-              saved: false,
-            },
+          : isResponsiveLesson
+            ? {
+                html: RESPONSIVE_CSS_STARTER,
+                checks: gradeResponsiveCss(RESPONSIVE_CSS_STARTER),
+                saved: false,
+              }
+            : {
+                html: CSS_BOX_MODEL_STARTER,
+                checks: gradeCssBoxModel(CSS_BOX_MODEL_STARTER),
+                saved: false,
+              },
         { note: null },
         null,
       ];
@@ -192,7 +216,13 @@ export default async function LessonPage({
             </a>
           </header>
 
-          {isSemanticLesson ? <SemanticLessonContent /> : <CssBoxModelLessonContent />}
+          {isSemanticLesson ? (
+            <SemanticLessonContent />
+          ) : isResponsiveLesson ? (
+            <ResponsiveCssLayoutLessonContent />
+          ) : (
+            <CssBoxModelLessonContent />
+          )}
 
           {isSemanticLesson ? (
             <>
@@ -210,6 +240,14 @@ export default async function LessonPage({
                 isSignedIn={Boolean(session)}
               />
             </>
+          ) : isResponsiveLesson ? (
+            <ResponsiveCssLayoutWorkspace
+              lessonSlug={studentLesson.lessonSlug}
+              initialCss={workspace.html}
+              initialChecks={workspace.checks as ResponsiveCssCheck[]}
+              initiallySaved={workspace.saved}
+              isSignedIn={Boolean(session)}
+            />
           ) : (
             <>
               <CssBoxModelWorkspace
@@ -248,7 +286,8 @@ export default async function LessonPage({
             initialFeedback={courseFeedback?.feedback ?? null}
             isSignedIn={Boolean(session)}
             completedLessonsAfterPass={Math.min(
-              studentLesson.completedLessons + (studentLesson.completed ? 0 : 1),
+              studentLesson.completedLessons +
+                (studentLesson.completed ? 0 : 1),
               studentLesson.totalLessons,
             )}
             nextLesson={
@@ -337,8 +376,8 @@ function SemanticLessonContent() {
           </div>
           <p>
             Use <code>&lt;article&gt;</code> when content could stand on its
-            own, such as a tutorial or post. Use <code>&lt;section&gt;</code>{" "}
-            to group a themed part of that content. Reach for{" "}
+            own, such as a tutorial or post. Use <code>&lt;section&gt;</code> to
+            group a themed part of that content. Reach for{" "}
             <code>&lt;div&gt;</code> only when no meaningful element fits.
           </p>
         </div>
@@ -349,10 +388,11 @@ function SemanticLessonContent() {
         <div>
           <h2>Build a heading outline someone can scan.</h2>
           <p>
-            Headings communicate hierarchy. Use one clear <code>&lt;h1&gt;</code>{" "}
-            for the page topic, then <code>&lt;h2&gt;</code> for its direct
-            sections. Do not pick a heading level because of its default font
-            size; CSS controls appearance.
+            Headings communicate hierarchy. Use one clear{" "}
+            <code>&lt;h1&gt;</code> for the page topic, then{" "}
+            <code>&lt;h2&gt;</code> for its direct sections. Do not pick a
+            heading level because of its default font size; CSS controls
+            appearance.
           </p>
           <pre aria-label="A semantic article structure">
             <code>{`<body>

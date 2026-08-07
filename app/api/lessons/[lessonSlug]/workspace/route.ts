@@ -1,9 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import {
-  getFirstLessonArtifact,
-  saveFirstLessonArtifact,
-} from "@/db/course";
+import { getFirstLessonArtifact, saveFirstLessonArtifact } from "@/db/course";
 import {
   hasValidSemanticHtmlLength,
   MAX_SEMANTIC_HTML_LENGTH,
@@ -12,6 +9,10 @@ import {
   hasValidCssPracticeLength,
   MAX_CSS_PRACTICE_LENGTH,
 } from "@/lib/css-box-model-practice";
+import {
+  hasValidResponsiveCssLength,
+  MAX_RESPONSIVE_CSS_LENGTH,
+} from "@/lib/responsive-css-practice";
 import { auth } from "@/lib/auth";
 
 type RouteContext = {
@@ -76,12 +77,16 @@ export async function POST(request: Request, context: RouteContext) {
       : "";
 
   const { lessonSlug } = await context.params;
-  const maxLength =
-    lessonSlug === "css-selectors-box-model"
+  const isBoxModelLesson = lessonSlug === "css-selectors-box-model";
+  const isResponsiveLesson = lessonSlug === "responsive-css-grid";
+  const maxLength = isResponsiveLesson
+    ? MAX_RESPONSIVE_CSS_LENGTH
+    : isBoxModelLesson
       ? MAX_CSS_PRACTICE_LENGTH
       : MAX_SEMANTIC_HTML_LENGTH;
-  const hasValidLength =
-    lessonSlug === "css-selectors-box-model"
+  const hasValidLength = isResponsiveLesson
+    ? hasValidResponsiveCssLength(html)
+    : isBoxModelLesson
       ? hasValidCssPracticeLength(html)
       : hasValidSemanticHtmlLength(html);
 

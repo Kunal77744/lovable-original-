@@ -6,6 +6,8 @@ import {
   FIRST_LESSON_REVISION,
   SECOND_LESSON,
   SECOND_LESSON_QUIZ,
+  THIRD_LESSON,
+  THIRD_LESSON_QUIZ,
   getPublicLessonQuiz,
   getPublicFirstLessonQuiz,
   gradeLessonQuiz,
@@ -23,9 +25,13 @@ describe("gradeFirstLessonQuiz", () => {
     ).toBe(true);
   });
 
-  it("defines two ordered, practical foundation lessons", () => {
-    expect(FIRST_COURSE_LESSONS).toEqual([FIRST_LESSON, SECOND_LESSON]);
-    expect(FIRST_COURSE_LESSONS).toHaveLength(2);
+  it("defines three ordered, practical foundation lessons", () => {
+    expect(FIRST_COURSE_LESSONS).toEqual([
+      FIRST_LESSON,
+      SECOND_LESSON,
+      THIRD_LESSON,
+    ]);
+    expect(FIRST_COURSE_LESSONS).toHaveLength(3);
     expect(FIRST_LESSON).toMatchObject({
       slug: "semantic-html",
       estimatedMinutes: 18,
@@ -36,6 +42,11 @@ describe("gradeFirstLessonQuiz", () => {
       estimatedMinutes: 16,
     });
     expect(SECOND_LESSON_QUIZ).toHaveLength(4);
+    expect(THIRD_LESSON).toMatchObject({
+      slug: "responsive-css-grid",
+      estimatedMinutes: 17,
+    });
+    expect(THIRD_LESSON_QUIZ).toHaveLength(4);
   });
 
   it("passes an answer set at the 75 percent threshold", () => {
@@ -66,6 +77,24 @@ describe("gradeFirstLessonQuiz", () => {
     expect(getPublicLessonQuiz(SECOND_LESSON.slug)?.[0]).not.toHaveProperty(
       "correctChoiceId",
     );
+    expect(getPublicLessonQuiz(THIRD_LESSON.slug)?.[0]).not.toHaveProperty(
+      "correctChoiceId",
+    );
+  });
+
+  it("grades responsive layout recall with the shared pass threshold", () => {
+    const answers = Object.fromEntries(
+      THIRD_LESSON_QUIZ.map((question, index) => [
+        question.id,
+        index === 0 ? "incorrect" : question.correctChoiceId,
+      ]),
+    );
+
+    expect(gradeLessonQuiz(THIRD_LESSON.slug, answers)).toMatchObject({
+      valid: true,
+      score: 75,
+      passed: true,
+    });
   });
 
   it("grades the CSS recall path with the shared pass threshold", () => {

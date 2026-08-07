@@ -54,15 +54,15 @@ export default async function DashboardPage() {
     javascriptCapstone,
     foundationsReview,
   ] = await Promise.all([
-      getOrCreateFirstCourseAssignment(session.user.id),
-      getCodingCatalogProgress(session.user.id),
-      getCssPracticeCatalogProgress(session.user.id),
-      getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
-      getHtmlCssCapstoneSummary(session.user.id),
-      getJavaScriptLabCatalogProgress(session.user.id),
-      getJavaScriptCapstoneSummary(session.user.id),
-      getWebFoundationsReviewResultForStudent(session.user.id),
-    ]);
+    getOrCreateFirstCourseAssignment(session.user.id),
+    getCodingCatalogProgress(session.user.id),
+    getCssPracticeCatalogProgress(session.user.id),
+    getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
+    getHtmlCssCapstoneSummary(session.user.id),
+    getJavaScriptLabCatalogProgress(session.user.id),
+    getJavaScriptCapstoneSummary(session.user.id),
+    getWebFoundationsReviewResultForStudent(session.user.id),
+  ]);
   const guidedProjectCompleted =
     guidedProject?.submission?.status === "completed";
   const guidedProjectStarted = Boolean(guidedProject?.saved);
@@ -153,12 +153,14 @@ export default async function DashboardPage() {
             <div>
               <p className="course-kicker">Spaced foundations review</p>
               <h2 id="dashboard-foundations-review-title">
-                {foundationsReview && !isWebFoundationsReviewDue(foundationsReview)
+                {foundationsReview &&
+                !isWebFoundationsReviewDue(foundationsReview)
                   ? `Your next HTML and CSS review is set for ${formatWebFoundationsReviewDueDate(foundationsReview.nextDueAt)}.`
                   : "Bring four HTML and CSS decisions back before they fade."}
               </h2>
               <p>
-                {foundationsReview && !isWebFoundationsReviewDue(foundationsReview)
+                {foundationsReview &&
+                !isWebFoundationsReviewDue(foundationsReview)
                   ? `Last recall ${foundationsReview.correctCount}/${foundationsReview.totalCount}. Your project remains the next milestone.`
                   : "Four authored prompts adapt the next due date without storing your choices or changing course completion."}
               </p>
@@ -169,7 +171,8 @@ export default async function DashboardPage() {
                 className="dashboard-foundations-review-action"
                 href="/courses/web-development-foundations/review"
               >
-                {foundationsReview && !isWebFoundationsReviewDue(foundationsReview)
+                {foundationsReview &&
+                !isWebFoundationsReviewDue(foundationsReview)
                   ? "View review schedule"
                   : "Review due concepts"}
                 <span aria-hidden="true">→</span>
@@ -189,8 +192,8 @@ export default async function DashboardPage() {
             </h2>
             <p>
               Choose your certificate name now. Your private course certificate
-              becomes available after you pass both saved recall checks at 75%
-              or higher.
+              becomes available after you pass all three saved recall checks at
+              75% or higher.
             </p>
           </div>
           <div className="dashboard-account-actions">
@@ -243,9 +246,7 @@ export default async function DashboardPage() {
             <h2 id="dashboard-playground-title">
               Take an idea outside the problem set.
             </h2>
-            <p>
-              Write, run, save, and return to one private JavaScript file.
-            </p>
+            <p>Write, run, save, and return to one private JavaScript file.</p>
           </div>
           <Link className="dashboard-playground-action" href="/playground">
             Open playground <span aria-hidden="true">→</span>

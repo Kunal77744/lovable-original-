@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   ]);
   if (!course.courseCompleted) {
     return NextResponse.json(
-      { error: "Complete both lessons before review" },
+      { error: "Complete all three lessons before review" },
       { status: 403 },
     );
   }
@@ -56,10 +56,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const saved = await saveWebFoundationsReviewResultForStudent(session.user.id, {
-    correctCount: result.correctCount,
-    totalCount: result.totalCount,
-  });
+  const saved = await saveWebFoundationsReviewResultForStudent(
+    session.user.id,
+    {
+      correctCount: result.correctCount,
+      totalCount: result.totalCount,
+    },
+  );
   if (!saved) {
     return NextResponse.json(
       { error: "Review result could not be saved" },

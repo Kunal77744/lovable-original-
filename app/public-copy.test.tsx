@@ -30,9 +30,7 @@ describe("public product promise", () => {
     expect(
       screen.getByText(/take a short lesson, build and check real work/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Path preview · step 1 of 3"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Path preview · step 1 of 3")).toBeInTheDocument();
     expect(
       screen.getByText(/build and check a guided project/i),
     ).toBeInTheDocument();
@@ -67,7 +65,9 @@ describe("public product promise", () => {
     expect(screen.getByText(/private course certificate/i)).toBeInTheDocument();
     expect(screen.getByText(/private learner profile/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/five-question JavaScript fundamentals interview drill/i),
+      screen.getByText(
+        /five-question JavaScript fundamentals interview drill/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/private saved JavaScript playground/i),
@@ -102,21 +102,18 @@ describe("public product promise", () => {
     expect(courseMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
-        alt:
-          "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
+        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
-        alt:
-          "Web Development Foundations: two practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
+        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
-        alt:
-          "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and six JavaScript problems.",
+        alt: "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and six JavaScript problems.",
       }),
     ]);
   });
@@ -138,7 +135,7 @@ describe("public product promise", () => {
     expect(
       screen.getByText(/six JavaScript problems and six CSS challenges/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("2 saved builds")).toBeInTheDocument();
+    expect(screen.getByText("3 saved builds")).toBeInTheDocument();
     expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
     expect(screen.getByText("6 + 6 + 6")).toBeInTheDocument();
     expect(

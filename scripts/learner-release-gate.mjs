@@ -8,9 +8,11 @@ const COURSE_TITLE = "Web Development Foundations";
 const COURSE_SLUG = "web-development-foundations";
 const LESSON_SLUG = "semantic-html";
 const SECOND_LESSON_SLUG = "css-selectors-box-model";
+const THIRD_LESSON_SLUG = "responsive-css-grid";
 const PROJECT_SLUG = "semantic-html-article";
 const LESSON_TITLE = "Build a page the browser understands";
 const SECOND_LESSON_TITLE = "Style a card without guessing";
+const THIRD_LESSON_TITLE = "Build a layout that adapts";
 const CSS_CHALLENGES = [
   {
     slug: "class-selector",
@@ -91,6 +93,12 @@ const SECOND_QUIZ_ANSWERS = {
   "box-width": "whole-box",
   "spacing-choice": "padding",
 };
+const THIRD_QUIZ_ANSWERS = {
+  "grid-container": "children",
+  "minmax-purpose": "range",
+  "auto-fit-purpose": "available-space",
+  "gap-choice": "container-rule",
+};
 const DEFAULT_APP_URL = "http://127.0.0.1:3210";
 const DATABASE_PREFIX = "lovable_release_gate_";
 const WAIT_TIMEOUT_MS = 60_000;
@@ -98,8 +106,8 @@ const WAIT_TIMEOUT_MS = 60_000;
 const steps = [
   "Account creation",
   "Initial dashboard",
-  "Two lesson workspaces",
-  "Two workspace saves and checks",
+  "Three lesson workspaces",
+  "Three workspace saves and checks",
   "Quiz, project, feedback, certificate, and interview",
   "Saved learner state after reload",
   "Sign out",
@@ -151,7 +159,7 @@ class CookieJar {
 
 function getOption(name) {
   const index = process.argv.indexOf(name);
-  return index === -1 ? null : process.argv[index + 1] ?? null;
+  return index === -1 ? null : (process.argv[index + 1] ?? null);
 }
 
 function getAppUrl() {
@@ -167,7 +175,9 @@ function getAppUrl() {
     throw new Error("--app-url must be a valid loopback HTTP URL.");
   }
 
-  const isLoopback = ["127.0.0.1", "localhost", "::1"].includes(appUrl.hostname);
+  const isLoopback = ["127.0.0.1", "localhost", "::1"].includes(
+    appUrl.hostname,
+  );
 
   if (
     appUrl.protocol !== "http:" ||
@@ -319,7 +329,9 @@ async function createIsolatedDatabase(adminSql, databaseName) {
 
 async function dropIsolatedDatabase(adminSql, databaseName) {
   if (!databaseName.startsWith(DATABASE_PREFIX)) {
-    throw new Error("Refusing to drop a database outside the release-gate prefix.");
+    throw new Error(
+      "Refusing to drop a database outside the release-gate prefix.",
+    );
   }
 
   await adminSql`
@@ -354,7 +366,9 @@ async function waitForApp(baseUrl, child) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  throw new Error("The local application did not become ready within 60 seconds.");
+  throw new Error(
+    "The local application did not become ready within 60 seconds.",
+  );
 }
 
 function startApp(appUrl, env) {
@@ -416,6 +430,7 @@ async function runJourney(baseUrl, databaseUrl) {
   const forcedFailure = process.env.LEARNER_GATE_TEST_FAIL_STEP?.trim();
   let savedWorkspaceHtml = "";
   let savedCssWorkspace = "";
+  let savedResponsiveWorkspace = "";
   const savedCssChallenges = new Map();
   let savedProjectHtml = "";
   let savedFeedbackComment = "";
@@ -449,11 +464,15 @@ async function runJourney(baseUrl, databaseUrl) {
   }
 
   async function jsonRequest(path, body, requestJar = jar) {
-    return request(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    }, requestJar);
+    return request(
+      path,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+      requestJar,
+    );
   }
 
   async function runStep(number, action) {
@@ -471,7 +490,10 @@ async function runJourney(baseUrl, databaseUrl) {
       if (error instanceof StepFailure) {
         throw error;
       }
-      throw new StepFailure(step, "Unexpected response from the learner journey.");
+      throw new StepFailure(
+        step,
+        "Unexpected response from the learner journey.",
+      );
     }
   }
 
@@ -482,22 +504,38 @@ async function runJourney(baseUrl, databaseUrl) {
       password,
       callbackURL: "/dashboard",
     });
-    assertStep(response.status === 200, step, "Account creation did not succeed.");
+    assertStep(
+      response.status === 200,
+      step,
+      "Account creation did not succeed.",
+    );
     const payload = await response.json();
-    assertStep(Boolean(payload.user?.id), step, "Account creation returned no user.");
+    assertStep(
+      Boolean(payload.user?.id),
+      step,
+      "Account creation returned no user.",
+    );
     learnerUserId = payload.user.id;
-    assertStep(Boolean(jar.header()), step, "Account creation returned no session.");
+    assertStep(
+      Boolean(jar.header()),
+      step,
+      "Account creation returned no session.",
+    );
   });
 
   await runStep(2, async (step) => {
     const response = await request("/dashboard");
     const text = pageText(await response.text());
     assertStep(response.status === 200, step, "Dashboard did not load.");
-    assertStep(text.includes(COURSE_TITLE), step, "First course was not visible.");
     assertStep(
-      /Start here\s*·\s*34 minutes/.test(text),
+      text.includes(COURSE_TITLE),
       step,
-      "Initial progress was not ready for both lessons.",
+      "First course was not visible.",
+    );
+    assertStep(
+      /Start here\s*·\s*51 minutes/.test(text),
+      step,
+      "Initial progress was not ready for all three lessons.",
     );
     assertStep(
       text.includes("Certificate settings") &&
@@ -508,12 +546,14 @@ async function runJourney(baseUrl, databaseUrl) {
   });
 
   await runStep(3, async (step) => {
-    const response = await request(
-      `/learn/${COURSE_SLUG}/${LESSON_SLUG}`,
-    );
+    const response = await request(`/learn/${COURSE_SLUG}/${LESSON_SLUG}`);
     const text = pageText(await response.text());
     assertStep(response.status === 200, step, "Lesson did not load.");
-    assertStep(text.includes(LESSON_TITLE), step, "Lesson title was not visible.");
+    assertStep(
+      text.includes(LESSON_TITLE),
+      step,
+      "Lesson title was not visible.",
+    );
     assertStep(
       /75\s*%\s*to complete/.test(text),
       step,
@@ -575,6 +615,32 @@ async function runJourney(baseUrl, databaseUrl) {
       "A fresh learner did not receive the four-check CSS workspace.",
     );
 
+    const thirdLessonResponse = await request(
+      `/learn/${COURSE_SLUG}/${THIRD_LESSON_SLUG}`,
+    );
+    const thirdLessonText = pageText(await thirdLessonResponse.text());
+    assertStep(
+      thirdLessonResponse.status === 200 &&
+        thirdLessonText.includes(THIRD_LESSON_TITLE) &&
+        /75\s*%\s*to complete/.test(thirdLessonText),
+      step,
+      "The third lesson and its recall check did not load.",
+    );
+
+    const thirdWorkspaceResponse = await request(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+    );
+    const thirdWorkspace = await thirdWorkspaceResponse.json();
+    assertStep(
+      thirdWorkspaceResponse.status === 200 &&
+        thirdWorkspace.saved === false &&
+        thirdWorkspace.submission === null &&
+        typeof thirdWorkspace.html === "string" &&
+        thirdWorkspace.checks?.length === 4,
+      step,
+      "A fresh learner did not receive the four-check responsive CSS workspace.",
+    );
+
     const practicePageResponse = await request("/practice/css");
     const practicePageText = pageText(await practicePageResponse.text());
     assertStep(
@@ -612,9 +678,7 @@ async function runJourney(baseUrl, databaseUrl) {
       );
     }
 
-    const noteResponse = await request(
-      `/api/lessons/${LESSON_SLUG}/notes`,
-    );
+    const noteResponse = await request(`/api/lessons/${LESSON_SLUG}/notes`);
     const note = await noteResponse.json();
     assertStep(
       noteResponse.status === 200 && note.note === null,
@@ -753,6 +817,32 @@ async function runJourney(baseUrl, databaseUrl) {
       "The CSS workspace did not save a completed 4/4 result.",
     );
 
+    savedResponsiveWorkspace = `.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  --release-gate: "${runId}";
+}
+
+.resource-card {
+  min-width: 0;
+}`;
+    const responsiveResponse = await jsonRequest(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+      { html: savedResponsiveWorkspace },
+    );
+    const responsiveWorkspace = await responsiveResponse.json();
+    assertStep(
+      responsiveResponse.status === 200 &&
+        responsiveWorkspace.html === savedResponsiveWorkspace &&
+        responsiveWorkspace.checks?.length === 4 &&
+        responsiveWorkspace.submission?.status === "completed" &&
+        responsiveWorkspace.submission?.passedChecks === 4 &&
+        responsiveWorkspace.checks.every((check) => check.passed === true),
+      step,
+      "The responsive CSS workspace did not save a completed 4/4 result.",
+    );
+
     const failingChallengeResponse = await jsonRequest(
       `/api/practice/css/${CSS_CHALLENGES[0].slug}`,
       { mode: "submit", css: ".learning-card { color: #17231e; }" },
@@ -826,9 +916,7 @@ async function runJourney(baseUrl, databaseUrl) {
       "The current JavaScript draft could not be revised after submission.",
     );
 
-    const codingWorkspaceResponse = await request(
-      "/practice/sum-two-numbers",
-    );
+    const codingWorkspaceResponse = await request("/practice/sum-two-numbers");
     const codingWorkspaceHtml = await codingWorkspaceResponse.text();
     const renderedCodingDraft = elementTextByAttribute(codingWorkspaceHtml, {
       tagName: "textarea",
@@ -1002,11 +1090,14 @@ async function runJourney(baseUrl, databaseUrl) {
   });
 
   await runStep(5, async (step) => {
-    const response = await jsonRequest(
-      `/api/lessons/${LESSON_SLUG}/complete`,
-      { answers: QUIZ_ANSWERS },
+    const response = await jsonRequest(`/api/lessons/${LESSON_SLUG}/complete`, {
+      answers: QUIZ_ANSWERS,
+    });
+    assertStep(
+      response.status === 200,
+      step,
+      "Quiz submission did not succeed.",
     );
-    assertStep(response.status === 200, step, "Quiz submission did not succeed.");
     const payload = await response.json();
     assertStep(payload.passed === true, step, "Quiz result did not pass.");
     assertStep(payload.completed === true, step, "Lesson was not completed.");
@@ -1028,6 +1119,20 @@ async function runJourney(baseUrl, databaseUrl) {
         secondPayload.savedScore === 100,
       step,
       "The second lesson was not completed with a saved 100% score.",
+    );
+
+    const thirdResponse = await jsonRequest(
+      `/api/lessons/${THIRD_LESSON_SLUG}/complete`,
+      { answers: THIRD_QUIZ_ANSWERS },
+    );
+    const thirdPayload = await thirdResponse.json();
+    assertStep(
+      thirdResponse.status === 200 &&
+        thirdPayload.passed === true &&
+        thirdPayload.completed === true &&
+        thirdPayload.savedScore === 100,
+      step,
+      "The third lesson was not completed with a saved 100% score.",
     );
 
     const projectPageResponse = await request(`/projects/${PROJECT_SLUG}`);
@@ -1188,16 +1293,20 @@ async function runJourney(baseUrl, databaseUrl) {
     const response = await request("/dashboard");
     const html = await response.text();
     const text = pageText(html);
-    assertStep(response.status === 200, step, "Reloaded dashboard did not load.");
     assertStep(
-      /Completed\s*·\s*2\s*\/\s*2 lessons/.test(text),
+      response.status === 200,
       step,
-      "Saved progress was not 2/2.",
+      "Reloaded dashboard did not load.",
+    );
+    assertStep(
+      /Completed\s*·\s*3\s*\/\s*3 lessons/.test(text),
+      step,
+      "Saved progress was not 3/3.",
     );
     assertStep(
       text.includes("HTML and CSS foundations complete"),
       step,
-      "The completed two-lesson milestone was not restored.",
+      "The completed three-lesson milestone was not restored.",
     );
     assertStep(
       /1\s*\/\s*6 Accepted/.test(text),
@@ -1233,6 +1342,20 @@ async function runJourney(baseUrl, databaseUrl) {
       "The exact CSS workspace and 4/4 result were not restored after reload.",
     );
 
+    const thirdWorkspaceResponse = await request(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+    );
+    const thirdWorkspace = await thirdWorkspaceResponse.json();
+    assertStep(
+      thirdWorkspaceResponse.status === 200 &&
+        thirdWorkspace.saved === true &&
+        thirdWorkspace.html === savedResponsiveWorkspace &&
+        thirdWorkspace.submission?.status === "completed" &&
+        thirdWorkspace.submission?.passedChecks === 4,
+      step,
+      "The exact responsive CSS workspace and 4/4 result were not restored after reload.",
+    );
+
     for (const challenge of CSS_CHALLENGES) {
       const challengeStateResponse = await request(
         `/api/practice/css/${challenge.slug}`,
@@ -1261,20 +1384,15 @@ async function runJourney(baseUrl, databaseUrl) {
       "The revised feedback was not restored after reload.",
     );
 
-    const noteResponse = await request(
-      `/api/lessons/${LESSON_SLUG}/notes`,
-    );
+    const noteResponse = await request(`/api/lessons/${LESSON_SLUG}/notes`);
     const note = await noteResponse.json();
     assertStep(
-      noteResponse.status === 200 &&
-        note.note?.content === savedLessonNote,
+      noteResponse.status === 200 && note.note?.content === savedLessonNote,
       step,
       "The exact revised lesson note was not restored after reload.",
     );
 
-    const projectResponse = await request(
-      `/api/projects/${PROJECT_SLUG}`,
-    );
+    const projectResponse = await request(`/api/projects/${PROJECT_SLUG}`);
     const project = await projectResponse.json();
     assertStep(
       projectResponse.status === 200 &&
@@ -1344,6 +1462,7 @@ async function runJourney(baseUrl, databaseUrl) {
     assertStep(
       !lessonText.includes(savedWorkspaceHtml) &&
         !lessonText.includes(savedCssWorkspace) &&
+        !lessonText.includes(savedResponsiveWorkspace) &&
         !lessonText.includes(savedProjectHtml) &&
         !lessonText.includes(savedLessonNote) &&
         !lessonText.includes(savedFeedbackComment) &&
@@ -1363,6 +1482,18 @@ async function runJourney(baseUrl, databaseUrl) {
         !secondLessonText.includes(savedCssWorkspace),
       step,
       "The second public lesson was unavailable or exposed saved CSS after sign out.",
+    );
+
+    const thirdLessonResponse = await request(
+      `/learn/${COURSE_SLUG}/${THIRD_LESSON_SLUG}`,
+    );
+    const thirdLessonText = pageText(await thirdLessonResponse.text());
+    assertStep(
+      thirdLessonResponse.status === 200 &&
+        thirdLessonText.includes(THIRD_LESSON_TITLE) &&
+        !thirdLessonText.includes(savedResponsiveWorkspace),
+      step,
+      "The third public lesson was unavailable or exposed saved responsive CSS after sign out.",
     );
 
     for (const challenge of CSS_CHALLENGES) {
@@ -1433,6 +1564,14 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Signed-out CSS workspace access was not rejected.",
     );
+    const thirdWorkspaceResponse = await request(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+    );
+    assertStep(
+      thirdWorkspaceResponse.status === 401,
+      step,
+      "Signed-out responsive CSS workspace access was not rejected.",
+    );
     for (const challenge of CSS_CHALLENGES) {
       const challengeStateResponse = await request(
         `/api/practice/css/${challenge.slug}`,
@@ -1457,9 +1596,7 @@ async function runJourney(baseUrl, databaseUrl) {
       step,
       "Signed-out feedback access was not rejected.",
     );
-    const noteResponse = await request(
-      `/api/lessons/${LESSON_SLUG}/notes`,
-    );
+    const noteResponse = await request(`/api/lessons/${LESSON_SLUG}/notes`);
     assertStep(
       noteResponse.status === 401,
       step,
@@ -1503,7 +1640,7 @@ async function runJourney(baseUrl, databaseUrl) {
       "Dashboard did not load after sign in.",
     );
     assertStep(
-      /Completed\s*·\s*2\s*\/\s*2 lessons/.test(text),
+      /Completed\s*·\s*3\s*\/\s*3 lessons/.test(text),
       step,
       "Saved result did not remain after sign in.",
     );
@@ -1534,6 +1671,19 @@ async function runJourney(baseUrl, databaseUrl) {
       "The exact CSS workspace and 4/4 result did not remain after sign in.",
     );
 
+    const thirdWorkspaceResponse = await request(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+    );
+    const thirdWorkspace = await thirdWorkspaceResponse.json();
+    assertStep(
+      thirdWorkspaceResponse.status === 200 &&
+        thirdWorkspace.html === savedResponsiveWorkspace &&
+        thirdWorkspace.submission?.status === "completed" &&
+        thirdWorkspace.submission?.passedChecks === 4,
+      step,
+      "The exact responsive CSS workspace and 4/4 result did not remain after sign in.",
+    );
+
     for (const challenge of CSS_CHALLENGES) {
       const challengeStateResponse = await request(
         `/api/practice/css/${challenge.slug}`,
@@ -1561,13 +1711,10 @@ async function runJourney(baseUrl, databaseUrl) {
       "Saved feedback did not remain after sign in.",
     );
 
-    const noteResponse = await request(
-      `/api/lessons/${LESSON_SLUG}/notes`,
-    );
+    const noteResponse = await request(`/api/lessons/${LESSON_SLUG}/notes`);
     const note = await noteResponse.json();
     assertStep(
-      noteResponse.status === 200 &&
-        note.note?.content === savedLessonNote,
+      noteResponse.status === 200 && note.note?.content === savedLessonNote,
       step,
       "The exact lesson note did not remain after sign in.",
     );
@@ -1756,16 +1903,44 @@ async function runJourney(baseUrl, databaseUrl) {
       "One learner could read another learner’s CSS workspace.",
     );
 
+    const thirdWorkspaceResponse = await request(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+      {},
+      secondJar,
+    );
+    const thirdWorkspace = await thirdWorkspaceResponse.json();
+    assertStep(
+      thirdWorkspaceResponse.status === 200 &&
+        thirdWorkspace.saved === false &&
+        thirdWorkspace.submission === null &&
+        thirdWorkspace.html !== savedResponsiveWorkspace,
+      step,
+      "One learner could read another learner’s responsive CSS workspace.",
+    );
+
     const originalSecondWorkspaceResponse = await request(
       `/api/lessons/${SECOND_LESSON_SLUG}/workspace`,
     );
-    const originalSecondWorkspace = await originalSecondWorkspaceResponse.json();
+    const originalSecondWorkspace =
+      await originalSecondWorkspaceResponse.json();
     assertStep(
       originalSecondWorkspaceResponse.status === 200 &&
         originalSecondWorkspace.html === savedCssWorkspace &&
         originalSecondWorkspace.submission?.passedChecks === 4,
       step,
       "The isolation learner changed the original CSS workspace.",
+    );
+
+    const originalThirdWorkspaceResponse = await request(
+      `/api/lessons/${THIRD_LESSON_SLUG}/workspace`,
+    );
+    const originalThirdWorkspace = await originalThirdWorkspaceResponse.json();
+    assertStep(
+      originalThirdWorkspaceResponse.status === 200 &&
+        originalThirdWorkspace.html === savedResponsiveWorkspace &&
+        originalThirdWorkspace.submission?.passedChecks === 4,
+      step,
+      "The isolation learner changed the original responsive CSS workspace.",
     );
 
     for (const challenge of CSS_CHALLENGES) {
@@ -2065,14 +2240,10 @@ async function main() {
     await createIsolatedDatabase(adminSql, databaseName);
     databaseCreated = true;
 
-    await childOutput(
-      { ...appEnv, DATABASE_URL: isolatedDatabaseUrl },
-      ["scripts/database-release.mjs"],
-    );
-    await childOutput(appEnv, [
-      "node_modules/next/dist/bin/next",
-      "build",
+    await childOutput({ ...appEnv, DATABASE_URL: isolatedDatabaseUrl }, [
+      "scripts/database-release.mjs",
     ]);
+    await childOutput(appEnv, ["node_modules/next/dist/bin/next", "build"]);
 
     appProcess = startApp(appUrl, appEnv);
     await waitForApp(appUrl, appProcess);
@@ -2082,11 +2253,15 @@ async function main() {
         "The local application emitted stderr during the learner journey.",
       );
     }
-    console.log(`Learner release gate passed: ${steps.length}/${steps.length} checks.`);
+    console.log(
+      `Learner release gate passed: ${steps.length}/${steps.length} checks.`,
+    );
     result = 0;
   } catch (error) {
     const stage =
-      error instanceof StepFailure ? `STEP FAILED ${error.step}` : "SETUP FAILED";
+      error instanceof StepFailure
+        ? `STEP FAILED ${error.step}`
+        : "SETUP FAILED";
     console.error(`${stage}: ${safeMessage(error)}`);
   } finally {
     await stopApp(appProcess);
