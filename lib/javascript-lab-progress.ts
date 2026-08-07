@@ -3,7 +3,7 @@ import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "./javascript-algorithm-p
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "./javascript-data-structures";
 import { JAVASCRIPT_DEBUGGING_DRILLS } from "./debugging-lab";
 import { JAVASCRIPT_DOM_EXERCISES } from "./javascript-dom-exercises";
-import { JAVASCRIPT_FOUNDATION_EXERCISES } from "./javascript-foundations";
+import { JAVASCRIPT_FOUNDATIONS_UNIT_STEPS } from "./javascript-foundations";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "./javascript-functions-scope";
 import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "./javascript-linked-lists";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "./javascript-recursion";
@@ -17,7 +17,8 @@ export const JAVASCRIPT_LABS = [
     slug: "foundations",
     title: "JavaScript foundations",
     href: "/practice/foundations",
-    exerciseIds: JAVASCRIPT_FOUNDATION_EXERCISES.map((exercise) => exercise.slug),
+    exerciseIds: JAVASCRIPT_FOUNDATIONS_UNIT_STEPS.map((step) => step.id),
+    exerciseHrefs: JAVASCRIPT_FOUNDATIONS_UNIT_STEPS.map((step) => step.href),
   },
   {
     slug: "tracing",
@@ -130,6 +131,17 @@ export function getJavaScriptLab(labSlug: string) {
   return JAVASCRIPT_LABS.find((lab) => lab.slug === labSlug) ?? null;
 }
 
+function getJavaScriptLabExerciseHref(
+  lab: (typeof JAVASCRIPT_LABS)[number],
+  exerciseIndex: number,
+) {
+  if ("exerciseHrefs" in lab) {
+    return lab.exerciseHrefs[exerciseIndex] ?? lab.href;
+  }
+
+  return lab.href;
+}
+
 export function isJavaScriptLabExercise(labSlug: string, exerciseId: string) {
   const lab = getJavaScriptLab(labSlug);
   return lab ? lab.exerciseIds.some((id) => id === exerciseId) : false;
@@ -186,7 +198,10 @@ export function buildJavaScriptLabCatalogProgress(
     return {
       slug: lab.slug,
       title: lab.title,
-      href: lab.href,
+      href:
+        nextExerciseIndex === -1
+          ? lab.href
+          : getJavaScriptLabExerciseHref(lab, nextExerciseIndex),
       completedCount,
       totalCount: lab.exerciseIds.length,
       nextExerciseNumber:

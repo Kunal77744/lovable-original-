@@ -8,17 +8,20 @@ import {
 } from "./javascript-lab-progress";
 
 describe("JavaScript lab progress catalog", () => {
-  it("defines 50 unique exercises across thirteen private labs", () => {
+  it("defines 51 unique saved steps across thirteen private labs", () => {
     const keys = JAVASCRIPT_LABS.flatMap((lab) =>
       lab.exerciseIds.map((exerciseId) => `${lab.slug}:${exerciseId}`),
     );
     expect(JAVASCRIPT_LABS).toHaveLength(13);
-    expect(keys).toHaveLength(50);
-    expect(new Set(keys)).toHaveLength(50);
+    expect(keys).toHaveLength(51);
+    expect(new Set(keys)).toHaveLength(51);
   });
 
   it("rejects unknown lab and exercise combinations", () => {
     expect(isJavaScriptLabExercise("tracing", "assignment-order")).toBe(true);
+    expect(
+      isJavaScriptLabExercise("foundations", "understand-the-judge"),
+    ).toBe(true);
     expect(isJavaScriptLabExercise("tracing", "parse-input")).toBe(false);
     expect(isJavaScriptLabExercise("recursion", "stop-at-the-base-case")).toBe(
       true,
@@ -58,7 +61,7 @@ describe("JavaScript lab progress catalog", () => {
     ]);
 
     expect(progress.completedCount).toBe(foundations.exerciseIds.length + 1);
-    expect(progress.totalCount).toBe(50);
+    expect(progress.totalCount).toBe(51);
     expect(progress.nextLabSlug).toBe("tracing");
     expect(progress.nextExerciseNumber).toBe(2);
     expect(progress.labs).toHaveLength(13);
@@ -76,6 +79,24 @@ describe("JavaScript lab progress catalog", () => {
       state: "not-started",
       completedCount: 0,
       nextExerciseNumber: 1,
+    });
+  });
+
+  it("resumes the foundations unit at the exact unfinished route", () => {
+    const fresh = buildJavaScriptLabCatalogProgress([]);
+    expect(fresh.nextHref).toBe("/practice/judge-basics");
+    expect(fresh.nextExerciseNumber).toBe(1);
+
+    const afterJudge = buildJavaScriptLabCatalogProgress([
+      { labSlug: "foundations", exerciseId: "understand-the-judge" },
+    ]);
+    expect(afterJudge.nextHref).toBe("/practice/foundations");
+    expect(afterJudge.nextExerciseNumber).toBe(2);
+    expect(afterJudge.labs[0]).toMatchObject({
+      href: "/practice/foundations",
+      completedCount: 1,
+      totalCount: 4,
+      state: "in-progress",
     });
   });
 });

@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@/lib/auth";
+import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 import JavaScriptJudgeBasicsPage, { metadata } from "./page";
 
 const { redirectMock } = vi.hoisted(() => ({
@@ -23,7 +24,14 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getCompletedJavaScriptLabExerciseIds: vi.fn(),
+}));
+
 const getSession = vi.mocked(auth.api.getSession);
+const getCompletedExerciseIds = vi.mocked(
+  getCompletedJavaScriptLabExerciseIds,
+);
 
 describe("JavaScriptJudgeBasicsPage", () => {
   afterEach(() => {
@@ -39,11 +47,19 @@ describe("JavaScriptJudgeBasicsPage", () => {
     getSession.mockResolvedValue({ user: { id: "learner-1" } } as Awaited<
       ReturnType<typeof auth.api.getSession>
     >);
+    getCompletedExerciseIds.mockResolvedValue([]);
 
     render(await JavaScriptJudgeBasicsPage());
 
     expect(screen.getByRole("heading", { name: "Follow one value through the judge." })).toBeInTheDocument();
-    expect(screen.getByText("Private JavaScript lesson · 5 minutes")).toBeInTheDocument();
+    expect(screen.getByText("JavaScript foundations · step 1 of 4")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "JavaScript foundations unit" }),
+    ).toBeInTheDocument();
+    expect(getCompletedExerciseIds).toHaveBeenCalledWith(
+      "learner-1",
+      "foundations",
+    );
   });
 
   it("redirects signed-out visitors before rendering private content", async () => {
@@ -53,5 +69,6 @@ describe("JavaScriptJudgeBasicsPage", () => {
     expect(redirectMock).toHaveBeenCalledWith(
       "/account?mode=signin&next=/practice/judge-basics",
     );
+    expect(getCompletedExerciseIds).not.toHaveBeenCalled();
   });
 });

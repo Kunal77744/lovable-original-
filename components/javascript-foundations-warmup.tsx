@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
-import { JAVASCRIPT_FOUNDATION_EXERCISES } from "@/lib/javascript-foundations";
+import {
+  JAVASCRIPT_FOUNDATION_EXERCISES,
+  JAVASCRIPT_FOUNDATIONS_UNIT_STEPS,
+} from "@/lib/javascript-foundations";
 import {
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
@@ -63,10 +66,21 @@ export function JavaScriptFoundationsWarmup({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      const response = await saveJavaScriptLabExercise(
+        "foundations",
+        exercise.slug,
+      );
+      if (!response?.ok) {
+        setCheckState({
+          kind: "error",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
+        });
+        return;
+      }
       setCompletedIds((current) =>
         current.includes(exercise.slug) ? current : [...current, exercise.slug],
       );
-      void saveJavaScriptLabExercise("foundations", exercise.slug);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Exercise progress saved.`,
@@ -116,10 +130,16 @@ export function JavaScriptFoundationsWarmup({
 
   if (!exercise) {
     return (
-      <section className="foundations-complete" aria-label="Foundations warm-up complete">
-        <p className="eyebrow">Warm-up complete · saved to your account</p>
-        <h2>Three moves ready for judged practice.</h2>
-        <p>Your parsing, branching, and loop exercises will remain complete after sign-in.</p>
+      <section
+        className="foundations-complete"
+        aria-label="Foundations warm-up complete"
+      >
+        <p className="eyebrow">Foundations complete · saved to your account</p>
+        <h2>Four steps ready for judged practice.</h2>
+        <p>
+          Your judge, parsing, branching, and loop steps will remain complete
+          after sign-in.
+        </p>
         <Link className="foundations-run" href="/practice/sum-two-numbers">
           Start problem 01 <span aria-hidden="true">→</span>
         </Link>
@@ -136,7 +156,8 @@ export function JavaScriptFoundationsWarmup({
       <div className="foundations-lesson">
         <div className="foundations-step-row">
           <span>
-            Warm-up {exercise.number} of {JAVASCRIPT_FOUNDATION_EXERCISES.length}
+            Unit step {exercise.number + 1} of{" "}
+            {JAVASCRIPT_FOUNDATIONS_UNIT_STEPS.length}
           </span>
           <strong>{exercise.concept}</strong>
         </div>
@@ -163,18 +184,18 @@ export function JavaScriptFoundationsWarmup({
           </div>
         </div>
 
-        <ol className="foundations-path" aria-label="Warm-up concepts">
-          {JAVASCRIPT_FOUNDATION_EXERCISES.map((item, index) => (
+        <ol className="foundations-path" aria-label="Foundations unit steps">
+          {JAVASCRIPT_FOUNDATIONS_UNIT_STEPS.map((item, index) => (
             <li
               className={
-                index === exerciseIndex
+                index === exerciseIndex + 1
                   ? "is-current"
-                  : completedIds.includes(item.slug)
+                  : completedIds.includes(item.id)
                     ? "is-complete"
                     : undefined
               }
-              key={item.slug}
-              aria-current={index === exerciseIndex ? "step" : undefined}
+              key={item.id}
+              aria-current={index === exerciseIndex + 1 ? "step" : undefined}
             >
               <span>{String(item.number).padStart(2, "0")}</span>
               <strong>{item.concept}</strong>
@@ -231,7 +252,7 @@ export function JavaScriptFoundationsWarmup({
               className="foundations-run"
               onClick={continueWarmup}
             >
-              Continue to warm-up {exercise.number + 1}
+              Continue to step {exercise.number + 2}
             </button>
           )}
         </div>

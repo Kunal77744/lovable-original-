@@ -96,16 +96,27 @@ export default async function PracticePage() {
   const catalogProgressLabel = session
     ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
     : `${progress.totalCount} problems`;
+  const foundationsProgress = labProgress?.labs.find(
+    (lab) => lab.slug === "foundations",
+  );
+  const foundationsComplete = foundationsProgress?.state === "complete";
+  const foundationsStarted = (foundationsProgress?.completedCount ?? 0) > 0;
   const primaryActionLabel = session
     ? progress.completedCount === 0
-      ? "Learn how the judge works"
+      ? foundationsComplete
+        ? "Start problem 01"
+        : foundationsStarted
+          ? `Continue foundations · step ${foundationsProgress?.nextExerciseNumber ?? 1} of ${foundationsProgress?.totalCount ?? 4}`
+          : "Start JavaScript foundations"
       : nextProblemSlug
       ? `Continue at step ${primaryProblem.number} of ${progress.totalCount}`
       : "Review the six-step path"
     : `Start step 1 of ${progress.totalCount}`;
   const primaryActionHref =
     session && progress.completedCount === 0
-      ? "/practice/judge-basics"
+      ? foundationsComplete
+        ? "/practice/sum-two-numbers"
+        : foundationsProgress?.href ?? "/practice/judge-basics"
       : `/practice/${primaryProblem.slug}`;
 
   return (
@@ -372,7 +383,7 @@ export default async function PracticePage() {
               >
                 <span>
                   <small>
-                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 50} exercises
+                    Saved practice · {labProgress?.completedCount ?? 0}/{labProgress?.totalCount ?? 51} exercises
                   </small>
                   <strong>
                     {labProgress?.nextLabTitle

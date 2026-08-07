@@ -15291,7 +15291,7 @@ footer {
   margin: 32px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   list-style: none;
 }
@@ -19637,12 +19637,43 @@ footer {
   text-wrap: balance;
 }
 
-.judge-basics-hero > p {
+.judge-unit-summary > p {
   max-width: 48ch;
   margin: 0;
   color: var(--muted);
   font-size: 15px;
   line-height: 1.72;
+}
+
+.judge-unit-summary ol {
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  list-style: none;
+}
+
+.judge-unit-summary li {
+  padding-top: 10px;
+  display: grid;
+  gap: 4px;
+  color: #87928c;
+  border-top: 2px solid #d3ddd4;
+}
+
+.judge-unit-summary li.is-current {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.judge-unit-summary li span {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+}
+
+.judge-unit-summary li strong {
+  font-size: 10px;
 }
 
 .judge-trace {

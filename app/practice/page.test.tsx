@@ -48,12 +48,22 @@ describe("PracticePage progress", () => {
     getReviewQueue.mockResolvedValue([]);
     getLabProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 50,
+      totalCount: 51,
       nextLabSlug: "foundations",
       nextLabTitle: "JavaScript foundations",
-      nextHref: "/practice/foundations",
+      nextHref: "/practice/judge-basics",
       nextExerciseNumber: 1,
-      labs: [],
+      labs: [
+        {
+          slug: "foundations",
+          title: "JavaScript foundations",
+          href: "/practice/judge-basics",
+          completedCount: 0,
+          totalCount: 4,
+          nextExerciseNumber: 1,
+          state: "not-started",
+        },
+      ],
     });
     getCapstoneSummary.mockResolvedValue({
       state: "not-started",
@@ -79,7 +89,7 @@ describe("PracticePage progress", () => {
 
     expect(screen.getByText("Accepted 0 of 6")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Learn how the judge works" }),
+      screen.getByRole("link", { name: "Start JavaScript foundations" }),
     ).toHaveAttribute("href", "/practice/judge-basics");
     expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
       "Accepted 0 of 6",
@@ -167,7 +177,7 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     const privateLabLinks: Array<[RegExp, string]> = [
-      [/Continue JavaScript foundations, exercise 1/, "/practice/foundations"],
+      [/Continue JavaScript foundations, exercise 1/, "/practice/judge-basics"],
       [/Trace values/, "/practice/tracing"],
       [/Repair defects/, "/practice/debugging"],
       [/Find edge cases/, "/practice/test-design"],
@@ -209,6 +219,81 @@ describe("PracticePage progress", () => {
     expect(getLabProgress).toHaveBeenCalledWith("returning-learner");
     expect(screen.getByText("4/6 outcomes")).toBeInTheDocument();
     expect(screen.getByText("Continue project")).toBeInTheDocument();
+  });
+
+  it("resumes the saved foundations unit before problem 01", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "foundations-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 6,
+      completedSlugs: [],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 51,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 3,
+      labs: [
+        {
+          slug: "foundations",
+          title: "JavaScript foundations",
+          href: "/practice/foundations",
+          completedCount: 2,
+          totalCount: 4,
+          nextExerciseNumber: 3,
+          state: "in-progress",
+        },
+      ],
+    });
+
+    render(await PracticePage());
+
+    expect(
+      screen.getByRole("link", {
+        name: "Continue foundations · step 3 of 4",
+      }),
+    ).toHaveAttribute("href", "/practice/foundations");
+  });
+
+  it("opens problem 01 after all four foundations steps are saved", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "foundations-complete" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 6,
+      completedSlugs: [],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 4,
+      totalCount: 51,
+      nextLabSlug: "tracing",
+      nextLabTitle: "Code tracing",
+      nextHref: "/practice/tracing",
+      nextExerciseNumber: 1,
+      labs: [
+        {
+          slug: "foundations",
+          title: "JavaScript foundations",
+          href: "/practice/foundations",
+          completedCount: 4,
+          totalCount: 4,
+          nextExerciseNumber: null,
+          state: "complete",
+        },
+      ],
+    });
+
+    render(await PracticePage());
+
+    expect(screen.getByRole("link", { name: "Start problem 01" })).toHaveAttribute(
+      "href",
+      "/practice/sum-two-numbers",
+    );
   });
 
   it("describes the catalog without implying personal progress when signed out", async () => {

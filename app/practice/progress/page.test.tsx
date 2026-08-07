@@ -43,18 +43,18 @@ describe("PracticeProgressPage", () => {
     });
     mocks.getLabProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 50,
+      totalCount: 51,
       nextLabSlug: "foundations",
       nextLabTitle: "JavaScript foundations",
-      nextHref: "/practice/foundations",
+      nextHref: "/practice/judge-basics",
       nextExerciseNumber: 1,
       labs: [
         {
           slug: "foundations",
           title: "JavaScript foundations",
-          href: "/practice/foundations",
+          href: "/practice/judge-basics",
           completedCount: 0,
-          totalCount: 3,
+          totalCount: 4,
           nextExerciseNumber: 1,
           state: "not-started",
         },

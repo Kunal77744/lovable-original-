@@ -102,3 +102,22 @@ export const JAVASCRIPT_FOUNDATION_EXERCISES: JavaScriptFoundationExercise[] = [
       "Collect repeated results in an array, then join them once to control the output format.",
   },
 ];
+
+export const JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID = "understand-the-judge";
+
+export const JAVASCRIPT_FOUNDATIONS_UNIT_STEPS = [
+  {
+    id: JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID,
+    number: 1,
+    concept: "Judge",
+    title: "Understand the judge",
+    href: "/practice/judge-basics",
+  },
+  ...JAVASCRIPT_FOUNDATION_EXERCISES.map((exercise) => ({
+    id: exercise.slug,
+    number: exercise.number + 1,
+    concept: exercise.concept,
+    title: exercise.title,
+    href: "/practice/foundations",
+  })),
+] as const;

@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID,
+} from "@/lib/javascript-foundations";
+import { saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
 const ANSWERS = [
   { value: "12", label: 'It returns "12"' },
@@ -9,10 +13,37 @@ const ANSWERS = [
   { value: "undefined", label: "It returns undefined" },
 ] as const;
 
-export function JavaScriptJudgeBasics() {
-  const [selectedAnswer, setSelectedAnswer] = useState("");
-  const [checkedAnswer, setCheckedAnswer] = useState("");
+type JavaScriptJudgeBasicsProps = {
+  initialCompleted?: boolean;
+};
+
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+export function JavaScriptJudgeBasics({
+  initialCompleted = false,
+}: JavaScriptJudgeBasicsProps) {
+  const [selectedAnswer, setSelectedAnswer] = useState(
+    initialCompleted ? "57" : "",
+  );
+  const [checkedAnswer, setCheckedAnswer] = useState(
+    initialCompleted ? "57" : "",
+  );
+  const [saveState, setSaveState] = useState<SaveState>(
+    initialCompleted ? "saved" : "idle",
+  );
   const isCorrect = checkedAnswer === "57";
+
+  async function checkReasoning() {
+    setCheckedAnswer(selectedAnswer);
+    if (selectedAnswer !== "57") return;
+
+    setSaveState("saving");
+    const response = await saveJavaScriptLabExercise(
+      "foundations",
+      JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID,
+    );
+    setSaveState(response?.ok ? "saved" : "error");
+  }
 
   return (
     <>
@@ -106,7 +137,9 @@ export function JavaScriptJudgeBasics() {
                   onChange={(event) => {
                     setSelectedAnswer(event.target.value);
                     setCheckedAnswer("");
+                    setSaveState("idle");
                   }}
+                  disabled={saveState === "saving"}
                 />
                 <span>{answer.label}</span>
               </label>
@@ -118,7 +151,7 @@ export function JavaScriptJudgeBasics() {
               type="button"
               className="primary-action judge-check-button"
               disabled={!selectedAnswer}
-              onClick={() => setCheckedAnswer(selectedAnswer)}
+              onClick={checkReasoning}
             >
               Check my reasoning
             </button>
@@ -135,10 +168,29 @@ export function JavaScriptJudgeBasics() {
               <div className="judge-answer-feedback is-correct">
                 <span>Ready for the judge</span>
                 <h3>Strings join. Numbers add.</h3>
-                <p><code>map(Number)</code> converts both values before <code>+</code> runs.</p>
-                <Link className="primary-action" href="/practice/sum-two-numbers">
-                  Start problem 01 <span aria-hidden="true">→</span>
-                </Link>
+                <p>
+                  <code>map(Number)</code> converts both values before <code>+</code> runs.
+                </p>
+                {saveState === "saving" ? (
+                  <p>Saving step 1 privately to your account…</p>
+                ) : null}
+                {saveState === "error" ? (
+                  <>
+                    <p>Step 1 could not be saved. Try again before continuing.</p>
+                    <button
+                      type="button"
+                      className="primary-action judge-check-button"
+                      onClick={checkReasoning}
+                    >
+                      Retry private save
+                    </button>
+                  </>
+                ) : null}
+                {saveState === "saved" ? (
+                  <Link className="primary-action" href="/practice/foundations">
+                    Continue to step 2 <span aria-hidden="true">→</span>
+                  </Link>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -146,7 +198,8 @@ export function JavaScriptJudgeBasics() {
       </section>
 
       <p className="judge-privacy-note">
-        Your answer stays in this browser. This lesson creates no judged attempt or progress record.
+        Your answer stays in this browser. Completed steps save privately to your
+        account without creating a judged attempt.
       </p>
     </>
   );

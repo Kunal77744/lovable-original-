@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { JavaScriptFoundationsWarmup } from "@/components/javascript-foundations-warmup";
 import { auth } from "@/lib/auth";
 import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import { JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID } from "@/lib/javascript-foundations";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,11 @@ export default async function JavaScriptFoundationsPage() {
   }
   const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "foundations");
 
+  if (!completedExerciseIds.includes(JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID)) {
+    redirect("/practice/judge-basics");
+    return null;
+  }
+
   return (
     <main>
       <SiteNav currentPage="practice" studentSession />
@@ -42,13 +48,13 @@ export default async function JavaScriptFoundationsPage() {
 
         <header className="foundations-hero">
           <div>
-            <p className="eyebrow">Private guided warm-up · 10 minutes</p>
+            <p className="eyebrow">JavaScript foundations · steps 2–4 of 4</p>
             <h1>Understand the code before you chase Accepted.</h1>
           </div>
           <p>
-            Complete three small programs that teach the exact moves behind the
-            beginner problem path: parse input, choose a branch, and build output.
-            Runs stay in your browser and create no judged attempt.
+            Build on the judge lesson with three small programs: parse input,
+            choose a branch, and build output. Each completed step saves privately,
+            while every run stays in your browser.
           </p>
         </header>
 
