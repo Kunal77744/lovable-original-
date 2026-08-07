@@ -255,7 +255,13 @@ export function HtmlCssCapstoneWorkspace({
                 The HTML names the parts. The CSS controls their layout and box
                 behavior without depending on their order.
               </p>
-              <Link href="/profile">
+              <Link
+                className="js-capstone-debrief-link"
+                href="/projects/html-css-resource-library/debrief"
+              >
+                Open project debrief <span aria-hidden="true">→</span>
+              </Link>
+              <Link className="js-capstone-record-link" href="/profile">
                 Return to private progress <span aria-hidden="true">→</span>
               </Link>
             </div>

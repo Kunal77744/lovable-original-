@@ -21515,6 +21515,28 @@ footer {
   white-space: pre-wrap;
 }
 
+.html-css-debrief-source-files {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.html-css-debrief-source-files section {
+  min-width: 0;
+}
+
+.html-css-debrief-source-files h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.html-css-debrief-source-files pre {
+  height: 440px;
+}
+
 .project-debrief-actions {
   margin-top: 24px;
   display: flex;
@@ -21643,6 +21665,10 @@ footer {
   .project-debrief-actions {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .html-css-debrief-source-files {
+    grid-template-columns: 1fr;
   }
 
   .project-debrief-print-button {
