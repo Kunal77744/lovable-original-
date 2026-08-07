@@ -10,7 +10,7 @@ import {
   type SavedJavaScriptReadinessResult,
 } from "@/db/javascript-readiness";
 import { auth } from "@/lib/auth";
-import type { JavaScriptLabSlug } from "@/lib/javascript-lab-progress";
+import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +26,10 @@ export const metadata: Metadata = {
 
 function ReadinessContent({
   initialResult,
-  recommendationHrefs,
+  recommendationLabs,
 }: {
   initialResult: SavedJavaScriptReadinessResult | null;
-  recommendationHrefs: { labSlug: JavaScriptLabSlug; href: string }[];
+  recommendationLabs: JavaScriptLabCatalogProgress["labs"];
 }) {
   return (
     <main>
@@ -60,7 +60,7 @@ function ReadinessContent({
 
         <JavaScriptReadinessCheck
           initialResult={initialResult}
-          recommendationHrefs={recommendationHrefs}
+          recommendationLabs={recommendationLabs}
         />
       </div>
       <SiteFooter />
@@ -83,10 +83,7 @@ export default async function JavaScriptReadinessPage() {
   return (
     <ReadinessContent
       initialResult={initialResult}
-      recommendationHrefs={labProgress.labs.map((lab) => ({
-        labSlug: lab.slug,
-        href: lab.href,
-      }))}
+      recommendationLabs={labProgress.labs}
     />
   );
 }

@@ -22701,6 +22701,42 @@ footer {
   cursor: pointer;
 }
 
+.readiness-result-actions .readiness-retake-primary {
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: white;
+  border: 1px solid var(--ink);
+  border-radius: 9px;
+  background: var(--ink);
+  text-decoration: none;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.readiness-result-actions .readiness-retake-primary:hover {
+  color: white;
+  background: var(--accent-deep);
+  transform: translateY(-1px);
+}
+
+.readiness-review-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  text-underline-offset: 4px;
+}
+
+.readiness-review-link:hover {
+  color: var(--ink);
+}
+
 @media (max-width: 820px) {
   .practice-readiness-entry,
   .readiness-hero,

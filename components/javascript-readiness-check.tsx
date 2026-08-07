@@ -3,25 +3,20 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { SavedJavaScriptReadinessResult } from "@/db/javascript-readiness";
-import type { JavaScriptLabSlug } from "@/lib/javascript-lab-progress";
+import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
 import {
   getJavaScriptReadinessRecommendation,
   JAVASCRIPT_READINESS_QUESTIONS,
 } from "@/lib/javascript-readiness";
 
-type RecommendationHref = {
-  labSlug: JavaScriptLabSlug;
-  href: string;
-};
-
 type JavaScriptReadinessCheckProps = {
   initialResult: SavedJavaScriptReadinessResult | null;
-  recommendationHrefs: RecommendationHref[];
+  recommendationLabs: JavaScriptLabCatalogProgress["labs"];
 };
 
 export function JavaScriptReadinessCheck({
   initialResult,
-  recommendationHrefs,
+  recommendationLabs,
 }: JavaScriptReadinessCheckProps) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -29,17 +24,25 @@ export function JavaScriptReadinessCheck({
   const [isRetaking, setIsRetaking] = useState(!initialResult);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
-  const hrefByLab = useMemo(
-    () => new Map(recommendationHrefs.map((item) => [item.labSlug, item.href])),
-    [recommendationHrefs],
+  const progressByLab = useMemo(
+    () => new Map(recommendationLabs.map((item) => [item.slug, item])),
+    [recommendationLabs],
   );
+
+  function startRetake() {
+    setAnswers({});
+    setQuestionIndex(0);
+    setStatus("");
+    setIsRetaking(true);
+  }
 
   if (savedResult && !isRetaking) {
     const recommendation = getJavaScriptReadinessRecommendation(
       savedResult.recommendedLabSlug,
     );
-    const recommendationHref =
-      hrefByLab.get(savedResult.recommendedLabSlug) ?? "/practice";
+    const recommendedLab = progressByLab.get(savedResult.recommendedLabSlug);
+    const recommendationHref = recommendedLab?.href ?? "/practice";
+    const recommendationIsComplete = recommendedLab?.state === "complete";
 
     return (
       <section className="readiness-result" aria-labelledby="readiness-result-title">
@@ -48,28 +51,53 @@ export function JavaScriptReadinessCheck({
           <small>of {savedResult.totalCount} checks</small>
         </div>
         <div className="readiness-result-copy">
-          <p className="eyebrow">Your private readiness result</p>
-          <h2 id="readiness-result-title">{recommendation?.title}</h2>
-          <p>{recommendation?.reason}</p>
+          <p className="eyebrow">
+            {recommendationIsComplete
+              ? "Recommended practice complete"
+              : "Your private readiness result"}
+          </p>
+          <h2 id="readiness-result-title">
+            {recommendationIsComplete
+              ? `${recommendedLab.title} is complete.`
+              : recommendation?.title}
+          </h2>
+          <p>
+            {recommendationIsComplete
+              ? `You saved all ${recommendedLab.completedCount} of ${recommendedLab.totalCount} exercises in this lab. Retake the six checks to find your current next step.`
+              : recommendation?.reason}
+          </p>
           <p className="readiness-saved-note">
-            Only this score and recommendation are saved to your account. Your
-            individual choices are not stored.
+            {recommendationIsComplete
+              ? "Your last score stays saved until you finish a retake. Individual choices are not stored."
+              : "Only this score and recommendation are saved to your account. Your individual choices are not stored."}
           </p>
           <div className="readiness-result-actions">
-            <Link className="primary-action" href={recommendationHref}>
-              Open recommended lab <span aria-hidden="true">→</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                setAnswers({});
-                setQuestionIndex(0);
-                setStatus("");
-                setIsRetaking(true);
-              }}
-            >
-              Retake the check
-            </button>
+            {recommendationIsComplete ? (
+              <button
+                className="readiness-retake-primary"
+                type="button"
+                onClick={startRetake}
+              >
+                Retake for next step <span aria-hidden="true">→</span>
+              </button>
+            ) : (
+              <Link className="primary-action" href={recommendationHref}>
+                Open recommended lab <span aria-hidden="true">→</span>
+              </Link>
+            )}
+            {recommendationIsComplete ? (
+              <Link className="readiness-review-link" href={recommendationHref}>
+                Review completed lab
+              </Link>
+            ) : null}
+            {!recommendationIsComplete ? (
+              <button
+                type="button"
+                onClick={startRetake}
+              >
+                Retake the check
+              </button>
+            ) : null}
           </div>
         </div>
       </section>
