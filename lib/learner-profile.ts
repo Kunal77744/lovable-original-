@@ -1,9 +1,14 @@
 import type { RecentCodingAttempt } from "@/db/coding-practice";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { CSS_PRACTICE_CHALLENGES } from "@/lib/css-practice-challenges";
 import {
   GUIDED_PROJECT_SLUG,
   GUIDED_PROJECT_TITLE,
 } from "@/lib/guided-project";
+import {
+  getJavaScriptFoundationsEntry,
+  type JavaScriptLabCatalogProgress,
+} from "@/lib/javascript-lab-progress";
 
 type CourseLesson = {
   slug: string;
@@ -40,6 +45,8 @@ export type LearnerProfileAction = {
 export type LearnerProfileViewModel = {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
+  cssPractice: LearnerProfilePractice;
+  labPractice: JavaScriptLabCatalogProgress;
   attempts: RecentCodingAttempt[];
   quizScore: number | null;
   isFreshLearner: boolean;
@@ -49,18 +56,42 @@ export type LearnerProfileViewModel = {
 export function buildLearnerProfile({
   course,
   practice,
+  cssPractice,
   attempts,
   projectCompleted,
+  htmlCssCapstone = { state: "completed", passedChecks: 6 },
+  labPractice = {
+    completedCount: 0,
+    totalCount: 55,
+    nextLabSlug: "foundations",
+    nextLabTitle: "JavaScript foundations",
+    nextHref: "/practice/foundations",
+    nextExerciseNumber: 1,
+    labs: [],
+  },
+  javascriptCapstone = { state: "completed", passedChecks: 6 },
 }: {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
+  cssPractice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   projectCompleted: boolean;
+  htmlCssCapstone?: {
+    state: "not-started" | "in-progress" | "completed";
+    passedChecks: number;
+  };
+  labPractice?: JavaScriptLabCatalogProgress;
+  javascriptCapstone?: {
+    state: "not-started" | "in-progress" | "completed";
+    passedChecks: number;
+  };
 }): LearnerProfileViewModel {
   const quizScore = course.nextLesson?.quizScore ?? null;
   const isFreshLearner =
     course.completedLessons === 0 &&
     practice.completedCount === 0 &&
+    cssPractice.completedCount === 0 &&
+    labPractice.completedCount === 0 &&
     attempts.length === 0 &&
     quizScore === null;
 
@@ -70,6 +101,8 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -89,6 +122,8 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -103,6 +138,35 @@ export function buildLearnerProfile({
     };
   }
 
+  const foundationsEntry = getJavaScriptFoundationsEntry(
+    labPractice,
+    practice.completedCount,
+  );
+
+  if (foundationsEntry) {
+    const foundationsStarted = foundationsEntry.completedCount > 0;
+
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: foundationsStarted
+          ? `Continue foundations · step ${foundationsEntry.nextExerciseNumber} of ${foundationsEntry.totalCount}`
+          : "Start JavaScript foundations",
+        href: foundationsEntry.href,
+        kicker: `${foundationsEntry.completedCount}/${foundationsEntry.totalCount} foundations steps saved`,
+        title: "JavaScript foundations",
+        description:
+          "Learn the judge contract, parsing, branching, and loops before problem 01.",
+      },
+    };
+  }
+
   const completedSlugs = new Set(practice.completedSlugs);
   const nextProblem = CODING_PROBLEMS.find(
     (problem) => !completedSlugs.has(problem.slug),
@@ -112,6 +176,8 @@ export function buildLearnerProfile({
     return {
       course,
       practice,
+      cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -128,9 +194,110 @@ export function buildLearnerProfile({
     };
   }
 
+  const completedCssSlugs = new Set(cssPractice.completedSlugs);
+  const nextCssChallenge = CSS_PRACTICE_CHALLENGES.find(
+    (challenge) => !completedCssSlugs.has(challenge.slug),
+  );
+
+  if (nextCssChallenge) {
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: `Complete CSS ${String(nextCssChallenge.number).padStart(2, "0")}`,
+        href: `/practice/css/${nextCssChallenge.slug}`,
+        kicker:
+          cssPractice.completedCount === 0
+            ? "Finish the coding path"
+            : "Continue your CSS practice",
+        title: nextCssChallenge.title,
+        description: `Practice ${nextCssChallenge.skill.toLowerCase()} and keep the completed result on this record.`,
+      },
+    };
+  }
+
+  if (htmlCssCapstone.state !== "completed") {
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label:
+          htmlCssCapstone.state === "in-progress"
+            ? "Resume the capstone"
+            : "Build the capstone",
+        href: "/projects/html-css-resource-library",
+        kicker:
+          htmlCssCapstone.state === "in-progress"
+            ? `${htmlCssCapstone.passedChecks}/6 outcomes passing`
+            : "Your integrated front-end result",
+        title: "Learning resource library",
+        description:
+          "Combine semantic HTML, CSS grid, scoped selectors, and the box model in one private saved project.",
+      },
+    };
+  }
+
+  if (labPractice.nextLabSlug && labPractice.nextLabTitle) {
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: `Continue exercise ${labPractice.nextExerciseNumber ?? 1}`,
+        href: labPractice.nextHref,
+        kicker: `${labPractice.completedCount}/${labPractice.totalCount} guided steps saved`,
+        title: labPractice.nextLabTitle,
+        description:
+          "Continue at the exact first unfinished JavaScript exercise. Guided practice builds fluency without replacing judged results.",
+      },
+    };
+  }
+
+  if (javascriptCapstone.state !== "completed") {
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label:
+          javascriptCapstone.state === "in-progress"
+            ? "Resume the capstone"
+            : "Build the capstone",
+        href: "/projects/javascript-expense-report",
+        kicker:
+          javascriptCapstone.state === "in-progress"
+            ? `${javascriptCapstone.passedChecks}/6 outcomes passing`
+            : "Your integrated JavaScript result",
+        title: "JavaScript expense report",
+        description:
+          "Combine parsing, arrays, objects, sorting, totals, and exact output formatting in one private saved project.",
+      },
+    };
+  }
+
   return {
     course,
     practice,
+    cssPractice,
+    labPractice,
     attempts,
     quizScore,
     isFreshLearner,

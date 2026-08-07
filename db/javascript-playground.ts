@@ -7,6 +7,7 @@ export async function getPlaygroundFile(userId: string) {
   const [file] = await getDatabase()
     .select({
       code: playgroundFile.code,
+      quickChecks: playgroundFile.quickChecks,
       updatedAt: playgroundFile.updatedAt,
     })
     .from(playgroundFile)
@@ -15,11 +16,16 @@ export async function getPlaygroundFile(userId: string) {
 
   return {
     code: file?.code ?? PLAYGROUND_STARTER_CODE,
+    quickChecks: file?.quickChecks ?? "",
     updatedAt: file?.updatedAt.toISOString() ?? null,
   };
 }
 
-export async function savePlaygroundFile(userId: string, code: string) {
+export async function savePlaygroundFile(
+  userId: string,
+  code: string,
+  quickChecks: string,
+) {
   const now = new Date();
   const [file] = await getDatabase()
     .insert(playgroundFile)
@@ -27,22 +33,26 @@ export async function savePlaygroundFile(userId: string, code: string) {
       id: crypto.randomUUID(),
       userId,
       code,
+      quickChecks,
       updatedAt: now,
     })
     .onConflictDoUpdate({
       target: playgroundFile.userId,
       set: {
         code,
+        quickChecks,
         updatedAt: now,
       },
     })
     .returning({
       code: playgroundFile.code,
+      quickChecks: playgroundFile.quickChecks,
       updatedAt: playgroundFile.updatedAt,
     });
 
   return {
     code: file.code,
+    quickChecks: file.quickChecks,
     updatedAt: file.updatedAt.toISOString(),
   };
 }

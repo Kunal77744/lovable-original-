@@ -9,9 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LessonQuiz } from "./lesson-quiz";
 
 const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
+const captureLessonCompleted = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/product-analytics", () => ({
   captureLearnerEventOnce,
+  captureLessonCompleted,
 }));
 
 const questions = [
@@ -83,8 +85,18 @@ describe("LessonQuiz analytics", () => {
         passed: true,
       }),
     );
+    expect(captureLessonCompleted).toHaveBeenCalledOnce();
+    expect(captureLessonCompleted).toHaveBeenCalledWith({
+      courseSlug: "web-development-foundations",
+      completionState: "completed",
+    });
 
-    expect(JSON.stringify(captureLearnerEventOnce.mock.calls)).not.toMatch(
+    expect(
+      JSON.stringify([
+        captureLearnerEventOnce.mock.calls,
+        captureLessonCompleted.mock.calls,
+      ]),
+    ).not.toMatch(
       /First question|First answer|q1/i,
     );
     expect(
@@ -156,6 +168,11 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        completedLessonsAfterPass={1}
+        nextLesson={{
+          title: "Style a card without guessing",
+          href: "/learn/web-development-foundations/css-selectors-box-model",
+        }}
       />,
     );
 
@@ -173,6 +190,15 @@ describe("LessonQuiz analytics", () => {
         name: "Continue to JavaScript practice",
       }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText(/1 of 2 lessons complete/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to Style a card without guessing",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/css-selectors-box-model",
+    );
   });
 
   it("keeps signed-out answers local until the learner requests grading", () => {

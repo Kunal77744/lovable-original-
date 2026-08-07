@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { saveFirstLessonQuizResult } from "@/db/course";
 import {
-  gradeFirstLessonQuiz,
+  gradeLessonQuiz,
   type QuizAnswers,
 } from "@/lib/first-course-content";
 import { auth } from "@/lib/auth";
@@ -38,13 +38,16 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const result = gradeFirstLessonQuiz(payload.answers);
+  const { lessonSlug } = await context.params;
+  const result = gradeLessonQuiz(lessonSlug, payload.answers);
 
   if (!result.valid) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error === "Lesson not found." ? 404 : 400 },
+    );
   }
 
-  const { lessonSlug } = await context.params;
   const progress = await saveFirstLessonQuizResult(
     session.user.id,
     lessonSlug,

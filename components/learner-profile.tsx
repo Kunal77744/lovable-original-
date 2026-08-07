@@ -32,8 +32,8 @@ export function LearnerProfile({
           </div>
           <p>
             {profile.isFreshLearner
-              ? "Nothing is completed yet. Start with one focused lesson, and your course and JavaScript practice progress will build here."
-              : "Course results and accepted JavaScript problems stay together here, attached only to your account."}
+              ? "Nothing is completed yet. Start with one focused lesson, and your course, JavaScript, and CSS progress will build here."
+              : "Course results, judged problems, guided JavaScript practice, and CSS challenges stay together here, attached only to your account."}
           </p>
         </div>
         <div className="profile-privacy-note">
@@ -42,6 +42,10 @@ export function LearnerProfile({
             <strong>Private by default.</strong>
             Only you can open this learning record.
           </p>
+          <Link className="profile-project-link" href="/projects">
+            View private projects
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </header>
 
@@ -94,15 +98,36 @@ export function LearnerProfile({
         </article>
 
         <article className="profile-practice-progress">
-          <p>JavaScript practice</p>
-          <strong>
-            {profile.practice.completedCount}
-            <span>/{profile.practice.totalCount}</span>
-          </strong>
-          <h2>problems accepted</h2>
+          <p>Coding practice</p>
+          <div className="profile-practice-counts">
+            <div>
+              <strong>
+                {profile.practice.completedCount}
+                <span>/{profile.practice.totalCount}</span>
+              </strong>
+              <h2>JavaScript Accepted</h2>
+            </div>
+            <div>
+              <strong>
+                {profile.cssPractice.completedCount}
+                <span>/{profile.cssPractice.totalCount}</span>
+              </strong>
+              <h2>CSS completed</h2>
+            </div>
+          </div>
+          <div className="profile-lab-progress">
+            <div>
+              <h2>Guided JavaScript</h2>
+              <span>Practice steps saved</span>
+            </div>
+            <strong>
+              {profile.labPractice.completedCount}
+              <span>/{profile.labPractice.totalCount}</span>
+            </strong>
+          </div>
           <p>
-            Accepted results stay here after reload, sign-out, and your next
-            sign-in.
+            Practice steps and judged results return after reload, sign-out, and
+            your next sign-in.
           </p>
         </article>
       </section>
@@ -114,7 +139,11 @@ export function LearnerProfile({
               <p className="course-kicker">Recent attempts</p>
               <h2>Practice history</h2>
             </div>
-            <span>{profile.attempts.length} shown</span>
+            {profile.attempts.length > 0 ? (
+              <Link href="/submissions">View all submissions</Link>
+            ) : (
+              <span>{profile.attempts.length} shown</span>
+            )}
           </div>
 
           {profile.attempts.length === 0 ? (
@@ -133,7 +162,7 @@ export function LearnerProfile({
                     {String(attempt.problemNumber).padStart(2, "0")}
                   </span>
                   <div>
-                    <Link href={`/practice/${attempt.problemSlug}`}>
+                    <Link href={`/submissions/${attempt.id}`}>
                       {attempt.problemTitle}
                     </Link>
                     <time dateTime={attempt.createdAt}>

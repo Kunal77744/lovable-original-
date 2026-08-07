@@ -7,7 +7,13 @@ import {
   getFirstLessonNote,
 } from "@/db/course";
 import { auth } from "@/lib/auth";
-import LessonPage from "./page";
+import LessonPage, { generateMetadata } from "./page";
+
+const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/product-analytics", () => ({
+  captureLearnerEventOnce,
+}));
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -38,6 +44,7 @@ describe("public lesson access", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSession.mockResolvedValue(null);
+    captureLearnerEventOnce.mockReset();
   });
 
   it("renders the complete authored lesson without loading private learner data", async () => {
@@ -76,8 +83,8 @@ describe("public lesson access", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Check your mental model." }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("heading", { name: "Check your mental model." }),
+    ).not.toHaveLength(0);
     expect(screen.getByText("Full lesson · Free to read")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -94,6 +101,75 @@ describe("public lesson access", () => {
       screen.queryByRole("link", { name: "Create account" }),
     ).not.toBeInTheDocument();
 
+    expect(getStudentLesson).not.toHaveBeenCalled();
+    expect(getArtifact).not.toHaveBeenCalled();
+    expect(getNote).not.toHaveBeenCalled();
+    expect(getFeedback).not.toHaveBeenCalled();
+  });
+
+  it("describes the CSS lesson accurately in search and sharing metadata", async () => {
+    const metadata = await generateMetadata({
+      params: Promise.resolve({
+        courseSlug: "web-development-foundations",
+        lessonSlug: "css-selectors-box-model",
+      }),
+    });
+
+    expect(metadata.title).toBe(
+      "Style a card without guessing | Lovable Original",
+    );
+    expect(metadata.description).toBe(
+      "Use CSS selectors and the box model to style a predictable learning card, then return to your saved practice after sign-in.",
+    );
+    expect(metadata.openGraph?.description).toBe(metadata.description);
+    expect(metadata.twitter?.description).toBe(metadata.description);
+    expect(metadata.robots).toEqual({ index: false, follow: false });
+  });
+
+  it("renders the complete responsive CSS lesson without private reads", async () => {
+    render(
+      await LessonPage({
+        params: Promise.resolve({
+          courseSlug: "web-development-foundations",
+          lessonSlug: "responsive-css-grid",
+        }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Build a layout that adapts" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Layout describes a relationship, not a screen size.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Make one resource grid adapt." }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { name: "Check your mental model." }),
+    ).not.toHaveLength(0);
+    expect(getStudentLesson).not.toHaveBeenCalled();
+    expect(getArtifact).not.toHaveBeenCalled();
+  });
+
+  it("records an anonymous lesson start from the stable founder-warm entry", async () => {
+    render(
+      await LessonPage({
+        params: Promise.resolve({
+          courseSlug: "web-development-foundations",
+          lessonSlug: "semantic-html",
+        }),
+        searchParams: Promise.resolve({ entry_source: "founder_warm" }),
+      }),
+    );
+
+    expect(captureLearnerEventOnce).toHaveBeenCalledWith("lesson_started", {
+      course_slug: "web-development-foundations",
+      lesson_slug: "semantic-html",
+      entry_source: "founder_warm",
+    });
     expect(getStudentLesson).not.toHaveBeenCalled();
     expect(getArtifact).not.toHaveBeenCalled();
     expect(getNote).not.toHaveBeenCalled();
