@@ -11,6 +11,7 @@ import { JAVASCRIPT_SEARCH_SORT_EXERCISES } from "./javascript-search-sort";
 import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "./javascript-stacks-queues";
 import { JAVASCRIPT_TEST_DESIGN_EXERCISES } from "./javascript-test-design";
 import { JAVASCRIPT_TRACE_EXERCISES } from "./javascript-tracing";
+import { JAVASCRIPT_TREES_GRAPHS_EXERCISES } from "./javascript-trees-graphs";
 
 export const JAVASCRIPT_LABS = [
   {
@@ -77,6 +78,14 @@ export const JAVASCRIPT_LABS = [
     title: "Linked-list fundamentals",
     href: "/practice/linked-lists",
     exerciseIds: JAVASCRIPT_LINKED_LIST_EXERCISES.map(
+      (exercise) => exercise.slug,
+    ),
+  },
+  {
+    slug: "trees-graphs",
+    title: "Trees and graphs",
+    href: "/practice/trees-graphs",
+    exerciseIds: JAVASCRIPT_TREES_GRAPHS_EXERCISES.map(
       (exercise) => exercise.slug,
     ),
   },

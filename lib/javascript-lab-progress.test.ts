@@ -8,13 +8,13 @@ import {
 } from "./javascript-lab-progress";
 
 describe("JavaScript lab progress catalog", () => {
-  it("defines 51 unique saved steps across thirteen private labs", () => {
+  it("defines 55 unique saved steps across fourteen private labs", () => {
     const keys = JAVASCRIPT_LABS.flatMap((lab) =>
       lab.exerciseIds.map((exerciseId) => `${lab.slug}:${exerciseId}`),
     );
-    expect(JAVASCRIPT_LABS).toHaveLength(13);
-    expect(keys).toHaveLength(51);
-    expect(new Set(keys)).toHaveLength(51);
+    expect(JAVASCRIPT_LABS).toHaveLength(14);
+    expect(keys).toHaveLength(55);
+    expect(new Set(keys)).toHaveLength(55);
   });
 
   it("rejects unknown lab and exercise combinations", () => {
@@ -35,6 +35,9 @@ describe("JavaScript lab progress catalog", () => {
     expect(isJavaScriptLabExercise("linked-lists", "connect-the-next-node")).toBe(
       true,
     );
+    expect(
+      isJavaScriptLabExercise("trees-graphs", "walk-a-tree-depth-first"),
+    ).toBe(true);
     expect(
       isJavaScriptLabExercise("algorithm-patterns", "slide-a-fixed-window"),
     ).toBe(true);
@@ -61,10 +64,10 @@ describe("JavaScript lab progress catalog", () => {
     ]);
 
     expect(progress.completedCount).toBe(foundations.exerciseIds.length + 1);
-    expect(progress.totalCount).toBe(51);
+    expect(progress.totalCount).toBe(55);
     expect(progress.nextLabSlug).toBe("tracing");
     expect(progress.nextExerciseNumber).toBe(2);
-    expect(progress.labs).toHaveLength(13);
+    expect(progress.labs).toHaveLength(14);
     expect(progress.labs[0]).toMatchObject({
       state: "complete",
       completedCount: foundations.exerciseIds.length,

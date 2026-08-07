@@ -163,7 +163,7 @@ export function CodingSkillRecord({
       >
         <div className="skill-record-labs-heading">
           <div>
-            <p className="eyebrow">Thirteen private labs</p>
+            <p className="eyebrow">{labProgress.labs.length} private labs</p>
             <h2 id="skill-record-labs-title">Your saved practice record</h2>
           </div>
           <div className="skill-record-labs-summary">

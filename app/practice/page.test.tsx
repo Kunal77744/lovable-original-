@@ -48,7 +48,7 @@ describe("PracticePage progress", () => {
     getReviewQueue.mockResolvedValue([]);
     getLabProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 51,
+      totalCount: 55,
       nextLabSlug: "foundations",
       nextLabTitle: "JavaScript foundations",
       nextHref: "/practice/judge-basics",
@@ -187,6 +187,7 @@ describe("PracticePage progress", () => {
       [/Search and sort values/, "/practice/search-sort"],
       [/Use stacks and queues/, "/practice/stacks-queues"],
       [/Follow linked lists/, "/practice/linked-lists"],
+      [/Traverse trees and graphs/, "/practice/trees-graphs"],
       [/Work with the DOM/, "/practice/dom"],
       [/Compare efficiency/, "/practice/efficiency"],
       [/Implement algorithm patterns/, "/practice/algorithm-patterns"],
@@ -232,7 +233,7 @@ describe("PracticePage progress", () => {
     });
     getLabProgress.mockResolvedValue({
       completedCount: 2,
-      totalCount: 51,
+      totalCount: 55,
       nextLabSlug: "foundations",
       nextLabTitle: "JavaScript foundations",
       nextHref: "/practice/foundations",
@@ -270,7 +271,7 @@ describe("PracticePage progress", () => {
     });
     getLabProgress.mockResolvedValue({
       completedCount: 4,
-      totalCount: 51,
+      totalCount: 55,
       nextLabSlug: "tracing",
       nextLabTitle: "Code tracing",
       nextHref: "/practice/tracing",

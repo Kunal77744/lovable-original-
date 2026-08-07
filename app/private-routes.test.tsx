@@ -17,6 +17,7 @@ import { metadata as searchSortMetadata } from "./practice/search-sort/page";
 import { metadata as stacksQueuesMetadata } from "./practice/stacks-queues/page";
 import { metadata as testDesignMetadata } from "./practice/test-design/page";
 import { metadata as tracingMetadata } from "./practice/tracing/page";
+import { metadata as treesGraphsMetadata } from "./practice/trees-graphs/page";
 import { metadata as settingsMetadata } from "./settings/page";
 import { metadata as submissionsMetadata } from "./submissions/page";
 import { metadata as submissionMetadata } from "./submissions/[submissionId]/page";
@@ -94,6 +95,7 @@ describe("private learner routes", () => {
       searchSortMetadata,
       stacksQueuesMetadata,
       linkedListsMetadata,
+      treesGraphsMetadata,
     ];
 
     for (const metadata of privatePracticeMetadata) {
@@ -145,6 +147,7 @@ describe("private learner routes", () => {
       "search-sort",
       "stacks-queues",
       "linked-lists",
+      "trees-graphs",
     ];
 
     for (const path of privatePracticePaths) {
