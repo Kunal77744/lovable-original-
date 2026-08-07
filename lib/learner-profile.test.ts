@@ -36,7 +36,17 @@ const emptyLabPractice = {
   nextLabTitle: "JavaScript foundations",
   nextHref: "/practice/foundations",
   nextExerciseNumber: 1,
-  labs: [],
+  labs: [
+    {
+      slug: "foundations" as const,
+      title: "JavaScript foundations",
+      href: "/practice/judge-basics",
+      completedCount: 0,
+      totalCount: 4,
+      nextExerciseNumber: 1,
+      state: "not-started" as const,
+    },
+  ],
 };
 
 const completeLabPractice = {
@@ -192,6 +202,50 @@ describe("buildLearnerProfile", () => {
         href: "/practice/even-or-odd",
       }),
     );
+  });
+
+  it("resumes foundations before problem 01 after project completion", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: emptyPractice,
+      cssPractice: emptyCssPractice,
+      labPractice: {
+        ...emptyLabPractice,
+        completedCount: 2,
+        nextHref: "/practice/foundations",
+        nextExerciseNumber: 3,
+        labs: [
+          {
+            ...emptyLabPractice.labs[0],
+            href: "/practice/foundations",
+            completedCount: 2,
+            nextExerciseNumber: 3,
+            state: "in-progress",
+          },
+        ],
+      },
+      attempts: [],
+      projectCompleted: true,
+    });
+
+    expect(profile.nextAction).toEqual({
+      label: "Continue foundations · step 3 of 4",
+      href: "/practice/foundations",
+      kicker: "2/4 foundations steps saved",
+      title: "JavaScript foundations",
+      description:
+        "Learn the judge contract, parsing, branching, and loops before problem 01.",
+    });
   });
 
   it("sends a completed learner to revision", () => {

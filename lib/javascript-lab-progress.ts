@@ -136,6 +136,44 @@ export type JavaScriptLabCatalogProgress = {
   }>;
 };
 
+export type JavaScriptFoundationsEntry = {
+  href: string;
+  completedCount: number;
+  totalCount: number;
+  nextExerciseNumber: number;
+};
+
+export function getJavaScriptFoundationsEntry(
+  labProgress: JavaScriptLabCatalogProgress | null,
+  acceptedProblemCount: number,
+): JavaScriptFoundationsEntry | null {
+  if (acceptedProblemCount > 0) return null;
+
+  const foundations = labProgress?.labs.find(
+    (lab) => lab.slug === "foundations",
+  );
+
+  if (foundations?.state === "complete") return null;
+
+  if (foundations) {
+    return {
+      href: foundations.href,
+      completedCount: foundations.completedCount,
+      totalCount: foundations.totalCount,
+      nextExerciseNumber: foundations.nextExerciseNumber ?? 1,
+    };
+  }
+
+  if (labProgress && labProgress.nextLabSlug !== "foundations") return null;
+
+  return {
+    href: labProgress?.nextHref ?? "/practice/judge-basics",
+    completedCount: 0,
+    totalCount: JAVASCRIPT_FOUNDATIONS_UNIT_STEPS.length,
+    nextExerciseNumber: labProgress?.nextExerciseNumber ?? 1,
+  };
+}
+
 export function getJavaScriptLab(labSlug: string) {
   return JAVASCRIPT_LABS.find((lab) => lab.slug === labSlug) ?? null;
 }

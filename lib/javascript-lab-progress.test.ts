@@ -2,12 +2,45 @@ import { describe, expect, it } from "vitest";
 import {
   buildJavaScriptLabCatalogProgress,
   getFirstIncompleteExerciseIndex,
+  getJavaScriptFoundationsEntry,
   getNextIncompleteExerciseIndex,
   isJavaScriptLabExercise,
   JAVASCRIPT_LABS,
 } from "./javascript-lab-progress";
 
 describe("JavaScript lab progress catalog", () => {
+  it("keeps a zero-Accepted learner on the exact unfinished foundations step", () => {
+    const progress = buildJavaScriptLabCatalogProgress([
+      { labSlug: "foundations", exerciseId: "understand-the-judge" },
+      { labSlug: "foundations", exerciseId: "parse-and-sum" },
+    ]);
+
+    expect(getJavaScriptFoundationsEntry(progress, 0)).toEqual({
+      href: "/practice/foundations",
+      completedCount: 2,
+      totalCount: 4,
+      nextExerciseNumber: 3,
+    });
+  });
+
+  it("does not send an Accepted learner back to foundations", () => {
+    const progress = buildJavaScriptLabCatalogProgress([]);
+
+    expect(getJavaScriptFoundationsEntry(progress, 1)).toBeNull();
+  });
+
+  it("opens problem 01 after every foundations step is saved", () => {
+    const foundations = JAVASCRIPT_LABS[0];
+    const progress = buildJavaScriptLabCatalogProgress(
+      foundations.exerciseIds.map((exerciseId) => ({
+        labSlug: foundations.slug,
+        exerciseId,
+      })),
+    );
+
+    expect(getJavaScriptFoundationsEntry(progress, 0)).toBeNull();
+  });
+
   it("defines 55 unique saved steps across fourteen private labs", () => {
     const keys = JAVASCRIPT_LABS.flatMap((lab) =>
       lab.exerciseIds.map((exerciseId) => `${lab.slug}:${exerciseId}`),

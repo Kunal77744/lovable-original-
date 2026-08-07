@@ -80,7 +80,17 @@ describe("DashboardPage", () => {
       nextLabTitle: "JavaScript foundations",
       nextHref: "/practice/judge-basics",
       nextExerciseNumber: 1,
-      labs: [],
+      labs: [
+        {
+          slug: "foundations",
+          title: "JavaScript foundations",
+          href: "/practice/judge-basics",
+          completedCount: 0,
+          totalCount: 4,
+          nextExerciseNumber: 1,
+          state: "not-started",
+        },
+      ],
     });
     mocks.getJavaScriptCapstone.mockResolvedValue({
       state: "not-started",
@@ -264,6 +274,63 @@ describe("DashboardPage", () => {
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("1/6 Accepted")).toBeInTheDocument();
     expect(screen.getByText("2/6")).toBeInTheDocument();
+  });
+
+  it("resumes foundations before problem 01 after project completion", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 2,
+      progressPercent: 100,
+      courseCompleted: true,
+      nextLesson: {
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
+        completed: true,
+        quizScore: 100,
+      },
+    });
+    mocks.getProject.mockResolvedValue({
+      saved: true,
+      submission: {
+        status: "completed",
+        passedChecks: 6,
+        totalChecks: 6,
+      },
+    });
+    mocks.getJavaScriptLabProgress.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 55,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 3,
+      labs: [
+        {
+          slug: "foundations",
+          title: "JavaScript foundations",
+          href: "/practice/foundations",
+          completedCount: 2,
+          totalCount: 4,
+          nextExerciseNumber: 3,
+          state: "in-progress",
+        },
+      ],
+    });
+
+    render(await DashboardPage());
+
+    expect(
+      screen.getByRole("link", {
+        name: "Continue foundations · step 3 of 4",
+      }),
+    ).toHaveAttribute("href", "/practice/foundations");
+    expect(screen.getByText("2/4 foundations steps saved")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Start problem 01" }),
+    ).not.toBeInTheDocument();
   });
 
   it("continues a JavaScript completer into the exact next CSS challenge", async () => {

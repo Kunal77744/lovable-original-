@@ -5,7 +5,10 @@ import {
   GUIDED_PROJECT_SLUG,
   GUIDED_PROJECT_TITLE,
 } from "@/lib/guided-project";
-import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
+import {
+  getJavaScriptFoundationsEntry,
+  type JavaScriptLabCatalogProgress,
+} from "@/lib/javascript-lab-progress";
 
 type CourseLesson = {
   slug: string;
@@ -131,6 +134,35 @@ export function buildLearnerProfile({
         title: GUIDED_PROJECT_TITLE,
         description:
           "Turn the completed lesson into a private saved article, then revise it against six review checks.",
+      },
+    };
+  }
+
+  const foundationsEntry = getJavaScriptFoundationsEntry(
+    labPractice,
+    practice.completedCount,
+  );
+
+  if (foundationsEntry) {
+    const foundationsStarted = foundationsEntry.completedCount > 0;
+
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: foundationsStarted
+          ? `Continue foundations · step ${foundationsEntry.nextExerciseNumber} of ${foundationsEntry.totalCount}`
+          : "Start JavaScript foundations",
+        href: foundationsEntry.href,
+        kicker: `${foundationsEntry.completedCount}/${foundationsEntry.totalCount} foundations steps saved`,
+        title: "JavaScript foundations",
+        description:
+          "Learn the judge contract, parsing, branching, and loops before problem 01.",
       },
     };
   }

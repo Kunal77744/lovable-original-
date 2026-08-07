@@ -1,5 +1,8 @@
 import Link from "next/link";
-import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
+import {
+  getJavaScriptFoundationsEntry,
+  type JavaScriptLabCatalogProgress,
+} from "@/lib/javascript-lab-progress";
 
 type LearnerMilestoneChecklistProps = {
   course: {
@@ -66,6 +69,13 @@ export function LearnerMilestoneChecklist({
   const nextCssChallengeNumber = cssPractice.nextChallenge
     ? String(cssPractice.nextChallenge.number).padStart(2, "0")
     : null;
+  const foundationsEntry = getJavaScriptFoundationsEntry(
+    javascriptPath.labProgress,
+    practice.completedCount,
+  );
+  const activeFoundationsEntry = project.completed ? foundationsEntry : null;
+  const foundationsStarted =
+    (activeFoundationsEntry?.completedCount ?? 0) > 0;
   const guidedJavaScriptCompleted =
     javascriptPath.labProgress.totalCount > 0 &&
     javascriptPath.labProgress.completedCount ===
@@ -224,22 +234,38 @@ export function LearnerMilestoneChecklist({
             <span>
               {practicePathCompleted
                 ? "Completed · 6/6 Accepted"
+                : activeFoundationsEntry
+                  ? `${activeFoundationsEntry.completedCount}/${activeFoundationsEntry.totalCount} foundations steps saved`
                 : project.completed
                   ? `${practice.completedCount}/${practice.totalCount} Accepted`
                   : "After the field guide"}
             </span>
             <h3>
-              {practice.nextProblem
-                ? `Solve problem ${nextProblemNumber}: ${practice.nextProblem.title}`
-                : "JavaScript beginner path complete"}
+              {activeFoundationsEntry
+                ? "JavaScript foundations"
+                : practice.nextProblem
+                  ? `Solve problem ${nextProblemNumber}: ${practice.nextProblem.title}`
+                  : "JavaScript beginner path complete"}
             </h3>
             <p>
-              {practice.nextProblem
-                ? "Run your solution against fixed checks and save the Accepted result."
-                : "Every solution and Accepted result is saved to your learner record."}
+              {activeFoundationsEntry
+                ? "Learn the judge contract, parsing, branching, and loops before problem 01."
+                : practice.nextProblem
+                  ? "Run your solution against fixed checks and save the Accepted result."
+                  : "Every solution and Accepted result is saved to your learner record."}
             </p>
           </div>
-          {project.completed && practice.nextProblem ? (
+          {activeFoundationsEntry ? (
+            <Link
+              className="dashboard-path-action"
+              href={activeFoundationsEntry.href}
+            >
+              {foundationsStarted
+                ? `Continue foundations · step ${activeFoundationsEntry.nextExerciseNumber} of ${activeFoundationsEntry.totalCount}`
+                : "Start JavaScript foundations"}
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : project.completed && practice.nextProblem ? (
             <Link
               className="dashboard-path-action"
               href={practice.nextProblem.href}

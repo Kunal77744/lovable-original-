@@ -9,6 +9,7 @@ import {
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { auth } from "@/lib/auth";
+import { getJavaScriptFoundationsEntry } from "@/lib/javascript-lab-progress";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
@@ -97,27 +98,25 @@ export default async function PracticePage() {
   const catalogProgressLabel = session
     ? `Accepted ${progress.completedCount} of ${progress.totalCount}`
     : `${progress.totalCount} problems`;
-  const foundationsProgress = labProgress?.labs.find(
-    (lab) => lab.slug === "foundations",
+  const foundationsEntry = getJavaScriptFoundationsEntry(
+    labProgress,
+    progress.completedCount,
   );
-  const foundationsComplete = foundationsProgress?.state === "complete";
-  const foundationsStarted = (foundationsProgress?.completedCount ?? 0) > 0;
+  const foundationsStarted = (foundationsEntry?.completedCount ?? 0) > 0;
   const primaryActionLabel = session
-    ? progress.completedCount === 0
-      ? foundationsComplete
+    ? foundationsEntry
+      ? foundationsStarted
+        ? `Continue foundations · step ${foundationsEntry.nextExerciseNumber} of ${foundationsEntry.totalCount}`
+        : "Start JavaScript foundations"
+      : progress.completedCount === 0
         ? "Start problem 01"
-        : foundationsStarted
-          ? `Continue foundations · step ${foundationsProgress?.nextExerciseNumber ?? 1} of ${foundationsProgress?.totalCount ?? 4}`
-          : "Start JavaScript foundations"
       : nextProblemSlug
       ? `Continue at step ${primaryProblem.number} of ${progress.totalCount}`
       : "Review the six-step path"
     : `Start step 1 of ${progress.totalCount}`;
   const primaryActionHref =
-    session && progress.completedCount === 0
-      ? foundationsComplete
-        ? "/practice/sum-two-numbers"
-        : foundationsProgress?.href ?? "/practice/judge-basics"
+    session && foundationsEntry
+      ? foundationsEntry.href
       : `/practice/${primaryProblem.slug}`;
 
   return (
