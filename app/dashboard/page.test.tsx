@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getHtmlCssCapstone: vi.fn(),
   getJavaScriptLabProgress: vi.fn(),
   getJavaScriptCapstone: vi.fn(),
+  getFoundationsReview: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -51,6 +52,10 @@ vi.mock("@/db/javascript-lab-progress", () => ({
 
 vi.mock("@/db/javascript-capstone", () => ({
   getJavaScriptCapstoneSummary: mocks.getJavaScriptCapstone,
+}));
+
+vi.mock("@/db/web-foundations-review", () => ({
+  getWebFoundationsReviewResultForStudent: mocks.getFoundationsReview,
 }));
 
 vi.mock("@/components/sign-out-button", () => ({
@@ -96,6 +101,7 @@ describe("DashboardPage", () => {
       state: "not-started",
       passedChecks: 0,
     });
+    mocks.getFoundationsReview.mockResolvedValue(null);
     mocks.getCourse.mockResolvedValue({
       slug: "web-development-foundations",
       title: "Web Development Foundations",
@@ -230,6 +236,12 @@ describe("DashboardPage", () => {
     ).toHaveAttribute("href", "/projects/semantic-html-article");
     expect(screen.getByText("Saved draft ready")).toBeInTheDocument();
     expect(screen.getByText("1/6")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Review due concepts" }),
+    ).toHaveAttribute(
+      "href",
+      "/courses/web-development-foundations/review",
+    );
   });
 
   it("points a returning learner to the exact next unfinished problem", async () => {

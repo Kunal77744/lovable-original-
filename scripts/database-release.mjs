@@ -27,6 +27,7 @@ const requiredTables = [
   "interview_drill_progress",
   "javascript_mixed_review_result",
   "javascript_readiness_result",
+  "web_foundations_review_result",
   "lesson",
   "lesson_artifact",
   "lesson_note",
@@ -130,6 +131,16 @@ const requiredColumns = {
     "updated_at",
   ],
   javascript_mixed_review_result: [
+    "id",
+    "user_id",
+    "correct_count",
+    "total_count",
+    "next_due_at",
+    "completed_at",
+    "created_at",
+    "updated_at",
+  ],
+  web_foundations_review_result: [
     "id",
     "user_id",
     "correct_count",
@@ -264,6 +275,7 @@ async function run() {
           'guided_project_feedback',
           'javascript_mixed_review_result',
           'javascript_readiness_result',
+          'web_foundations_review_result',
           'practice_feedback',
           'playground_file'
         )

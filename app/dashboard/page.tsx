@@ -9,6 +9,7 @@ import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
+import { getWebFoundationsReviewResultForStudent } from "@/db/web-foundations-review";
 import { auth } from "@/lib/auth";
 import {
   getCodingProblem,
@@ -16,6 +17,10 @@ import {
 } from "@/lib/coding-problems";
 import { getCssPracticeChallenge } from "@/lib/css-practice-challenges";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
+import {
+  formatWebFoundationsReviewDueDate,
+  isWebFoundationsReviewDue,
+} from "@/lib/web-foundations-review";
 import { LearnerMilestoneChecklist } from "@/components/learner-milestone-checklist";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteFooter, SiteNav } from "../site-chrome";
@@ -47,6 +52,7 @@ export default async function DashboardPage() {
     htmlCssCapstone,
     javascriptLabProgress,
     javascriptCapstone,
+    foundationsReview,
   ] = await Promise.all([
       getOrCreateFirstCourseAssignment(session.user.id),
       getCodingCatalogProgress(session.user.id),
@@ -55,6 +61,7 @@ export default async function DashboardPage() {
       getHtmlCssCapstoneSummary(session.user.id),
       getJavaScriptLabCatalogProgress(session.user.id),
       getJavaScriptCapstoneSummary(session.user.id),
+      getWebFoundationsReviewResultForStudent(session.user.id),
     ]);
   const guidedProjectCompleted =
     guidedProject?.submission?.status === "completed";
@@ -137,6 +144,39 @@ export default async function DashboardPage() {
             capstone: javascriptCapstone,
           }}
         />
+
+        {firstCourse.courseCompleted ? (
+          <section
+            className="dashboard-foundations-review"
+            aria-labelledby="dashboard-foundations-review-title"
+          >
+            <div>
+              <p className="course-kicker">Spaced foundations review</p>
+              <h2 id="dashboard-foundations-review-title">
+                {foundationsReview && !isWebFoundationsReviewDue(foundationsReview)
+                  ? `Your next HTML and CSS review is set for ${formatWebFoundationsReviewDueDate(foundationsReview.nextDueAt)}.`
+                  : "Bring four HTML and CSS decisions back before they fade."}
+              </h2>
+              <p>
+                {foundationsReview && !isWebFoundationsReviewDue(foundationsReview)
+                  ? `Last recall ${foundationsReview.correctCount}/${foundationsReview.totalCount}. Your project remains the next milestone.`
+                  : "Four authored prompts adapt the next due date without storing your choices or changing course completion."}
+              </p>
+            </div>
+            <div>
+              <span>About 4 minutes</span>
+              <Link
+                className="dashboard-foundations-review-action"
+                href="/courses/web-development-foundations/review"
+              >
+                {foundationsReview && !isWebFoundationsReviewDue(foundationsReview)
+                  ? "View review schedule"
+                  : "Review due concepts"}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </section>
+        ) : null}
 
         <section
           className="dashboard-account-tools"

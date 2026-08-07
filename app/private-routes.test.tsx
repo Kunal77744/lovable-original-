@@ -12,6 +12,7 @@ import { metadata as functionsMetadata } from "./practice/functions/page";
 import { metadata as judgeBasicsMetadata } from "./practice/judge-basics/page";
 import { metadata as linkedListsMetadata } from "./practice/linked-lists/page";
 import { metadata as mixedReviewMetadata } from "./practice/mixed-review/page";
+import { metadata as webFoundationsReviewMetadata } from "./courses/web-development-foundations/review/page";
 import { metadata as progressMetadata } from "./practice/progress/page";
 import { metadata as recursionMetadata } from "./practice/recursion/page";
 import { metadata as searchSortMetadata } from "./practice/search-sort/page";
@@ -79,6 +80,10 @@ describe("private learner routes", () => {
       index: false,
       follow: false,
     });
+    expect(webFoundationsReviewMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
     const privatePracticeMetadata = [
       activityMetadata,
       challengeMetadata,
@@ -131,6 +136,9 @@ describe("private learner routes", () => {
     );
     expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/projects/html-css-resource-library/debrief",
+    );
+    expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/courses/web-development-foundations/review",
     );
     const privatePracticePaths = [
       "activity",

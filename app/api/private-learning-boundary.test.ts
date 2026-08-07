@@ -5,6 +5,7 @@ import * as practiceDb from "@/db/coding-practice";
 import * as labProgressDb from "@/db/javascript-lab-progress";
 import * as readinessDb from "@/db/javascript-readiness";
 import * as mixedReviewDb from "@/db/javascript-mixed-review";
+import * as foundationsReviewDb from "@/db/web-foundations-review";
 import { auth } from "@/lib/auth";
 import { GET as getCertificate } from "./certificate/route";
 import {
@@ -35,6 +36,7 @@ import {
 import { POST as saveLabProgress } from "./practice/labs/[labSlug]/progress/route";
 import { POST as saveReadiness } from "./practice/readiness/route";
 import { POST as saveMixedReview } from "./practice/mixed-review/route";
+import { POST as saveFoundationsReview } from "./courses/web-development-foundations/review/route";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -70,6 +72,10 @@ vi.mock("@/db/javascript-readiness", () => ({ saveJavaScriptReadinessResultForSt
 vi.mock("@/db/javascript-mixed-review", () => ({
   getJavaScriptMixedReviewResultForStudent: vi.fn(),
   saveJavaScriptMixedReviewResultForStudent: vi.fn(),
+}));
+vi.mock("@/db/web-foundations-review", () => ({
+  getWebFoundationsReviewResultForStudent: vi.fn(),
+  saveWebFoundationsReviewResultForStudent: vi.fn(),
 }));
 
 vi.mock("@/db/coding-practice", () => ({
@@ -127,10 +133,11 @@ describe("signed-out private learning boundary", () => {
       saveLabProgress(request.clone(), labContext),
       saveReadiness(request.clone()),
       saveMixedReview(request.clone()),
+      saveFoundationsReview(request.clone()),
     ]);
 
     expect(responses.map((response) => response.status)).toEqual(
-      Array(17).fill(401),
+      Array(18).fill(401),
     );
     expect(courseDb.getFirstLessonNote).not.toHaveBeenCalled();
     expect(courseDb.saveFirstLessonNote).not.toHaveBeenCalled();
@@ -154,5 +161,7 @@ describe("signed-out private learning boundary", () => {
     expect(readinessDb.saveJavaScriptReadinessResultForStudent).not.toHaveBeenCalled();
     expect(mixedReviewDb.getJavaScriptMixedReviewResultForStudent).not.toHaveBeenCalled();
     expect(mixedReviewDb.saveJavaScriptMixedReviewResultForStudent).not.toHaveBeenCalled();
+    expect(foundationsReviewDb.getWebFoundationsReviewResultForStudent).not.toHaveBeenCalled();
+    expect(foundationsReviewDb.saveWebFoundationsReviewResultForStudent).not.toHaveBeenCalled();
   });
 });
