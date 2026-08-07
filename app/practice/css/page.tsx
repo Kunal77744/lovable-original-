@@ -5,6 +5,7 @@ import {
   getCssPracticeCatalogProgress,
   getCssReviewSessionForStudent,
 } from "@/db/css-practice";
+import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { auth } from "@/lib/auth";
 import {
   CSS_PRACTICE_CHALLENGE_COUNT,
@@ -23,15 +24,29 @@ export const metadata: Metadata = {
 
 export default async function CssPracticePage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const [progress, reviewSession] = await Promise.all([
+  const [progress, reviewSession, capstone] = await Promise.all([
     getCssPracticeCatalogProgress(session?.user.id ?? null),
     session
       ? getCssReviewSessionForStudent(session.user.id)
       : Promise.resolve([]),
+    session
+      ? getHtmlCssCapstoneSummary(session.user.id)
+      : Promise.resolve({ state: "not-started" as const, passedChecks: 0 }),
   ]);
   const completed = new Set(progress.completedSlugs);
-  const primaryChallengeSlug =
-    progress.nextChallengeSlug ?? CSS_PRACTICE_CHALLENGES[0].slug;
+  const cssComplete = progress.completedCount === progress.totalCount;
+  const primaryHref = cssComplete
+    ? "/projects/html-css-resource-library"
+    : `/practice/css/${progress.nextChallengeSlug ?? CSS_PRACTICE_CHALLENGES[0].slug}`;
+  const primaryLabel = cssComplete
+    ? capstone.state === "not-started"
+      ? "Build the HTML and CSS capstone"
+      : capstone.state === "completed"
+        ? "Review the completed capstone"
+        : "Resume the HTML and CSS capstone"
+    : session && progress.completedCount > 0
+      ? "Resume CSS practice"
+      : "Start CSS practice";
 
   return (
     <main>
@@ -46,11 +61,9 @@ export default async function CssPracticePage() {
           </p>
           <Link
             className="hero-primary"
-            href={`/practice/css/${primaryChallengeSlug}`}
+            href={primaryHref}
           >
-            {session && progress.completedCount > 0
-              ? "Resume CSS practice"
-              : "Start CSS practice"}
+            {primaryLabel}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

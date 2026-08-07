@@ -21102,6 +21102,84 @@ footer {
   }
 }
 
+/* Private HTML and CSS capstone */
+.html-css-capstone-hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 52%),
+    #f0eee2;
+}
+
+.html-css-capstone-workbench {
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+}
+
+.html-css-capstone-editors {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.html-css-capstone-editor + .html-css-capstone-editor {
+  border-left: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.html-css-capstone-editor textarea {
+  min-height: 560px;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.html-css-capstone-preview {
+  min-width: 0;
+  padding: 0 20px 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.11);
+  background: #0f1a15;
+}
+
+.html-css-capstone-preview .workspace-panel-label {
+  margin: 0 -20px 20px;
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  color: #a7b6ae;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.html-css-capstone-preview iframe {
+  width: 100%;
+  min-height: 560px;
+  border: 0;
+  border-radius: 10px 10px 3px 10px;
+  background: #f6f7f2;
+}
+
+.html-css-capstone-teaching a {
+  width: fit-content;
+  margin-top: 14px;
+}
+
+@media (max-width: 1040px) {
+  .html-css-capstone-workbench,
+  .html-css-capstone-editors {
+    grid-template-columns: 1fr;
+  }
+
+  .html-css-capstone-editor + .html-css-capstone-editor,
+  .html-css-capstone-preview {
+    border-top: 1px solid rgba(255, 255, 255, 0.11);
+    border-left: 0;
+  }
+
+  .html-css-capstone-editor textarea,
+  .html-css-capstone-preview iframe {
+    min-height: 430px;
+  }
+}
+
 /* Private JavaScript project debrief */
 .project-debrief-shell {
   width: min(1120px, calc(100% - 48px));

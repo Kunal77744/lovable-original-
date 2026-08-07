@@ -25,6 +25,7 @@ describe("public sitemap", () => {
     "/playground",
     "/projects/semantic-html-article",
     "/projects/javascript-expense-report",
+    "/projects/html-css-resource-library",
     "/settings",
     "/certificate",
   ])("excludes the private route %s", (privateRoute) => {

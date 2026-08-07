@@ -32,6 +32,10 @@ type LearnerMilestoneChecklistProps = {
       href: string;
     } | null;
   };
+  htmlCssCapstone: {
+    state: "not-started" | "in-progress" | "completed";
+    passedChecks: number;
+  };
 };
 
 export function LearnerMilestoneChecklist({
@@ -39,6 +43,7 @@ export function LearnerMilestoneChecklist({
   project,
   practice,
   cssPractice,
+  htmlCssCapstone,
 }: LearnerMilestoneChecklistProps) {
   const practicePathCompleted =
     practice.totalCount > 0 &&
@@ -50,7 +55,7 @@ export function LearnerMilestoneChecklist({
     Number(
       cssPractice.totalCount > 0 &&
         cssPractice.completedCount === cssPractice.totalCount,
-    );
+    ) + Number(htmlCssCapstone.state === "completed");
   const cssPathCompleted =
     cssPractice.totalCount > 0 &&
     cssPractice.completedCount === cssPractice.totalCount;
@@ -79,7 +84,7 @@ export function LearnerMilestoneChecklist({
         </div>
         <div className="dashboard-path-summary">
           <span>Milestones complete</span>
-          <strong>{completedMilestones}/4</strong>
+          <strong>{completedMilestones}/5</strong>
           <Link href="/profile">
             View learning record <span aria-hidden="true">→</span>
           </Link>
@@ -256,6 +261,51 @@ export function LearnerMilestoneChecklist({
               {cssPractice.completedCount > 0
                 ? `Continue at CSS ${nextCssChallengeNumber}`
                 : "Start CSS challenge 01"}
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+        </li>
+        <li
+          className={
+            htmlCssCapstone.state === "completed"
+              ? "dashboard-milestone is-complete"
+              : cssPathCompleted
+                ? "dashboard-milestone is-current"
+                : "dashboard-milestone"
+          }
+          aria-current={
+            cssPathCompleted && htmlCssCapstone.state !== "completed"
+              ? "step"
+              : undefined
+          }
+        >
+          <span className="dashboard-milestone-marker" aria-hidden="true">
+            {htmlCssCapstone.state === "completed" ? "✓" : "05"}
+          </span>
+          <div className="dashboard-milestone-copy">
+            <span>
+              {htmlCssCapstone.state === "completed"
+                ? "Completed · 6/6 outcomes"
+                : htmlCssCapstone.state === "in-progress"
+                  ? `Saved project · ${htmlCssCapstone.passedChecks}/6 passing`
+                  : cssPathCompleted
+                    ? "Your next milestone"
+                    : "After CSS practice"}
+            </span>
+            <h3>Build a learning resource library</h3>
+            <p>
+              Combine semantic HTML, grid, selectors, and the box model in one
+              private two-file capstone.
+            </p>
+          </div>
+          {cssPathCompleted && htmlCssCapstone.state !== "completed" ? (
+            <Link
+              className="dashboard-path-action"
+              href="/projects/html-css-resource-library"
+            >
+              {htmlCssCapstone.state === "in-progress"
+                ? "Resume the capstone"
+                : "Build the capstone"}
               <span aria-hidden="true">→</span>
             </Link>
           ) : null}

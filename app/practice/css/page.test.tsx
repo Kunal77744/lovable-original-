@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getProgress: vi.fn(),
   getReviewSession: vi.fn(),
+  getHtmlCssCapstone: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -21,6 +22,10 @@ vi.mock("@/db/css-practice", () => ({
   getCssReviewSessionForStudent: mocks.getReviewSession,
 }));
 
+vi.mock("@/db/html-css-capstone", () => ({
+  getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
+}));
+
 describe("CssPracticePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,6 +36,10 @@ describe("CssPracticePage", () => {
       nextChallengeSlug: "class-selector",
     });
     mocks.getReviewSession.mockResolvedValue([]);
+    mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
+    });
   });
 
   afterEach(() => cleanup());

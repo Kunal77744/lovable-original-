@@ -140,9 +140,9 @@ export default async function CssChallengePage({
               <strong>{nextChallenge.title}</strong>
             </Link>
           ) : (
-            <Link href="/practice/css">
+            <Link href="/projects/html-css-resource-library">
               <span>Path complete</span>
-              <strong>Review CSS practice</strong>
+              <strong>Build the HTML and CSS capstone</strong>
             </Link>
           )}
         </nav>

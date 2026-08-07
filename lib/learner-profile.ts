@@ -54,12 +54,17 @@ export function buildLearnerProfile({
   cssPractice,
   attempts,
   projectCompleted,
+  htmlCssCapstone = { state: "completed", passedChecks: 6 },
 }: {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
   cssPractice: LearnerProfilePractice;
   attempts: RecentCodingAttempt[];
   projectCompleted: boolean;
+  htmlCssCapstone?: {
+    state: "not-started" | "in-progress" | "completed";
+    passedChecks: number;
+  };
 }): LearnerProfileViewModel {
   const quizScore = course.nextLesson?.quizScore ?? null;
   const isFreshLearner =
@@ -158,6 +163,31 @@ export function buildLearnerProfile({
             : "Continue your CSS practice",
         title: nextCssChallenge.title,
         description: `Practice ${nextCssChallenge.skill.toLowerCase()} and keep the completed result on this record.`,
+      },
+    };
+  }
+
+  if (htmlCssCapstone.state !== "completed") {
+    return {
+      course,
+      practice,
+      cssPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label:
+          htmlCssCapstone.state === "in-progress"
+            ? "Resume the capstone"
+            : "Build the capstone",
+        href: "/projects/html-css-resource-library",
+        kicker:
+          htmlCssCapstone.state === "in-progress"
+            ? `${htmlCssCapstone.passedChecks}/6 outcomes passing`
+            : "Your integrated front-end result",
+        title: "Learning resource library",
+        description:
+          "Combine semantic HTML, CSS grid, scoped selectors, and the box model in one private saved project.",
       },
     };
   }

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getCssPractice: vi.fn(),
   getAttempts: vi.fn(),
   getProject: vi.fn(),
+  getHtmlCssCapstone: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -47,6 +48,10 @@ vi.mock("@/db/guided-project", () => ({
   getGuidedProjectForStudent: mocks.getProject,
 }));
 
+vi.mock("@/db/html-css-capstone", () => ({
+  getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
+}));
+
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -78,6 +83,10 @@ describe("ProfilePage", () => {
     mocks.getAttempts.mockResolvedValue([]);
     mocks.getProject.mockResolvedValue({
       submission: null,
+    });
+    mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
     });
   });
 

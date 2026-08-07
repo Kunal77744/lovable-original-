@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getPractice: vi.fn(),
   getCssPractice: vi.fn(),
   getProject: vi.fn(),
+  getHtmlCssCapstone: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -38,6 +39,10 @@ vi.mock("@/db/guided-project", () => ({
   getGuidedProjectForStudent: mocks.getProject,
 }));
 
+vi.mock("@/db/html-css-capstone", () => ({
+  getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
+}));
+
 vi.mock("@/components/sign-out-button", () => ({
   SignOutButton: () => <button type="button">Sign out</button>,
 }));
@@ -53,6 +58,10 @@ describe("DashboardPage", () => {
         name: "Verification Learner",
         email: "learner@example.com",
       },
+    });
+    mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
     });
     mocks.getCourse.mockResolvedValue({
       slug: "web-development-foundations",
@@ -127,7 +136,7 @@ describe("DashboardPage", () => {
         name: "Solve problem 01: Sum two numbers",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("0/4")).toBeInTheDocument();
+    expect(screen.getByText("0/5")).toBeInTheDocument();
     expect(screen.getByText("Start here · 34 minutes")).toBeInTheDocument();
   });
 
@@ -187,7 +196,7 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue the field guide" }),
     ).toHaveAttribute("href", "/projects/semantic-html-article");
     expect(screen.getByText("Saved draft ready")).toBeInTheDocument();
-    expect(screen.getByText("1/4")).toBeInTheDocument();
+    expect(screen.getByText("1/5")).toBeInTheDocument();
   });
 
   it("points a returning learner to the exact next unfinished problem", async () => {
@@ -231,7 +240,7 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue at problem 02" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("1/6 Accepted")).toBeInTheDocument();
-    expect(screen.getByText("2/4")).toBeInTheDocument();
+    expect(screen.getByText("2/5")).toBeInTheDocument();
   });
 
   it("continues a JavaScript completer into the exact next CSS challenge", async () => {
@@ -287,6 +296,6 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("link", { name: "Continue at CSS 03" }),
     ).toHaveAttribute("href", "/practice/css/predictable-width");
-    expect(screen.getByText("3/4")).toBeInTheDocument();
+    expect(screen.getByText("3/5")).toBeInTheDocument();
   });
 });

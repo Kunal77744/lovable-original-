@@ -9,6 +9,7 @@ import {
 import { getCssPracticeCatalogProgress } from "@/db/css-practice";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
+import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { auth } from "@/lib/auth";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { buildLearnerProfile } from "@/lib/learner-profile";
@@ -35,12 +36,13 @@ export default async function ProfilePage() {
     redirect("/account?mode=signin");
   }
 
-  const [course, practice, cssPractice, attempts, project] = await Promise.all([
+  const [course, practice, cssPractice, attempts, project, htmlCssCapstone] = await Promise.all([
     getOrCreateFirstCourseAssignment(session.user.id),
     getCodingCatalogProgress(session.user.id),
     getCssPracticeCatalogProgress(session.user.id),
     getRecentCodingAttempts(session.user.id),
     getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
+    getHtmlCssCapstoneSummary(session.user.id),
   ]);
   const profile = buildLearnerProfile({
     course,
@@ -48,6 +50,7 @@ export default async function ProfilePage() {
     cssPractice,
     attempts,
     projectCompleted: project?.submission?.status === "completed",
+    htmlCssCapstone,
   });
 
   return (
