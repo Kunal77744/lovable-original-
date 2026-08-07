@@ -6,6 +6,7 @@ import {
   getCodingProblemBookmarksForStudent,
 } from "@/db/coding-practice";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
+import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { auth } from "@/lib/auth";
 import PracticePage from "./page";
 
@@ -29,12 +30,16 @@ vi.mock("@/db/coding-practice", () => ({
 vi.mock("@/db/javascript-lab-progress", () => ({
   getJavaScriptLabCatalogProgress: vi.fn(),
 }));
+vi.mock("@/db/javascript-capstone", () => ({
+  getJavaScriptCapstoneSummary: vi.fn(),
+}));
 
 const getSession = vi.mocked(auth.api.getSession);
 const getProgress = vi.mocked(getCodingCatalogProgress);
 const getReviewQueue = vi.mocked(getCodingMistakeReviewQueueForStudent);
 const getBookmarks = vi.mocked(getCodingProblemBookmarksForStudent);
 const getLabProgress = vi.mocked(getJavaScriptLabCatalogProgress);
+const getCapstoneSummary = vi.mocked(getJavaScriptCapstoneSummary);
 
 describe("PracticePage progress", () => {
   beforeEach(() => {
@@ -49,6 +54,10 @@ describe("PracticePage progress", () => {
       nextHref: "/practice/foundations",
       nextExerciseNumber: 1,
       labs: [],
+    });
+    getCapstoneSummary.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
     });
   });
 
@@ -93,6 +102,12 @@ describe("PracticePage progress", () => {
     expect(getBookmarks).toHaveBeenCalledWith("fresh-learner");
     expect(getReviewQueue).toHaveBeenCalledWith("fresh-learner");
     expect(getLabProgress).toHaveBeenCalledWith("fresh-learner");
+    expect(getCapstoneSummary).toHaveBeenCalledWith("fresh-learner");
+    expect(
+      screen.getByRole("link", {
+        name: /Build an expense report from raw data/,
+      }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report");
     expect(
       screen.getByRole("link", { name: "Check review status" }),
     ).toHaveAttribute("href", "/practice/review");
@@ -131,6 +146,10 @@ describe("PracticePage progress", () => {
         attemptedAt: "2026-08-04T09:00:00.000Z",
       },
     ]);
+    getCapstoneSummary.mockResolvedValue({
+      state: "in-progress",
+      passedChecks: 4,
+    });
 
     render(await PracticePage());
 
@@ -188,6 +207,8 @@ describe("PracticePage progress", () => {
       /function solve|learner code/i,
     );
     expect(getLabProgress).toHaveBeenCalledWith("returning-learner");
+    expect(screen.getByText("4/6 outcomes")).toBeInTheDocument();
+    expect(screen.getByText("Continue project")).toBeInTheDocument();
   });
 
   it("describes the catalog without implying personal progress when signed out", async () => {
@@ -222,6 +243,10 @@ describe("PracticePage progress", () => {
     expect(getBookmarks).not.toHaveBeenCalled();
     expect(getReviewQueue).not.toHaveBeenCalled();
     expect(getLabProgress).not.toHaveBeenCalled();
+    expect(getCapstoneSummary).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText("Private JavaScript capstone"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Saved for later")).not.toBeInTheDocument();
     expect(screen.queryByText("Mistakes to revisit")).not.toBeInTheDocument();
     expect(screen.queryByText("Private review session")).not.toBeInTheDocument();

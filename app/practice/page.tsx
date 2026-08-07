@@ -7,6 +7,7 @@ import {
   getCodingProblemBookmarksForStudent,
 } from "@/db/coding-practice";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
+import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { auth } from "@/lib/auth";
 import {
   CODING_PROBLEMS,
@@ -65,7 +66,8 @@ export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const [progress, savedProblems, reviewQueue, labProgress] = await Promise.all([
+  const [progress, savedProblems, reviewQueue, labProgress, capstoneSummary] =
+    await Promise.all([
     getCodingCatalogProgress(session?.user.id ?? null),
     session
       ? getCodingProblemBookmarksForStudent(session.user.id)
@@ -74,7 +76,10 @@ export default async function PracticePage() {
       ? getCodingMistakeReviewQueueForStudent(session.user.id)
       : Promise.resolve([]),
     session ? getJavaScriptLabCatalogProgress(session.user.id) : Promise.resolve(null),
-  ]);
+      session
+        ? getJavaScriptCapstoneSummary(session.user.id)
+        : Promise.resolve(null),
+    ]);
   const completedSlugs = new Set(progress.completedSlugs);
   const reviewSession = buildCodingReviewSession({
     mistakes: reviewQueue,
@@ -399,6 +404,43 @@ export default async function PracticePage() {
                   </section>
                 ))}
               </div>
+
+              <Link
+                className={`practice-capstone-entry ${
+                  capstoneSummary?.state === "completed" ? "is-complete" : ""
+                }`}
+                href="/projects/javascript-expense-report"
+              >
+                <span className="practice-capstone-number" aria-hidden="true">
+                  02
+                </span>
+                <span className="practice-capstone-copy">
+                  <small>Private JavaScript capstone</small>
+                  <strong>Build an expense report from raw data.</strong>
+                  <span>
+                    Combine parsing, arrays, objects, sorting, totals, and exact
+                    output in one saved project.
+                  </span>
+                </span>
+                <span className="practice-capstone-state">
+                  <small>
+                    {capstoneSummary?.state === "completed"
+                      ? "Complete"
+                      : capstoneSummary?.state === "in-progress"
+                        ? "In progress"
+                        : "Not started"}
+                  </small>
+                  <strong>{capstoneSummary?.passedChecks ?? 0}/6 outcomes</strong>
+                  <span>
+                    {capstoneSummary?.state === "completed"
+                      ? "Review project"
+                      : capstoneSummary?.state === "in-progress"
+                        ? "Continue project"
+                        : "Start project"}{" "}
+                    <span aria-hidden="true">→</span>
+                  </span>
+                </span>
+              </Link>
 
               <div className="practice-learning-playground">
                 <p>

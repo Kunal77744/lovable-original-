@@ -20482,3 +20482,607 @@ footer {
     transition: none;
   }
 }
+
+/* Private JavaScript capstone */
+.practice-capstone-entry {
+  min-height: 166px;
+  margin-top: 16px;
+  padding: 28px 30px;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) minmax(170px, auto);
+  align-items: center;
+  gap: 24px;
+  border: 1px solid rgba(23, 35, 30, 0.19);
+  border-radius: 16px 16px 5px 16px;
+  background: #17231e;
+  color: #f5f7f2;
+  text-decoration: none;
+  box-shadow: 0 22px 42px rgba(23, 35, 30, 0.13);
+}
+
+.practice-capstone-number {
+  align-self: start;
+  color: #66dc9d;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.practice-capstone-copy {
+  display: grid;
+  gap: 7px;
+}
+
+.practice-capstone-copy small,
+.practice-capstone-state small {
+  color: #91cda9;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.practice-capstone-copy > strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.practice-capstone-copy > span {
+  max-width: 66ch;
+  color: #b9c5be;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.practice-capstone-state {
+  min-width: 170px;
+  padding-left: 24px;
+  display: grid;
+  gap: 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.practice-capstone-state > strong {
+  font-size: 14px;
+}
+
+.practice-capstone-state > span {
+  color: #f5f7f2;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.js-capstone-shell {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 34px 0 110px;
+}
+
+.js-capstone-hero {
+  margin-top: 24px;
+  padding: 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(310px, 0.66fr);
+  align-items: stretch;
+  gap: 72px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 25px 25px 7px 25px;
+  background: #edf3e9;
+  box-shadow: 0 28px 68px rgba(23, 35, 30, 0.08);
+}
+
+.js-capstone-hero-copy h1 {
+  max-width: 760px;
+  margin: 14px 0 22px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(52px, 6.2vw, 82px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.js-capstone-hero-copy > p:last-child {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.68;
+}
+
+.js-capstone-brief {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 16px 16px 5px 16px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.js-capstone-brief > span {
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.js-capstone-brief > strong {
+  margin-top: 22px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.js-capstone-brief > p {
+  margin: 15px 0 28px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.js-capstone-brief dl {
+  margin: auto 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+}
+
+.js-capstone-brief dl div {
+  padding: 17px 8px 0 0;
+}
+
+.js-capstone-brief dt {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.js-capstone-brief dd {
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.js-capstone-workspace {
+  margin-top: 22px;
+  padding: 46px 48px 50px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 7px 24px 24px 24px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.js-capstone-workspace-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 42px;
+}
+
+.js-capstone-workspace-heading h2,
+.js-capstone-review-heading h3,
+.js-capstone-actions h3 {
+  margin: 9px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.js-capstone-workspace-heading h2 {
+  font-size: clamp(37px, 4.6vw, 56px);
+}
+
+.js-capstone-workspace-heading > div:first-child > p:last-child {
+  max-width: 62ch;
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.62;
+}
+
+.js-capstone-score {
+  width: 156px;
+  min-height: 136px;
+  padding: 19px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  border-radius: 13px 13px 4px 13px;
+  background: #17231e;
+  color: white;
+}
+
+.js-capstone-score span,
+.js-capstone-score small {
+  color: #a8b9af;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.js-capstone-score strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.js-capstone-workbench {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  overflow: hidden;
+  border-radius: 15px 15px 5px 15px;
+  background: #17231e;
+  box-shadow: 0 26px 56px rgba(23, 35, 30, 0.17);
+}
+
+.js-capstone-editor {
+  min-width: 0;
+  padding: 0 28px 28px;
+}
+
+.js-capstone-editor .workspace-panel-label {
+  margin: 0 -28px 20px;
+  padding: 13px 20px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+  color: #a7b6ae;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.js-capstone-editor label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.js-capstone-editor textarea {
+  width: 100%;
+  min-height: 510px;
+  padding: 0;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e9f1eb;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.75;
+  tab-size: 2;
+}
+
+.js-capstone-contract {
+  padding: 28px;
+  border-left: 1px solid rgba(255, 255, 255, 0.11);
+  background: #0f1a15;
+  color: #eef5ef;
+}
+
+.js-capstone-contract h3 {
+  margin: 8px 0 13px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.js-capstone-sample {
+  margin-top: 22px;
+}
+
+.js-capstone-sample > span,
+.js-capstone-output > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #95a89c;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.js-capstone-sample pre,
+.js-capstone-output pre {
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  color: #d7e6dc;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.js-capstone-contract > button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 22px;
+  border: 1px solid rgba(102, 220, 157, 0.55);
+  border-radius: 8px 8px 3px 8px;
+  background: transparent;
+  color: #dff3e4;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.js-capstone-contract button:disabled,
+.js-capstone-actions button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.js-capstone-output {
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid rgba(235, 172, 143, 0.42);
+  border-radius: 8px 8px 3px 8px;
+  background: rgba(235, 172, 143, 0.08);
+}
+
+.js-capstone-output.is-passed {
+  border-color: rgba(102, 220, 157, 0.42);
+  background: rgba(102, 220, 157, 0.08);
+}
+
+.js-capstone-review-layout {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(290px, 0.62fr);
+  gap: 18px;
+}
+
+.js-capstone-review,
+.js-capstone-actions {
+  padding: 30px;
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 14px 14px 5px 14px;
+  background: #f6f7f2;
+}
+
+.js-capstone-review-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.js-capstone-review-heading h3,
+.js-capstone-actions h3 {
+  font-size: 29px;
+}
+
+.js-capstone-review-heading > span {
+  flex: none;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.js-capstone-checks {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.js-capstone-checks article {
+  min-height: 116px;
+  padding: 17px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 9px;
+  border: 1px solid rgba(23, 35, 30, 0.1);
+  border-radius: 10px 10px 3px 10px;
+  background: white;
+}
+
+.js-capstone-checks article.is-passed {
+  border-color: rgba(40, 118, 82, 0.34);
+  background: #edf5ec;
+}
+
+.js-capstone-checks article > span {
+  color: var(--accent-deep);
+  font-weight: 850;
+}
+
+.js-capstone-checks p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.js-capstone-recovery {
+  margin-top: 12px;
+  padding: 18px;
+  border-left: 3px solid #d28b63;
+  background: rgba(237, 221, 190, 0.46);
+}
+
+.js-capstone-recovery span,
+.js-capstone-teaching > span {
+  display: block;
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.js-capstone-recovery p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.js-capstone-actions {
+  display: flex;
+  flex-direction: column;
+}
+
+.js-capstone-actions button {
+  width: 100%;
+  min-height: 48px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.js-capstone-actions .js-capstone-save {
+  margin-top: 26px;
+  border: 1px solid rgba(23, 35, 30, 0.22);
+  border-radius: 8px 8px 3px 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.js-capstone-actions .lesson-primary-action {
+  margin-top: 8px;
+  border: 0;
+}
+
+.js-capstone-actions > p[role="status"] {
+  min-height: 54px;
+  margin: 15px 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.js-capstone-teaching {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.js-capstone-teaching a {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 760;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 900px) {
+  .practice-capstone-entry {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .practice-capstone-state {
+    grid-column: 2;
+    min-width: 0;
+    padding: 14px 0 0;
+    grid-template-columns: repeat(3, auto);
+    border-top: 1px solid rgba(255, 255, 255, 0.13);
+    border-left: 0;
+  }
+
+  .js-capstone-hero,
+  .js-capstone-workbench,
+  .js-capstone-review-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .js-capstone-hero {
+    gap: 34px;
+  }
+
+  .js-capstone-contract {
+    border-top: 1px solid rgba(255, 255, 255, 0.11);
+    border-left: 0;
+  }
+
+  .js-capstone-editor textarea {
+    min-height: 430px;
+  }
+}
+
+@media (max-width: 640px) {
+  .practice-capstone-entry {
+    padding: 24px 20px;
+    grid-template-columns: 1fr;
+  }
+
+  .practice-capstone-number {
+    display: none;
+  }
+
+  .practice-capstone-state {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .js-capstone-shell {
+    width: min(100% - 24px, 1180px);
+    padding-bottom: 70px;
+  }
+
+  .js-capstone-hero,
+  .js-capstone-workspace {
+    padding: 29px 22px;
+  }
+
+  .js-capstone-hero-copy h1 {
+    font-size: clamp(46px, 14vw, 64px);
+  }
+
+  .js-capstone-brief dl {
+    grid-template-columns: 1fr;
+  }
+
+  .js-capstone-brief dl div {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .js-capstone-workspace-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .js-capstone-score {
+    width: 100%;
+    min-height: 98px;
+  }
+
+  .js-capstone-editor,
+  .js-capstone-contract,
+  .js-capstone-review,
+  .js-capstone-actions {
+    padding: 22px;
+  }
+
+  .js-capstone-editor .workspace-panel-label {
+    margin: 0 -22px 20px;
+  }
+
+  .js-capstone-checks {
+    grid-template-columns: 1fr;
+  }
+
+  .js-capstone-review-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
