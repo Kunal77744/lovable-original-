@@ -7,6 +7,7 @@ import {
 } from "@/db/coding-practice";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
+import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
 import PracticePage from "./page";
 
@@ -33,6 +34,9 @@ vi.mock("@/db/javascript-lab-progress", () => ({
 vi.mock("@/db/javascript-capstone", () => ({
   getJavaScriptCapstoneSummary: vi.fn(),
 }));
+vi.mock("@/db/javascript-mixed-review", () => ({
+  getJavaScriptMixedReviewResultForStudent: vi.fn(),
+}));
 
 const getSession = vi.mocked(auth.api.getSession);
 const getProgress = vi.mocked(getCodingCatalogProgress);
@@ -40,6 +44,9 @@ const getReviewQueue = vi.mocked(getCodingMistakeReviewQueueForStudent);
 const getBookmarks = vi.mocked(getCodingProblemBookmarksForStudent);
 const getLabProgress = vi.mocked(getJavaScriptLabCatalogProgress);
 const getCapstoneSummary = vi.mocked(getJavaScriptCapstoneSummary);
+const getMixedReviewResult = vi.mocked(
+  getJavaScriptMixedReviewResultForStudent,
+);
 
 describe("PracticePage progress", () => {
   beforeEach(() => {
@@ -69,6 +76,7 @@ describe("PracticePage progress", () => {
       state: "not-started",
       passedChecks: 0,
     });
+    getMixedReviewResult.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -113,6 +121,7 @@ describe("PracticePage progress", () => {
     expect(getReviewQueue).toHaveBeenCalledWith("fresh-learner");
     expect(getLabProgress).toHaveBeenCalledWith("fresh-learner");
     expect(getCapstoneSummary).toHaveBeenCalledWith("fresh-learner");
+    expect(getMixedReviewResult).toHaveBeenCalledWith("fresh-learner");
     expect(
       screen.getByRole("link", {
         name: /Build an expense report from raw data/,
@@ -157,9 +166,9 @@ describe("PracticePage progress", () => {
       }),
     ).toHaveAttribute("href", "/practice/test-design?exercise=1");
     expect(
-      screen.getByRole("link", { name: "Start mixed review" }),
+      screen.getByRole("link", { name: "Start spaced review" }),
     ).toHaveAttribute("href", "/practice/mixed-review");
-    expect(screen.getByText(/does not change judged mastery/)).toBeInTheDocument();
+    expect(screen.getByText(/without changing judged mastery/)).toBeInTheDocument();
   });
 
   it("restores a returning learner's saved Accepted total", async () => {
@@ -368,6 +377,7 @@ describe("PracticePage progress", () => {
     expect(getReviewQueue).not.toHaveBeenCalled();
     expect(getLabProgress).not.toHaveBeenCalled();
     expect(getCapstoneSummary).not.toHaveBeenCalled();
+    expect(getMixedReviewResult).not.toHaveBeenCalled();
     expect(
       screen.queryByText("Private JavaScript capstone"),
     ).not.toBeInTheDocument();

@@ -23236,6 +23236,28 @@ footer {
   cursor: pointer;
 }
 
+.mixed-review-record-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  text-underline-offset: 4px;
+}
+
+.mixed-review-record-link:hover {
+  color: var(--ink);
+}
+
+.mixed-review-save-status {
+  min-height: 20px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .mixed-review-locked {
   padding: 48px;
 }

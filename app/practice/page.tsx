@@ -8,6 +8,7 @@ import {
 } from "@/db/coding-practice";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
+import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
 import { getJavaScriptFoundationsEntry } from "@/lib/javascript-lab-progress";
 import {
@@ -16,7 +17,11 @@ import {
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
 import { buildCodingReviewSession } from "@/lib/coding-review-session";
-import { buildJavaScriptMixedReviewSession } from "@/lib/javascript-mixed-review";
+import {
+  buildJavaScriptMixedReviewSession,
+  formatJavaScriptMixedReviewDueDate,
+  isJavaScriptMixedReviewDue,
+} from "@/lib/javascript-mixed-review";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -69,8 +74,14 @@ export default async function PracticePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const [progress, savedProblems, reviewQueue, labProgress, capstoneSummary] =
-    await Promise.all([
+  const [
+    progress,
+    savedProblems,
+    reviewQueue,
+    labProgress,
+    capstoneSummary,
+    mixedReviewResult,
+  ] = await Promise.all([
     getCodingCatalogProgress(session?.user.id ?? null),
     session
       ? getCodingProblemBookmarksForStudent(session.user.id)
@@ -81,6 +92,9 @@ export default async function PracticePage() {
     session ? getJavaScriptLabCatalogProgress(session.user.id) : Promise.resolve(null),
       session
         ? getJavaScriptCapstoneSummary(session.user.id)
+        : Promise.resolve(null),
+      session
+        ? getJavaScriptMixedReviewResultForStudent(session.user.id)
         : Promise.resolve(null),
     ]);
   const completedSlugs = new Set(progress.completedSlugs);
@@ -106,6 +120,7 @@ export default async function PracticePage() {
   const mixedReviewItems = labProgress
     ? buildJavaScriptMixedReviewSession(labProgress.labs)
     : [];
+  const mixedReviewDue = isJavaScriptMixedReviewDue(mixedReviewResult);
   const foundationsStarted = (foundationsEntry?.completedCount ?? 0) > 0;
   const primaryActionLabel = session
     ? foundationsEntry
@@ -415,17 +430,27 @@ export default async function PracticePage() {
               {mixedReviewItems.length > 0 ? (
                 <aside className="practice-mixed-review-entry">
                   <div>
-                    <small>Mixed recall · completed labs only</small>
+                    <small>
+                      {mixedReviewResult && !mixedReviewDue
+                        ? `Spaced recall · next ${formatJavaScriptMixedReviewDueDate(mixedReviewResult.nextDueAt)}`
+                        : "Spaced recall · completed labs only"}
+                    </small>
                     <strong>
-                      Bring {mixedReviewItems.length} JavaScript concepts back at once.
+                      {mixedReviewResult && !mixedReviewDue
+                        ? `Last review saved at ${mixedReviewResult.correctCount}/${mixedReviewResult.totalCount}.`
+                        : `Bring ${mixedReviewItems.length} JavaScript concepts back at once.`}
                     </strong>
                     <p>
-                      One browser-only session mixes teaching you already
-                      unlocked. It does not change judged mastery or saved progress.
+                      Answers stay in your browser. Only the bounded result and
+                      next due date save, without changing judged mastery.
                     </p>
                   </div>
                   <Link href="/practice/mixed-review">
-                    Start mixed review <span aria-hidden="true">→</span>
+                    {mixedReviewResult && !mixedReviewDue
+                      ? "View review schedule"
+                      : mixedReviewResult
+                        ? "Review due concepts"
+                        : "Start spaced review"} <span aria-hidden="true">→</span>
                   </Link>
                 </aside>
               ) : null}

@@ -2,18 +2,29 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { SavedJavaScriptMixedReviewResult } from "@/db/javascript-mixed-review";
 import type { JavaScriptMixedReviewItem } from "@/lib/javascript-mixed-review";
+import { formatJavaScriptMixedReviewDueDate } from "@/lib/javascript-mixed-review";
 
 export function JavaScriptMixedReview({
   items,
+  initialResult,
+  nextHref,
+  nextLabel,
 }: {
   items: JavaScriptMixedReviewItem[];
+  initialResult: SavedJavaScriptMixedReviewResult | null;
+  nextHref: string;
+  nextLabel: string;
 }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [checkedOptionId, setCheckedOptionId] = useState<string | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
-  const [complete, setComplete] = useState(false);
+  const [savedResult, setSavedResult] =
+    useState<SavedJavaScriptMixedReviewResult | null>(initialResult);
+  const [saveStatus, setSaveStatus] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const question = items[questionIndex];
   const isCorrect = checkedOptionId === question.correctOptionId;
@@ -26,10 +37,37 @@ export function JavaScriptMixedReview({
     }
   }
 
-  function continueReview() {
+  async function continueReview() {
     if (!checkedOptionId) return;
     if (questionIndex === items.length - 1) {
-      setComplete(true);
+      setSaving(true);
+      setSaveStatus("Saving your private review result.");
+      try {
+        const response = await fetch("/api/practice/mixed-review", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ correctCount, totalCount: items.length }),
+        });
+        const body = (await response.json().catch(() => null)) as
+          | SavedJavaScriptMixedReviewResult
+          | { error?: string }
+          | null;
+        if (!response.ok || !body || !("nextDueAt" in body)) {
+          setSaveStatus(
+            body && "error" in body && body.error
+              ? body.error
+              : "Your result was not saved. Try again.",
+          );
+          return;
+        }
+
+        setSavedResult(body);
+        setSaveStatus("Saved privately to your account.");
+      } catch {
+        setSaveStatus("Your result was not saved. Try again.");
+      } finally {
+        setSaving(false);
+      }
       return;
     }
 
@@ -38,37 +76,33 @@ export function JavaScriptMixedReview({
     setCheckedOptionId(null);
   }
 
-  function restartReview() {
-    setQuestionIndex(0);
-    setSelectedOptionId(null);
-    setCheckedOptionId(null);
-    setCorrectCount(0);
-    setComplete(false);
-  }
-
-  if (complete) {
+  if (savedResult) {
     return (
       <section className="mixed-review-complete" aria-labelledby="mixed-review-complete-title">
-        <div className="mixed-review-score" aria-label={`${correctCount} of ${items.length} concepts recalled`}>
-          <strong>{correctCount}</strong>
-          <span>of {items.length}</span>
+        <div
+          className="mixed-review-score"
+          aria-label={`${savedResult.correctCount} of ${savedResult.totalCount} concepts recalled`}
+        >
+          <strong>{savedResult.correctCount}</strong>
+          <span>of {savedResult.totalCount}</span>
         </div>
         <div>
-          <p className="eyebrow">Review complete</p>
+          <p className="eyebrow">Private review saved</p>
           <h2 id="mixed-review-complete-title">
-            You brought {items.length} completed concepts back to mind.
+            Your next mixed review is set for{" "}
+            {formatJavaScriptMixedReviewDueDate(savedResult.nextDueAt)}.
           </h2>
           <p>
-            This browser-only result is a recall check, not judged mastery. No
-            answers or score were added to your account.
+            Only this bounded result and next review date belong to your account.
+            Your answers stayed in this browser, and judged mastery did not change.
           </p>
           <div className="mixed-review-complete-actions">
-            <Link className="primary-action" href="/practice">
-              Return to JavaScript practice <span aria-hidden="true">→</span>
+            <Link className="primary-action" href={nextHref}>
+              {nextLabel} <span aria-hidden="true">→</span>
             </Link>
-            <button onClick={restartReview} type="button">
-              Review the same concepts again
-            </button>
+            <Link className="mixed-review-record-link" href="/practice/progress">
+              View saved lab progress
+            </Link>
           </div>
         </div>
       </section>
@@ -106,7 +140,7 @@ export function JavaScriptMixedReview({
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (checkedOptionId) continueReview();
+          if (checkedOptionId) void continueReview();
           else checkAnswer();
         }}
       >
@@ -141,15 +175,22 @@ export function JavaScriptMixedReview({
 
         <div className="mixed-review-controls">
           <Link href="/practice">Leave review</Link>
-          <button disabled={!selectedOptionId} type="submit">
+          <button disabled={!selectedOptionId || saving} type="submit">
             {checkedOptionId
               ? questionIndex === items.length - 1
-                ? "Finish review"
+                ? saving
+                  ? "Saving result"
+                  : saveStatus
+                    ? "Retry saving result"
+                    : "Finish and save"
                 : "Next concept"
               : "Check my recall"}
             <span aria-hidden="true">→</span>
           </button>
         </div>
+        <p className="mixed-review-save-status" aria-live="polite" aria-atomic="true">
+          {saveStatus}
+        </p>
       </form>
     </section>
   );

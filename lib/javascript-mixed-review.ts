@@ -33,6 +33,62 @@ export type JavaScriptMixedReviewItem = JavaScriptMixedReviewPrompt & {
   correctOptionId: JavaScriptLabSlug;
 };
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+export function isBoundedJavaScriptMixedReviewResult(result: {
+  correctCount: number;
+  totalCount: number;
+}) {
+  return (
+    Number.isInteger(result.correctCount) &&
+    Number.isInteger(result.totalCount) &&
+    result.totalCount >= 3 &&
+    result.totalCount <= 6 &&
+    result.correctCount >= 0 &&
+    result.correctCount <= result.totalCount
+  );
+}
+
+export function getJavaScriptMixedReviewIntervalDays(result: {
+  correctCount: number;
+  totalCount: number;
+}) {
+  if (!isBoundedJavaScriptMixedReviewResult(result)) return null;
+
+  const recallRate = result.correctCount / result.totalCount;
+  if (recallRate >= 0.75) return 7;
+  if (recallRate >= 0.5) return 3;
+  return 1;
+}
+
+export function getJavaScriptMixedReviewDueAt(
+  result: { correctCount: number; totalCount: number },
+  completedAt: Date,
+) {
+  const intervalDays = getJavaScriptMixedReviewIntervalDays(result);
+  if (!intervalDays) throw new Error("Mixed review result is outside its bounded range.");
+  return new Date(completedAt.getTime() + intervalDays * DAY_IN_MS);
+}
+
+export function isJavaScriptMixedReviewDue(
+  result: { nextDueAt: string } | null,
+  now = new Date(),
+) {
+  if (!result) return true;
+  const nextDueAt = Date.parse(result.nextDueAt);
+  return !Number.isFinite(nextDueAt) || nextDueAt <= now.getTime();
+}
+
+export function formatJavaScriptMixedReviewDueDate(nextDueAt: string) {
+  const date = new Date(nextDueAt);
+  if (!Number.isFinite(date.getTime())) return "your next visit";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 const foundations = JAVASCRIPT_FOUNDATION_EXERCISES[0];
 const tracing = JAVASCRIPT_TRACE_EXERCISES[0];
 const debugging = JAVASCRIPT_DEBUGGING_DRILLS[0];
@@ -189,6 +245,7 @@ function selectEvenly<T>(items: readonly T[], limit: number) {
 export function buildJavaScriptMixedReviewSession(
   labs: JavaScriptLabCatalogProgress["labs"],
   limit = 4,
+  rotationSeed = 0,
 ): JavaScriptMixedReviewItem[] {
   const boundedLimit = Math.max(3, Math.min(limit, 6));
   const completedSlugs = new Set(
@@ -200,7 +257,15 @@ export function buildJavaScriptMixedReviewSession(
 
   if (eligiblePrompts.length < 3) return [];
 
-  const selected = selectEvenly(eligiblePrompts, boundedLimit);
+  const normalizedRotation =
+    ((Math.trunc(rotationSeed) % eligiblePrompts.length) +
+      eligiblePrompts.length) %
+    eligiblePrompts.length;
+  const rotatedPrompts = [
+    ...eligiblePrompts.slice(normalizedRotation),
+    ...eligiblePrompts.slice(0, normalizedRotation),
+  ];
+  const selected = selectEvenly(rotatedPrompts, boundedLimit);
   return selected.map((prompt, index) => {
     const optionPrompts = [
       prompt,

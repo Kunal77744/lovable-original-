@@ -1,5 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptMixedReview } from "./javascript-mixed-review";
 import type { JavaScriptMixedReviewItem } from "@/lib/javascript-mixed-review";
 
@@ -55,9 +61,31 @@ const items: JavaScriptMixedReviewItem[] = [
 ];
 
 describe("JavaScriptMixedReview", () => {
-  it("gives bounded recovery and completes without saving", () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    render(<JavaScriptMixedReview items={items} />);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("gives bounded recovery and saves only the final result", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          correctCount: 2,
+          totalCount: 3,
+          completedAt: "2026-08-07T12:00:00.000Z",
+          nextDueAt: "2026-08-10T12:00:00.000Z",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    render(
+      <JavaScriptMixedReview
+        initialResult={null}
+        items={items}
+        nextHref="/practice/test-design?exercise=1"
+        nextLabel="Continue Test design, exercise 1"
+      />,
+    );
 
     fireEvent.click(
       screen.getByLabelText("Track each value after every statement."),
@@ -79,16 +107,68 @@ describe("JavaScriptMixedReview", () => {
       screen.getByLabelText("Isolate the first failing assumption."),
     );
     fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
-    fireEvent.click(screen.getByRole("button", { name: "Finish review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish and save" }));
 
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", {
+          name: "Your next mixed review is set for Aug 10.",
+        }),
+      ).toBeInTheDocument(),
+    );
+    expect(fetchSpy).toHaveBeenCalledWith("/api/practice/mixed-review", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ correctCount: 2, totalCount: 3 }),
+    });
+    expect(fetchSpy.mock.calls[0]?.[1]?.body).not.toContain("option");
     expect(
-      screen.getByRole("heading", {
-        name: "You brought 3 completed concepts back to mind.",
+      screen.getByRole("link", {
+        name: "Continue Test design, exercise 1",
       }),
+    ).toHaveAttribute("href", "/practice/test-design?exercise=1");
+  });
+
+  it("keeps completion hidden when the private save fails", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "Review result could not be saved" }), {
+        status: 500,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    render(
+      <JavaScriptMixedReview
+        initialResult={null}
+        items={items}
+        nextHref="/practice"
+        nextLabel="Return to JavaScript practice"
+      />,
+    );
+
+    for (const [index, label] of [
+      "Split the input before converting values.",
+      "Track each value after every statement.",
+      "Isolate the first failing assumption.",
+    ].entries()) {
+      fireEvent.click(screen.getByLabelText(label));
+      fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: index === 2 ? "Finish and save" : "Next concept",
+        }),
+      );
+    }
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Review result could not be saved"),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByText("Private review saved"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retry saving result" }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("2 of 3 concepts recalled")).toBeInTheDocument();
-    expect(screen.getByText(/No answers or score were added/)).toBeInTheDocument();
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
   });
 });

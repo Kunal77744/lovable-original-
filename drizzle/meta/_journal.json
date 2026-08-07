@@ -169,6 +169,13 @@
       "when": 1786102595176,
       "tag": "0023_calm_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1786121546856,
+      "tag": "0024_concerned_scourge",
+      "breakpoints": true
     }
   ]
 }
