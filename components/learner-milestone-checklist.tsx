@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
 
 type LearnerMilestoneChecklistProps = {
   course: {
@@ -36,6 +37,13 @@ type LearnerMilestoneChecklistProps = {
     state: "not-started" | "in-progress" | "completed";
     passedChecks: number;
   };
+  javascriptPath: {
+    labProgress: JavaScriptLabCatalogProgress;
+    capstone: {
+      state: "not-started" | "in-progress" | "completed";
+      passedChecks: number;
+    };
+  };
 };
 
 export function LearnerMilestoneChecklist({
@@ -44,18 +52,11 @@ export function LearnerMilestoneChecklist({
   practice,
   cssPractice,
   htmlCssCapstone,
+  javascriptPath,
 }: LearnerMilestoneChecklistProps) {
   const practicePathCompleted =
     practice.totalCount > 0 &&
     practice.completedCount === practice.totalCount;
-  const completedMilestones =
-    Number(course.completed) +
-    Number(project.completed) +
-    Number(practicePathCompleted) +
-    Number(
-      cssPractice.totalCount > 0 &&
-        cssPractice.completedCount === cssPractice.totalCount,
-    ) + Number(htmlCssCapstone.state === "completed");
   const cssPathCompleted =
     cssPractice.totalCount > 0 &&
     cssPractice.completedCount === cssPractice.totalCount;
@@ -65,6 +66,38 @@ export function LearnerMilestoneChecklist({
   const nextCssChallengeNumber = cssPractice.nextChallenge
     ? String(cssPractice.nextChallenge.number).padStart(2, "0")
     : null;
+  const guidedJavaScriptCompleted =
+    javascriptPath.labProgress.totalCount > 0 &&
+    javascriptPath.labProgress.completedCount ===
+      javascriptPath.labProgress.totalCount;
+  const javascriptPathCompleted =
+    guidedJavaScriptCompleted &&
+    javascriptPath.capstone.state === "completed";
+  const completedMilestones =
+    Number(course.completed) +
+    Number(project.completed) +
+    Number(practicePathCompleted) +
+    Number(cssPathCompleted) +
+    Number(htmlCssCapstone.state === "completed") +
+    Number(javascriptPathCompleted);
+  const javascriptPathReady = htmlCssCapstone.state === "completed";
+  const javascriptPathAction = !guidedJavaScriptCompleted
+    ? {
+        href: javascriptPath.labProgress.nextHref,
+        label:
+          javascriptPath.labProgress.completedCount > 0
+            ? `Continue exercise ${javascriptPath.labProgress.nextExerciseNumber ?? 1}`
+            : "Start guided JavaScript",
+      }
+    : javascriptPath.capstone.state !== "completed"
+      ? {
+          href: "/projects/javascript-expense-report",
+          label:
+            javascriptPath.capstone.state === "in-progress"
+              ? "Resume the JavaScript capstone"
+              : "Build the JavaScript capstone",
+        }
+      : null;
 
   return (
     <section
@@ -84,7 +117,7 @@ export function LearnerMilestoneChecklist({
         </div>
         <div className="dashboard-path-summary">
           <span>Milestones complete</span>
-          <strong>{completedMilestones}/5</strong>
+          <strong>{completedMilestones}/6</strong>
           <Link href="/profile">
             View learning record <span aria-hidden="true">→</span>
           </Link>
@@ -307,6 +340,58 @@ export function LearnerMilestoneChecklist({
                 ? "Resume the capstone"
                 : "Build the capstone"}
               <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
+        </li>
+        <li
+          className={
+            javascriptPathCompleted
+              ? "dashboard-milestone is-complete"
+              : javascriptPathReady
+                ? "dashboard-milestone is-current"
+                : "dashboard-milestone"
+          }
+          aria-current={
+            javascriptPathReady && !javascriptPathCompleted ? "step" : undefined
+          }
+        >
+          <span className="dashboard-milestone-marker" aria-hidden="true">
+            {javascriptPathCompleted ? "✓" : "06"}
+          </span>
+          <div className="dashboard-milestone-copy">
+            <span>
+              {javascriptPathCompleted
+                ? `Completed · ${javascriptPath.labProgress.totalCount} guided steps + 6/6 capstone`
+                : !javascriptPathReady
+                  ? "After the front-end capstone"
+                  : !guidedJavaScriptCompleted
+                    ? `${javascriptPath.labProgress.completedCount}/${javascriptPath.labProgress.totalCount} guided steps saved`
+                    : javascriptPath.capstone.state === "in-progress"
+                      ? `Guided practice saved · ${javascriptPath.capstone.passedChecks}/6 capstone outcomes passing`
+                      : `${javascriptPath.labProgress.totalCount}/${javascriptPath.labProgress.totalCount} guided steps saved`}
+            </span>
+            <h3>
+              {javascriptPathCompleted
+                ? "JavaScript practice and capstone complete"
+                : !guidedJavaScriptCompleted
+                  ? javascriptPath.labProgress.nextLabTitle ??
+                    "Continue guided JavaScript"
+                  : "Build a JavaScript expense report"}
+            </h3>
+            <p>
+              {javascriptPathCompleted
+                ? "Your guided practice and integrated project are saved without replacing the six judged Accepted results."
+                : !guidedJavaScriptCompleted
+                  ? "Build fluency through guided exercises, then prove the combined skills in one private capstone."
+                  : "Combine parsing, arrays, objects, sorting, totals, and exact formatting in one private project."}
+            </p>
+          </div>
+          {javascriptPathReady && javascriptPathAction ? (
+            <Link
+              className="dashboard-path-action"
+              href={javascriptPathAction.href}
+            >
+              {javascriptPathAction.label} <span aria-hidden="true">→</span>
             </Link>
           ) : null}
         </li>

@@ -7,6 +7,8 @@ import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { getCssPracticeCatalogProgress } from "@/db/css-practice";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
+import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import {
   getCodingProblem,
@@ -37,13 +39,22 @@ export default async function DashboardPage() {
     redirect("/account?mode=signin");
   }
 
-  const [firstCourse, practiceProgress, cssPracticeProgress, guidedProject, htmlCssCapstone] =
-    await Promise.all([
+  const [
+    firstCourse,
+    practiceProgress,
+    cssPracticeProgress,
+    guidedProject,
+    htmlCssCapstone,
+    javascriptLabProgress,
+    javascriptCapstone,
+  ] = await Promise.all([
       getOrCreateFirstCourseAssignment(session.user.id),
       getCodingCatalogProgress(session.user.id),
       getCssPracticeCatalogProgress(session.user.id),
       getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
       getHtmlCssCapstoneSummary(session.user.id),
+      getJavaScriptLabCatalogProgress(session.user.id),
+      getJavaScriptCapstoneSummary(session.user.id),
     ]);
   const guidedProjectCompleted =
     guidedProject?.submission?.status === "completed";
@@ -121,6 +132,10 @@ export default async function DashboardPage() {
               : null,
           }}
           htmlCssCapstone={htmlCssCapstone}
+          javascriptPath={{
+            labProgress: javascriptLabProgress,
+            capstone: javascriptCapstone,
+          }}
         />
 
         <section

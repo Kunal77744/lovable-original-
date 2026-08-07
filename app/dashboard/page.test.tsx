@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   getCssPractice: vi.fn(),
   getProject: vi.fn(),
   getHtmlCssCapstone: vi.fn(),
+  getJavaScriptLabProgress: vi.fn(),
+  getJavaScriptCapstone: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -43,6 +45,14 @@ vi.mock("@/db/html-css-capstone", () => ({
   getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
 }));
 
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: mocks.getJavaScriptLabProgress,
+}));
+
+vi.mock("@/db/javascript-capstone", () => ({
+  getJavaScriptCapstoneSummary: mocks.getJavaScriptCapstone,
+}));
+
 vi.mock("@/components/sign-out-button", () => ({
   SignOutButton: () => <button type="button">Sign out</button>,
 }));
@@ -60,6 +70,19 @@ describe("DashboardPage", () => {
       },
     });
     mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
+    });
+    mocks.getJavaScriptLabProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 55,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/judge-basics",
+      nextExerciseNumber: 1,
+      labs: [],
+    });
+    mocks.getJavaScriptCapstone.mockResolvedValue({
       state: "not-started",
       passedChecks: 0,
     });
@@ -136,7 +159,7 @@ describe("DashboardPage", () => {
         name: "Solve problem 01: Sum two numbers",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("0/5")).toBeInTheDocument();
+    expect(screen.getByText("0/6")).toBeInTheDocument();
     expect(screen.getByText("Start here · 34 minutes")).toBeInTheDocument();
   });
 
@@ -196,7 +219,7 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue the field guide" }),
     ).toHaveAttribute("href", "/projects/semantic-html-article");
     expect(screen.getByText("Saved draft ready")).toBeInTheDocument();
-    expect(screen.getByText("1/5")).toBeInTheDocument();
+    expect(screen.getByText("1/6")).toBeInTheDocument();
   });
 
   it("points a returning learner to the exact next unfinished problem", async () => {
@@ -240,7 +263,7 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue at problem 02" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("1/6 Accepted")).toBeInTheDocument();
-    expect(screen.getByText("2/5")).toBeInTheDocument();
+    expect(screen.getByText("2/6")).toBeInTheDocument();
   });
 
   it("continues a JavaScript completer into the exact next CSS challenge", async () => {
@@ -296,6 +319,154 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("link", { name: "Continue at CSS 03" }),
     ).toHaveAttribute("href", "/practice/css/predictable-width");
-    expect(screen.getByText("3/5")).toBeInTheDocument();
+    expect(screen.getByText("3/6")).toBeInTheDocument();
+  });
+
+  it("continues a main-path completer at the exact unfinished guided JavaScript exercise", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 2,
+      progressPercent: 100,
+      courseCompleted: true,
+      nextLesson: {
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
+        completed: true,
+        quizScore: 100,
+      },
+    });
+    mocks.getProject.mockResolvedValue({
+      saved: true,
+      submission: { status: "completed", passedChecks: 6, totalChecks: 6 },
+    });
+    mocks.getPractice.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [
+        "sum-two-numbers",
+        "even-or-odd",
+        "multiplication-table",
+        "largest-value",
+        "reverse-a-word",
+        "fizz-buzz",
+      ],
+    });
+    mocks.getCssPractice.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [
+        "class-selector",
+        "descendant-selector",
+        "predictable-width",
+        "content-box",
+        "grid-columns",
+        "grid-gap",
+      ],
+      nextChallengeSlug: null,
+    });
+    mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "completed",
+      passedChecks: 6,
+    });
+    mocks.getJavaScriptLabProgress.mockResolvedValue({
+      completedCount: 12,
+      totalCount: 55,
+      nextLabSlug: "tracing",
+      nextLabTitle: "Code tracing",
+      nextHref: "/practice/tracing",
+      nextExerciseNumber: 3,
+      labs: [],
+    });
+
+    render(await DashboardPage());
+
+    expect(screen.getByText("5/6")).toBeInTheDocument();
+    expect(screen.getByText("12/55 guided steps saved")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Code tracing" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Continue exercise 3" }),
+    ).toHaveAttribute("href", "/practice/tracing");
+    expect(
+      screen.queryByText(/without replacing the six judged/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the JavaScript capstone after all guided steps are saved", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 2,
+      progressPercent: 100,
+      courseCompleted: true,
+      nextLesson: {
+        slug: "css-selectors-box-model",
+        title: "Style a card without guessing",
+        description: "Style a predictable learning card.",
+        moduleTitle: "CSS foundations",
+        estimatedMinutes: 16,
+        completed: true,
+        quizScore: 100,
+      },
+    });
+    mocks.getProject.mockResolvedValue({
+      saved: true,
+      submission: { status: "completed", passedChecks: 6, totalChecks: 6 },
+    });
+    mocks.getPractice.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [
+        "sum-two-numbers",
+        "even-or-odd",
+        "multiplication-table",
+        "largest-value",
+        "reverse-a-word",
+        "fizz-buzz",
+      ],
+    });
+    mocks.getCssPractice.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [
+        "class-selector",
+        "descendant-selector",
+        "predictable-width",
+        "content-box",
+        "grid-columns",
+        "grid-gap",
+      ],
+      nextChallengeSlug: null,
+    });
+    mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "completed",
+      passedChecks: 6,
+    });
+    mocks.getJavaScriptLabProgress.mockResolvedValue({
+      completedCount: 55,
+      totalCount: 55,
+      nextLabSlug: null,
+      nextLabTitle: null,
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: null,
+      labs: [],
+    });
+    mocks.getJavaScriptCapstone.mockResolvedValue({
+      state: "in-progress",
+      passedChecks: 4,
+    });
+
+    render(await DashboardPage());
+
+    expect(screen.getByText("5/6")).toBeInTheDocument();
+    expect(
+      screen.getByText("Guided practice saved · 4/6 capstone outcomes passing"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Resume the JavaScript capstone" }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report");
   });
 });
