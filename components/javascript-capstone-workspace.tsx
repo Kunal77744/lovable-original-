@@ -347,7 +347,13 @@ export function JavaScriptCapstoneWorkspace({
                 That structure makes a data program easier to test, debug, and
                 extend without changing every step at once.
               </p>
-              <Link href="/practice/progress">
+              <Link
+                className="js-capstone-debrief-link"
+                href="/projects/javascript-expense-report/debrief"
+              >
+                Open project debrief <span aria-hidden="true">→</span>
+              </Link>
+              <Link className="js-capstone-record-link" href="/practice/progress">
                 Return to your JavaScript record <span aria-hidden="true">→</span>
               </Link>
             </div>

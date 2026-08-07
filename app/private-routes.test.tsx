@@ -21,6 +21,7 @@ import { metadata as settingsMetadata } from "./settings/page";
 import { metadata as submissionsMetadata } from "./submissions/page";
 import { metadata as submissionMetadata } from "./submissions/[submissionId]/page";
 import { metadata as javascriptCapstoneMetadata } from "./projects/javascript-expense-report/page";
+import { metadata as javascriptCapstoneDebriefMetadata } from "./projects/javascript-expense-report/debrief/page";
 
 vi.mock("@/lib/auth", () => ({
   auth: {
@@ -59,6 +60,10 @@ describe("private learner routes", () => {
       follow: false,
     });
     expect(javascriptCapstoneMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
+    expect(javascriptCapstoneDebriefMetadata.robots).toEqual({
       index: false,
       follow: false,
     });
@@ -103,6 +108,9 @@ describe("private learner routes", () => {
     );
     expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/projects/javascript-expense-report",
+    );
+    expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/projects/javascript-expense-report/debrief",
     );
     const privatePracticePaths = [
       "activity",

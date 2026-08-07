@@ -161,6 +161,9 @@ describe("JavaScriptCapstoneWorkspace", () => {
       screen.getByText("Separate parsing, transforming, and formatting."),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "Open project debrief" }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report/debrief");
+    expect(
       screen.getByRole("link", { name: "Return to your JavaScript record" }),
     ).toHaveAttribute("href", "/practice/progress");
   });

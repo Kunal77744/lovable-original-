@@ -20976,12 +20976,27 @@ footer {
 }
 
 .js-capstone-teaching a {
-  display: inline-block;
-  margin-top: 16px;
+  display: block;
   color: var(--accent-deep);
   font-size: 11px;
   font-weight: 760;
   text-underline-offset: 4px;
+}
+
+.js-capstone-teaching .js-capstone-debrief-link {
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 13px 15px;
+  border-radius: 8px 8px 3px 8px;
+  background: var(--ink);
+  color: white;
+  text-align: center;
+  text-decoration: none;
+}
+
+.js-capstone-teaching .js-capstone-record-link {
+  width: fit-content;
+  margin-top: 13px;
 }
 
 @media (max-width: 900px) {
@@ -21084,5 +21099,537 @@ footer {
     align-items: start;
     flex-direction: column;
     gap: 10px;
+  }
+}
+
+/* Private JavaScript project debrief */
+.project-debrief-shell {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 34px 0 110px;
+}
+
+.project-debrief-hero {
+  margin-top: 24px;
+  padding: 58px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.55fr);
+  gap: 64px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 25px 25px 7px 25px;
+  background: #edf3e9;
+  box-shadow: 0 28px 68px rgba(23, 35, 30, 0.08);
+}
+
+.project-debrief-hero h1 {
+  max-width: 760px;
+  margin: 14px 0 22px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(48px, 6vw, 76px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+  text-wrap: balance;
+}
+
+.project-debrief-hero > div > p:last-child {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.68;
+  text-wrap: pretty;
+}
+
+.project-debrief-hero > aside {
+  min-height: 310px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 17px 17px 5px 17px;
+  background: #17231e;
+  color: white;
+}
+
+.project-debrief-hero > aside > span,
+.project-debrief-hero dt {
+  color: #91cda9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.project-debrief-hero > aside > strong {
+  margin-top: 24px;
+  color: #66dc9d;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 72px;
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.project-debrief-hero > aside > p {
+  margin: 12px 0 0;
+  color: #d7e2db;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.project-debrief-hero dl {
+  margin: auto 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.project-debrief-hero dl div {
+  padding-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.project-debrief-hero dd {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.project-debrief-grid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.6fr);
+  gap: 18px;
+}
+
+.project-debrief-evidence,
+.project-debrief-portfolio,
+.project-debrief-architecture,
+.project-debrief-interview,
+.project-debrief-readme,
+.project-debrief-source {
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 15px 15px 5px 15px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.project-debrief-evidence,
+.project-debrief-portfolio,
+.project-debrief-architecture,
+.project-debrief-interview,
+.project-debrief-readme {
+  padding: 34px;
+}
+
+.project-debrief-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.project-debrief-section-heading h2,
+.project-debrief-portfolio h2,
+.project-debrief-interview h2,
+.project-debrief-readme h2 {
+  margin: 9px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(29px, 3vw, 40px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.project-debrief-section-heading > span {
+  flex: none;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.project-debrief-checks {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.project-debrief-checks article {
+  min-height: 112px;
+  padding: 17px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 9px;
+  border: 1px solid rgba(40, 118, 82, 0.25);
+  border-radius: 10px 10px 3px 10px;
+  background: #edf5ec;
+}
+
+.project-debrief-checks article > span {
+  color: var(--accent-deep);
+  font-weight: 850;
+}
+
+.project-debrief-checks p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.project-debrief-portfolio {
+  display: flex;
+  flex-direction: column;
+  background: #17231e;
+  color: white;
+}
+
+.project-debrief-portfolio .eyebrow {
+  color: #91cda9;
+}
+
+.project-debrief-portfolio blockquote {
+  margin: 32px 0 0;
+  padding-left: 20px;
+  border-left: 2px solid #66dc9d;
+  color: #ecf2ed;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  line-height: 1.48;
+}
+
+.project-debrief-portfolio > p:last-child {
+  margin: auto 0 0;
+  padding-top: 28px;
+  color: #9fafb6;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.project-debrief-architecture {
+  margin-top: 22px;
+}
+
+.project-debrief-section-heading > div > p:last-child {
+  max-width: 68ch;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.project-debrief-architecture ol {
+  margin: 30px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.project-debrief-architecture li {
+  min-height: 180px;
+  padding: 24px 24px 8px 0;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.project-debrief-architecture li + li {
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+
+.project-debrief-architecture li > span,
+.project-debrief-interview li > span {
+  color: var(--accent-deep);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 21px;
+}
+
+.project-debrief-architecture li strong,
+.project-debrief-interview li strong {
+  font-size: 13px;
+}
+
+.project-debrief-architecture li p,
+.project-debrief-interview li p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.58;
+}
+
+.project-debrief-prep-grid {
+  grid-template-columns: minmax(0, 0.78fr) minmax(360px, 1fr);
+}
+
+.project-debrief-interview ol {
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+  list-style: none;
+}
+
+.project-debrief-interview li {
+  padding-top: 18px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.project-debrief-readme {
+  background: #edf3e9;
+}
+
+.project-debrief-readme pre {
+  margin: 26px 0 0;
+  padding: 24px;
+  overflow-x: auto;
+  border-radius: 11px 11px 4px 11px;
+  background: #17231e;
+  color: #dce9e0;
+  font-size: 11px;
+  line-height: 1.72;
+  white-space: pre-wrap;
+}
+
+.project-debrief-source {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.project-debrief-source summary {
+  min-height: 58px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.project-debrief-source > div {
+  padding: 0 24px 24px;
+}
+
+.project-debrief-source p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.project-debrief-source pre {
+  max-height: 520px;
+  margin: 18px 0 0;
+  padding: 24px;
+  overflow: auto;
+  border-radius: 11px 11px 4px 11px;
+  background: #17231e;
+  color: #dce9e0;
+  font-size: 11px;
+  line-height: 1.72;
+  white-space: pre-wrap;
+}
+
+.project-debrief-actions {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.project-debrief-print-button {
+  min-height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 9px 9px 3px 9px;
+  background: var(--ink);
+  color: white;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.project-debrief-print-button:hover,
+.js-capstone-debrief-link:hover {
+  background: var(--accent-deep);
+}
+
+.project-debrief-print-button:focus-visible,
+.js-capstone-debrief-link:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.32);
+  outline-offset: 3px;
+}
+
+.project-debrief-locked {
+  width: min(680px, calc(100% - 40px));
+  margin: 88px auto 120px;
+  padding: 54px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 23px 23px 7px 23px;
+  background: #edf3e9;
+}
+
+.project-debrief-lock-mark {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #17231e;
+  color: #66dc9d;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 23px;
+}
+
+.project-debrief-locked h1 {
+  max-width: 13ch;
+  margin: 12px 0 20px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(42px, 6vw, 64px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.project-debrief-locked > p:not(.eyebrow) {
+  max-width: 58ch;
+  margin: 0 0 28px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .project-debrief-hero,
+  .project-debrief-grid,
+  .project-debrief-prep-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-debrief-hero {
+    gap: 34px;
+  }
+
+  .project-debrief-portfolio > p:last-child {
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .project-debrief-shell {
+    width: min(100% - 24px, 1120px);
+    padding-bottom: 70px;
+  }
+
+  .project-debrief-hero,
+  .project-debrief-evidence,
+  .project-debrief-portfolio,
+  .project-debrief-architecture,
+  .project-debrief-interview,
+  .project-debrief-readme {
+    padding: 28px 22px;
+  }
+
+  .project-debrief-hero h1 {
+    font-size: clamp(44px, 13vw, 62px);
+  }
+
+  .project-debrief-hero > aside {
+    min-height: 280px;
+  }
+
+  .project-debrief-checks,
+  .project-debrief-architecture ol {
+    grid-template-columns: 1fr;
+  }
+
+  .project-debrief-architecture li {
+    min-height: auto;
+    padding: 22px 0;
+  }
+
+  .project-debrief-architecture li + li {
+    padding-left: 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .project-debrief-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .project-debrief-print-button {
+    width: 100%;
+  }
+
+  .project-debrief-locked {
+    padding: 38px 26px;
+  }
+}
+
+@media print {
+  @page {
+    size: portrait;
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  .project-debrief-page {
+    color: #17231e;
+    background: white;
+  }
+
+  .project-debrief-screen-only,
+  .project-debrief-source,
+  body > .posthog-reset {
+    display: none !important;
+  }
+
+  .project-debrief-shell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .project-debrief-hero,
+  .project-debrief-grid,
+  .project-debrief-prep-grid {
+    margin-top: 10mm;
+    grid-template-columns: 1fr;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .project-debrief-hero {
+    margin-top: 0;
+    padding: 10mm;
+  }
+
+  .project-debrief-hero h1 {
+    font-size: 42px;
+  }
+
+  .project-debrief-hero > aside {
+    min-height: auto;
+  }
+
+  .project-debrief-architecture {
+    break-inside: avoid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-debrief-print-button,
+  .js-capstone-debrief-link {
+    transition: none;
   }
 }
