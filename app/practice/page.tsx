@@ -378,6 +378,20 @@ export default async function PracticePage() {
                 </p>
               </div>
 
+              <aside className="practice-readiness-entry">
+                <div>
+                  <small>Not sure which skill needs work?</small>
+                  <strong>Check six core JavaScript concepts in five minutes.</strong>
+                  <p>
+                    Your first weak concept opens the exact guided lab that fits.
+                    Only the final result saves.
+                  </p>
+                </div>
+                <Link href="/practice/readiness">
+                  Check my readiness <span aria-hidden="true">→</span>
+                </Link>
+              </aside>
+
               <Link
                 className="practice-learning-start"
                 href={labProgress?.nextHref ?? "/practice/foundations"}

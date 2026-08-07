@@ -3,6 +3,7 @@ import * as courseDb from "@/db/course";
 import * as projectDb from "@/db/guided-project";
 import * as practiceDb from "@/db/coding-practice";
 import * as labProgressDb from "@/db/javascript-lab-progress";
+import * as readinessDb from "@/db/javascript-readiness";
 import { auth } from "@/lib/auth";
 import { GET as getCertificate } from "./certificate/route";
 import {
@@ -31,6 +32,7 @@ import {
   POST as savePracticeFeedback,
 } from "./practice/feedback/route";
 import { POST as saveLabProgress } from "./practice/labs/[labSlug]/progress/route";
+import { POST as saveReadiness } from "./practice/readiness/route";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -62,6 +64,7 @@ vi.mock("@/db/guided-project", () => ({
   saveGuidedProjectFeedbackForStudent: vi.fn(),
 }));
 vi.mock("@/db/javascript-lab-progress", () => ({ saveJavaScriptLabExerciseCompletion: vi.fn() }));
+vi.mock("@/db/javascript-readiness", () => ({ saveJavaScriptReadinessResultForStudent: vi.fn() }));
 
 vi.mock("@/db/coding-practice", () => ({
   getPracticeFeedbackForStudent: vi.fn(),
@@ -116,10 +119,11 @@ describe("signed-out private learning boundary", () => {
       ),
       savePracticeFeedback(request.clone()),
       saveLabProgress(request.clone(), labContext),
+      saveReadiness(request.clone()),
     ]);
 
     expect(responses.map((response) => response.status)).toEqual(
-      Array(15).fill(401),
+      Array(16).fill(401),
     );
     expect(courseDb.getFirstLessonNote).not.toHaveBeenCalled();
     expect(courseDb.saveFirstLessonNote).not.toHaveBeenCalled();
@@ -140,5 +144,6 @@ describe("signed-out private learning boundary", () => {
     expect(practiceDb.getPracticeFeedbackForStudent).not.toHaveBeenCalled();
     expect(practiceDb.savePracticeFeedbackForStudent).not.toHaveBeenCalled();
     expect(labProgressDb.saveJavaScriptLabExerciseCompletion).not.toHaveBeenCalled();
+    expect(readinessDb.saveJavaScriptReadinessResultForStudent).not.toHaveBeenCalled();
   });
 });

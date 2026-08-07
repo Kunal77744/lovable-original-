@@ -25,6 +25,7 @@ const requiredTables = [
   "guided_project",
   "guided_project_feedback",
   "interview_drill_progress",
+  "javascript_readiness_result",
   "lesson",
   "lesson_artifact",
   "lesson_note",
@@ -114,6 +115,16 @@ const requiredColumns = {
     "project_slug",
     "confidence",
     "comment",
+    "created_at",
+    "updated_at",
+  ],
+  javascript_readiness_result: [
+    "id",
+    "user_id",
+    "correct_count",
+    "total_count",
+    "recommended_lab_slug",
+    "completed_at",
     "created_at",
     "updated_at",
   ],
@@ -240,6 +251,7 @@ async function run() {
           'coding_submission',
           'guided_project',
           'guided_project_feedback',
+          'javascript_readiness_result',
           'practice_feedback',
           'playground_file'
         )

@@ -681,6 +681,32 @@ export const codingLabExerciseProgress = pgTable(
   ],
 );
 
+export const javascriptReadinessResult = pgTable(
+  "javascript_readiness_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    recommendedLabSlug: text("recommended_lab_slug").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("javascript_readiness_result_user_unique").on(table.userId),
+    index("javascript_readiness_result_user_id_idx").on(table.userId),
+  ],
+);
+
 export const courseCertificate = pgTable(
   "course_certificate",
   {

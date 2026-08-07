@@ -21,4 +21,24 @@ describe("database release contract", () => {
       /table_name in \([\s\S]*?'coding_submission'[\s\S]*?\)/,
     );
   });
+
+  it("adds and verifies private JavaScript readiness results", async () => {
+    const [migration, releaseScript] = await Promise.all([
+      readFile(path.join(root, "drizzle/0023_calm_arachne.sql"), "utf8"),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+
+    expect(migration).toContain(
+      'CREATE TABLE IF NOT EXISTS "javascript_readiness_result"',
+    );
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX IF NOT EXISTS "javascript_readiness_result_user_unique"',
+    );
+    expect(releaseScript).toMatch(
+      /javascript_readiness_result:\s*\[[\s\S]*?"correct_count",[\s\S]*?"recommended_lab_slug"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'javascript_readiness_result'[\s\S]*?\)/,
+    );
+  });
 });

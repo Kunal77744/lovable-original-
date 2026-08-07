@@ -177,6 +177,7 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open the playground" }),
     ).toHaveAttribute("href", "/playground");
     const privateLabLinks: Array<[RegExp, string]> = [
+      [/Check my readiness/, "/practice/readiness"],
       [/Continue JavaScript foundations, exercise 1/, "/practice/judge-basics"],
       [/Trace values/, "/practice/tracing"],
       [/Repair defects/, "/practice/debugging"],
