@@ -33,7 +33,7 @@ export function LearnerProfile({
           <p>
             {profile.isFreshLearner
               ? "Nothing is completed yet. Start with one focused lesson, and your course, JavaScript, and CSS progress will build here."
-              : "Course results, accepted JavaScript problems, and completed CSS challenges stay together here, attached only to your account."}
+              : "Course results, judged problems, guided JavaScript practice, and CSS challenges stay together here, attached only to your account."}
           </p>
         </div>
         <div className="profile-privacy-note">
@@ -115,8 +115,19 @@ export function LearnerProfile({
               <h2>CSS completed</h2>
             </div>
           </div>
+          <div className="profile-lab-progress">
+            <div>
+              <h2>Guided JavaScript</h2>
+              <span>Practice steps saved</span>
+            </div>
+            <strong>
+              {profile.labPractice.completedCount}
+              <span>/{profile.labPractice.totalCount}</span>
+            </strong>
+          </div>
           <p>
-            Saved results return after reload, sign-out, and your next sign-in.
+            Practice steps and judged results return after reload, sign-out, and
+            your next sign-in.
           </p>
         </article>
       </section>

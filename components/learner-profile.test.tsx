@@ -34,6 +34,15 @@ const profile: LearnerProfileViewModel = {
       "border",
     ],
   },
+  labPractice: {
+    completedCount: 12,
+    totalCount: 55,
+    nextLabSlug: "tracing",
+    nextLabTitle: "Code tracing",
+    nextHref: "/practice/tracing",
+    nextExerciseNumber: 3,
+    labs: [],
+  },
   attempts: [
     {
       id: "attempt-1",
@@ -68,6 +77,9 @@ describe("LearnerProfile", () => {
     );
     expect(screen.getByText("CSS completed").parentElement).toHaveTextContent(
       "4/6",
+    );
+    expect(screen.getByText("Guided JavaScript").parentElement?.parentElement).toHaveTextContent(
+      "12/55",
     );
     expect(screen.getByText("Sum two numbers")).toBeInTheDocument();
     expect(screen.getByText("Accepted")).toBeInTheDocument();
@@ -118,6 +130,15 @@ describe("LearnerProfile", () => {
         totalCount: 6,
         completedSlugs: [],
       },
+      labPractice: {
+        completedCount: 0,
+        totalCount: 55,
+        nextLabSlug: "foundations",
+        nextLabTitle: "JavaScript foundations",
+        nextHref: "/practice/foundations",
+        nextExerciseNumber: 1,
+        labs: [],
+      },
       attempts: [],
       quizScore: null,
       isFreshLearner: true,
@@ -146,6 +167,9 @@ describe("LearnerProfile", () => {
     ).toHaveTextContent("0/6");
     expect(freshState.getByText("CSS completed").parentElement).toHaveTextContent(
       "0/6",
+    );
+    expect(freshState.getByText("Guided JavaScript").parentElement?.parentElement).toHaveTextContent(
+      "0/55",
     );
     expect(freshState.getByText("Not started")).toBeInTheDocument();
     expect(freshState.getByText("Not attempted")).toBeInTheDocument();

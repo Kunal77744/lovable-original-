@@ -5,6 +5,7 @@ import {
   GUIDED_PROJECT_SLUG,
   GUIDED_PROJECT_TITLE,
 } from "@/lib/guided-project";
+import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
 
 type CourseLesson = {
   slug: string;
@@ -42,6 +43,7 @@ export type LearnerProfileViewModel = {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
   cssPractice: LearnerProfilePractice;
+  labPractice: JavaScriptLabCatalogProgress;
   attempts: RecentCodingAttempt[];
   quizScore: number | null;
   isFreshLearner: boolean;
@@ -55,6 +57,16 @@ export function buildLearnerProfile({
   attempts,
   projectCompleted,
   htmlCssCapstone = { state: "completed", passedChecks: 6 },
+  labPractice = {
+    completedCount: 0,
+    totalCount: 55,
+    nextLabSlug: "foundations",
+    nextLabTitle: "JavaScript foundations",
+    nextHref: "/practice/foundations",
+    nextExerciseNumber: 1,
+    labs: [],
+  },
+  javascriptCapstone = { state: "completed", passedChecks: 6 },
 }: {
   course: LearnerProfileCourse;
   practice: LearnerProfilePractice;
@@ -65,12 +77,18 @@ export function buildLearnerProfile({
     state: "not-started" | "in-progress" | "completed";
     passedChecks: number;
   };
+  labPractice?: JavaScriptLabCatalogProgress;
+  javascriptCapstone?: {
+    state: "not-started" | "in-progress" | "completed";
+    passedChecks: number;
+  };
 }): LearnerProfileViewModel {
   const quizScore = course.nextLesson?.quizScore ?? null;
   const isFreshLearner =
     course.completedLessons === 0 &&
     practice.completedCount === 0 &&
     cssPractice.completedCount === 0 &&
+    labPractice.completedCount === 0 &&
     attempts.length === 0 &&
     quizScore === null;
 
@@ -81,6 +99,7 @@ export function buildLearnerProfile({
       course,
       practice,
       cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -101,6 +120,7 @@ export function buildLearnerProfile({
       course,
       practice,
       cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -125,6 +145,7 @@ export function buildLearnerProfile({
       course,
       practice,
       cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -151,6 +172,7 @@ export function buildLearnerProfile({
       course,
       practice,
       cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -172,6 +194,7 @@ export function buildLearnerProfile({
       course,
       practice,
       cssPractice,
+      labPractice,
       attempts,
       quizScore,
       isFreshLearner,
@@ -192,10 +215,57 @@ export function buildLearnerProfile({
     };
   }
 
+  if (labPractice.nextLabSlug && labPractice.nextLabTitle) {
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label: `Continue exercise ${labPractice.nextExerciseNumber ?? 1}`,
+        href: labPractice.nextHref,
+        kicker: `${labPractice.completedCount}/${labPractice.totalCount} guided steps saved`,
+        title: labPractice.nextLabTitle,
+        description:
+          "Continue at the exact first unfinished JavaScript exercise. Guided practice builds fluency without replacing judged results.",
+      },
+    };
+  }
+
+  if (javascriptCapstone.state !== "completed") {
+    return {
+      course,
+      practice,
+      cssPractice,
+      labPractice,
+      attempts,
+      quizScore,
+      isFreshLearner,
+      nextAction: {
+        label:
+          javascriptCapstone.state === "in-progress"
+            ? "Resume the capstone"
+            : "Build the capstone",
+        href: "/projects/javascript-expense-report",
+        kicker:
+          javascriptCapstone.state === "in-progress"
+            ? `${javascriptCapstone.passedChecks}/6 outcomes passing`
+            : "Your integrated JavaScript result",
+        title: "JavaScript expense report",
+        description:
+          "Combine parsing, arrays, objects, sorting, totals, and exact output formatting in one private saved project.",
+      },
+    };
+  }
+
   return {
     course,
     practice,
     cssPractice,
+    labPractice,
     attempts,
     quizScore,
     isFreshLearner,

@@ -29,6 +29,26 @@ const emptyCssPractice = {
   completedSlugs: [] as string[],
 };
 
+const emptyLabPractice = {
+  completedCount: 0,
+  totalCount: 55,
+  nextLabSlug: "foundations" as const,
+  nextLabTitle: "JavaScript foundations",
+  nextHref: "/practice/foundations",
+  nextExerciseNumber: 1,
+  labs: [],
+};
+
+const completeLabPractice = {
+  completedCount: 55,
+  totalCount: 55,
+  nextLabSlug: null,
+  nextLabTitle: null,
+  nextHref: "/practice/foundations",
+  nextExerciseNumber: null,
+  labs: [],
+};
+
 describe("buildLearnerProfile", () => {
   it("starts an empty learner with the course", () => {
     const profile = buildLearnerProfile({
@@ -88,6 +108,27 @@ describe("buildLearnerProfile", () => {
     expect(profile.cssPractice.completedCount).toBe(1);
   });
 
+  it("does not call a learner fresh when only guided lab progress exists", () => {
+    const profile = buildLearnerProfile({
+      course: baseCourse,
+      practice: emptyPractice,
+      cssPractice: emptyCssPractice,
+      labPractice: {
+        ...emptyLabPractice,
+        completedCount: 1,
+        nextHref: "/practice/tracing",
+        nextLabSlug: "tracing",
+        nextLabTitle: "Code tracing",
+        nextExerciseNumber: 2,
+      },
+      attempts: [],
+      projectCompleted: false,
+    });
+
+    expect(profile.isFreshLearner).toBe(false);
+    expect(profile.labPractice.completedCount).toBe(1);
+  });
+
   it("routes a completed course into the unfinished guided project", () => {
     const profile = buildLearnerProfile({
       course: {
@@ -141,6 +182,8 @@ describe("buildLearnerProfile", () => {
       cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: true,
+      labPractice: completeLabPractice,
+      javascriptCapstone: { state: "completed", passedChecks: 6 },
     });
 
     expect(profile.nextAction).toEqual(
@@ -190,6 +233,8 @@ describe("buildLearnerProfile", () => {
       },
       attempts: [],
       projectCompleted: true,
+      labPractice: completeLabPractice,
+      javascriptCapstone: { state: "completed", passedChecks: 6 },
     });
 
     expect(profile.nextAction).toEqual(
@@ -239,6 +284,121 @@ describe("buildLearnerProfile", () => {
         label: "Complete CSS 03",
         href: "/practice/css/predictable-width",
         title: "Keep the width predictable",
+      }),
+    );
+  });
+
+  it("continues the completed main path at the exact unfinished guided exercise", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "sum-two-numbers",
+          "even-or-odd",
+          "multiplication-table",
+          "largest-value",
+          "reverse-a-word",
+          "fizz-buzz",
+        ],
+      },
+      cssPractice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "class-selector",
+          "descendant-selector",
+          "predictable-width",
+          "inside-and-between",
+          "link-hit-area",
+          "centered-card",
+        ],
+      },
+      labPractice: {
+        ...emptyLabPractice,
+        completedCount: 12,
+        nextLabSlug: "tracing",
+        nextLabTitle: "Code tracing",
+        nextHref: "/practice/tracing",
+        nextExerciseNumber: 3,
+      },
+      attempts: [],
+      projectCompleted: true,
+      htmlCssCapstone: { state: "completed", passedChecks: 6 },
+      javascriptCapstone: { state: "not-started", passedChecks: 0 },
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Continue exercise 3",
+        href: "/practice/tracing",
+        kicker: "12/55 guided steps saved",
+        title: "Code tracing",
+      }),
+    );
+  });
+
+  it("opens the JavaScript capstone after every guided exercise is saved", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "sum-two-numbers",
+          "even-or-odd",
+          "multiplication-table",
+          "largest-value",
+          "reverse-a-word",
+          "fizz-buzz",
+        ],
+      },
+      cssPractice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "class-selector",
+          "descendant-selector",
+          "predictable-width",
+          "inside-and-between",
+          "link-hit-area",
+          "centered-card",
+        ],
+      },
+      labPractice: completeLabPractice,
+      attempts: [],
+      projectCompleted: true,
+      htmlCssCapstone: { state: "completed", passedChecks: 6 },
+      javascriptCapstone: { state: "in-progress", passedChecks: 4 },
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Resume the capstone",
+        href: "/projects/javascript-expense-report",
+        kicker: "4/6 outcomes passing",
+        title: "JavaScript expense report",
       }),
     );
   });

@@ -10604,6 +10604,46 @@ h1 {
   line-height: 1.35;
 }
 
+.profile-lab-progress {
+  margin-top: 24px;
+  padding-top: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.profile-lab-progress h2 {
+  margin: 0;
+  color: white;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.profile-lab-progress div > span {
+  display: block;
+  margin-top: 4px;
+  color: #9bada3;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.profile-lab-progress > strong {
+  flex: 0 0 auto;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-lab-progress > strong span {
+  color: #81928a;
+  font-size: 17px;
+}
+
 .profile-practice-progress > p:last-child {
   margin: 20px 0 0;
   color: #b9c4be;
@@ -12652,6 +12692,10 @@ footer {
 
   .profile-practice-counts > div + div {
     padding-left: 18px;
+  }
+
+  .profile-lab-progress {
+    align-items: flex-start;
   }
 
   .profile-attempts {

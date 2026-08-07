@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   getAttempts: vi.fn(),
   getProject: vi.fn(),
   getHtmlCssCapstone: vi.fn(),
+  getLabPractice: vi.fn(),
+  getJavaScriptCapstone: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -52,6 +54,14 @@ vi.mock("@/db/html-css-capstone", () => ({
   getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
 }));
 
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: mocks.getLabPractice,
+}));
+
+vi.mock("@/db/javascript-capstone", () => ({
+  getJavaScriptCapstoneSummary: mocks.getJavaScriptCapstone,
+}));
+
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -88,6 +98,19 @@ describe("ProfilePage", () => {
       state: "not-started",
       passedChecks: 0,
     });
+    mocks.getLabPractice.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 55,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 1,
+      labs: [],
+    });
+    mocks.getJavaScriptCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
+    });
   });
 
   afterEach(() => {
@@ -100,6 +123,7 @@ describe("ProfilePage", () => {
     expect(preview).toContain("Your private course and practice progress");
     expect(preview).toContain("saved course progress");
     expect(preview).toContain("accepted JavaScript problems");
+    expect(preview).toContain("guided practice");
     expect(preview).toContain("completed CSS challenges");
     expect(preview).toContain("private account view");
     expect(preview).not.toMatch(/public profile|rankings?|social/i);
@@ -121,8 +145,10 @@ describe("ProfilePage", () => {
     expect(mocks.getCourse).not.toHaveBeenCalled();
     expect(mocks.getPractice).not.toHaveBeenCalled();
     expect(mocks.getCssPractice).not.toHaveBeenCalled();
+    expect(mocks.getLabPractice).not.toHaveBeenCalled();
     expect(mocks.getAttempts).not.toHaveBeenCalled();
     expect(mocks.getProject).not.toHaveBeenCalled();
+    expect(mocks.getJavaScriptCapstone).not.toHaveBeenCalled();
   });
 
   it("loads only the signed-in learner's account-backed record", async () => {
@@ -148,15 +174,20 @@ describe("ProfilePage", () => {
     expect(screen.getByText("CSS completed").parentElement).toHaveTextContent(
       "0/6",
     );
+    expect(screen.getByText("Guided JavaScript").parentElement?.parentElement).toHaveTextContent(
+      "0/55",
+    );
     expect(screen.getByText("Not started")).toBeInTheDocument();
     expect(mocks.getCourse).toHaveBeenCalledWith("learner-1");
     expect(mocks.getPractice).toHaveBeenCalledWith("learner-1");
     expect(mocks.getCssPractice).toHaveBeenCalledWith("learner-1");
+    expect(mocks.getLabPractice).toHaveBeenCalledWith("learner-1");
     expect(mocks.getAttempts).toHaveBeenCalledWith("learner-1");
     expect(mocks.getProject).toHaveBeenCalledWith(
       "learner-1",
       "semantic-html-article",
     );
+    expect(mocks.getJavaScriptCapstone).toHaveBeenCalledWith("learner-1");
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Start the course/ }),

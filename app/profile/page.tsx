@@ -10,6 +10,8 @@ import { getCssPracticeCatalogProgress } from "@/db/css-practice";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
+import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { buildLearnerProfile } from "@/lib/learner-profile";
@@ -20,7 +22,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Your private course and practice progress | Lovable Original",
   description:
-    "Review your saved course progress, accepted JavaScript problems, completed CSS challenges, and recent attempts in one private account view.",
+    "Review your saved course progress, accepted JavaScript problems, guided practice, completed CSS challenges, and recent attempts in one private account view.",
   robots: {
     index: false,
     follow: false,
@@ -36,21 +38,34 @@ export default async function ProfilePage() {
     redirect("/account?mode=signin");
   }
 
-  const [course, practice, cssPractice, attempts, project, htmlCssCapstone] = await Promise.all([
+  const [
+    course,
+    practice,
+    cssPractice,
+    labPractice,
+    attempts,
+    project,
+    htmlCssCapstone,
+    javascriptCapstone,
+  ] = await Promise.all([
     getOrCreateFirstCourseAssignment(session.user.id),
     getCodingCatalogProgress(session.user.id),
     getCssPracticeCatalogProgress(session.user.id),
+    getJavaScriptLabCatalogProgress(session.user.id),
     getRecentCodingAttempts(session.user.id),
     getGuidedProjectForStudent(session.user.id, GUIDED_PROJECT_SLUG),
     getHtmlCssCapstoneSummary(session.user.id),
+    getJavaScriptCapstoneSummary(session.user.id),
   ]);
   const profile = buildLearnerProfile({
     course,
     practice,
     cssPractice,
+    labPractice,
     attempts,
     projectCompleted: project?.submission?.status === "completed",
     htmlCssCapstone,
+    javascriptCapstone,
   });
 
   return (
