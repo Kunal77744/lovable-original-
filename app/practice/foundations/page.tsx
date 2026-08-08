@@ -64,7 +64,7 @@ export default async function JavaScriptFoundationsPage() {
           <div>
             <span>01</span>
             <strong>Guided, not graded</strong>
-            <p>Three checks help you reason before the six judged problems.</p>
+            <p>Three checks help you reason before the 12 judged problems.</p>
           </div>
           <div>
             <span>02</span>

@@ -9,6 +9,7 @@ import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import PracticePage from "./page";
 
 vi.mock("next/headers", () => ({
@@ -83,24 +84,24 @@ describe("PracticePage progress", () => {
     cleanup();
   });
 
-  it("shows a fresh signed-in learner Accepted 0 of 6", async () => {
+  it("shows a fresh signed-in learner Accepted 0 of 12", async () => {
     getSession.mockResolvedValue({
       user: { id: "fresh-learner" },
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
 
     render(await PracticePage());
 
-    expect(screen.getByText("Accepted 0 of 6")).toBeInTheDocument();
+    expect(screen.getByText("Accepted 0 of 12")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start JavaScript foundations" }),
     ).toHaveAttribute("href", "/practice/judge-basics");
-    expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
-      "Accepted 0 of 6",
+    expect(screen.getByLabelText("Accepted 0 of 12")).toHaveTextContent(
+      "Accepted 0 of 12",
     );
     expect(
       screen.getByText("Saved privately to your account"),
@@ -140,7 +141,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 1,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["sum-two-numbers"],
     });
     getLabProgress.mockResolvedValue({
@@ -177,7 +178,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 2,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["sum-two-numbers", "reverse-a-word"],
     });
     getBookmarks.mockResolvedValue([
@@ -209,15 +210,15 @@ describe("PracticePage progress", () => {
 
     render(await PracticePage());
 
-    expect(screen.getByText("Accepted 2 of 6")).toBeInTheDocument();
-    expect(screen.getByLabelText("Accepted 2 of 6")).toHaveTextContent(
-      "Accepted 2 of 6",
+    expect(screen.getByText("Accepted 2 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Accepted 2 of 12")).toHaveTextContent(
+      "Accepted 2 of 12",
     );
     expect(
       document.querySelectorAll(".problem-row.is-complete"),
     ).toHaveLength(2);
     expect(
-      screen.getByRole("link", { name: "Continue at step 2 of 6" }),
+      screen.getByRole("link", { name: "Continue at step 2 of 12" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(
       screen.getByRole("link", { name: "Open the playground" }),
@@ -275,7 +276,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
     getLabProgress.mockResolvedValue({
@@ -313,7 +314,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
     getLabProgress.mockResolvedValue({
@@ -348,14 +349,14 @@ describe("PracticePage progress", () => {
     getSession.mockResolvedValue(null);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
 
     render(await PracticePage());
 
-    expect(screen.getByText("6 problems")).toBeInTheDocument();
-    expect(screen.getByLabelText("6 problems")).toHaveTextContent("6 problems");
+    expect(screen.getByText("12 problems")).toBeInTheDocument();
+    expect(screen.getByLabelText("12 problems")).toHaveTextContent("12 problems");
     expect(
       screen.queryByText("Saved privately to your account"),
     ).not.toBeInTheDocument();
@@ -368,9 +369,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.queryByRole("heading", { name: "Choose the skill you need next." }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
+    expect(screen.queryByText("Accepted 0 of 12")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Start step 1 of 6" }),
+      screen.getByRole("link", { name: "Start step 1 of 12" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
     expect(getProgress).toHaveBeenCalledWith(null);
     expect(getBookmarks).not.toHaveBeenCalled();
@@ -386,33 +387,26 @@ describe("PracticePage progress", () => {
     expect(screen.queryByText("Private review session")).not.toBeInTheDocument();
   });
 
-  it("shows one completed six-step outcome without inventing another step", async () => {
+  it("shows one completed 12-step outcome without inventing another step", async () => {
     getSession.mockResolvedValue({
       user: { id: "complete-learner" },
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
-      completedCount: 6,
-      totalCount: 6,
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedCount: 12,
+      totalCount: 12,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
     });
 
     render(await PracticePage());
 
     expect(
       screen.getByText(
-        "Six-step path complete. Every Accepted result is saved.",
+        "Twelve-problem path complete. Every Accepted result is saved.",
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Review the six-step path" }),
+      screen.getByRole("link", { name: "Review the 12-problem path" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
-    expect(screen.getAllByText("Accepted")).toHaveLength(6);
+    expect(screen.getAllByText("Accepted")).toHaveLength(12);
   });
 });

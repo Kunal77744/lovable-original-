@@ -37,7 +37,7 @@ describe("CodingActivityPage", () => {
     mocks.getActivityDays.mockResolvedValue([]);
     mocks.getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
   });
@@ -65,7 +65,7 @@ describe("CodingActivityPage", () => {
     ]);
     mocks.getProgress.mockResolvedValue({
       completedCount: 1,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["sum-two-numbers"],
     });
 

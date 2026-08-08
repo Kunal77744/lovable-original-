@@ -72,7 +72,7 @@ describe("practice problem metadata", () => {
     });
   });
 
-  it("renders distinct problem-specific previews for all six routes", async () => {
+  it("renders distinct problem-specific previews for all 12 routes", async () => {
     const renderedMetadata = await Promise.all(
       CODING_PROBLEMS.map(async (problem) => ({
         problem,
@@ -84,17 +84,17 @@ describe("practice problem metadata", () => {
 
     expect(
       new Set(renderedMetadata.map(({ metadata }) => metadata.title)).size,
-    ).toBe(6);
+    ).toBe(12);
     expect(
       new Set(renderedMetadata.map(({ metadata }) => metadata.description)).size,
-    ).toBe(6);
+    ).toBe(12);
 
     for (const { problem, metadata } of renderedMetadata) {
       expect(metadata.title).toBe(
         `${problem.title} JavaScript problem | Lovable Original`,
       );
       expect(metadata.description).toBe(
-        `${problem.title}: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
+        `${problem.title}: solve this ${problem.difficulty.toLowerCase()} JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
       );
       expect(metadata.alternates).toEqual({
         canonical: `/practice/${problem.slug}`,
@@ -112,7 +112,7 @@ describe("practice problem metadata", () => {
     });
   });
 
-  it("shows a stable path position and recovery cue on all six problem routes", async () => {
+  it("shows a stable path position and recovery cue on all 12 problem routes", async () => {
     for (const problem of CODING_PROBLEMS) {
       render(
         await ProblemPage({

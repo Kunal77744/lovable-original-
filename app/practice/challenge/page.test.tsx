@@ -37,7 +37,7 @@ describe("TimedCodingChallengePage", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 2,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["sum-two-numbers", "even-or-odd"],
     });
 

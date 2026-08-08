@@ -99,7 +99,7 @@ function submissionResponse(
       passedTests,
       totalTests: 4,
       completedCount: verdict === "Accepted" ? 1 : 0,
-      totalCount: 6,
+      totalCount: 12,
       nextProblemSlug: verdict === "Accepted" ? "even-or-odd" : null,
       createdAt: "2026-07-26T22:30:00.000Z",
       hasSource: true,
@@ -684,7 +684,7 @@ describe("CodingWorkspace", () => {
         name: "Continue to next unfinished step",
       }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
-    expect(screen.getByText("Practice progress · 1/6 accepted")).toBeInTheDocument();
+    expect(screen.getByText("Practice progress · 1/12 accepted")).toBeInTheDocument();
     expect(screen.getByText("Concept unlocked")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -779,8 +779,8 @@ describe("CodingWorkspace", () => {
           bestVerdict: "Accepted",
           passedTests: 4,
           totalTests: 4,
-          completedCount: 6,
-          totalCount: 6,
+          completedCount: 12,
+          totalCount: 12,
           nextProblemSlug: null,
           createdAt: "2026-07-26T22:35:00.000Z",
           isFirstAcceptedResult: false,
@@ -879,7 +879,7 @@ describe("CodingWorkspace", () => {
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
   });
 
-  it("returns a learner who completes all six problems to the catalog", async () => {
+  it("returns a learner who completes all 12 problems to the catalog", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
       outputs: ["13", "-5", "0", "1000"],
@@ -892,8 +892,8 @@ describe("CodingWorkspace", () => {
           bestVerdict: "Accepted",
           passedTests: 4,
           totalTests: 4,
-          completedCount: 6,
-          totalCount: 6,
+          completedCount: 12,
+          totalCount: 12,
           nextProblemSlug: null,
           createdAt: "2026-07-27T02:00:00.000Z",
           isFirstAcceptedResult: true,

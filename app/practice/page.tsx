@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "JavaScript practice arena | Lovable Original",
   description:
-    "Solve six free beginner JavaScript problems with instant browser-run verdicts and saved progress.",
+    "Solve 12 free JavaScript problems with instant browser-run verdicts and saved progress.",
   alternates: {
     canonical: "/practice",
   },
@@ -131,7 +131,7 @@ export default async function PracticePage() {
         ? "Start problem 01"
       : nextProblemSlug
       ? `Continue at step ${primaryProblem.number} of ${progress.totalCount}`
-      : "Review the six-step path"
+      : "Review the 12-problem path"
     : `Start step 1 of ${progress.totalCount}`;
   const primaryActionHref =
     session && foundationsEntry
@@ -145,11 +145,11 @@ export default async function PracticePage() {
         <section className="practice-hero" aria-labelledby="practice-title">
           <div className="practice-hero-copy">
             <p className="eyebrow">JavaScript practice arena</p>
-            <h1 id="practice-title">Six problems. One beginner path.</h1>
+            <h1 id="practice-title">Twelve problems. One ordered path.</h1>
             <p>
-              Follow six ordered steps from input handling to FizzBuzz. Run
-              every solution in your browser, submit against deterministic
-              checks, and return to your next unfinished step.
+              Start with input handling, then progress through stacks, search,
+              and sliding windows. Run every solution in your browser, submit
+              against deterministic checks, and return to your next unfinished step.
             </p>
             <Link
               className="primary-action"
@@ -183,8 +183,8 @@ export default async function PracticePage() {
             <p>
               {session
                 ? progress.completedCount === progress.totalCount
-                  ? "Six-step path complete. Every Accepted result is saved."
-                  : "Complete all six steps. Accepted results stay attached to your account."
+                  ? "Twelve-problem path complete. Every Accepted result is saved."
+                  : "Complete all 12 problems. Accepted results stay attached to your account."
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
             {session ? (
@@ -209,9 +209,9 @@ export default async function PracticePage() {
         <section className="problem-catalog" aria-labelledby="catalog-title">
           <div className="problem-catalog-heading">
             <div>
-              <p className="eyebrow">Six-step path · JavaScript</p>
+              <p className="eyebrow">12-problem path · JavaScript</p>
               <h2 id="catalog-title">
-                Build from input handling to FizzBuzz.
+                Build from input handling to sliding windows.
               </h2>
               <p className="problem-catalog-helper">
                 Each problem runs in browser-based JavaScript. Signed-in

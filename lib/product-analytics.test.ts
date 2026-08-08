@@ -264,7 +264,7 @@ describe("product analytics", () => {
     );
   });
 
-  it("captures each completed six-step practice path once without private work", () => {
+  it("captures each completed 12-step practice path once without private work", () => {
     const javascriptCompletion = {
       pathSlug: "beginner-javascript",
       completionState: "completed" as const,
