@@ -65,7 +65,7 @@ const PRACTICE_LAB_GROUPS = [
     labs: [
       { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
       { href: "/practice/algorithm-patterns", title: "Implement algorithm patterns", meta: "4 exercises" },
-      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "3 problems" },
+      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "4 timed sets" },
     ],
   },
 ] as const;

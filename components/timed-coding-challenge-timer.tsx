@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TIMED_CODING_CHALLENGE_MINUTES } from "@/lib/timed-coding-challenge";
 
-const STORAGE_KEY = "lovable-original:timed-coding-challenge:v1";
+const LEGACY_STORAGE_KEY = "lovable-original:timed-coding-challenge:v1";
 const DURATION_MS = TIMED_CODING_CHALLENGE_MINUTES * 60 * 1_000;
 
 type TimerStatus = "ready" | "running" | "paused" | "expired";
@@ -29,9 +29,15 @@ function isTimerStatus(value: unknown): value is TimerStatus {
   );
 }
 
-function readTimer(): StoredTimer {
+function getStorageKey(challengeSetId: string) {
+  return challengeSetId === "core-path"
+    ? LEGACY_STORAGE_KEY
+    : `lovable-original:timed-coding-challenge:v2:${challengeSetId}`;
+}
+
+function readTimer(storageKey: string): StoredTimer {
   try {
-    const rawValue = window.localStorage.getItem(STORAGE_KEY);
+    const rawValue = window.localStorage.getItem(storageKey);
     if (!rawValue) return READY_TIMER;
 
     const stored = JSON.parse(rawValue) as Partial<StoredTimer>;
@@ -56,8 +62,8 @@ function readTimer(): StoredTimer {
   }
 }
 
-function writeTimer(timer: StoredTimer) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(timer));
+function writeTimer(storageKey: string, timer: StoredTimer) {
+  window.localStorage.setItem(storageKey, JSON.stringify(timer));
 }
 
 function formatRemainingTime(remainingMs: number) {
@@ -68,18 +74,25 @@ function formatRemainingTime(remainingMs: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function TimedCodingChallengeTimer() {
+type TimedCodingChallengeTimerProps = {
+  challengeSetId?: string;
+};
+
+export function TimedCodingChallengeTimer({
+  challengeSetId = "core-path",
+}: TimedCodingChallengeTimerProps) {
+  const storageKey = getStorageKey(challengeSetId);
   const [timer, setTimer] = useState<StoredTimer>(READY_TIMER);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     const hydrationTimeout = window.setTimeout(() => {
-      setTimer(readTimer());
+      setTimer(readTimer(storageKey));
       setHydrated(true);
     }, 0);
 
     return () => window.clearTimeout(hydrationTimeout);
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!hydrated || timer.status !== "running" || !timer.deadlineMs) return;
@@ -94,7 +107,7 @@ export function TimedCodingChallengeTimer() {
           deadlineMs: null,
         };
         setTimer(expiredTimer);
-        writeTimer(expiredTimer);
+        writeTimer(storageKey, expiredTimer);
         return;
       }
 
@@ -104,7 +117,7 @@ export function TimedCodingChallengeTimer() {
     updateRemainingTime();
     const intervalId = window.setInterval(updateRemainingTime, 250);
     return () => window.clearInterval(intervalId);
-  }, [hydrated, timer.deadlineMs, timer.status]);
+  }, [hydrated, storageKey, timer.deadlineMs, timer.status]);
 
   const startOrResume = useCallback(() => {
     const remainingMs =
@@ -115,8 +128,8 @@ export function TimedCodingChallengeTimer() {
       deadlineMs: Date.now() + remainingMs,
     };
     setTimer(runningTimer);
-    writeTimer(runningTimer);
-  }, [timer.remainingMs, timer.status]);
+    writeTimer(storageKey, runningTimer);
+  }, [storageKey, timer.remainingMs, timer.status]);
 
   const pause = useCallback(() => {
     if (timer.status !== "running" || !timer.deadlineMs) return;
@@ -127,13 +140,13 @@ export function TimedCodingChallengeTimer() {
       deadlineMs: null,
     };
     setTimer(pausedTimer);
-    writeTimer(pausedTimer);
-  }, [timer.deadlineMs, timer.status]);
+    writeTimer(storageKey, pausedTimer);
+  }, [storageKey, timer.deadlineMs, timer.status]);
 
   const reset = useCallback(() => {
     setTimer(READY_TIMER);
-    writeTimer(READY_TIMER);
-  }, []);
+    writeTimer(storageKey, READY_TIMER);
+  }, [storageKey]);
 
   const timerLabel = useMemo(() => {
     if (timer.status === "running") return "Timer running";
