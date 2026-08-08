@@ -1,13 +1,18 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import {
-  getFirstLessonArtifact,
-  saveFirstLessonArtifact,
-} from "@/db/course";
+import { getFirstLessonArtifact, saveFirstLessonArtifact } from "@/db/course";
 import {
   hasValidSemanticHtmlLength,
   MAX_SEMANTIC_HTML_LENGTH,
 } from "@/lib/semantic-html-workspace";
+import {
+  hasValidCssPracticeLength,
+  MAX_CSS_PRACTICE_LENGTH,
+} from "@/lib/css-box-model-practice";
+import {
+  hasValidResponsiveCssLength,
+  MAX_RESPONSIVE_CSS_LENGTH,
+} from "@/lib/responsive-css-practice";
 import { auth } from "@/lib/auth";
 
 type RouteContext = {
@@ -71,16 +76,29 @@ export async function POST(request: Request, context: RouteContext) {
       ? payload.html
       : "";
 
-  if (!hasValidSemanticHtmlLength(html)) {
+  const { lessonSlug } = await context.params;
+  const isBoxModelLesson = lessonSlug === "css-selectors-box-model";
+  const isResponsiveLesson = lessonSlug === "responsive-css-grid";
+  const maxLength = isResponsiveLesson
+    ? MAX_RESPONSIVE_CSS_LENGTH
+    : isBoxModelLesson
+      ? MAX_CSS_PRACTICE_LENGTH
+      : MAX_SEMANTIC_HTML_LENGTH;
+  const hasValidLength = isResponsiveLesson
+    ? hasValidResponsiveCssLength(html)
+    : isBoxModelLesson
+      ? hasValidCssPracticeLength(html)
+      : hasValidSemanticHtmlLength(html);
+
+  if (!hasValidLength) {
     return NextResponse.json(
       {
-        error: `Keep the draft between 1 and ${MAX_SEMANTIC_HTML_LENGTH.toLocaleString()} characters.`,
+        error: `Keep the draft between 1 and ${maxLength.toLocaleString()} characters.`,
       },
       { status: 400 },
     );
   }
 
-  const { lessonSlug } = await context.params;
   const artifact = await saveFirstLessonArtifact(userId, lessonSlug, html);
 
   if (!artifact) {

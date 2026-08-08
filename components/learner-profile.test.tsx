@@ -24,6 +24,25 @@ const profile: LearnerProfileViewModel = {
     totalCount: 6,
     completedSlugs: ["sum-two-numbers"],
   },
+  cssPractice: {
+    completedCount: 4,
+    totalCount: 6,
+    completedSlugs: [
+      "class-selector",
+      "descendant-selector",
+      "padding",
+      "border",
+    ],
+  },
+  labPractice: {
+    completedCount: 12,
+    totalCount: 55,
+    nextLabSlug: "tracing",
+    nextLabTitle: "Code tracing",
+    nextHref: "/practice/tracing",
+    nextExerciseNumber: 3,
+    labs: [],
+  },
   attempts: [
     {
       id: "attempt-1",
@@ -53,18 +72,35 @@ describe("LearnerProfile", () => {
 
     expect(screen.getByText("Private progress")).toBeInTheDocument();
     expect(screen.getAllByText("100%")).toHaveLength(2);
-    expect(screen.getByText("problems accepted").parentElement).toHaveTextContent(
+    expect(screen.getByText("JavaScript Accepted").parentElement).toHaveTextContent(
       "1/6",
+    );
+    expect(screen.getByText("CSS completed").parentElement).toHaveTextContent(
+      "4/6",
+    );
+    expect(screen.getByText("Guided JavaScript").parentElement?.parentElement).toHaveTextContent(
+      "12/55",
     );
     expect(screen.getByText("Sum two numbers")).toBeInTheDocument();
     expect(screen.getByText("Accepted")).toBeInTheDocument();
     expect(screen.getByText("4/4 checks")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View all submissions" })).toHaveAttribute(
+      "href",
+      "/submissions",
+    );
+    expect(screen.getByRole("link", { name: "Sum two numbers" })).toHaveAttribute(
+      "href",
+      "/submissions/attempt-1",
+    );
     expect(
       screen.getByRole("link", { name: /Solve problem 02/ }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getAllByRole("link", { name: /Solve problem 02/ })).toHaveLength(
       1,
     );
+    expect(
+      screen.getByRole("link", { name: /View private projects/ }),
+    ).toHaveAttribute("href", "/projects");
   });
 
   it("gives a fresh learner one accurate first step", () => {
@@ -88,6 +124,20 @@ describe("LearnerProfile", () => {
         completedCount: 0,
         totalCount: 6,
         completedSlugs: [],
+      },
+      cssPractice: {
+        completedCount: 0,
+        totalCount: 6,
+        completedSlugs: [],
+      },
+      labPractice: {
+        completedCount: 0,
+        totalCount: 55,
+        nextLabSlug: "foundations",
+        nextLabTitle: "JavaScript foundations",
+        nextHref: "/practice/foundations",
+        nextExerciseNumber: 1,
+        labs: [],
       },
       attempts: [],
       quizScore: null,
@@ -113,16 +163,50 @@ describe("LearnerProfile", () => {
     expect(freshState.getByText("Private progress")).toBeInTheDocument();
     expect(freshState.getByText("0/1")).toBeInTheDocument();
     expect(
-      freshState.getByText("problems accepted").parentElement,
+      freshState.getByText("JavaScript Accepted").parentElement,
     ).toHaveTextContent("0/6");
+    expect(freshState.getByText("CSS completed").parentElement).toHaveTextContent(
+      "0/6",
+    );
+    expect(freshState.getByText("Guided JavaScript").parentElement?.parentElement).toHaveTextContent(
+      "0/55",
+    );
     expect(freshState.getByText("Not started")).toBeInTheDocument();
     expect(freshState.getByText("Not attempted")).toBeInTheDocument();
-    expect(freshState.getAllByRole("link")).toHaveLength(1);
+    expect(freshState.getAllByRole("link")).toHaveLength(2);
     expect(
       freshState.getByRole("link", { name: /Start the course/ }),
     ).toHaveAttribute(
       "href",
       "/learn/web-development-foundations/semantic-html",
+    );
+  });
+
+  it("shows both practice paths as complete without combining their totals", () => {
+    const { container } = render(
+      <LearnerProfile
+        profile={{
+          ...profile,
+          practice: {
+            completedCount: 6,
+            totalCount: 6,
+            completedSlugs: profile.practice.completedSlugs,
+          },
+          cssPractice: {
+            completedCount: 6,
+            totalCount: 6,
+            completedSlugs: profile.cssPractice.completedSlugs,
+          },
+        }}
+      />,
+    );
+
+    const completeState = within(container);
+    expect(completeState.getByText("JavaScript Accepted").parentElement).toHaveTextContent(
+      "6/6",
+    );
+    expect(completeState.getByText("CSS completed").parentElement).toHaveTextContent(
+      "6/6",
     );
   });
 

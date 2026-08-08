@@ -92,6 +92,104 @@
       "when": 1785290305981,
       "tag": "0012_guided_project_schema_hotfix",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785294911627,
+      "tag": "0013_striped_harry_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785675949446,
+      "tag": "0014_kind_jackpot",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785761903748,
+      "tag": "0015_material_robin_chapel",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785826272838,
+      "tag": "0016_amused_valeria_richards",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1785826380298,
+      "tag": "0017_spicy_purifiers",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785830751901,
+      "tag": "0018_living_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785833640869,
+      "tag": "0019_quiet_stryfe",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785840965561,
+      "tag": "0020_sleepy_kylun",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785865978248,
+      "tag": "0021_mean_shockwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1785971861094,
+      "tag": "0022_coding_lab_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1786102595176,
+      "tag": "0023_calm_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1786121546856,
+      "tag": "0024_concerned_scourge",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1786125240199,
+      "tag": "0025_web-foundations-review",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1786201200000,
+      "tag": "0026_lesson-reading-progress",
+      "breakpoints": true
     }
   ]
 }

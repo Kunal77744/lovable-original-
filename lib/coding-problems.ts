@@ -11,6 +11,12 @@ export type CodingProblemTestCase = {
   expectedOutput: string;
 };
 
+export type CodingProblemExplanation = {
+  concept: string;
+  whyItWorks: string;
+  commonMistake: string;
+};
+
 export type CodingProblem = {
   slug: string;
   number: number;
@@ -20,10 +26,18 @@ export type CodingProblem = {
   statement: string;
   inputFormat: string;
   outputFormat: string;
+  recoveryHint: string;
+  recoveryHints: [string, string];
+  acceptedExplanation: CodingProblemExplanation;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
 };
+
+export const CODING_SOLUTION_SCAFFOLD = `function solve(input) {
+  // Read the problem, use input, and return the exact output.
+  return "";
+}`;
 
 export const CODING_PROBLEMS: CodingProblem[] = [
   {
@@ -36,6 +50,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read two whole numbers from one line and return their sum. The numbers may be positive, negative, or zero.",
     inputFormat: "One line containing two space-separated integers: a b.",
     outputFormat: "One integer: a + b.",
+    recoveryHint:
+      "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
+    recoveryHints: [
+      "Inspect the two input tokens before you add them. If either still behaves like text, arithmetic will not produce the intended total.",
+      "Use one negative case and the zero case from your private tests. The same conversion and return path should handle both without a special branch.",
+    ],
+    acceptedExplanation: {
+      concept: "Parse text before arithmetic",
+      whyItWorks:
+        "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
+      commonMistake:
+        'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    },
     examples: [
       {
         input: "4 9",
@@ -48,11 +75,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "Adding 3 to -8 gives -5.",
       },
     ],
-    starterCode: `function solve(input) {
-  const [a, b] = input.trim().split(/\\s+/).map(Number);
-
-  return String(a + b);
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "4 9", expectedOutput: "13" },
       { input: "-8 3", expectedOutput: "-5" },
@@ -70,6 +93,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read one whole number. Return "Even" when it is divisible by 2 and "Odd" otherwise.',
     inputFormat: "One integer n.",
     outputFormat: 'The exact word "Even" or "Odd".',
+    recoveryHint:
+      "Trace the remainder for zero, an even positive number, and a negative odd number. Then check the exact capitalization of the word you return.",
+    recoveryHints: [
+      "Write down the remainder produced by dividing the input by 2. Only one remainder should map to Even.",
+      "Check the exact returned word after the condition. The judge compares capitalization as well as the branch.",
+    ],
+    acceptedExplanation: {
+      concept: "Remainders reveal divisibility",
+      whyItWorks:
+        "Every even integer leaves a remainder of zero when divided by 2. Odd integers do not, including negative ones.",
+      commonMistake:
+        'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
+    },
     examples: [
       {
         input: "17",
@@ -82,11 +118,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "24 is divisible by 2.",
       },
     ],
-    starterCode: `function solve(input) {
-  const number = Number(input.trim());
-
-  return number % 2 === 0 ? "Even" : "Odd";
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "17", expectedOutput: "Odd" },
       { input: "24", expectedOutput: "Even" },
@@ -104,6 +136,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one whole number and return its first ten multiples, from 1 × n through 10 × n.",
     inputFormat: "One integer n.",
     outputFormat: "Ten multiples separated by a single space.",
+    recoveryHint:
+      "Count your loop boundaries. The result needs exactly ten values, starting with the first multiple and ending with the tenth, separated by single spaces.",
+    recoveryHints: [
+      "List the first and last multiplier your loop visits. They should account for ten results, not nine or eleven.",
+      "Build the ten values first, then join them once. Extra separators or line breaks change the judged output.",
+    ],
+    acceptedExplanation: {
+      concept: "Loop boundaries define the sequence",
+      whyItWorks:
+        "Visiting multipliers 1 through 10 once creates ten ordered values. Joining them once keeps the spacing exact.",
+      commonMistake:
+        "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
+    },
     examples: [
       {
         input: "5",
@@ -111,16 +156,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "These are 5 multiplied by 1 through 10.",
       },
     ],
-    starterCode: `function solve(input) {
-  const number = Number(input.trim());
-  const multiples = [];
-
-  for (let step = 1; step <= 10; step += 1) {
-    multiples.push(number * step);
-  }
-
-  return multiples.join(" ");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5", expectedOutput: "5 10 15 20 25 30 35 40 45 50" },
       { input: "1", expectedOutput: "1 2 3 4 5 6 7 8 9 10" },
@@ -139,6 +175,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n space-separated integers.",
     outputFormat: "The largest integer in the list.",
+    recoveryHint:
+      "Separate the leading count from the values you compare. Test an all-negative list so a starting value of zero cannot hide the mistake.",
+    recoveryHints: [
+      "Ignore the first token after using it as the count. Only the values on the list should compete for the maximum.",
+      "Choose the first list value as your starting comparison. That keeps an all-negative list below zero instead of inventing zero.",
+    ],
+    acceptedExplanation: {
+      concept: "Compare only the data values",
+      whyItWorks:
+        "Separating the leading count leaves only the values that should compete for the maximum, including values below zero.",
+      commonMistake:
+        "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
+    },
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -146,12 +195,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "19 is greater than every other value in the list.",
       },
     ],
-    starterCode: `function solve(input) {
-  const values = input.trim().split(/\\s+/).map(Number);
-  const numbers = values.slice(1);
-
-  return String(Math.max(...numbers));
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5\n7 2 19 4 11", expectedOutput: "19" },
       { input: "4\n-8 -3 -21 -6", expectedOutput: "-3" },
@@ -169,6 +213,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one lowercase word and return its characters in reverse order.",
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: "The same word reversed.",
+    recoveryHint:
+      "Trace one character from each end of the word. Check that every character appears once and that the returned text has no extra spaces.",
+    recoveryHints: [
+      "Check the index of the first character you append and the last character you append. They should be opposite ends of the word.",
+      "Compare the output length with the input length. A mismatch means a character was skipped, repeated, or joined with extra text.",
+    ],
+    acceptedExplanation: {
+      concept: "Order can change without changing characters",
+      whyItWorks:
+        "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
+      commonMistake:
+        "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+    },
     examples: [
       {
         input: "semantic",
@@ -181,11 +238,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "A palindrome is unchanged when reversed.",
       },
     ],
-    starterCode: `function solve(input) {
-  const word = input.trim();
-
-  return word.split("").reverse().join("");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "semantic", expectedOutput: "citnames" },
       { input: "level", expectedOutput: "level" },
@@ -203,6 +256,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Return the numbers from 1 to n. Replace multiples of 3 with "Fizz", multiples of 5 with "Buzz", and multiples of both with "FizzBuzz".',
     inputFormat: "One positive integer n.",
     outputFormat: "The sequence from 1 to n, separated by a single space.",
+    recoveryHint:
+      "Check the overlap before either single divisibility case. A multiple of both 3 and 5 needs one token, and the sequence still needs to include n.",
+    recoveryHints: [
+      "For 15, decide which condition should win before you handle divisibility by only 3 or only 5.",
+      "Count from 1 through the input, including the final value, and collect one token per number before joining the sequence.",
+    ],
+    acceptedExplanation: {
+      concept: "Handle overlapping rules first",
+      whyItWorks:
+        "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
+      commonMistake:
+        "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+    },
     examples: [
       {
         input: "5",
@@ -210,19 +276,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "3 becomes Fizz and 5 becomes Buzz.",
       },
     ],
-    starterCode: `function solve(input) {
-  const limit = Number(input.trim());
-  const answer = [];
-
-  for (let number = 1; number <= limit; number += 1) {
-    if (number % 15 === 0) answer.push("FizzBuzz");
-    else if (number % 3 === 0) answer.push("Fizz");
-    else if (number % 5 === 0) answer.push("Buzz");
-    else answer.push(String(number));
-  }
-
-  return answer.join(" ");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5", expectedOutput: "1 2 Fizz 4 Buzz" },
       {

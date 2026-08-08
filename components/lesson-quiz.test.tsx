@@ -9,9 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LessonQuiz } from "./lesson-quiz";
 
 const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
+const captureLessonCompleted = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/product-analytics", () => ({
   captureLearnerEventOnce,
+  captureLessonCompleted,
 }));
 
 const questions = [
@@ -51,6 +53,18 @@ describe("LessonQuiz analytics", () => {
           passed: true,
           completed: true,
           savedScore: 100,
+          review: [
+            {
+              questionId: "q1",
+              correct: true,
+              explanation: "The first concept is working.",
+            },
+            {
+              questionId: "q2",
+              correct: true,
+              explanation: "The second concept is working.",
+            },
+          ],
         }),
       }),
     );
@@ -83,8 +97,18 @@ describe("LessonQuiz analytics", () => {
         passed: true,
       }),
     );
+    expect(captureLessonCompleted).toHaveBeenCalledOnce();
+    expect(captureLessonCompleted).toHaveBeenCalledWith({
+      courseSlug: "web-development-foundations",
+      completionState: "completed",
+    });
 
-    expect(JSON.stringify(captureLearnerEventOnce.mock.calls)).not.toMatch(
+    expect(
+      JSON.stringify([
+        captureLearnerEventOnce.mock.calls,
+        captureLessonCompleted.mock.calls,
+      ]),
+    ).not.toMatch(
       /First question|First answer|q1/i,
     );
     expect(
@@ -92,6 +116,13 @@ describe("LessonQuiz analytics", () => {
         name: "You completed Web Development Foundations.",
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Turn the score into a next attempt.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Confirmed")).toHaveLength(2);
+    expect(screen.getByText("The first concept is working.")).toBeInTheDocument();
     expect(screen.getByText(/1 of 1 lesson complete/)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start revision" }),
@@ -156,6 +187,11 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        completedLessonsAfterPass={1}
+        nextLesson={{
+          title: "Style a card without guessing",
+          href: "/learn/web-development-foundations/css-selectors-box-model",
+        }}
       />,
     );
 
@@ -173,6 +209,15 @@ describe("LessonQuiz analytics", () => {
         name: "Continue to JavaScript practice",
       }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText(/1 of 2 lessons complete/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to Style a card without guessing",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/css-selectors-box-model",
+    );
   });
 
   it("keeps signed-out answers local until the learner requests grading", () => {
@@ -211,5 +256,81 @@ describe("LessonQuiz analytics", () => {
       "href",
       "/account",
     );
+    expect(
+      screen.queryByRole("heading", {
+        name: "Turn the score into a next attempt.",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("teaches after a saved failed attempt and clears stale review on revision", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          score: 50,
+          correctCount: 1,
+          totalCount: 2,
+          passed: false,
+          completed: false,
+          savedScore: 50,
+          review: [
+            {
+              questionId: "q1",
+              correct: true,
+              explanation: "The first concept is working.",
+            },
+            {
+              questionId: "q2",
+              correct: false,
+              explanation: "Revisit the second concept before retrying.",
+            },
+          ],
+        }),
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={1}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Turn the score into a next attempt.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Confirmed")).toBeInTheDocument();
+    expect(screen.getByText("Revisit")).toBeInTheDocument();
+    expect(
+      screen.getByText("Revisit the second concept before retrying."),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/50% is saved/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("Fourth answer"));
+
+    expect(
+      screen.queryByRole("heading", {
+        name: "Turn the score into a next attempt.",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Check my answers" }),
+    ).toBeEnabled();
   });
 });
