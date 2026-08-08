@@ -1,6 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AccountPage from "./page";
+
+const mocks = vi.hoisted(() => ({
+  getSession: vi.fn(),
+  redirect: vi.fn((path: string) => {
+    throw new Error(`REDIRECT:${path}`);
+  }),
+}));
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -9,9 +16,13 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/auth", () => ({
   auth: {
     api: {
-      getSession: vi.fn().mockResolvedValue(null),
+      getSession: mocks.getSession,
     },
   },
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
 }));
 
 vi.mock("@/components/account-form", () => ({
@@ -25,6 +36,11 @@ vi.mock("@/components/account-form", () => ({
 }));
 
 describe("AccountPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getSession.mockResolvedValue(null);
+  });
+
   it("names the first course result without adding a second primary action", async () => {
     render(await AccountPage());
 
@@ -52,5 +68,25 @@ describe("AccountPage", () => {
     expect(
       screen.getAllByRole("button", { name: "Create my account" }),
     ).toHaveLength(1);
+  });
+
+  it("sends an existing session to its safe requested destination", async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: "learner-1" } });
+
+    await expect(
+      AccountPage({
+        searchParams: Promise.resolve({ next: "/playground" }),
+      }),
+    ).rejects.toThrow("REDIRECT:/playground");
+  });
+
+  it("rejects an external requested destination", async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: "learner-1" } });
+
+    await expect(
+      AccountPage({
+        searchParams: Promise.resolve({ next: "https://example.com/collect" }),
+      }),
+    ).rejects.toThrow("REDIRECT:/dashboard");
   });
 });
