@@ -8,6 +8,7 @@ import {
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { getDailyCodingChallenge } from "@/lib/daily-coding-challenge";
 import { capturePracticeProblemStarted } from "@/lib/product-analytics";
 import ProblemPage, { generateMetadata } from "./page";
 
@@ -72,7 +73,7 @@ describe("practice problem metadata", () => {
     });
   });
 
-  it("renders distinct problem-specific previews for all six routes", async () => {
+  it("renders distinct problem-specific previews for all 12 routes", async () => {
     const renderedMetadata = await Promise.all(
       CODING_PROBLEMS.map(async (problem) => ({
         problem,
@@ -84,17 +85,17 @@ describe("practice problem metadata", () => {
 
     expect(
       new Set(renderedMetadata.map(({ metadata }) => metadata.title)).size,
-    ).toBe(6);
+    ).toBe(12);
     expect(
       new Set(renderedMetadata.map(({ metadata }) => metadata.description)).size,
-    ).toBe(6);
+    ).toBe(12);
 
     for (const { problem, metadata } of renderedMetadata) {
       expect(metadata.title).toBe(
         `${problem.title} JavaScript problem | Lovable Original`,
       );
       expect(metadata.description).toBe(
-        `${problem.title}: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
+        `${problem.title}: solve this ${problem.difficulty.toLowerCase()} JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
       );
       expect(metadata.alternates).toEqual({
         canonical: `/practice/${problem.slug}`,
@@ -112,7 +113,7 @@ describe("practice problem metadata", () => {
     });
   });
 
-  it("shows a stable path position and recovery cue on all six problem routes", async () => {
+  it("shows a stable path position and recovery cue on all 12 problem routes", async () => {
     for (const problem of CODING_PROBLEMS) {
       render(
         await ProblemPage({
@@ -236,6 +237,45 @@ describe("practice problem metadata", () => {
     expect(
       screen.queryByRole("link", { name: "Private review session" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("accepts only today’s signed-in daily challenge context", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-08T14:00:00.000Z"));
+    const problem = getDailyCodingChallenge();
+    getSession.mockResolvedValue({
+      user: { id: "daily-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+    try {
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+          searchParams: Promise.resolve({ daily: "2026-08-08" }),
+        }),
+      );
+
+      expect(
+        screen.getByRole("link", { name: "Daily challenge" }),
+      ).toHaveAttribute("href", "/practice/daily");
+      expect(screen.getByText("Daily challenge · August 8 UTC")).toBeVisible();
+
+      cleanup();
+
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+          searchParams: Promise.resolve({ daily: "2026-08-07" }),
+        }),
+      );
+
+      expect(
+        screen.getByRole("link", { name: "Practice arena" }),
+      ).toHaveAttribute("href", "/practice");
+      expect(screen.queryByText(/Daily challenge ·/)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("loads only an owned submission as an unsaved editor copy without writing", async () => {

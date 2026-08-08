@@ -122,13 +122,13 @@ export function buildCodingSkillRecord({
     nextAction = {
       kicker: "Your next practice",
       title: `Start ${nextSkill.title}.`,
-      description: `Continue the six-step path with ${nextSkill.skill.toLowerCase()} and save the judged result to this record.`,
+      description: `Continue the ${skills.length}-problem path with ${nextSkill.skill.toLowerCase()} and save the judged result to this record.`,
       label: `Start problem ${String(nextSkill.number).padStart(2, "0")}`,
       href: `/practice/${nextSkill.slug}`,
     };
   } else {
     nextAction = {
-      kicker: "Six skills accepted",
+      kicker: `${skills.length} skills accepted`,
       title: "Keep the fundamentals sharp.",
       description:
         "Every problem has an Accepted result. Reopen the first skill and solve it again without relying on the saved answer.",

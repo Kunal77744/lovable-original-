@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import DashboardPage from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -145,7 +146,7 @@ describe("DashboardPage", () => {
     });
     mocks.getPractice.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: CODING_PROBLEMS.length,
       completedSlugs: [],
     });
     mocks.getCssPractice.mockResolvedValue({
@@ -303,7 +304,7 @@ describe("DashboardPage", () => {
     });
     mocks.getPractice.mockResolvedValue({
       completedCount: 1,
-      totalCount: 6,
+      totalCount: CODING_PROBLEMS.length,
       completedSlugs: ["sum-two-numbers"],
     });
 
@@ -317,7 +318,7 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("link", { name: "Continue at problem 02" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
-    expect(screen.getByText("1/6 Accepted")).toBeInTheDocument();
+    expect(screen.getByText("1/12 Accepted")).toBeInTheDocument();
     expect(screen.getByText("2/6")).toBeInTheDocument();
   });
 
@@ -403,16 +404,9 @@ describe("DashboardPage", () => {
       },
     });
     mocks.getPractice.mockResolvedValue({
-      completedCount: 6,
-      totalCount: 6,
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedCount: CODING_PROBLEMS.length,
+      totalCount: CODING_PROBLEMS.length,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
     });
     mocks.getCssPractice.mockResolvedValue({
       completedCount: 2,
@@ -431,6 +425,7 @@ describe("DashboardPage", () => {
     expect(
       screen.getByRole("link", { name: "Continue at CSS 03" }),
     ).toHaveAttribute("href", "/practice/css/predictable-width");
+    expect(screen.getByText("Completed · 12/12 Accepted")).toBeInTheDocument();
     expect(screen.getByText("3/6")).toBeInTheDocument();
   });
 
@@ -455,16 +450,9 @@ describe("DashboardPage", () => {
       submission: { status: "completed", passedChecks: 6, totalChecks: 6 },
     });
     mocks.getPractice.mockResolvedValue({
-      completedCount: 6,
-      totalCount: 6,
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedCount: CODING_PROBLEMS.length,
+      totalCount: CODING_PROBLEMS.length,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
     });
     mocks.getCssPractice.mockResolvedValue({
       completedCount: 6,
@@ -504,7 +492,7 @@ describe("DashboardPage", () => {
       screen.getByRole("link", { name: "Continue exercise 3" }),
     ).toHaveAttribute("href", "/practice/tracing");
     expect(
-      screen.queryByText(/without replacing the six judged/i),
+      screen.queryByText(/without replacing the 12 judged/i),
     ).not.toBeInTheDocument();
   });
 
@@ -529,16 +517,9 @@ describe("DashboardPage", () => {
       submission: { status: "completed", passedChecks: 6, totalChecks: 6 },
     });
     mocks.getPractice.mockResolvedValue({
-      completedCount: 6,
-      totalCount: 6,
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedCount: CODING_PROBLEMS.length,
+      totalCount: CODING_PROBLEMS.length,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
     });
     mocks.getCssPractice.mockResolvedValue({
       completedCount: 6,

@@ -165,7 +165,7 @@ export default async function PracticeReviewPage() {
             </h2>
             <p>
               {pathComplete
-                ? "All six problems are Accepted, with no unresolved mistakes or saved bookmarks waiting."
+                ? "All 12 problems are Accepted, with no unresolved mistakes or saved bookmarks waiting."
                 : "A saved Wrong Answer or Save for later choice will build a private review session automatically."}
             </p>
             <Link href="/practice">
@@ -178,7 +178,7 @@ export default async function PracticeReviewPage() {
         )}
 
         <div className="review-session-return">
-          <Link href="/practice">← Back to the six-step path</Link>
+          <Link href="/practice">← Back to the 12-problem path</Link>
         </div>
       </div>
       <SiteFooter />

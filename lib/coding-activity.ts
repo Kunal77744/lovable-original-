@@ -157,8 +157,8 @@ export function buildCodingActivity({
         ? `Review ${nextProblem.title}.`
         : `Continue with ${nextProblem.title}.`,
       description: completedAll
-        ? "All six problems have an Accepted result. Reopen problem 01 for another independent attempt."
-        : `This is the first unfinished step in your saved six-problem path: ${nextProblem.skill.toLowerCase()}.`,
+        ? `All ${CODING_PROBLEMS.length} problems have an Accepted result. Reopen problem 01 for another independent attempt.`
+        : `This is the first unfinished step in your saved ${CODING_PROBLEMS.length}-problem path: ${nextProblem.skill.toLowerCase()}.`,
       label: `${completedAll ? "Review" : "Continue"} problem ${String(nextProblem.number).padStart(2, "0")}`,
       href: `/practice/${nextProblem.slug}`,
     },

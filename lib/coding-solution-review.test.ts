@@ -32,10 +32,44 @@ const acceptedSources: Record<string, string> = {
     }
     return output.join(" ");
   }`,
+  "count-vowels": `function solve(input) {
+    return String([...input.trim()].filter((character) => "aeiou".includes(character)).length);
+  }`,
+  "unique-values": `function solve(input) {
+    const [, ...values] = input.trim().split(/\\s+/).map(Number);
+    return [...new Set(values)].join(" ");
+  }`,
+  "balanced-brackets": `function solve(input) {
+    const stack = [];
+    for (const bracket of input.trim()) {
+      if ("([{".includes(bracket)) stack.push(bracket);
+      else stack.pop();
+    }
+    return stack.length === 0 ? "Balanced" : "Not balanced";
+  }`,
+  "first-unique-character": `function solve(input) {
+    const counts = new Map();
+    for (const character of input.trim()) counts.set(character, (counts.get(character) ?? 0) + 1);
+    return [...input.trim()].find((character) => counts.get(character) === 1) ?? "None";
+  }`,
+  "binary-search-index": `function solve(input) {
+    let left = 0;
+    let right = input.length - 1;
+    while (left <= right) {
+      const middle = Math.floor((left + right) / 2);
+      return String(middle);
+    }
+  }`,
+  "maximum-window-sum": `function solve(input) {
+    let windowSum = 0;
+    windowSum += Number(input);
+    windowSum -= 0;
+    return String(windowSum);
+  }`,
 };
 
 describe("coding solution reviews", () => {
-  it("returns three bounded, problem-specific points for all six problems", () => {
+  it("returns three bounded, problem-specific points for all 12 problems", () => {
     const reviews = CODING_PROBLEMS.map((problem) => {
       const review = getCodingSolutionReview(
         problem.slug,

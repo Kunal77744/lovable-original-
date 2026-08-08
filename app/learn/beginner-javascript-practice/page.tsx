@@ -4,13 +4,13 @@ import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
 const pageDescription =
-  "Practice beginner JavaScript with six free problems covering input, conditions, loops, arrays, strings, and simple algorithms. Run code in your browser and save Accepted progress.";
+  "Practice JavaScript with 12 free problems covering foundations, sets, stacks, frequency maps, binary search, and sliding windows. Run code in your browser and save Accepted progress.";
 const shareImageAlt =
-  "Six free beginner JavaScript practice problems with browser-run checks and saved Accepted progress.";
+  "Twelve free JavaScript practice problems with browser-run checks and saved Accepted progress.";
 const firstProblem = CODING_PROBLEMS[0];
 
 export const metadata: Metadata = {
-  title: "Beginner JavaScript Practice: 6 Free Problems | Lovable Original",
+  title: "JavaScript Practice: 12 Free Problems | Lovable Original",
   description: pageDescription,
   alternates: {
     canonical: "/learn/beginner-javascript-practice",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/learn/beginner-javascript-practice",
-    title: "Beginner JavaScript Practice: 6 Free Problems | Lovable Original",
+    title: "JavaScript Practice: 12 Free Problems | Lovable Original",
     description: pageDescription,
     images: [
       {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Beginner JavaScript Practice: 6 Free Problems | Lovable Original",
+    title: "JavaScript Practice: 12 Free Problems | Lovable Original",
     description: pageDescription,
     images: [
       {
@@ -68,12 +68,12 @@ export default function BeginnerJavaScriptPracticeEntryPage() {
           aria-labelledby="javascript-entry-title"
         >
           <div className="learn-entry-copy">
-            <p className="eyebrow">Beginner JavaScript practice</p>
+            <p className="eyebrow">JavaScript practice path</p>
             <h1 id="javascript-entry-title">
-              Make your first six problems count.
+              Make your first 12 problems count.
             </h1>
             <p className="learn-entry-lede">
-              Six problems, one beginner path
+              Twelve problems, one ordered path
             </p>
             <Link
               className="primary-action"
@@ -130,7 +130,7 @@ export default function BeginnerJavaScriptPracticeEntryPage() {
           aria-labelledby="javascript-outcome"
         >
           <div className="learn-outcome-heading">
-            <p className="eyebrow">A six-step first streak</p>
+            <p className="eyebrow">A 12-problem first streak</p>
             <h2 id="javascript-outcome">
               Practice the basics in a useful order.
             </h2>
@@ -148,7 +148,7 @@ export default function BeginnerJavaScriptPracticeEntryPage() {
                   <strong>{problem.title}</strong>
                   <small>{problem.skill}</small>
                 </div>
-                <span>Beginner</span>
+                <span>{problem.difficulty}</span>
               </div>
             ))}
           </div>

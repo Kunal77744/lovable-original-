@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "JavaScript practice arena | Lovable Original",
   description:
-    "Solve six free beginner JavaScript problems with instant browser-run verdicts and saved progress.",
+    "Solve 12 free JavaScript problems with instant browser-run verdicts and saved progress.",
   alternates: {
     canonical: "/practice",
   },
@@ -65,15 +65,63 @@ const PRACTICE_LAB_GROUPS = [
     labs: [
       { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
       { href: "/practice/algorithm-patterns", title: "Implement algorithm patterns", meta: "4 exercises" },
-      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "3 problems" },
+      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "4 timed sets" },
     ],
   },
 ] as const;
 
-export default async function PracticePage() {
+const CODING_PROBLEM_GROUPS = [
+  {
+    key: "foundations",
+    label: "Language foundations",
+    description: "Parse input, choose a branch, and control a loop.",
+    firstProblem: 1,
+    lastProblem: 3,
+  },
+  {
+    key: "data-iteration",
+    label: "Data and iteration",
+    description: "Traverse arrays and strings, then combine simple rules.",
+    firstProblem: 4,
+    lastProblem: 6,
+  },
+  {
+    key: "collections",
+    label: "Collections and structure",
+    description: "Track membership, preserve order, and use a stack.",
+    firstProblem: 7,
+    lastProblem: 9,
+  },
+  {
+    key: "search-patterns",
+    label: "Search patterns",
+    description: "Count occurrences, narrow a range, and maintain a window.",
+    firstProblem: 10,
+    lastProblem: 12,
+  },
+] as const;
+
+type CatalogStatus = "all" | "unfinished" | "accepted";
+
+type PracticePageProps = {
+  searchParams?: Promise<{
+    status?: string | string[];
+  }>;
+};
+
+function normalizeCatalogStatus(status: string | string[] | undefined) {
+  return status === "unfinished" || status === "accepted" ? status : "all";
+}
+
+export default async function PracticePage({
+  searchParams,
+}: PracticePageProps = {}) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+  const requestedCatalogStatus = normalizeCatalogStatus(
+    (await searchParams)?.status,
+  );
   const [
     progress,
     savedProblems,
@@ -98,6 +146,51 @@ export default async function PracticePage() {
         : Promise.resolve(null),
     ]);
   const completedSlugs = new Set(progress.completedSlugs);
+  const catalogStatus: CatalogStatus = session
+    ? requestedCatalogStatus
+    : "all";
+  const unfinishedCount = progress.totalCount - progress.completedCount;
+  const catalogFilters: Array<{
+    status: CatalogStatus;
+    label: string;
+    count: number;
+    href: string;
+  }> = [
+    {
+      status: "all",
+      label: "All",
+      count: progress.totalCount,
+      href: "/practice",
+    },
+    {
+      status: "unfinished",
+      label: "Unfinished",
+      count: unfinishedCount,
+      href: "/practice?status=unfinished",
+    },
+    {
+      status: "accepted",
+      label: "Accepted",
+      count: progress.completedCount,
+      href: "/practice?status=accepted",
+    },
+  ];
+  const visibleProblemGroups = CODING_PROBLEM_GROUPS.map((group) => ({
+    ...group,
+    problems: CODING_PROBLEMS.filter(
+      (problem) =>
+        problem.number >= group.firstProblem &&
+        problem.number <= group.lastProblem &&
+        (catalogStatus === "all" ||
+          (catalogStatus === "accepted"
+            ? completedSlugs.has(problem.slug)
+            : !completedSlugs.has(problem.slug))),
+    ),
+  })).filter((group) => group.problems.length > 0);
+  const visibleProblemCount = visibleProblemGroups.reduce(
+    (count, group) => count + group.problems.length,
+    0,
+  );
   const reviewSession = buildCodingReviewSession({
     mistakes: reviewQueue,
     bookmarks: savedProblems,
@@ -131,7 +224,7 @@ export default async function PracticePage() {
         ? "Start problem 01"
       : nextProblemSlug
       ? `Continue at step ${primaryProblem.number} of ${progress.totalCount}`
-      : "Review the six-step path"
+      : "Review the 12-problem path"
     : `Start step 1 of ${progress.totalCount}`;
   const primaryActionHref =
     session && foundationsEntry
@@ -145,11 +238,11 @@ export default async function PracticePage() {
         <section className="practice-hero" aria-labelledby="practice-title">
           <div className="practice-hero-copy">
             <p className="eyebrow">JavaScript practice arena</p>
-            <h1 id="practice-title">Six problems. One beginner path.</h1>
+            <h1 id="practice-title">Twelve problems. One ordered path.</h1>
             <p>
-              Follow six ordered steps from input handling to FizzBuzz. Run
-              every solution in your browser, submit against deterministic
-              checks, and return to your next unfinished step.
+              Start with input handling, then progress through stacks, search,
+              and sliding windows. Run every solution in your browser, submit
+              against deterministic checks, and return to your next unfinished step.
             </p>
             <Link
               className="primary-action"
@@ -183,12 +276,18 @@ export default async function PracticePage() {
             <p>
               {session
                 ? progress.completedCount === progress.totalCount
-                  ? "Six-step path complete. Every Accepted result is saved."
-                  : "Complete all six steps. Accepted results stay attached to your account."
+                  ? "Twelve-problem path complete. Every Accepted result is saved."
+                  : "Complete all 12 problems. Accepted results stay attached to your account."
                 : "Create a free account to save code, attempts, and accepted results."}
             </p>
             {session ? (
               <div className="practice-progress-links">
+                <Link
+                  className="practice-progress-link practice-daily-link"
+                  href="/practice/daily"
+                >
+                  Open today’s challenge <span aria-hidden="true">→</span>
+                </Link>
                 <Link
                   className="practice-progress-link practice-skill-record-link"
                   href="/practice/progress"
@@ -209,9 +308,9 @@ export default async function PracticePage() {
         <section className="problem-catalog" aria-labelledby="catalog-title">
           <div className="problem-catalog-heading">
             <div>
-              <p className="eyebrow">Six-step path · JavaScript</p>
+              <p className="eyebrow">12-problem path · JavaScript</p>
               <h2 id="catalog-title">
-                Build from input handling to FizzBuzz.
+                Build from input handling to sliding windows.
               </h2>
               <p className="problem-catalog-helper">
                 Each problem runs in browser-based JavaScript. Signed-in
@@ -234,37 +333,94 @@ export default async function PracticePage() {
             </div>
           </div>
 
-          <div className="problem-table" role="list">
-            {CODING_PROBLEMS.map((problem) => {
-              const completed = completedSlugs.has(problem.slug);
-
-              return (
+          {session ? (
+            <nav className="problem-catalog-filters" aria-label="Filter problems">
+              {catalogFilters.map((filter) => (
                 <Link
-                  className={
-                    completed ? "problem-row is-complete" : "problem-row"
+                  aria-current={
+                    catalogStatus === filter.status ? "page" : undefined
                   }
-                  href={`/practice/${problem.slug}`}
-                  key={problem.slug}
-                  role="listitem"
+                  className={
+                    catalogStatus === filter.status ? "is-active" : undefined
+                  }
+                  href={filter.href}
+                  key={filter.status}
                 >
-                  <span className="problem-number">
-                    {String(problem.number).padStart(2, "0")}
-                  </span>
-                  <span className="problem-row-copy">
-                    <strong>{problem.title}</strong>
-                    <small>{problem.skill}</small>
-                  </span>
-                  <span className="problem-difficulty">{problem.difficulty}</span>
-                  <span className="problem-state">
-                    {completed ? "Accepted" : "Open"}
-                  </span>
-                  <span className="problem-arrow" aria-hidden="true">
-                    →
-                  </span>
+                  {filter.label} <span>{filter.count}</span>
                 </Link>
-              );
-            })}
-          </div>
+              ))}
+            </nav>
+          ) : null}
+
+          {visibleProblemCount > 0 ? (
+            <div className="problem-groups">
+              {visibleProblemGroups.map((group) => (
+                <section
+                  className="problem-group"
+                  aria-labelledby={`problem-group-${group.key}`}
+                  key={group.key}
+                >
+                  <div className="problem-group-heading">
+                    <div>
+                      <h3 id={`problem-group-${group.key}`}>{group.label}</h3>
+                      <p>{group.description}</p>
+                    </div>
+                    <span>
+                      {String(group.firstProblem).padStart(2, "0")}–
+                      {String(group.lastProblem).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className="problem-table" role="list">
+                    {group.problems.map((problem) => {
+                      const completed = completedSlugs.has(problem.slug);
+
+                      return (
+                        <Link
+                          className={
+                            completed ? "problem-row is-complete" : "problem-row"
+                          }
+                          href={`/practice/${problem.slug}`}
+                          key={problem.slug}
+                          role="listitem"
+                        >
+                          <span className="problem-number">
+                            {String(problem.number).padStart(2, "0")}
+                          </span>
+                          <span className="problem-row-copy">
+                            <strong>{problem.title}</strong>
+                            <small>{problem.skill}</small>
+                          </span>
+                          <span className="problem-difficulty">
+                            {problem.difficulty}
+                          </span>
+                          <span className="problem-state">
+                            {completed ? "Accepted" : "Open"}
+                          </span>
+                          <span className="problem-arrow" aria-hidden="true">
+                            →
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="problem-catalog-empty">
+              <strong>
+                {catalogStatus === "accepted"
+                  ? "No Accepted problems yet."
+                  : "Every problem is Accepted."}
+              </strong>
+              <p>
+                {catalogStatus === "accepted"
+                  ? "Your first saved Accepted result will appear here."
+                  : "Use the All view whenever you want to revisit the path."}
+              </p>
+              <Link href="/practice">Show all 12 problems</Link>
+            </div>
+          )}
 
           {session ? (
             <aside
