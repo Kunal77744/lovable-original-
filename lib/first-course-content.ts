@@ -376,6 +376,12 @@ export const FIRST_LESSON_REVISION = {
 
 export type QuizAnswers = Record<string, string>;
 
+export type QuizAttemptReviewItem = {
+  questionId: string;
+  correct: boolean;
+  explanation: string;
+};
+
 function getGradedLessonQuiz(lessonSlug: string) {
   if (lessonSlug === FIRST_LESSON.slug) {
     return FIRST_LESSON_QUIZ;
@@ -415,9 +421,12 @@ export function gradeLessonQuiz(lessonSlug: string, answers: QuizAnswers) {
     };
   }
 
-  const correctCount = quiz.filter(
-    (question) => answers[question.id] === question.correctChoiceId,
-  ).length;
+  const review: QuizAttemptReviewItem[] = quiz.map((question) => ({
+    questionId: question.id,
+    correct: answers[question.id] === question.correctChoiceId,
+    explanation: question.explanation,
+  }));
+  const correctCount = review.filter((item) => item.correct).length;
   const score = Math.round((correctCount / quiz.length) * 100);
 
   return {
@@ -426,6 +435,7 @@ export function gradeLessonQuiz(lessonSlug: string, answers: QuizAnswers) {
     passed: score >= FIRST_LESSON_PASS_PERCENT,
     correctCount,
     totalCount: quiz.length,
+    review,
   };
 }
 

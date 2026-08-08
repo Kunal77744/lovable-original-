@@ -64,6 +64,31 @@ describe("gradeFirstLessonQuiz", () => {
     });
   });
 
+  it("returns authored teaching for every graded concept without exposing answers", () => {
+    const answers = Object.fromEntries(
+      FIRST_LESSON_QUIZ.map((question, index) => [
+        question.id,
+        index === 0 ? "incorrect" : question.correctChoiceId,
+      ]),
+    );
+    const result = gradeFirstLessonQuiz(answers);
+
+    expect(result.valid).toBe(true);
+    if (!result.valid) {
+      throw new Error("Expected a valid quiz result.");
+    }
+
+    expect(result.review).toHaveLength(FIRST_LESSON_QUIZ.length);
+    expect(result.review[0]).toEqual({
+      questionId: FIRST_LESSON_QUIZ[0].id,
+      correct: false,
+      explanation: FIRST_LESSON_QUIZ[0].explanation,
+    });
+    expect(result.review.slice(1).every((item) => item.correct)).toBe(true);
+    expect(JSON.stringify(result.review)).not.toContain("correctChoiceId");
+    expect(JSON.stringify(result.review)).not.toContain("incorrect");
+  });
+
   it("rejects incomplete answer sets", () => {
     expect(gradeFirstLessonQuiz({})).toEqual({
       valid: false,

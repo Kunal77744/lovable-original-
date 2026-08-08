@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import type { QuizQuestion } from "@/lib/first-course-content";
+import type {
+  QuizAttemptReviewItem,
+  QuizQuestion,
+} from "@/lib/first-course-content";
 import {
   captureLearnerEventOnce,
   captureLessonCompleted,
@@ -18,6 +21,7 @@ type QuizResult = {
   passed: boolean;
   completed: boolean;
   savedScore: number;
+  review?: readonly QuizAttemptReviewItem[];
 };
 
 type LessonQuizProps = {
@@ -40,6 +44,69 @@ type LessonQuizProps = {
   nextLesson?: { title: string; href: string } | null;
   showRevisionPack?: boolean;
 };
+
+export function QuizAttemptReview({
+  review,
+  questions,
+  correctCount,
+  totalCount,
+}: {
+  review?: readonly QuizAttemptReviewItem[];
+  questions: readonly QuizQuestion[];
+  correctCount: number;
+  totalCount: number;
+}) {
+  if (!review?.length) {
+    return null;
+  }
+
+  return (
+    <section
+      className="quiz-attempt-review"
+      aria-labelledby="quiz-attempt-review-title"
+    >
+      <div className="quiz-attempt-review-heading">
+        <p className="quiz-kicker">Attempt review</p>
+        <h3 id="quiz-attempt-review-title">
+          Turn the score into a next attempt.
+        </h3>
+        <p>
+          {correctCount} of {totalCount} concepts held. Read each explanation,
+          then continue or retry from memory.
+        </p>
+      </div>
+      <ol className="quiz-attempt-review-list">
+        {review.map((item, index) => {
+          const question = questions.find(
+            (candidate) => candidate.id === item.questionId,
+          );
+
+          if (!question) {
+            return null;
+          }
+
+          return (
+            <li
+              className={`quiz-attempt-review-item ${
+                item.correct ? "is-correct" : "is-revisit"
+              }`}
+              key={item.questionId}
+            >
+              <div className="quiz-attempt-review-meta">
+                <span className="quiz-attempt-review-status">
+                  {item.correct ? "Confirmed" : "Revisit"}
+                </span>
+                <span>Question {index + 1}</span>
+              </div>
+              <h4>{question.prompt}</h4>
+              <p>{item.explanation}</p>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
 
 export function LessonQuiz({
   courseTitle,
@@ -172,6 +239,12 @@ export function LessonQuiz({
             View saved progress
           </Link>
         ) : null}
+        <QuizAttemptReview
+          review={result.review}
+          questions={questions}
+          correctCount={result.correctCount}
+          totalCount={result.totalCount}
+        />
         {showRevisionPack ? (
           <RevisionPack
             lessonSlug={lessonSlug}
@@ -219,12 +292,16 @@ export function LessonQuiz({
                     name={question.id}
                     value={choice.id}
                     checked={answers[question.id] === choice.id}
-                    onChange={() =>
+                    onChange={() => {
                       setAnswers((current) => ({
                         ...current,
                         [question.id]: choice.id,
-                      }))
-                    }
+                      }));
+                      setError(null);
+                      if (result && !result.completed) {
+                        setResult(null);
+                      }
+                    }}
                   />
                   <span>{choice.label}</span>
                 </label>
@@ -258,6 +335,12 @@ export function LessonQuiz({
           </p>
         </div>
       </form>
+      <QuizAttemptReview
+        review={result?.review}
+        questions={questions}
+        correctCount={result?.correctCount ?? 0}
+        totalCount={result?.totalCount ?? questions.length}
+      />
     </section>
   );
 }

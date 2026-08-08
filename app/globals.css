@@ -4067,6 +4067,89 @@ h1 {
   line-height: 1.5;
 }
 
+.quiz-attempt-review {
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+
+.quiz-attempt-review-heading {
+  max-width: 60ch;
+}
+
+.quiz-attempt-review-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.quiz-attempt-review-heading > p:last-child {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.quiz-attempt-review-list {
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+}
+
+.quiz-attempt-review-item {
+  padding: 20px;
+  border: 1px solid #d5ddd6;
+  border-radius: 12px;
+  background: #fafbf8;
+}
+
+.quiz-attempt-review-item.is-correct {
+  border-color: #c6ddcb;
+  background: #f3f8f1;
+}
+
+.quiz-attempt-review-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #68746d;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quiz-attempt-review-status {
+  color: #7a4e20;
+}
+
+.quiz-attempt-review-item.is-correct .quiz-attempt-review-status {
+  color: var(--accent-deep);
+}
+
+.quiz-attempt-review-item h4 {
+  margin: 16px 0 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.quiz-attempt-review-item p {
+  margin: 10px 0 0;
+  color: #556159;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .quiz-complete {
   text-align: center;
 }
@@ -13217,6 +13300,10 @@ footer {
 
   .quiz-submit-row .lesson-primary-action {
     width: 100%;
+  }
+
+  .quiz-attempt-review-list {
+    grid-template-columns: 1fr;
   }
 
   .course-feedback-heading,

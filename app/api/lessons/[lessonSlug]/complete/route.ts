@@ -66,5 +66,6 @@ export async function POST(request: Request, context: RouteContext) {
     passed: result.passed,
     completed: progress.completed,
     savedScore: progress.quizScore,
+    review: result.review,
   });
 }
