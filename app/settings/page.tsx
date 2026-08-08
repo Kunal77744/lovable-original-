@@ -7,6 +7,7 @@ import {
   getLearnerSettingsForStudent,
 } from "@/db/course";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { LearnerSettingsForm } from "@/components/learner-settings-form";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
@@ -28,7 +29,7 @@ export default async function SettingsPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/settings"));
   }
 
   const [settings, certificateState] = await Promise.all([

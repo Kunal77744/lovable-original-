@@ -12,6 +12,7 @@ import {
   GUIDED_PROJECT_TITLE,
 } from "@/lib/guided-project";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export default async function SemanticHtmlProjectPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects/semantic-html-article"));
   }
 
   const [project, projectFeedback] = await Promise.all([

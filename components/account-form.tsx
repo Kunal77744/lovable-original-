@@ -3,6 +3,7 @@
 import { FormEvent, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { getSafeAccountDestination } from "@/lib/account-destination";
 import { captureAccountCreated } from "@/lib/product-analytics";
 import {
   validateEmail,
@@ -17,6 +18,7 @@ const emptySubscribe = () => () => {};
 export function AccountForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const destination = getSafeAccountDestination(searchParams.get("next"));
   const [mode, setMode] = useState<Mode>(
     searchParams.get("mode") === "signin" ? "signin" : "create",
   );
@@ -60,12 +62,12 @@ export function AccountForm() {
               name: name.trim(),
               email: email.trim().toLowerCase(),
               password,
-              callbackURL: "/dashboard",
+              callbackURL: destination,
             })
           : await authClient.signIn.email({
               email: email.trim().toLowerCase(),
               password,
-              callbackURL: "/dashboard",
+              callbackURL: destination,
             });
 
       if (result.error) {
@@ -82,7 +84,7 @@ export function AccountForm() {
         captureAccountCreated();
       }
 
-      router.push("/dashboard");
+      router.push(destination);
       router.refresh();
     } catch {
       setError("Something went wrong. Check your connection and try again.");
