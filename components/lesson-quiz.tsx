@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import type { QuizQuestion } from "@/lib/first-course-content";
-import { captureLearnerEventOnce } from "@/lib/product-analytics";
+import type {
+  QuizAttemptReviewItem,
+  QuizQuestion,
+} from "@/lib/first-course-content";
+import {
+  captureLearnerEventOnce,
+  captureLessonCompleted,
+} from "@/lib/product-analytics";
 import { announceLessonProgress } from "@/lib/lesson-progress-events";
 import { CourseFeedback } from "@/components/course-feedback";
 import { RevisionPack } from "@/components/revision-pack";
@@ -15,6 +21,7 @@ type QuizResult = {
   passed: boolean;
   completed: boolean;
   savedScore: number;
+  review?: readonly QuizAttemptReviewItem[];
 };
 
 type LessonQuizProps = {
@@ -33,7 +40,73 @@ type LessonQuizProps = {
     updatedAt: string;
   } | null;
   isSignedIn?: boolean;
+  completedLessonsAfterPass?: number;
+  nextLesson?: { title: string; href: string } | null;
+  showRevisionPack?: boolean;
 };
+
+export function QuizAttemptReview({
+  review,
+  questions,
+  correctCount,
+  totalCount,
+}: {
+  review?: readonly QuizAttemptReviewItem[];
+  questions: readonly QuizQuestion[];
+  correctCount: number;
+  totalCount: number;
+}) {
+  if (!review?.length) {
+    return null;
+  }
+
+  return (
+    <section
+      className="quiz-attempt-review"
+      aria-labelledby="quiz-attempt-review-title"
+    >
+      <div className="quiz-attempt-review-heading">
+        <p className="quiz-kicker">Attempt review</p>
+        <h3 id="quiz-attempt-review-title">
+          Turn the score into a next attempt.
+        </h3>
+        <p>
+          {correctCount} of {totalCount} concepts held. Read each explanation,
+          then continue or retry from memory.
+        </p>
+      </div>
+      <ol className="quiz-attempt-review-list">
+        {review.map((item, index) => {
+          const question = questions.find(
+            (candidate) => candidate.id === item.questionId,
+          );
+
+          if (!question) {
+            return null;
+          }
+
+          return (
+            <li
+              className={`quiz-attempt-review-item ${
+                item.correct ? "is-correct" : "is-revisit"
+              }`}
+              key={item.questionId}
+            >
+              <div className="quiz-attempt-review-meta">
+                <span className="quiz-attempt-review-status">
+                  {item.correct ? "Confirmed" : "Revisit"}
+                </span>
+                <span>Question {index + 1}</span>
+              </div>
+              <h4>{question.prompt}</h4>
+              <p>{item.explanation}</p>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
 
 export function LessonQuiz({
   courseTitle,
@@ -47,6 +120,9 @@ export function LessonQuiz({
   initialScore,
   initialFeedback,
   isSignedIn = true,
+  completedLessonsAfterPass = courseLessonCount,
+  nextLesson = null,
+  showRevisionPack = lessonSlug === "semantic-html",
 }: LessonQuizProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(
@@ -110,6 +186,10 @@ export function LessonQuiz({
           lesson_slug: lessonSlug,
           passed: true,
         });
+        captureLessonCompleted({
+          courseSlug,
+          completionState: "completed",
+        });
       }
     } catch {
       setError("We couldn’t save your answers. Check your connection and try again.");
@@ -137,25 +217,47 @@ export function LessonQuiz({
         </h2>
         <p>
           Your best score is <strong>{result.savedScore}%</strong>. Your result
-          is saved and the dashboard now shows {courseLessonCount} of{" "}
+          is saved and the dashboard now shows {completedLessonsAfterPass} of{" "}
           {courseLessonCount} {lessonCountLabel} complete.
         </p>
-        <Link className="lesson-primary-action" href="#revision-pack">
-          Start revision
+        <Link
+          className="lesson-primary-action"
+          href={
+            nextLesson?.href ??
+            (showRevisionPack ? "#revision-pack" : "/dashboard")
+          }
+        >
+          {nextLesson
+            ? `Continue to ${nextLesson.title}`
+            : showRevisionPack
+              ? "Start revision"
+              : "View saved progress"}
           <span aria-hidden="true">→</span>
         </Link>
-        <Link className="completion-dashboard-link" href="/dashboard">
-          View saved progress
-        </Link>
-        <RevisionPack
-          lessonSlug={lessonSlug}
-          practiceHref={completesCourse ? "/practice" : undefined}
+        {nextLesson || showRevisionPack ? (
+          <Link className="completion-dashboard-link" href="/dashboard">
+            View saved progress
+          </Link>
+        ) : null}
+        <QuizAttemptReview
+          review={result.review}
+          questions={questions}
+          correctCount={result.correctCount}
+          totalCount={result.totalCount}
         />
-        <CourseFeedback
-          courseSlug={courseSlug}
-          lessonSlug={lessonSlug}
-          initialFeedback={initialFeedback}
-        />
+        {showRevisionPack ? (
+          <RevisionPack
+            lessonSlug={lessonSlug}
+            practiceHref={completesCourse ? "/practice" : undefined}
+          />
+        ) : null}
+        {completesCourse ? (
+          <CourseFeedback
+            courseSlug={courseSlug}
+            lessonSlug={lessonSlug}
+            initialFeedback={initialFeedback}
+          />
+        ) : null}
       </section>
     );
   }
@@ -190,12 +292,16 @@ export function LessonQuiz({
                     name={question.id}
                     value={choice.id}
                     checked={answers[question.id] === choice.id}
-                    onChange={() =>
+                    onChange={() => {
                       setAnswers((current) => ({
                         ...current,
                         [question.id]: choice.id,
-                      }))
-                    }
+                      }));
+                      setError(null);
+                      if (result && !result.completed) {
+                        setResult(null);
+                      }
+                    }}
                   />
                   <span>{choice.label}</span>
                 </label>
@@ -229,6 +335,12 @@ export function LessonQuiz({
           </p>
         </div>
       </form>
+      <QuizAttemptReview
+        review={result?.review}
+        questions={questions}
+        correctCount={result?.correctCount ?? 0}
+        totalCount={result?.totalCount ?? questions.length}
+      />
     </section>
   );
 }

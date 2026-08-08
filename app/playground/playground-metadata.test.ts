@@ -22,7 +22,7 @@ describe("JavaScript playground metadata", () => {
       "Private saved JavaScript playground | Lovable Original",
     );
     expect(metadata.description).toBe(
-      "Write, run, save, and restore one private JavaScript file in your account-only workspace.",
+      "Write, run, check, save, and restore one private JavaScript file in your account-only workspace.",
     );
     expect(metadata.robots).toEqual({
       index: false,
