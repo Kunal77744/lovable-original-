@@ -197,6 +197,13 @@
       "when": 1786204800000,
       "tag": "0027_coding-practice-goal",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1786208400000,
+      "tag": "0028_daily-coding-challenge",
+      "breakpoints": true
     }
   ]
 }

@@ -283,6 +283,12 @@ export default async function PracticePage({
             {session ? (
               <div className="practice-progress-links">
                 <Link
+                  className="practice-progress-link practice-daily-link"
+                  href="/practice/daily"
+                >
+                  Open today’s challenge <span aria-hidden="true">→</span>
+                </Link>
+                <Link
                   className="practice-progress-link practice-skill-record-link"
                   href="/practice/progress"
                 >

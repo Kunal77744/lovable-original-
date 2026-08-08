@@ -496,6 +496,31 @@ export const codingPracticeGoal = pgTable(
   ],
 );
 
+export const dailyCodingChallengeCompletion = pgTable(
+  "daily_coding_challenge_completion",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeDate: text("challenge_date").notNull(),
+    problemSlug: text("problem_slug").notNull(),
+    submissionId: text("submission_id")
+      .notNull()
+      .references(() => codingSubmission.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("daily_coding_challenge_user_date_unique").on(
+      table.userId,
+      table.challengeDate,
+    ),
+    index("daily_coding_challenge_user_id_idx").on(table.userId),
+  ],
+);
+
 export const codingProblemBookmark = pgTable(
   "coding_problem_bookmark",
   {

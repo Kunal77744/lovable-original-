@@ -117,6 +117,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "View private skill record" }),
     ).toHaveAttribute("href", "/practice/progress");
+    expect(
+      screen.getByRole("link", { name: "Open today’s challenge" }),
+    ).toHaveAttribute("href", "/practice/daily");
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
     expect(getBookmarks).toHaveBeenCalledWith("fresh-learner");
     expect(getReviewQueue).toHaveBeenCalledWith("fresh-learner");

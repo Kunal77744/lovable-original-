@@ -14,6 +14,7 @@ import type {
   SavedPracticeFeedback,
 } from "@/lib/practice-feedback";
 import type { CodingTestCase } from "@/lib/coding-test-cases";
+import { isCurrentDailyCodingChallenge } from "@/lib/daily-coding-challenge";
 import { getDatabase } from "./index";
 import {
   codingProblemBookmark,
@@ -21,6 +22,7 @@ import {
   codingProblemProgress,
   codingProblemTestCaseSet,
   codingSubmission,
+  dailyCodingChallengeCompletion,
   practiceFeedback,
 } from "./schema";
 
@@ -776,6 +778,7 @@ export async function saveCodingSubmission(
   problemSlug: string,
   code: string,
   outputs: unknown,
+  dailyChallengeDate?: unknown,
 ) {
   const result = gradeCodingOutputs(problemSlug, outputs);
 
@@ -843,6 +846,33 @@ export async function saveCodingSubmission(
       createdAt: now,
     });
 
+    const completesDailyChallenge =
+      result.verdict === "Accepted" &&
+      isCurrentDailyCodingChallenge({
+        dateKey: dailyChallengeDate,
+        problemSlug,
+        now,
+      });
+
+    if (completesDailyChallenge && typeof dailyChallengeDate === "string") {
+      await transaction
+        .insert(dailyCodingChallengeCompletion)
+        .values({
+          id: crypto.randomUUID(),
+          userId,
+          challengeDate: dailyChallengeDate,
+          problemSlug,
+          submissionId,
+          completedAt: now,
+        })
+        .onConflictDoNothing({
+          target: [
+            dailyCodingChallengeCompletion.userId,
+            dailyCodingChallengeCompletion.challengeDate,
+          ],
+        });
+    }
+
     const completed = await transaction
       .select({ problemSlug: codingProblemProgress.problemSlug })
       .from(codingProblemProgress)
@@ -863,6 +893,11 @@ export async function saveCodingSubmission(
       hasSource: true,
       bestVerdict,
       isFirstAcceptedResult,
+      dailyChallengeCompleted: completesDailyChallenge,
+      dailyChallengeDate:
+        completesDailyChallenge && typeof dailyChallengeDate === "string"
+          ? dailyChallengeDate
+          : null,
       completedCount: completed.length,
       totalCount: CODING_PROBLEMS.length,
       nextProblemSlug: getNextUnfinishedCodingProblemSlug(

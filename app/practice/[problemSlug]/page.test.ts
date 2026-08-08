@@ -8,6 +8,7 @@ import {
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { getDailyCodingChallenge } from "@/lib/daily-coding-challenge";
 import { capturePracticeProblemStarted } from "@/lib/product-analytics";
 import ProblemPage, { generateMetadata } from "./page";
 
@@ -236,6 +237,45 @@ describe("practice problem metadata", () => {
     expect(
       screen.queryByRole("link", { name: "Private review session" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("accepts only today’s signed-in daily challenge context", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-08T14:00:00.000Z"));
+    const problem = getDailyCodingChallenge();
+    getSession.mockResolvedValue({
+      user: { id: "daily-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+    try {
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+          searchParams: Promise.resolve({ daily: "2026-08-08" }),
+        }),
+      );
+
+      expect(
+        screen.getByRole("link", { name: "Daily challenge" }),
+      ).toHaveAttribute("href", "/practice/daily");
+      expect(screen.getByText("Daily challenge · August 8 UTC")).toBeVisible();
+
+      cleanup();
+
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+          searchParams: Promise.resolve({ daily: "2026-08-07" }),
+        }),
+      );
+
+      expect(
+        screen.getByRole("link", { name: "Practice arena" }),
+      ).toHaveAttribute("href", "/practice");
+      expect(screen.queryByText(/Daily challenge ·/)).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("loads only an owned submission as an unsaved editor copy without writing", async () => {
