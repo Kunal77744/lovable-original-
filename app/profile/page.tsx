@@ -9,6 +9,7 @@ import {
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { buildLearnerProfile } from "@/lib/learner-profile";
 import { SiteFooter, SiteNav } from "../site-chrome";
@@ -31,7 +32,7 @@ export default async function ProfilePage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/profile"));
   }
 
   const [course, practice, attempts, project] = await Promise.all([

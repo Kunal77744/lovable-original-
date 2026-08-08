@@ -92,7 +92,7 @@ describe("ProfilePage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(ProfilePage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fprofile",
     );
     expect(mocks.getCourse).not.toHaveBeenCalled();
     expect(mocks.getPractice).not.toHaveBeenCalled();
