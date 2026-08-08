@@ -9,6 +9,7 @@ import { ResponsiveCssLayoutWorkspace } from "@/components/responsive-css-layout
 import { LessonNotes } from "@/components/lesson-notes";
 import { LessonProgressRail } from "@/components/lesson-progress-rail";
 import { LessonQuiz } from "@/components/lesson-quiz";
+import { LessonReadingProgress } from "@/components/lesson-reading-progress";
 import { LessonStartTracker } from "@/components/lesson-start-tracker";
 import { SemanticHtmlTutor } from "@/components/semantic-html-tutor";
 import { SemanticHtmlWorkspace } from "@/components/semantic-html-workspace";
@@ -17,6 +18,7 @@ import {
   getFirstCourseLessonForStudent,
   getFirstLessonArtifact,
   getFirstLessonNote,
+  getLessonReadingProgressForStudent,
 } from "@/db/course";
 import { auth } from "@/lib/auth";
 import {
@@ -44,6 +46,7 @@ import {
   type SemanticHtmlCheck,
 } from "@/lib/semantic-html-workspace";
 import { parseLearnerEntrySource } from "@/lib/learner-entry-source";
+import { getLessonReadingSections } from "@/lib/lesson-reading-progress";
 import { SiteNav } from "../../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -139,13 +142,17 @@ export default async function LessonPage({
 
   const isSemanticLesson = studentLesson.lessonSlug === FIRST_LESSON.slug;
   const isResponsiveLesson = studentLesson.lessonSlug === THIRD_LESSON.slug;
-  const [workspace, lessonNote, courseFeedback] = session
+  const [workspace, lessonNote, courseFeedback, readingProgress] = session
     ? await Promise.all([
         getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
         isSemanticLesson
           ? getFirstLessonNote(session.user.id, studentLesson.lessonSlug)
           : Promise.resolve({ note: null }),
         getCourseFeedbackForStudent(session.user.id, courseSlug),
+        getLessonReadingProgressForStudent(
+          session.user.id,
+          studentLesson.lessonSlug,
+        ),
       ])
     : [
         isSemanticLesson
@@ -167,10 +174,12 @@ export default async function LessonPage({
               },
         { note: null },
         null,
+        null,
       ];
   const quiz = getPublicLessonQuiz(studentLesson.lessonSlug);
+  const readingSections = getLessonReadingSections(studentLesson.lessonSlug);
 
-  if (!workspace || !lessonNote || !quiz) notFound();
+  if (!workspace || !lessonNote || !quiz || !readingSections) notFound();
 
   const completesCourse = studentLesson.lessons.every(
     (item) => item.completed || item.slug === studentLesson.lessonSlug,
@@ -214,6 +223,13 @@ export default async function LessonPage({
             <a className="lesson-start-link" href="#lesson-idea">
               Start with the idea <span aria-hidden="true">↓</span>
             </a>
+            {session && readingProgress ? (
+              <LessonReadingProgress
+                lessonSlug={studentLesson.lessonSlug}
+                sections={readingSections}
+                initialFurthestSection={readingProgress.furthestSection}
+              />
+            ) : null}
           </header>
 
           {isSemanticLesson ? (
@@ -346,7 +362,7 @@ function SemanticLessonContent() {
         </div>
       </section>
 
-      <section className="lesson-section">
+      <section className="lesson-section" id="lesson-section-2">
         <p className="lesson-section-number">02</p>
         <div>
           <h2>Choose elements by purpose, not appearance.</h2>
@@ -383,7 +399,7 @@ function SemanticLessonContent() {
         </div>
       </section>
 
-      <section className="lesson-section">
+      <section className="lesson-section" id="lesson-section-3">
         <p className="lesson-section-number">03</p>
         <div>
           <h2>Build a heading outline someone can scan.</h2>

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { FIRST_COURSE, FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { getDefaultCertificateDisplayName } from "@/lib/learner-settings";
 import { buildCourseProgress } from "@/lib/course-progress";
@@ -344,6 +344,67 @@ export async function saveFirstLessonQuizResult(
     completed,
     quizScore: bestScore,
   };
+}
+
+export async function getLessonReadingProgressForStudent(
+  userId: string,
+  lessonSlug: string,
+) {
+  const database = getDatabase();
+  await ensureFirstCourseAssignment(userId);
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const [progress] = await database
+    .select({ furthestSection: lessonProgress.furthestSection })
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId),
+      ),
+    )
+    .limit(1);
+
+  return { furthestSection: progress?.furthestSection ?? 0 };
+}
+
+export async function saveLessonReadingProgressForStudent(
+  userId: string,
+  lessonSlug: string,
+  furthestSection: number,
+) {
+  const database = getDatabase();
+  await ensureFirstCourseAssignment(userId);
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const now = new Date();
+  const [savedProgress] = await database
+    .insert(lessonProgress)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      lessonId,
+      furthestSection,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [lessonProgress.userId, lessonProgress.lessonId],
+      set: {
+        furthestSection: sql`greatest(${lessonProgress.furthestSection}, ${furthestSection})`,
+        updatedAt: now,
+      },
+    })
+    .returning({ furthestSection: lessonProgress.furthestSection });
+
+  return savedProgress ?? null;
 }
 
 export async function getLearnerSettingsForStudent(

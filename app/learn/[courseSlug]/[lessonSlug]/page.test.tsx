@@ -5,6 +5,7 @@ import {
   getFirstCourseLessonForStudent,
   getFirstLessonArtifact,
   getFirstLessonNote,
+  getLessonReadingProgressForStudent,
 } from "@/db/course";
 import { auth } from "@/lib/auth";
 import LessonPage, { generateMetadata } from "./page";
@@ -32,6 +33,7 @@ vi.mock("@/db/course", () => ({
   getFirstCourseLessonForStudent: vi.fn(),
   getFirstLessonArtifact: vi.fn(),
   getFirstLessonNote: vi.fn(),
+  getLessonReadingProgressForStudent: vi.fn(),
 }));
 
 const getSession = vi.mocked(auth.api.getSession);
@@ -39,6 +41,7 @@ const getStudentLesson = vi.mocked(getFirstCourseLessonForStudent);
 const getArtifact = vi.mocked(getFirstLessonArtifact);
 const getNote = vi.mocked(getFirstLessonNote);
 const getFeedback = vi.mocked(getCourseFeedbackForStudent);
+const getReadingProgress = vi.mocked(getLessonReadingProgressForStudent);
 
 describe("public lesson access", () => {
   beforeEach(() => {
@@ -105,6 +108,7 @@ describe("public lesson access", () => {
     expect(getArtifact).not.toHaveBeenCalled();
     expect(getNote).not.toHaveBeenCalled();
     expect(getFeedback).not.toHaveBeenCalled();
+    expect(getReadingProgress).not.toHaveBeenCalled();
   });
 
   it("describes the CSS lesson accurately in search and sharing metadata", async () => {
@@ -152,6 +156,7 @@ describe("public lesson access", () => {
     ).not.toHaveLength(0);
     expect(getStudentLesson).not.toHaveBeenCalled();
     expect(getArtifact).not.toHaveBeenCalled();
+    expect(getReadingProgress).not.toHaveBeenCalled();
   });
 
   it("records an anonymous lesson start from the stable founder-warm entry", async () => {
@@ -174,5 +179,6 @@ describe("public lesson access", () => {
     expect(getArtifact).not.toHaveBeenCalled();
     expect(getNote).not.toHaveBeenCalled();
     expect(getFeedback).not.toHaveBeenCalled();
+    expect(getReadingProgress).not.toHaveBeenCalled();
   });
 });

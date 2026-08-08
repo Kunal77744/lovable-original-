@@ -2962,6 +2962,92 @@ h1 {
   outline-offset: 4px;
 }
 
+.lesson-reading-progress {
+  width: min(100%, 650px);
+  margin-top: 34px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px 22px;
+  color: #e8f2ec;
+  border: 1px solid rgba(159, 217, 184, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.lesson-reading-kicker,
+.lesson-reading-status {
+  margin: 0;
+}
+
+.lesson-reading-kicker {
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lesson-reading-status {
+  margin-top: 5px;
+  color: #c4cec9;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lesson-reading-progress ol {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 7px;
+  list-style: none;
+}
+
+.lesson-reading-progress li span:first-child {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  color: #9ba9a1;
+  border: 1px solid rgba(196, 206, 201, 0.3);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.lesson-reading-progress li.is-reached span:first-child {
+  color: #17231e;
+  border-color: #66dc9d;
+  background: #66dc9d;
+}
+
+.lesson-reading-progress a,
+.lesson-reading-progress button {
+  min-height: 36px;
+  grid-column: 1 / -1;
+  justify-self: start;
+  color: white;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-underline-offset: 5px;
+}
+
+.lesson-reading-progress button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.lesson-reading-progress a:focus-visible,
+.lesson-reading-progress button:focus-visible {
+  outline: 3px solid rgba(102, 220, 157, 0.48);
+  outline-offset: 4px;
+}
+
 .lesson-section {
   padding: 80px 8px;
   display: grid;
@@ -13048,6 +13134,15 @@ footer {
   .lesson-hero h1 {
     margin-top: 42px;
     font-size: clamp(45px, 14vw, 64px);
+  }
+
+  .lesson-reading-progress {
+    padding: 17px;
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-reading-progress ol {
+    grid-row: 2;
   }
 
   .lesson-section {

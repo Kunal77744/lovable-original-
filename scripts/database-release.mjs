@@ -120,6 +120,17 @@ const requiredColumns = {
     "created_at",
     "updated_at",
   ],
+  lesson_progress: [
+    "id",
+    "user_id",
+    "lesson_id",
+    "status",
+    "quiz_score",
+    "furthest_section",
+    "started_at",
+    "completed_at",
+    "updated_at",
+  ],
   javascript_readiness_result: [
     "id",
     "user_id",

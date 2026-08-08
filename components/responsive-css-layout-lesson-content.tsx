@@ -26,7 +26,7 @@ export function ResponsiveCssLayoutLessonContent() {
         </div>
       </section>
 
-      <section className="lesson-section">
+      <section className="lesson-section" id="lesson-section-2">
         <p className="lesson-section-number">02</p>
         <div>
           <h2>Give every column a safe minimum and a flexible maximum.</h2>
@@ -50,7 +50,7 @@ export function ResponsiveCssLayoutLessonContent() {
         </div>
       </section>
 
-      <section className="lesson-section">
+      <section className="lesson-section" id="lesson-section-3">
         <p className="lesson-section-number">03</p>
         <div>
           <h2>Use gap for the relationship between cards.</h2>

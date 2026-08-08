@@ -24,7 +24,7 @@ export function CssBoxModelLessonContent() {
         </div>
       </section>
 
-      <section className="lesson-section">
+      <section className="lesson-section" id="lesson-section-2">
         <p className="lesson-section-number">02</p>
         <div>
           <h2>Combine selectors to keep a rule local.</h2>
@@ -49,7 +49,7 @@ export function CssBoxModelLessonContent() {
         </div>
       </section>
 
-      <section className="lesson-section">
+      <section className="lesson-section" id="lesson-section-3">
         <p className="lesson-section-number">03</p>
         <div>
           <h2>The box model explains the space you see.</h2>

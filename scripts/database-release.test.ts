@@ -81,4 +81,18 @@ describe("database release contract", () => {
       /table_name in \([\s\S]*?'web_foundations_review_result'[\s\S]*?\)/,
     );
   });
+
+  it("adds and verifies the saved lesson reading checkpoint", async () => {
+    const [migration, releaseScript] = await Promise.all([
+      readFile(path.join(root, "drizzle/0026_lesson-reading-progress.sql"), "utf8"),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+
+    expect(migration).toContain(
+      'ALTER TABLE "lesson_progress" ADD COLUMN IF NOT EXISTS "furthest_section" integer DEFAULT 0 NOT NULL;',
+    );
+    expect(releaseScript).toMatch(
+      /lesson_progress:\s*\[[\s\S]*?"quiz_score",\s*"furthest_section"/,
+    );
+  });
 });

@@ -247,6 +247,7 @@ export const lessonProgress = pgTable(
       .references(() => lesson.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("in-progress"),
     quizScore: integer("quiz_score").notNull().default(0),
+    furthestSection: integer("furthest_section").notNull().default(0),
     startedAt: timestamp("started_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
