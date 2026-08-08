@@ -1,25 +1,42 @@
 import Link from "next/link";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import {
   getNextTimedCodingChallengeProblem,
+  getRecommendedTimedCodingChallengeSet,
+  getTimedCodingChallengeSet,
   TIMED_CODING_CHALLENGE_MINUTES,
-  TIMED_CODING_CHALLENGE_PROBLEMS,
+  TIMED_CODING_CHALLENGE_SETS,
 } from "@/lib/timed-coding-challenge";
 import { TimedCodingChallengeTimer } from "./timed-coding-challenge-timer";
 
 type TimedCodingChallengeViewProps = {
   completedSlugs: string[];
+  selectedSetId?: string | null;
 };
 
 export function TimedCodingChallengeView({
   completedSlugs,
+  selectedSetId,
 }: TimedCodingChallengeViewProps) {
   const completed = new Set(completedSlugs);
-  const completedCount = TIMED_CODING_CHALLENGE_PROBLEMS.filter((problem) =>
+  const recommendedSet = getRecommendedTimedCodingChallengeSet(completedSlugs);
+  const selectedSet =
+    getTimedCodingChallengeSet(selectedSetId) ?? recommendedSet;
+  const selectedSetIndex = TIMED_CODING_CHALLENGE_SETS.findIndex(
+    (challengeSet) => challengeSet.id === selectedSet.id,
+  );
+  const completedCount = selectedSet.problems.filter((problem) =>
     completed.has(problem.slug),
   ).length;
-  const nextProblem = getNextTimedCodingChallengeProblem(completedSlugs);
-  const actionProblem = nextProblem ?? TIMED_CODING_CHALLENGE_PROBLEMS[0];
+  const overallCompletedCount = CODING_PROBLEMS.filter((problem) =>
+    completed.has(problem.slug),
+  ).length;
+  const nextProblem = getNextTimedCodingChallengeProblem(
+    completedSlugs,
+    selectedSet,
+  );
+  const actionProblem = nextProblem ?? selectedSet.problems[0];
   const actionLabel = nextProblem
     ? `Open ${nextProblem.title}`
     : `Review ${actionProblem.title}`;
@@ -36,12 +53,13 @@ export function TimedCodingChallengeView({
 
         <header className="challenge-hero">
           <div className="challenge-hero-copy">
-            <p className="eyebrow">Private timed practice · 3 problems</p>
-            <h1>Three problems. Thirty focused minutes.</h1>
+            <p className="eyebrow">
+              Private timed practice · Set {selectedSetIndex + 1} of {TIMED_CODING_CHALLENGE_SETS.length}
+            </p>
+            <h1>{selectedSet.title}. Thirty focused minutes.</h1>
             <p>
-              Revisit conditions, arrays, and algorithms in one short set. The
-              existing judge and your saved Accepted results work exactly as
-              they do in the 12-problem path.
+              {selectedSet.description} The existing judge and your saved
+              Accepted results work exactly as they do in the 12-problem path.
             </p>
             <Link
               className="primary-action"
@@ -51,13 +69,53 @@ export function TimedCodingChallengeView({
             </Link>
             <p className="challenge-next-note">
               {nextProblem
-                ? `Next challenge problem: ${nextProblem.number}. ${nextProblem.title}`
-                : "All three are Accepted. Review starts from the first challenge problem."}
+                ? `Next set problem: ${nextProblem.number}. ${nextProblem.title}`
+                : "All three are Accepted. Review starts from the first problem in this set."}
             </p>
           </div>
 
-          <TimedCodingChallengeTimer />
+          <TimedCodingChallengeTimer
+            challengeSetId={selectedSet.id}
+            key={selectedSet.id}
+          />
         </header>
+
+        <section
+          className="challenge-set-picker"
+          aria-labelledby="challenge-set-picker-title"
+        >
+          <div className="challenge-set-picker-heading">
+            <div>
+              <p className="eyebrow">Four stable sets</p>
+              <h2 id="challenge-set-picker-title">Choose a three-problem set.</h2>
+            </div>
+            <span>
+              Accepted {overallCompletedCount} of {CODING_PROBLEMS.length}
+            </span>
+          </div>
+
+          <div className="challenge-set-options">
+            {TIMED_CODING_CHALLENGE_SETS.map((challengeSet, index) => {
+              const setCompletedCount = challengeSet.problems.filter((problem) =>
+                completed.has(problem.slug),
+              ).length;
+              const isSelected = challengeSet.id === selectedSet.id;
+
+              return (
+                <Link
+                  aria-current={isSelected ? "page" : undefined}
+                  className={isSelected ? "is-selected" : undefined}
+                  href={`/practice/challenge?set=${challengeSet.id}`}
+                  key={challengeSet.id}
+                >
+                  <span>Set {String(index + 1).padStart(2, "0")}</span>
+                  <strong>{challengeSet.title}</strong>
+                  <small>Accepted {setCompletedCount} of 3</small>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
 
         <section
           className="challenge-problem-set"
@@ -65,16 +123,16 @@ export function TimedCodingChallengeView({
         >
           <div className="challenge-set-heading">
             <div>
-              <p className="eyebrow">Your set</p>
-              <h2 id="challenge-set-title">One problem from each stage.</h2>
+              <p className="eyebrow">Selected set</p>
+              <h2 id="challenge-set-title">{selectedSet.title}</h2>
             </div>
             <span>
-              Accepted {completedCount} of {TIMED_CODING_CHALLENGE_PROBLEMS.length}
+              Accepted {completedCount} of {selectedSet.problems.length}
             </span>
           </div>
 
           <ol className="challenge-problem-list">
-            {TIMED_CODING_CHALLENGE_PROBLEMS.map((problem, index) => {
+            {selectedSet.problems.map((problem, index) => {
               const isComplete = completed.has(problem.slug);
               const isNext = nextProblem?.slug === problem.slug;
 
@@ -108,7 +166,7 @@ export function TimedCodingChallengeView({
           <aside className="challenge-rules" aria-label="Challenge boundaries">
             <div>
               <strong>{TIMED_CODING_CHALLENGE_MINUTES} minutes</strong>
-              <p>Pause, resume, or reset the browser timer when you need to.</p>
+              <p>Each set keeps its own browser timer. Pause, resume, or reset it.</p>
             </div>
             <div>
               <strong>Existing judge</strong>
@@ -117,7 +175,7 @@ export function TimedCodingChallengeView({
             <div>
               <strong>No extra record</strong>
               <p>
-                The challenge creates no score, rating, leaderboard, or analytics
+                Timed sets create no score, rating, leaderboard, or analytics
                 event.
               </p>
             </div>

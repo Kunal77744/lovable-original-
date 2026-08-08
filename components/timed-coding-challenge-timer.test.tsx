@@ -69,4 +69,25 @@ describe("TimedCodingChallengeTimer", () => {
       screen.getByText("The practice window ended, but every problem stays open."),
     ).toBeVisible();
   });
+
+  it("keeps a separate browser-only deadline for each timed set", () => {
+    const firstSet = render(
+      <TimedCodingChallengeTimer challengeSetId="collections" />,
+    );
+    hydrateTimer();
+    fireEvent.click(screen.getByRole("button", { name: "Start 30-minute timer" }));
+
+    act(() => {
+      vi.advanceTimersByTime(61_000);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pause timer" }));
+    expect(screen.getByRole("timer")).toHaveTextContent("28:59");
+
+    firstSet.unmount();
+    render(<TimedCodingChallengeTimer challengeSetId="search-and-windows" />);
+    hydrateTimer();
+
+    expect(screen.getByRole("timer")).toHaveTextContent("30:00");
+    expect(screen.getByRole("heading", { name: "Timer ready" })).toBeVisible();
+  });
 });
