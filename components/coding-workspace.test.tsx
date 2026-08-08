@@ -60,6 +60,7 @@ function renderWorkspace({
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
+  dailyChallengeDate = null,
 }: {
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
@@ -71,6 +72,7 @@ function renderWorkspace({
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
+  dailyChallengeDate?: string | null;
 } = {}) {
   return render(
     <CodingWorkspace
@@ -82,6 +84,7 @@ function renderWorkspace({
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       isReviewSession={isReviewSession}
+      dailyChallengeDate={dailyChallengeDate}
       problem={problem}
     />,
   );
@@ -99,11 +102,13 @@ function submissionResponse(
       passedTests,
       totalTests: 4,
       completedCount: verdict === "Accepted" ? 1 : 0,
-      totalCount: 6,
+      totalCount: 12,
       nextProblemSlug: verdict === "Accepted" ? "even-or-odd" : null,
       createdAt: "2026-07-26T22:30:00.000Z",
       hasSource: true,
       isFirstAcceptedResult: verdict === "Accepted",
+      dailyChallengeCompleted: false,
+      dailyChallengeDate: null,
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
@@ -684,7 +689,7 @@ describe("CodingWorkspace", () => {
         name: "Continue to next unfinished step",
       }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
-    expect(screen.getByText("Practice progress · 1/6 accepted")).toBeInTheDocument();
+    expect(screen.getByText("Practice progress · 1/12 accepted")).toBeInTheDocument();
     expect(screen.getByText("Concept unlocked")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -766,6 +771,58 @@ describe("CodingWorkspace", () => {
     ).toHaveClass("accepted-secondary-action");
   });
 
+  it("sends the current daily context and confirms only the saved Accepted result", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: "daily-accepted",
+          verdict: "Accepted",
+          bestVerdict: "Accepted",
+          passedTests: 4,
+          totalTests: 4,
+          completedCount: 1,
+          totalCount: 12,
+          nextProblemSlug: "even-or-odd",
+          createdAt: "2026-08-08T12:00:00.000Z",
+          hasSource: true,
+          isFirstAcceptedResult: true,
+          dailyChallengeCompleted: true,
+          dailyChallengeDate: "2026-08-08",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    renderWorkspace({ dailyChallengeDate: "2026-08-08" });
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    expect(
+      await screen.findByText(
+        "Sum two numbers is complete. Today’s daily challenge is saved.",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Return to today’s challenge" }),
+    ).toHaveAttribute("href", "/practice/daily");
+    const request = fetchSpy.mock.calls.find(
+      ([url]) => url === "/api/practice/sum-two-numbers",
+    );
+    expect(request?.[1]).toEqual(
+      expect.objectContaining({
+        body: JSON.stringify({
+          mode: "submit",
+          code: "function solve(input) { return input; }",
+          outputs: ["13", "-5", "0", "1000"],
+          dailyChallengeDate: "2026-08-08",
+        }),
+      }),
+    );
+  });
+
   it("does not recapture a previously saved Accepted result", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
@@ -779,8 +836,8 @@ describe("CodingWorkspace", () => {
           bestVerdict: "Accepted",
           passedTests: 4,
           totalTests: 4,
-          completedCount: 6,
-          totalCount: 6,
+          completedCount: 12,
+          totalCount: 12,
           nextProblemSlug: null,
           createdAt: "2026-07-26T22:35:00.000Z",
           isFirstAcceptedResult: false,
@@ -879,7 +936,7 @@ describe("CodingWorkspace", () => {
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
   });
 
-  it("returns a learner who completes all six problems to the catalog", async () => {
+  it("returns a learner who completes all 12 problems to the catalog", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
       outputs: ["13", "-5", "0", "1000"],
@@ -892,8 +949,8 @@ describe("CodingWorkspace", () => {
           bestVerdict: "Accepted",
           passedTests: 4,
           totalTests: 4,
-          completedCount: 6,
-          totalCount: 6,
+          completedCount: 12,
+          totalCount: 12,
           nextProblemSlug: null,
           createdAt: "2026-07-27T02:00:00.000Z",
           isFirstAcceptedResult: true,

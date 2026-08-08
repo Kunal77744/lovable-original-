@@ -47,7 +47,7 @@ describe("buildCodingMistakeReviewQueue", () => {
     expect(queue).toEqual([]);
   });
 
-  it("ignores attempts outside the authored six-problem catalog", () => {
+  it("ignores attempts outside the authored 12-problem catalog", () => {
     const queue = buildCodingMistakeReviewQueue([
       verdict("unknown", "private-problem", "Wrong Answer", "2026-08-04T09:00:00Z"),
     ]);

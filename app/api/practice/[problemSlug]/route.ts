@@ -104,11 +104,19 @@ export async function POST(request: Request, context: RouteContext) {
     typeof payload === "object" && payload !== null && "outputs" in payload
       ? payload.outputs
       : null;
+  const dailyChallengeDate =
+    typeof payload === "object" &&
+    payload !== null &&
+    "dailyChallengeDate" in payload &&
+    typeof payload.dailyChallengeDate === "string"
+      ? payload.dailyChallengeDate
+      : null;
   const submission = await saveCodingSubmission(
     userId,
     problemSlug,
     code,
     outputs,
+    dailyChallengeDate,
   );
 
   if (!submission) {

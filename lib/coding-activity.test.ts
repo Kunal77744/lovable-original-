@@ -37,7 +37,7 @@ describe("buildCodingActivity", () => {
     expect(activity.nextAction).toEqual({
       title: "Continue with Even or odd.",
       description:
-        "This is the first unfinished step in your saved six-problem path: conditions.",
+        "This is the first unfinished step in your saved 12-problem path: conditions.",
       label: "Continue problem 02",
       href: "/practice/even-or-odd",
     });
@@ -91,7 +91,7 @@ describe("buildCodingActivity", () => {
     expect(activity.longestRun).toBe(1);
   });
 
-  it("offers a factual review action when all six problems are Accepted", () => {
+  it("offers a factual review action when all 12 problems are Accepted", () => {
     const activity = buildCodingActivity({
       now: NOW,
       completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
@@ -101,7 +101,7 @@ describe("buildCodingActivity", () => {
     expect(activity.nextAction).toEqual({
       title: "Review Sum two numbers.",
       description:
-        "All six problems have an Accepted result. Reopen problem 01 for another independent attempt.",
+        "All 12 problems have an Accepted result. Reopen problem 01 for another independent attempt.",
       label: "Review problem 01",
       href: "/practice/sum-two-numbers",
     });

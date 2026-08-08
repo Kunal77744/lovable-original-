@@ -13,6 +13,10 @@ import {
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import {
+  formatDailyCodingChallengeDate,
+  isCurrentDailyCodingChallenge,
+} from "@/lib/daily-coding-challenge";
+import {
   CODING_PROBLEM_COUNT,
   CODING_PROBLEMS,
   getCodingProblem,
@@ -27,6 +31,7 @@ type ProblemPageProps = {
   searchParams?: Promise<{
     review?: string | string[];
     submission?: string | string[];
+    daily?: string | string[];
   }>;
 };
 
@@ -56,6 +61,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
   const requestedSubmissionId =
     typeof submissionParam === "string" ? submissionParam : null;
   const reviewParam = resolvedSearchParams?.review;
+  const dailyParam = resolvedSearchParams?.daily;
   const problem = getCodingProblem(problemSlug);
 
   if (!problem) notFound();
@@ -82,6 +88,16 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
   if (!practiceFeedbackState) notFound();
 
   const isReviewSession = Boolean(session) && reviewParam === "1";
+  const dailyChallengeDate =
+    session &&
+    typeof dailyParam === "string" &&
+    isCurrentDailyCodingChallenge({
+      dateKey: dailyParam,
+      problemSlug,
+    })
+      ? dailyParam
+      : null;
+  const isDailyChallenge = Boolean(dailyChallengeDate);
 
   const previousProblem = CODING_PROBLEMS[problem.number - 2] ?? null;
   const nextProblem = CODING_PROBLEMS[problem.number] ?? null;
@@ -110,8 +126,20 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
         tabIndex={-1}
       >
         <nav className="problem-breadcrumbs" aria-label="Problem navigation">
-          <Link href={isReviewSession ? "/practice/review" : "/practice"}>
-            {isReviewSession ? "Private review session" : "Practice arena"}
+          <Link
+            href={
+              isDailyChallenge
+                ? "/practice/daily"
+                : isReviewSession
+                  ? "/practice/review"
+                  : "/practice"
+            }
+          >
+            {isDailyChallenge
+              ? "Daily challenge"
+              : isReviewSession
+                ? "Private review session"
+                : "Practice arena"}
           </Link>
           <span aria-hidden="true">/</span>
           <span aria-current="step">
@@ -125,6 +153,11 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               <p className="eyebrow">
                 Step {problem.number} of {CODING_PROBLEM_COUNT} · {problem.skill}
               </p>
+              {dailyChallengeDate ? (
+                <p className="daily-problem-context">
+                  Daily challenge · {formatDailyCodingChallengeDate(dailyChallengeDate)} UTC
+                </p>
+              ) : null}
               <h1>{problem.title}</h1>
               <div className="problem-meta">
                 <span>{problem.difficulty}</span>
@@ -190,6 +223,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
             isSignedIn={Boolean(session)}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             isReviewSession={isReviewSession}
+            dailyChallengeDate={dailyChallengeDate}
             loadedSubmission={loadedSubmission}
             problem={{
               slug: problem.slug,
