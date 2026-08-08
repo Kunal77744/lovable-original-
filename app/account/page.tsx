@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AccountForm } from "@/components/account-form";
 import { auth } from "@/lib/auth";
+import { getSafeAccountDestination } from "@/lib/account-destination";
 import {
   FIRST_COURSE,
   FIRST_LESSON,
@@ -23,13 +24,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AccountPage() {
+type AccountPageProps = {
+  searchParams: Promise<{
+    next?: string | string[];
+  }>;
+};
+
+export default async function AccountPage(
+  { searchParams }: AccountPageProps = { searchParams: Promise.resolve({}) },
+) {
+  const requestedDestination = (await searchParams).next;
+  const destination = getSafeAccountDestination(
+    typeof requestedDestination === "string" ? requestedDestination : null,
+  );
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (session) {
-    redirect("/dashboard");
+    redirect(destination);
   }
 
   return (

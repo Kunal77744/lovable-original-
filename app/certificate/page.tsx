@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getFirstCourseCertificateForStudent } from "@/db/course";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { PrintCertificateButton } from "@/components/print-certificate-button";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
@@ -25,7 +26,7 @@ export default async function CertificatePage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/certificate"));
   }
 
   const certificateState = await getFirstCourseCertificateForStudent(

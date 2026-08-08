@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   signIn: vi.fn(),
   signUp: vi.fn(),
+  search: "",
 }));
 
 vi.mock("next/navigation", () => ({
@@ -22,7 +23,7 @@ vi.mock("next/navigation", () => ({
     push: mocks.push,
     refresh: mocks.refresh,
   }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mocks.search),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -43,7 +44,31 @@ describe("AccountForm analytics", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.search = "";
     mocks.signUp.mockResolvedValue({ error: null });
+    mocks.signIn.mockResolvedValue({ error: null });
+  });
+
+  it("returns a signed-in learner to the private route they requested", async () => {
+    mocks.search = "mode=signin&next=%2Fplayground";
+    render(<AccountForm />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "learner@example.test" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password/), {
+      target: { value: "a-safe-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    await waitFor(() => expect(mocks.signIn).toHaveBeenCalledOnce());
+    expect(mocks.signIn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackURL: "/playground",
+        email: "learner@example.test",
+      }),
+    );
+    expect(mocks.push).toHaveBeenCalledWith("/playground");
   });
 
   it("captures account_created only after account creation succeeds", async () => {

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { JavaScriptPlayground } from "@/components/javascript-playground";
 import { getPlaygroundFile } from "@/db/javascript-playground";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export default async function PlaygroundPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin&next=/playground");
+    redirect(getSignInHref("/playground"));
   }
 
   const file = await getPlaygroundFile(session.user.id);
