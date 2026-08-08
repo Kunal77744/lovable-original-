@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav, SkipLink } from "../site-chrome";
+
+const javascriptProblemCount = CODING_PROBLEMS.length;
 
 export const metadata: Metadata = {
   title: "About Lovable Original | Learn coding by doing",
@@ -25,7 +28,7 @@ const learningLoop = [
   {
     number: "03",
     title: "Practice what comes next",
-    copy: "Solve six browser-run JavaScript problems and resume at the first unfinished step.",
+    copy: `Solve ${javascriptProblemCount} browser-run JavaScript problems and resume at the first unfinished step.`,
   },
 ];
 
@@ -57,7 +60,8 @@ export default function AboutPage() {
             <p className="about-lede">
               Take a short lesson, build and check real work, then keep
               practicing from where you left off. The first path connects
-              semantic HTML, a guided project, and six JavaScript problems.
+              semantic HTML, a guided project, and {javascriptProblemCount}{" "}
+              JavaScript problems.
             </p>
             <Link
               className="primary-action"
@@ -103,8 +107,8 @@ export default function AboutPage() {
             <p>
               The first learner path is live now. It starts with one public
               18-minute lesson, continues through a private six-check field
-              guide, and moves into six judged JavaScript problems you can
-              return to.
+              guide, and moves into {javascriptProblemCount} judged JavaScript
+              problems you can return to.
             </p>
           </div>
         </section>
@@ -126,8 +130,8 @@ export default function AboutPage() {
                 six clear review checks.
               </li>
               <li>
-                Work through six browser-run JavaScript problems with saved
-                code, verdicts, and Accepted progress.
+                Work through {javascriptProblemCount} browser-run JavaScript
+                problems with saved code, verdicts, and Accepted progress.
               </li>
               <li>
                 Return after sign-in to your best quiz result, private learner

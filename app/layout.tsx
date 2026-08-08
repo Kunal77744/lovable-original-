@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import "./globals.css";
 import { PublicPageviews } from "./public-pageviews";
+
+const javascriptProblemCount = CODING_PROBLEMS.length;
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lovable-original-eight.vercel.app"),
   title: "Lovable Original | Learn coding by doing",
   description:
-    "Take one 18-minute semantic HTML lesson, build and check saved work, then continue into six browser-run JavaScript problems.",
+    `Take one 18-minute semantic HTML lesson, build and check saved work, then continue into ${javascriptProblemCount} browser-run JavaScript problems.`,
   alternates: {
     canonical: "/",
   },
@@ -17,13 +20,13 @@ export const metadata: Metadata = {
     siteName: "Lovable Original",
     title: "Lovable Original | Learn coding by doing",
     description:
-      "Take one 18-minute semantic HTML lesson, build and check saved work, then continue into six browser-run JavaScript problems.",
+      `Take one 18-minute semantic HTML lesson, build and check saved work, then continue into ${javascriptProblemCount} browser-run JavaScript problems.`,
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and six JavaScript problems.",
+        alt: `Lovable Original: learn coding through a short lesson, saved semantic HTML work, and ${javascriptProblemCount} JavaScript problems.`,
       },
     ],
   },
@@ -31,7 +34,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Lovable Original | Learn coding by doing",
     description:
-      "Take one 18-minute semantic HTML lesson, build and check saved work, then continue into six browser-run JavaScript problems.",
+      `Take one 18-minute semantic HTML lesson, build and check saved work, then continue into ${javascriptProblemCount} browser-run JavaScript problems.`,
     images: ["/opengraph-image"],
   },
 };

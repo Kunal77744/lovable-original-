@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav, SkipLink } from "./site-chrome";
+
+const javascriptProblemCount = CODING_PROBLEMS.length;
 
 const learningLoop = [
   {
@@ -15,7 +18,7 @@ const learningLoop = [
   {
     number: "03",
     title: "Keep practicing",
-    copy: "Move into six browser-run JavaScript problems and return to the first unfinished step after sign-in.",
+    copy: `Move into ${javascriptProblemCount} browser-run JavaScript problems and return to the first unfinished step after sign-in.`,
   },
 ];
 

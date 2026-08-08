@@ -233,7 +233,7 @@ export function LearnerMilestoneChecklist({
           <div className="dashboard-milestone-copy">
             <span>
               {practicePathCompleted
-                ? "Completed · 6/6 Accepted"
+                ? `Completed · ${practice.completedCount}/${practice.totalCount} Accepted`
                 : activeFoundationsEntry
                   ? `${activeFoundationsEntry.completedCount}/${activeFoundationsEntry.totalCount} foundations steps saved`
                 : project.completed
@@ -406,7 +406,7 @@ export function LearnerMilestoneChecklist({
             </h3>
             <p>
               {javascriptPathCompleted
-                ? "Your guided practice and integrated project are saved without replacing the six judged Accepted results."
+                ? `Your guided practice and integrated project are saved without replacing the ${practice.totalCount} judged Accepted results.`
                 : !guidedJavaScriptCompleted
                   ? "Build fluency through guided exercises, then prove the combined skills in one private capstone."
                   : "Combine parsing, arrays, objects, sorting, totals, and exact formatting in one private project."}
