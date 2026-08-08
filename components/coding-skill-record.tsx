@@ -45,7 +45,7 @@ export function CodingSkillRecord({
           <p className="eyebrow">Private JavaScript record</p>
           <h1 id="skill-record-title">See the skill behind every verdict.</h1>
           <p>
-            Track the six beginner concepts your saved results have proved, then
+            Track the 12 JavaScript concepts your saved results have proved, then
             reopen the exact problem that needs another attempt.
           </p>
           <Link
@@ -112,7 +112,7 @@ export function CodingSkillRecord({
       >
         <div className="skill-record-path-heading">
           <div>
-            <p className="eyebrow">Six-step evidence</p>
+            <p className="eyebrow">12-problem evidence</p>
             <h2 id="skill-record-path-title">Your JavaScript skill path</h2>
           </div>
           <p>

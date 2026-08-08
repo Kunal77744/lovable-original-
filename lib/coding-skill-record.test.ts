@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CODING_PROBLEMS } from "./coding-problems";
 import { buildCodingSkillRecord } from "./coding-skill-record";
 
 describe("buildCodingSkillRecord", () => {
@@ -10,13 +11,13 @@ describe("buildCodingSkillRecord", () => {
 
     expect(record).toMatchObject({
       acceptedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       attemptCount: 0,
       practiceDays: 0,
       lastPracticedAt: null,
     });
     expect(record.skills.map((skill) => skill.state)).toEqual(
-      Array(6).fill("not-started"),
+      Array(12).fill("not-started"),
     );
     expect(record.nextAction).toMatchObject({
       label: "Start problem 01",
@@ -82,20 +83,13 @@ describe("buildCodingSkillRecord", () => {
     expect(record.nextAction.href).toBe("/practice/even-or-odd");
   });
 
-  it("reviews the first skill when all six have been Accepted", () => {
+  it("reviews the first skill when all 12 have been Accepted", () => {
     const record = buildCodingSkillRecord({
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
       attempts: [],
     });
 
-    expect(record.acceptedCount).toBe(6);
+    expect(record.acceptedCount).toBe(12);
     expect(record.nextAction).toMatchObject({
       label: "Review problem 01",
       href: "/practice/sum-two-numbers",

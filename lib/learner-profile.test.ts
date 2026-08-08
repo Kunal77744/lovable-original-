@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CODING_PROBLEMS } from "./coding-problems";
 import { buildLearnerProfile } from "./learner-profile";
 
 const baseCourse = {
@@ -19,8 +20,14 @@ const baseCourse = {
 
 const emptyPractice = {
   completedCount: 0,
-  totalCount: 6,
+  totalCount: 12,
   completedSlugs: [] as string[],
+};
+
+const completePractice = {
+  completedCount: CODING_PROBLEMS.length,
+  totalCount: CODING_PROBLEMS.length,
+  completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
 };
 
 const emptyCssPractice = {
@@ -87,7 +94,7 @@ describe("buildLearnerProfile", () => {
       },
       practice: {
         completedCount: 1,
-        totalCount: 6,
+        totalCount: 12,
         completedSlugs: ["sum-two-numbers"],
       },
       cssPractice: emptyCssPractice,
@@ -154,7 +161,7 @@ describe("buildLearnerProfile", () => {
       },
       practice: {
         completedCount: 1,
-        totalCount: 6,
+        totalCount: 12,
         completedSlugs: ["sum-two-numbers"],
       },
       cssPractice: emptyCssPractice,
@@ -186,7 +193,7 @@ describe("buildLearnerProfile", () => {
       },
       practice: {
         completedCount: 1,
-        totalCount: 6,
+        totalCount: 12,
         completedSlugs: ["sum-two-numbers"],
       },
       cssPractice: emptyCssPractice,
@@ -261,18 +268,7 @@ describe("buildLearnerProfile", () => {
           quizScore: 100,
         },
       },
-      practice: {
-        completedCount: 6,
-        totalCount: 6,
-        completedSlugs: [
-          "sum-two-numbers",
-          "even-or-odd",
-          "multiplication-table",
-          "largest-value",
-          "reverse-a-word",
-          "fizz-buzz",
-        ],
-      },
+      practice: completePractice,
       cssPractice: {
         completedCount: 6,
         totalCount: 6,
@@ -312,18 +308,7 @@ describe("buildLearnerProfile", () => {
           quizScore: 100,
         },
       },
-      practice: {
-        completedCount: 6,
-        totalCount: 6,
-        completedSlugs: [
-          "sum-two-numbers",
-          "even-or-odd",
-          "multiplication-table",
-          "largest-value",
-          "reverse-a-word",
-          "fizz-buzz",
-        ],
-      },
+      practice: completePractice,
       cssPractice: {
         completedCount: 2,
         totalCount: 6,
@@ -355,18 +340,7 @@ describe("buildLearnerProfile", () => {
           quizScore: 100,
         },
       },
-      practice: {
-        completedCount: 6,
-        totalCount: 6,
-        completedSlugs: [
-          "sum-two-numbers",
-          "even-or-odd",
-          "multiplication-table",
-          "largest-value",
-          "reverse-a-word",
-          "fizz-buzz",
-        ],
-      },
+      practice: completePractice,
       cssPractice: {
         completedCount: 6,
         totalCount: 6,
@@ -416,18 +390,7 @@ describe("buildLearnerProfile", () => {
           quizScore: 100,
         },
       },
-      practice: {
-        completedCount: 6,
-        totalCount: 6,
-        completedSlugs: [
-          "sum-two-numbers",
-          "even-or-odd",
-          "multiplication-table",
-          "largest-value",
-          "reverse-a-word",
-          "fizz-buzz",
-        ],
-      },
+      practice: completePractice,
       cssPractice: {
         completedCount: 6,
         totalCount: 6,

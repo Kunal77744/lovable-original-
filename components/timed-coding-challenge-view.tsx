@@ -41,7 +41,7 @@ export function TimedCodingChallengeView({
             <p>
               Revisit conditions, arrays, and algorithms in one short set. The
               existing judge and your saved Accepted results work exactly as
-              they do in the six-step path.
+              they do in the 12-problem path.
             </p>
             <Link
               className="primary-action"
