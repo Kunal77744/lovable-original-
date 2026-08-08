@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { CodingActivity as CodingActivityViewModel } from "@/lib/coding-activity";
+import type { WeeklyCodingPracticeGoal } from "@/lib/coding-practice-goal";
+import { CodingPracticeGoal } from "./coding-practice-goal";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en", {
@@ -20,8 +22,10 @@ function getDayLabel(day: CodingActivityViewModel["days"][number]) {
 
 export function CodingActivity({
   activity,
+  weeklyGoal,
 }: {
   activity: CodingActivityViewModel;
+  weeklyGoal: WeeklyCodingPracticeGoal;
 }) {
   return (
     <div className="coding-activity-layout">
@@ -57,6 +61,8 @@ export function CodingActivity({
           </dl>
         </aside>
       </header>
+
+      <CodingPracticeGoal goal={weeklyGoal} />
 
       <section
         className="coding-activity-calendar"

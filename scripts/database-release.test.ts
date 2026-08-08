@@ -5,6 +5,26 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 
 describe("database release contract", () => {
+  it("adds and verifies the private weekly coding practice target", async () => {
+    const [migration, releaseScript] = await Promise.all([
+      readFile(path.join(root, "drizzle/0027_coding-practice-goal.sql"), "utf8"),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+
+    expect(migration).toContain(
+      'CREATE TABLE IF NOT EXISTS "coding_practice_goal"',
+    );
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX IF NOT EXISTS "coding_practice_goal_user_unique"',
+    );
+    expect(releaseScript).toMatch(
+      /coding_practice_goal:\s*\[[\s\S]*?"target_active_days",[\s\S]*?"updated_at"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'coding_practice_goal'[\s\S]*?\)/,
+    );
+  });
+
   it("adds and verifies the immutable coding submission source column", async () => {
     const [migration, releaseScript] = await Promise.all([
       readFile(path.join(root, "drizzle/0020_sleepy_kylun.sql"), "utf8"),
