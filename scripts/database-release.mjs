@@ -284,6 +284,7 @@ async function run() {
           'coding_submission',
           'guided_project',
           'guided_project_feedback',
+          'lesson_progress',
           'javascript_mixed_review_result',
           'javascript_readiness_result',
           'web_foundations_review_result',

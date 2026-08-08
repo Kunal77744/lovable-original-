@@ -94,5 +94,8 @@ describe("database release contract", () => {
     expect(releaseScript).toMatch(
       /lesson_progress:\s*\[[\s\S]*?"quiz_score",\s*"furthest_section"/,
     );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'lesson_progress'[\s\S]*?\)/,
+    );
   });
 });
