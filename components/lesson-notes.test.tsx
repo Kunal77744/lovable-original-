@@ -100,6 +100,58 @@ describe("LessonNotes", () => {
     );
   });
 
+  it("keeps newer edits unsaved when an older save finishes", async () => {
+    let finishSave: ((value: unknown) => void) | undefined;
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishSave = resolve;
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LessonNotes
+        lessonSlug="semantic-html"
+        initialNote={{
+          content: "Initial saved note.",
+          updatedAt: "2026-07-26T22:00:00.000Z",
+        }}
+      />,
+    );
+
+    const note = screen.getByLabelText("What do you want to remember?");
+    fireEvent.change(note, { target: { value: "Earlier revision." } });
+    fireEvent.click(screen.getByRole("button", { name: "Update note" }));
+    fireEvent.change(note, { target: { value: "Newest revision." } });
+
+    finishSave?.({
+      ok: true,
+      json: async () => ({
+        note: {
+          content: "Earlier revision.",
+          updatedAt: "2026-07-26T22:05:00.000Z",
+        },
+      }),
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Your earlier note was saved. Your newer changes are still unsaved.",
+        ),
+      ).toBeInTheDocument(),
+    );
+    expect(note).toHaveValue("Newest revision.");
+    expect(screen.getByRole("button", { name: "Update note" })).toBeEnabled();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lessons/semantic-html/notes",
+      expect.objectContaining({
+        body: JSON.stringify({ content: "Earlier revision." }),
+      }),
+    );
+  });
+
   it("keeps a signed-out note local until the learner tries to save", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

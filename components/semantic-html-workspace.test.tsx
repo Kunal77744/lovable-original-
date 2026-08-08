@@ -131,6 +131,93 @@ describe("SemanticHtmlWorkspace", () => {
     expect(screen.getByText("Assignment complete")).toBeInTheDocument();
   });
 
+  it("keeps newer edits visibly unsaved when an older submission finishes", async () => {
+    const submittedHtml = "<main><article>Submitted draft</article></main>";
+    const newerHtml = "<main><article>Newer unsaved draft</article></main>";
+    const savedChecks = initialChecks.map((check) => ({ ...check, passed: true }));
+    let resolveResponse!: (value: {
+      ok: boolean;
+      json: () => Promise<WorkspaceResponseFixture>;
+    }) => void;
+    type WorkspaceResponseFixture = {
+      html: string;
+      checks: typeof savedChecks;
+      saved: boolean;
+      updatedAt: string;
+      submission: {
+        status: "completed";
+        passedChecks: number;
+        totalChecks: number;
+        submittedAt: string;
+      };
+    };
+    const responsePromise = new Promise<{
+      ok: boolean;
+      json: () => Promise<WorkspaceResponseFixture>;
+    }>((resolve) => {
+      resolveResponse = resolve;
+    });
+    const fetchMock = vi.fn().mockReturnValue(responsePromise);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: submittedHtml },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit assignment" }));
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: newerHtml },
+    });
+
+    resolveResponse({
+      ok: true,
+      json: async () => ({
+        html: submittedHtml,
+        checks: savedChecks,
+        saved: true,
+        updatedAt: "2026-08-06T00:00:00.000Z",
+        submission: {
+          status: "completed",
+          passedChecks: 5,
+          totalChecks: 5,
+          submittedAt: "2026-08-06T00:00:00.000Z",
+        },
+      }),
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "Your submitted result is saved. Newer changes are still unsaved.",
+        ),
+      ).toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lessons/semantic-html/workspace",
+      expect.objectContaining({
+        body: JSON.stringify({ html: submittedHtml }),
+      }),
+    );
+    expect(screen.getByLabelText("Semantic HTML")).toHaveValue(newerHtml);
+    expect(screen.getByText("Changes not submitted")).toBeInTheDocument();
+    expect(screen.getByText("Previous result")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Resubmit assignment" }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByText("Assignment complete. Your HTML and 5/5 result are saved."),
+    ).not.toBeInTheDocument();
+  });
+
   it("restores a saved submission and presents its revision state", () => {
     render(
       <SemanticHtmlWorkspace

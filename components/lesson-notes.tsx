@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   MAX_LESSON_NOTE_LENGTH,
   type SavedLessonNote,
@@ -19,6 +19,7 @@ export function LessonNotes({
   isSignedIn = true,
 }: LessonNotesProps) {
   const [content, setContent] = useState(initialNote?.content ?? "");
+  const latestContent = useRef(initialNote?.content ?? "");
   const [savedContent, setSavedContent] = useState(initialNote?.content ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState(
@@ -48,12 +49,13 @@ export function LessonNotes({
     setIsSaving(true);
     setIsError(false);
     setMessage("Saving your note…");
+    const submittedContent = content;
 
     try {
       const response = await fetch(`/api/lessons/${lessonSlug}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: submittedContent }),
       });
       const payload = (await response.json()) as {
         error?: string;
@@ -66,8 +68,16 @@ export function LessonNotes({
         return;
       }
 
-      setContent(payload.note.content);
       setSavedContent(payload.note.content);
+      if (latestContent.current !== submittedContent) {
+        setMessage(
+          "Your earlier note was saved. Your newer changes are still unsaved.",
+        );
+        return;
+      }
+
+      latestContent.current = payload.note.content;
+      setContent(payload.note.content);
       setMessage(
         hasSavedNote
           ? "Changes saved. This note will return with your account."
@@ -109,6 +119,7 @@ export function LessonNotes({
           value={content}
           placeholder="For example: A semantic element explains what a region does, not how it looks."
           onChange={(event) => {
+            latestContent.current = event.target.value;
             setContent(event.target.value);
             setIsError(false);
             setMessage(

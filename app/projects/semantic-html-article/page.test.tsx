@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getGuidedProjectFeedbackForStudent,
   getGuidedProjectForStudent,
 } from "@/db/guided-project";
+import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import SemanticHtmlProjectPage, { metadata } from "./page";
 
@@ -24,9 +25,14 @@ vi.mock("@/db/guided-project", () => ({
   getGuidedProjectForStudent: vi.fn(),
 }));
 
+vi.mock("@/db/coding-practice", () => ({
+  getCodingCatalogProgress: vi.fn(),
+}));
+
 const getSession = vi.mocked(auth.api.getSession);
 const getProject = vi.mocked(getGuidedProjectForStudent);
 const getProjectFeedback = vi.mocked(getGuidedProjectFeedbackForStudent);
+const getPracticeProgress = vi.mocked(getCodingCatalogProgress);
 
 describe("SemanticHtmlProjectPage", () => {
   beforeEach(() => {
@@ -42,6 +48,15 @@ describe("SemanticHtmlProjectPage", () => {
       submission: null,
     });
     getProjectFeedback.mockResolvedValue({ feedback: null });
+    getPracticeProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 6,
+      completedSlugs: [],
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("keeps the account-only project out of search", () => {
@@ -75,5 +90,57 @@ describe("SemanticHtmlProjectPage", () => {
     expect(
       screen.getByRole("heading", { name: "Build, review, revise." }),
     ).toBeInTheDocument();
+  });
+
+  it("teaches a fresh learner how judging works after project completion", async () => {
+    getProject.mockResolvedValue({
+      html: "<header></header><main><article></article></main><footer></footer>",
+      saved: true,
+      updatedAt: "2026-08-06T08:00:00.000Z",
+      hasUnreviewedChanges: false,
+      submission: {
+        status: "completed",
+        checks: [],
+        passedChecks: 6,
+        totalChecks: 6,
+        submittedAt: "2026-08-06T08:00:00.000Z",
+      },
+    });
+
+    render(await SemanticHtmlProjectPage());
+
+    expect(
+      screen.getByRole("link", { name: "Learn how JavaScript judging works" }),
+    ).toHaveAttribute("href", "/practice/judge-basics");
+  });
+
+  it("names the exact unfinished JavaScript step after project completion", async () => {
+    getPracticeProgress.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 6,
+      completedSlugs: ["sum-two-numbers", "even-or-odd"],
+    });
+    getProject.mockResolvedValue({
+      html: "<header></header><main><article></article></main><footer></footer>",
+      saved: true,
+      updatedAt: "2026-07-29T04:50:00.000Z",
+      hasUnreviewedChanges: false,
+      submission: {
+        status: "completed",
+        checks: [],
+        passedChecks: 6,
+        totalChecks: 6,
+        submittedAt: "2026-07-29T04:50:00.000Z",
+      },
+    });
+
+    render(await SemanticHtmlProjectPage());
+
+    expect(getPracticeProgress).toHaveBeenCalledWith("learner-1");
+    expect(
+      screen.getByRole("link", {
+        name: /Continue to JavaScript step 03: Multiplication table/,
+      }),
+    ).toHaveAttribute("href", "/practice/multiplication-table");
   });
 });

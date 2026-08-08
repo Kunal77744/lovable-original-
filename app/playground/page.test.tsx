@@ -20,13 +20,23 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/db/javascript-playground", () => ({
   getPlaygroundFile: vi.fn().mockResolvedValue({
     code: "console.log('private');",
+    quickChecks: "double(4) === 8",
     updatedAt: null,
   }),
 }));
 
 vi.mock("@/components/javascript-playground", () => ({
-  JavaScriptPlayground: () => (
-    <section aria-label="JavaScript playground editor" />
+  JavaScriptPlayground: ({
+    initialCode,
+    initialQuickChecks,
+  }: {
+    initialCode: string;
+    initialQuickChecks: string;
+  }) => (
+    <section aria-label="JavaScript playground editor">
+      <pre>{initialCode}</pre>
+      <pre>{initialQuickChecks}</pre>
+    </section>
   ),
 }));
 
@@ -50,6 +60,8 @@ describe("PlaygroundPage", () => {
     expect(privateCue).toHaveTextContent(
       "Saved code belongs only to your signed-in account.",
     );
+    expect(screen.getByText("console.log('private');")).toBeInTheDocument();
+    expect(screen.getByText("double(4) === 8")).toBeInTheDocument();
   });
 
   it("keeps the account-only page out of search", () => {

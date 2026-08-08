@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { runPlaygroundCode } from "@/lib/coding-runner";
-import { MAX_PLAYGROUND_CODE_LENGTH } from "@/lib/javascript-playground";
+import { useRef, useState } from "react";
+import {
+  type PlaygroundCheckResult,
+  runPlaygroundChecks,
+  runPlaygroundCode,
+} from "@/lib/coding-runner";
+import {
+  MAX_PLAYGROUND_CHECKS,
+  MAX_PLAYGROUND_CODE_LENGTH,
+  validatePlaygroundChecks,
+} from "@/lib/javascript-playground";
 
 type JavaScriptPlaygroundProps = {
   initialCode: string;
+  initialQuickChecks: string;
   initialUpdatedAt: string | null;
 };
 
@@ -15,18 +24,34 @@ type RunState =
   | { kind: "finished"; output: string[]; message: string }
   | { kind: "error"; output: string[]; message: string };
 
+type CheckState =
+  | { kind: "ready"; checks: PlaygroundCheckResult[]; message: string }
+  | { kind: "running"; checks: PlaygroundCheckResult[]; message: string }
+  | { kind: "finished"; checks: PlaygroundCheckResult[]; message: string }
+  | { kind: "error"; checks: PlaygroundCheckResult[]; message: string };
+
 export function JavaScriptPlayground({
   initialCode,
+  initialQuickChecks,
   initialUpdatedAt,
 }: JavaScriptPlaygroundProps) {
   const [code, setCode] = useState(initialCode);
+  const latestCode = useRef(initialCode);
+  const saveRequestPending = useRef(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(initialUpdatedAt ? "saved" : "unsaved");
+  const [isSaving, setIsSaving] = useState(false);
   const [runState, setRunState] = useState<RunState>({
     kind: "ready",
     output: [],
     message: "Run playground.js to see console output here.",
+  });
+  const [checkSource, setCheckSource] = useState(initialQuickChecks);
+  const [checkState, setCheckState] = useState<CheckState>({
+    kind: "ready",
+    checks: [],
+    message: "Add one expression per line. Each check should return true.",
   });
 
   async function runCode() {
@@ -57,28 +82,83 @@ export function JavaScriptPlayground({
   }
 
   async function saveFile() {
+    if (saveRequestPending.current) return;
+
+    const submittedCode = latestCode.current;
+    saveRequestPending.current = true;
+    setIsSaving(true);
     setSaveState("saving");
 
     try {
       const response = await fetch("/api/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({
+          code: submittedCode,
+          quickChecks: checkSource,
+        }),
       });
 
       if (!response.ok) {
-        setSaveState("error");
+        setSaveState(
+          latestCode.current === submittedCode ? "error" : "unsaved",
+        );
         return;
       }
 
-      setSaveState("saved");
+      setSaveState(
+        latestCode.current === submittedCode ? "saved" : "unsaved",
+      );
     } catch {
-      setSaveState("error");
+      setSaveState(
+        latestCode.current === submittedCode ? "error" : "unsaved",
+      );
+    } finally {
+      saveRequestPending.current = false;
+      setIsSaving(false);
     }
   }
 
+  async function runChecks() {
+    const validation = validatePlaygroundChecks(checkSource);
+
+    if (!validation.valid) {
+      setCheckState({ kind: "error", checks: [], message: validation.error });
+      return;
+    }
+
+    setCheckState({
+      kind: "running",
+      checks: [],
+      message: "Running quick checks in an isolated browser worker…",
+    });
+    const result = await runPlaygroundChecks(code, validation.checks);
+
+    if (result.status === "finished") {
+      const passed = result.checks.filter((check) => check.passed).length;
+      setCheckState({
+        kind: "finished",
+        checks: result.checks,
+        message: `${passed} of ${result.checks.length} checks passed.`,
+      });
+      return;
+    }
+
+    setCheckState({
+      kind: "error",
+      checks: result.checks,
+      message: result.message,
+    });
+  }
+
   function updateCode(nextCode: string) {
+    latestCode.current = nextCode;
     setCode(nextCode);
+    setSaveState("unsaved");
+  }
+
+  function updateCheckSource(nextSource: string) {
+    setCheckSource(nextSource);
     setSaveState("unsaved");
   }
 
@@ -151,9 +231,9 @@ export function JavaScriptPlayground({
           className="playground-save"
           type="button"
           onClick={saveFile}
-          disabled={saveState === "saving" || code.length === 0}
+          disabled={isSaving || code.length === 0}
         >
-          {saveState === "saving" ? "Saving file…" : "Save file"}
+          {isSaving ? "Saving file…" : "Save file"}
         </button>
       </div>
 
@@ -196,6 +276,69 @@ export function JavaScriptPlayground({
           <p>{runState.message}</p>
         </div>
       </section>
+
+      <details className="playground-checks" open>
+        <summary>
+          <span>
+            <strong>Quick checks</strong>
+            <small>Test the behavior you expect before you save.</small>
+          </span>
+          <span>Up to {MAX_PLAYGROUND_CHECKS}</span>
+        </summary>
+        <div className="playground-checks-body">
+          <div className="playground-checks-input">
+            <label htmlFor="playground-check-source">Quick check expressions</label>
+            <textarea
+              id="playground-check-source"
+              value={checkSource}
+              onChange={(event) => updateCheckSource(event.target.value)}
+              placeholder={'double(4) === 8\nformatName("ada") === "Ada"'}
+              spellCheck={false}
+            />
+            <p>
+              One true-or-false JavaScript expression per line. Runs stay
+              local; Save file keeps these checks private with your code.
+            </p>
+            <button
+              className="playground-checks-run"
+              type="button"
+              onClick={runChecks}
+              disabled={checkState.kind === "running"}
+            >
+              {checkState.kind === "running"
+                ? "Running checks…"
+                : "Run quick checks"}
+            </button>
+          </div>
+          <div
+            className={
+              checkState.kind === "error"
+                ? "playground-check-results is-error"
+                : "playground-check-results"
+            }
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <strong>Check results</strong>
+            <p>{checkState.message}</p>
+            {checkState.checks.length > 0 ? (
+              <ol>
+                {checkState.checks.map((check, index) => (
+                  <li
+                    className={check.passed ? "is-passed" : "is-failed"}
+                    key={`${check.expression}-${index}`}
+                  >
+                    <span>{check.passed ? "Passed" : "Needs work"}</span>
+                    <code>{check.expression}</code>
+                    {check.message ? <small>{check.message}</small> : null}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </div>
+        </div>
+      </details>
     </section>
   );
 }

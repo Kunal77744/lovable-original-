@@ -1,10 +1,9 @@
 import posthog, { type CaptureResult } from "posthog-js";
+import type { LearnerEntrySource } from "./learner-entry-source";
 
-const POSTHOG_KEY =
-  "phc_mKF4BaB7MLJ2KcvCU3xqCpHLZoPZ6k5ZrYQyxKD2NXor";
+const POSTHOG_KEY = "phc_mKF4BaB7MLJ2KcvCU3xqCpHLZoPZ6k5ZrYQyxKD2NXor";
 const POSTHOG_HOST = "https://us.i.posthog.com";
-const TEST_CAPTURE_URL =
-  process.env.NEXT_PUBLIC_ANALYTICS_TEST_CAPTURE_URL;
+const TEST_CAPTURE_URL = process.env.NEXT_PUBLIC_ANALYTICS_TEST_CAPTURE_URL;
 const PRODUCTION_HOST = "lovable-original-eight.vercel.app";
 const VERCEL_PREVIEW_HOST = /\.vercel\.app$/;
 const JOURNEY_ID_KEY = "lovable_original_journey_id";
@@ -20,6 +19,12 @@ type LearnerEventProperties = {
   course_slug?: string;
   lesson_slug?: string;
   passed?: boolean;
+  entry_source?: LearnerEntrySource;
+};
+
+type LessonCompletedProperties = {
+  courseSlug: string;
+  completionState: "completed";
 };
 
 type ProjectCompletedProperties = {
@@ -34,6 +39,15 @@ type PracticeAcceptedProperties = {
 
 type PracticeStartedProperties = {
   problemSlug: string;
+};
+
+type PracticeFeedbackProperties = {
+  usefulness: string;
+};
+
+type PracticePathCompletedProperties = {
+  pathSlug: string;
+  completionState: "completed";
 };
 
 let initialized = false;
@@ -195,11 +209,16 @@ function capture(
     | "$pageview"
     | "account_created"
     | "lesson_started"
+    | "lesson_completed"
     | "quiz_completed"
     | "feedback_submitted"
     | "project_completed"
     | "practice_problem_started"
-    | "practice_problem_accepted",
+    | "practice_problem_accepted"
+    | "practice_feedback_submitted"
+    | "javascript_practice_completed"
+    | "css_practice_completed"
+    | "css_path_feedback_submitted",
   properties: Record<string, string | number | boolean>,
 ) {
   const environment = initializePostHog();
@@ -248,10 +267,21 @@ export function captureLearnerEventOnce(
   eventName: "lesson_started" | "quiz_completed" | "feedback_submitted",
   properties: LearnerEventProperties,
 ) {
+  const safeProperties: LearnerEventProperties = {
+    ...(properties.course_slug ? { course_slug: properties.course_slug } : {}),
+    ...(properties.lesson_slug ? { lesson_slug: properties.lesson_slug } : {}),
+    ...(typeof properties.passed === "boolean"
+      ? { passed: properties.passed }
+      : {}),
+    ...(eventName === "lesson_started" &&
+    properties.entry_source === "founder_warm"
+      ? { entry_source: properties.entry_source }
+      : {}),
+  };
   const dedupeKey = [
     eventName,
-    properties.course_slug,
-    properties.lesson_slug,
+    safeProperties.course_slug,
+    safeProperties.lesson_slug,
   ]
     .filter(Boolean)
     .join(":");
@@ -263,8 +293,31 @@ export function captureLearnerEventOnce(
 
   const didCapture = capture(
     eventName,
-    properties as Record<string, string | number | boolean>,
+    safeProperties as Record<string, string | number | boolean>,
   );
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function captureLessonCompleted({
+  courseSlug,
+  completionState,
+}: LessonCompletedProperties) {
+  const dedupeKey = `lesson_completed:${courseSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture("lesson_completed", {
+    course_slug: courseSlug,
+    completion_state: completionState,
+  });
 
   if (didCapture) {
     rememberCapturedEvent(dedupeKey, capturedEvents);
@@ -317,6 +370,56 @@ export function capturePracticeProblemAccepted({
   }
 
   return didCapture;
+}
+
+export function capturePracticeFeedbackSubmitted(
+  usefulness: PracticeFeedbackProperties["usefulness"],
+) {
+  return capture("practice_feedback_submitted", { usefulness });
+}
+
+export function captureCssPathFeedbackSubmitted(
+  usefulness: PracticeFeedbackProperties["usefulness"],
+) {
+  return capture("css_path_feedback_submitted", { usefulness });
+}
+
+function capturePracticePathCompleted(
+  eventName: "javascript_practice_completed" | "css_practice_completed",
+  { pathSlug, completionState }: PracticePathCompletedProperties,
+) {
+  const dedupeKey = `${eventName}:${pathSlug}`;
+  const capturedEvents = getCapturedEvents();
+
+  if (capturedEvents.has(dedupeKey)) {
+    return false;
+  }
+
+  const didCapture = capture(eventName, {
+    path_slug: pathSlug,
+    completion_state: completionState,
+  });
+
+  if (didCapture) {
+    rememberCapturedEvent(dedupeKey, capturedEvents);
+  }
+
+  return didCapture;
+}
+
+export function captureJavaScriptPracticeCompleted(
+  properties: PracticePathCompletedProperties,
+) {
+  return capturePracticePathCompleted(
+    "javascript_practice_completed",
+    properties,
+  );
+}
+
+export function captureCssPracticeCompleted(
+  properties: PracticePathCompletedProperties,
+) {
+  return capturePracticePathCompleted("css_practice_completed", properties);
 }
 
 export function capturePracticeProblemStarted({

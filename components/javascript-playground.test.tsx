@@ -10,9 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptPlayground } from "./javascript-playground";
 
 const runPlaygroundCode = vi.fn();
+const runPlaygroundChecks = vi.fn();
 
 vi.mock("@/lib/coding-runner", () => ({
   runPlaygroundCode: (...args: unknown[]) => runPlaygroundCode(...args),
+  runPlaygroundChecks: (...args: unknown[]) => runPlaygroundChecks(...args),
 }));
 
 describe("JavaScriptPlayground", () => {
@@ -21,6 +23,7 @@ describe("JavaScriptPlayground", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     runPlaygroundCode.mockReset();
+    runPlaygroundChecks.mockReset();
   });
 
   it("runs the exact editor source from the keyboard and announces the result", async () => {
@@ -35,6 +38,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="console.log('answer', 42);"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -66,6 +70,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="console.log('shortcut');"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -77,6 +82,70 @@ describe("JavaScriptPlayground", () => {
     expect(actions).toContainElement(
       screen.getByRole("button", { name: "Run code" }),
     );
+  });
+
+  it("runs learner-authored checks against the exact editor source", async () => {
+    runPlaygroundChecks.mockResolvedValue({
+      status: "finished",
+      checks: [
+        { expression: "double(4) === 8", passed: true, message: null },
+        { expression: "double(0) === 0", passed: true, message: null },
+      ],
+    });
+    render(
+      <JavaScriptPlayground
+        initialCode="const double = (value) => value * 2;"
+        initialQuickChecks=""
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+      { target: { value: "double(4) === 8\ndouble(0) === 0" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Run quick checks" }));
+
+    await waitFor(() =>
+      expect(runPlaygroundChecks).toHaveBeenCalledWith(
+        "const double = (value) => value * 2;",
+        ["double(4) === 8", "double(0) === 0"],
+      ),
+    );
+    expect(await screen.findByText("2 of 2 checks passed.")).toBeVisible();
+    expect(screen.getAllByText("Passed")).toHaveLength(2);
+    expect(screen.getByText("double(4) === 8")).toBeVisible();
+  });
+
+  it("keeps failed and broken expressions visible for the next attempt", async () => {
+    runPlaygroundChecks.mockResolvedValue({
+      status: "finished",
+      checks: [
+        { expression: "double(4) === 10", passed: false, message: null },
+        {
+          expression: "missing(2) === 2",
+          passed: false,
+          message: "missing is not defined",
+        },
+      ],
+    });
+    render(
+      <JavaScriptPlayground
+        initialCode="const double = (value) => value * 2;"
+        initialQuickChecks=""
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+      { target: { value: "double(4) === 10\nmissing(2) === 2" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Run quick checks" }));
+
+    expect(await screen.findByText("0 of 2 checks passed.")).toBeVisible();
+    expect(screen.getAllByText("Needs work")).toHaveLength(2);
+    expect(screen.getByText("missing is not defined")).toBeVisible();
   });
 
   it.each([
@@ -106,6 +175,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="while (true) {}"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );
@@ -126,7 +196,11 @@ describe("JavaScriptPlayground", () => {
       }),
     );
     render(
-      <JavaScriptPlayground initialCode={exactCode} initialUpdatedAt={null} />,
+      <JavaScriptPlayground
+        initialCode={exactCode}
+        initialQuickChecks={'double(4) === 8\ndouble(0) === 0'}
+        initialUpdatedAt={null}
+      />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Save file" }));
@@ -142,7 +216,10 @@ describe("JavaScriptPlayground", () => {
         "/api/playground",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ code: exactCode }),
+          body: JSON.stringify({
+            code: exactCode,
+            quickChecks: "double(4) === 8\ndouble(0) === 0",
+          }),
         }),
       ),
     );
@@ -153,6 +230,7 @@ describe("JavaScriptPlayground", () => {
           JSON.stringify({
             file: {
               code: exactCode,
+              quickChecks: "double(4) === 8\ndouble(0) === 0",
               updatedAt: "2026-07-27T03:02:00.000Z",
             },
           }),
@@ -162,6 +240,72 @@ describe("JavaScriptPlayground", () => {
     });
 
     expect(saveStatus).toHaveTextContent("Saved to your account");
+  });
+
+  it("keeps newer code unsaved when an older save finishes", async () => {
+    const savedVersion = "console.log('saved version');";
+    const newerVersion = "console.log('newer unsaved version');";
+    let finishFirstSave: ((response: Response) => void) | undefined;
+    vi.spyOn(globalThis, "fetch").mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishFirstSave = resolve;
+      }),
+    ).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          file: {
+            code: newerVersion,
+            updatedAt: "2026-08-06T16:30:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    render(
+      <JavaScriptPlayground
+        initialCode={savedVersion}
+        initialQuickChecks=""
+        initialUpdatedAt={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "JavaScript file" }), {
+      target: { value: newerVersion },
+    });
+
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Saving file…" })).toBeDisabled();
+
+    await act(async () => {
+      finishFirstSave?.(
+        new Response(
+          JSON.stringify({
+            file: {
+              code: savedVersion,
+              updatedAt: "2026-08-06T16:29:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save file" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenLastCalledWith(
+        "/api/playground",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ code: newerVersion, quickChecks: "" }),
+        }),
+      ),
+    );
+    expect(await screen.findByText("Saved to your account")).toBeInTheDocument();
   });
 
   it.each([
@@ -187,6 +331,7 @@ describe("JavaScriptPlayground", () => {
     render(
       <JavaScriptPlayground
         initialCode="console.log('keep this exact code');"
+        initialQuickChecks=""
         initialUpdatedAt={null}
       />,
     );

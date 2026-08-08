@@ -3,9 +3,9 @@ import Link from "next/link";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
 const courseDescription =
-  "Build and save a semantic HTML article page in one 18-minute lesson, then pass a four-question quiz at 75%.";
+  "Follow one beginner coding path through semantic HTML, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
 const courseShareImageAlt =
-  "Web Development Foundations: build and save a semantic HTML article page in one 18-minute lesson.";
+  "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
@@ -43,21 +43,35 @@ export const metadata: Metadata = {
 const courseSteps = [
   {
     number: "01",
-    label: "Learn",
-    title: "Read the page before you style it.",
-    copy: "Three focused sections explain how landmarks, headings, and articles give a document useful structure.",
+    label: "Lessons",
+    title: "Build the structure, then style it.",
+    copy: "Read three public HTML and CSS lessons, save three practice builds, and pass four questions per lesson at 75%.",
+    href: "/learn/web-development-foundations/semantic-html",
+    linkLabel: "Open the first lesson",
   },
   {
     number: "02",
-    label: "Build",
-    title: "Turn the structure into a saved page.",
-    copy: "Write semantic HTML in the course workspace, see the page take shape, and save the exact result to your account.",
+    label: "Project",
+    title: "Turn the lesson into a field guide.",
+    copy: "Build and save a private semantic HTML field guide, review six checks, then revise your work.",
+    href: "/learn/semantic-html-project",
+    linkLabel: "Preview the guided project",
   },
   {
     number: "03",
-    label: "Recall",
-    title: "Prove the choices make sense.",
-    copy: "Answer four questions, pass at 75%, and return to your best score and completed progress from the dashboard.",
+    label: "JavaScript practice",
+    title: "Solve one small problem at a time.",
+    copy: "Continue through six ordered beginner problems and return to the next unfinished step.",
+    href: "/learn/beginner-javascript-practice",
+    linkLabel: "See the JavaScript path",
+  },
+  {
+    number: "04",
+    label: "CSS practice",
+    title: "Make the box model predictable.",
+    copy: "Work through six selector and box-model challenges, with saved attempts that resume at the next unfinished step.",
+    href: "/practice/css",
+    linkLabel: "See the CSS path",
   },
 ];
 
@@ -97,26 +111,31 @@ export default function WebDevelopmentFoundationsPage() {
       <SiteNav currentPage="course" />
 
       <main id="main-content" tabIndex={-1}>
-        <section className="course-overview-hero" aria-labelledby="course-title">
+        <section
+          className="course-overview-hero"
+          aria-labelledby="course-title"
+        >
           <div className="course-overview-copy">
             <p className="eyebrow">Web Development Foundations</p>
             <h1 id="course-title">
-              Build a semantic article page in 18 minutes.
+              One beginner path from page structure to working code.
             </h1>
             <p className="course-overview-lede">
-              Learn how browsers read a page, build and save your own semantic
-              HTML, then check your choices with four questions. Pass at 75%
-              and keep your best result.
+              Read three practical lessons, build a reviewed semantic HTML field
+              guide, then keep practicing through six JavaScript problems and
+              six CSS challenges. Your next unfinished step waits when you
+              return.
             </p>
             <Link
               className="primary-action"
               href="/learn/web-development-foundations/semantic-html"
             >
-              Read the full lesson
+              Start the beginner path
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              One lesson · Saved workspace · Four-question quiz
+              Three lessons · Six-check project · Six JavaScript + six CSS
+              challenges
             </p>
           </div>
 
@@ -129,7 +148,10 @@ export default function WebDevelopmentFoundationsPage() {
               </span>
             </figcaption>
             <div className="course-build-stage">
-              <div className="course-code-panel" aria-label="Semantic HTML code">
+              <div
+                className="course-code-panel"
+                aria-label="Semantic HTML code"
+              >
                 <span>&lt;main&gt;</span>
                 <span className="code-indent">&lt;article&gt;</span>
                 <span className="code-indent-two">
@@ -163,26 +185,26 @@ export default function WebDevelopmentFoundationsPage() {
 
         <section className="course-proof-strip" aria-label="Course facts">
           <div>
-            <strong>18 minutes</strong>
-            <span>One focused lesson</span>
+            <strong>51 minutes</strong>
+            <span>Three focused lessons</span>
           </div>
           <div>
-            <strong>1 saved page</strong>
-            <span>Your practical result</span>
+            <strong>3 saved builds</strong>
+            <span>HTML and CSS practice</span>
           </div>
           <div>
-            <strong>75% to pass</strong>
-            <span>Four recall questions</span>
+            <strong>6 + 6 + 6</strong>
+            <span>Project checks, JS problems, and CSS challenges</span>
           </div>
         </section>
 
         <section className="course-journey" aria-labelledby="journey-title">
           <div className="course-journey-heading">
             <p className="eyebrow">The complete course</p>
-            <h2 id="journey-title">Structure, practice, proof.</h2>
+            <h2 id="journey-title">Follow the path from lesson to practice.</h2>
             <p>
-              Each step stays connected, so the lesson ends with something you
-              made and a result you can return to.
+              Every stage has one clear outcome. Start with the lesson, then use
+              the quieter links to understand what comes next.
             </p>
           </div>
 
@@ -194,6 +216,10 @@ export default function WebDevelopmentFoundationsPage() {
                   <p>{step.label}</p>
                   <h3>{step.title}</h3>
                   <span>{step.copy}</span>
+                  <Link className="course-step-link" href={step.href}>
+                    {step.linkLabel}
+                    <ArrowIcon />
+                  </Link>
                 </div>
               </li>
             ))}
