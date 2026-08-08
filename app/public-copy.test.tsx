@@ -35,7 +35,7 @@ describe("public product promise", () => {
       screen.getByText(/build and check a guided project/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/six browser-run JavaScript problems/i),
+      screen.getByText(/12 browser-run JavaScript problems/i),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("public product promise", () => {
       screen.getByText(/private saved JavaScript playground/i),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByText(/six browser-run JavaScript problems/i),
+      screen.getAllByText(/12 browser-run JavaScript problems/i),
     ).toHaveLength(2);
     expect(
       screen.getByText(/private semantic HTML field guide/i),
@@ -102,18 +102,18 @@ describe("public product promise", () => {
     expect(courseMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
-        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
+        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, 12 JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
-        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.",
+        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, 12 JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
-        alt: "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and six JavaScript problems.",
+        alt: "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and 12 JavaScript problems.",
       }),
     ]);
   });
@@ -133,11 +133,11 @@ describe("public product promise", () => {
       "/learn/web-development-foundations/semantic-html",
     );
     expect(
-      screen.getByText(/six JavaScript problems and six CSS challenges/i),
+      screen.getByText(/12 JavaScript problems and six CSS challenges/i),
     ).toBeInTheDocument();
     expect(screen.getByText("3 saved builds")).toBeInTheDocument();
     expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
-    expect(screen.getByText("6 + 6 + 6")).toBeInTheDocument();
+    expect(screen.getByText("6 + 12 + 6")).toBeInTheDocument();
     expect(
       screen.getByText("Project checks, JS problems, and CSS challenges"),
     ).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe("public product promise", () => {
       screen.getByText(/private semantic HTML field guide/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/six ordered beginner problems/i),
+      screen.getByText(/12 ordered beginner problems/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /preview the guided project/i }),

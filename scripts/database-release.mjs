@@ -14,6 +14,8 @@ const requiredTables = [
   "course_certificate",
   "course_feedback",
   "coding_problem_bookmark",
+  "coding_practice_goal",
+  "daily_coding_challenge_completion",
   "coding_lab_exercise_progress",
   "coding_problem_progress",
   "coding_problem_test_case_set",
@@ -41,6 +43,21 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  daily_coding_challenge_completion: [
+    "id",
+    "user_id",
+    "challenge_date",
+    "problem_slug",
+    "submission_id",
+    "completed_at",
+  ],
+  coding_practice_goal: [
+    "id",
+    "user_id",
+    "target_active_days",
+    "created_at",
+    "updated_at",
+  ],
   coding_lab_exercise_progress: [
     "id",
     "user_id",
@@ -277,6 +294,8 @@ async function run() {
       where table_schema = 'public'
         and table_name in (
           'coding_lab_exercise_progress',
+          'coding_practice_goal',
+          'daily_coding_challenge_completion',
           'css_practice_attempt',
           'css_practice_feedback',
           'css_practice_progress',

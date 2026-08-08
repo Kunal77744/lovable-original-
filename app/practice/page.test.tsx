@@ -9,6 +9,7 @@ import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import PracticePage from "./page";
 
 vi.mock("next/headers", () => ({
@@ -83,24 +84,24 @@ describe("PracticePage progress", () => {
     cleanup();
   });
 
-  it("shows a fresh signed-in learner Accepted 0 of 6", async () => {
+  it("shows a fresh signed-in learner Accepted 0 of 12", async () => {
     getSession.mockResolvedValue({
       user: { id: "fresh-learner" },
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
 
     render(await PracticePage());
 
-    expect(screen.getByText("Accepted 0 of 6")).toBeInTheDocument();
+    expect(screen.getByText("Accepted 0 of 12")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start JavaScript foundations" }),
     ).toHaveAttribute("href", "/practice/judge-basics");
-    expect(screen.getByLabelText("Accepted 0 of 6")).toHaveTextContent(
-      "Accepted 0 of 6",
+    expect(screen.getByLabelText("Accepted 0 of 12")).toHaveTextContent(
+      "Accepted 0 of 12",
     );
     expect(
       screen.getByText("Saved privately to your account"),
@@ -116,6 +117,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "View private skill record" }),
     ).toHaveAttribute("href", "/practice/progress");
+    expect(
+      screen.getByRole("link", { name: "Open today’s challenge" }),
+    ).toHaveAttribute("href", "/practice/daily");
     expect(getProgress).toHaveBeenCalledWith("fresh-learner");
     expect(getBookmarks).toHaveBeenCalledWith("fresh-learner");
     expect(getReviewQueue).toHaveBeenCalledWith("fresh-learner");
@@ -140,7 +144,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 1,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["sum-two-numbers"],
     });
     getLabProgress.mockResolvedValue({
@@ -177,7 +181,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 2,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["sum-two-numbers", "reverse-a-word"],
     });
     getBookmarks.mockResolvedValue([
@@ -209,15 +213,36 @@ describe("PracticePage progress", () => {
 
     render(await PracticePage());
 
-    expect(screen.getByText("Accepted 2 of 6")).toBeInTheDocument();
-    expect(screen.getByLabelText("Accepted 2 of 6")).toHaveTextContent(
-      "Accepted 2 of 6",
+    expect(screen.getByText("Accepted 2 of 12")).toBeInTheDocument();
+    expect(screen.getByLabelText("Accepted 2 of 12")).toHaveTextContent(
+      "Accepted 2 of 12",
     );
     expect(
       document.querySelectorAll(".problem-row.is-complete"),
     ).toHaveLength(2);
     expect(
-      screen.getByRole("link", { name: "Continue at step 2 of 6" }),
+      screen.getByRole("heading", { name: "Language foundations" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Data and iteration" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Collections and structure" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Search patterns" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "All 12" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: "Unfinished 10" }),
+    ).toHaveAttribute("href", "/practice?status=unfinished");
+    expect(
+      screen.getByRole("link", { name: "Accepted 2" }),
+    ).toHaveAttribute("href", "/practice?status=accepted");
+    expect(
+      screen.getByRole("link", { name: "Continue at step 2 of 12" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(
       screen.getByRole("link", { name: "Open the playground" }),
@@ -275,7 +300,7 @@ describe("PracticePage progress", () => {
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
     getLabProgress.mockResolvedValue({
@@ -307,13 +332,73 @@ describe("PracticePage progress", () => {
     ).toHaveAttribute("href", "/practice/foundations");
   });
 
+  it("filters a signed-in catalog by saved Accepted status", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "filter-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 12,
+      completedSlugs: ["sum-two-numbers", "balanced-brackets"],
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({ status: "accepted" }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Accepted 2" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(document.querySelectorAll(".problem-row")).toHaveLength(2);
+    expect(
+      document.querySelector('[href="/practice/sum-two-numbers"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[href="/practice/balanced-brackets"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[href="/practice/even-or-odd"]'),
+    ).not.toHaveClass("problem-row");
+    expect(
+      screen.getByRole("link", { name: "Continue at step 2 of 12" }),
+    ).toHaveAttribute("href", "/practice/even-or-odd");
+  });
+
+  it("shows a truthful empty Unfinished view after all problems are Accepted", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "complete-filter-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 12,
+      totalCount: 12,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({ status: "unfinished" }),
+      }),
+    );
+
+    expect(screen.getByText("Every problem is Accepted.")).toBeInTheDocument();
+    expect(document.querySelectorAll(".problem-row")).toHaveLength(0);
+    expect(
+      screen.getByRole("link", { name: "Show all 12 problems" }),
+    ).toHaveAttribute("href", "/practice");
+    expect(
+      screen.getByRole("link", { name: "Review the 12-problem path" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers");
+  });
+
   it("opens problem 01 after all four foundations steps are saved", async () => {
     getSession.mockResolvedValue({
       user: { id: "foundations-complete" },
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
     getLabProgress.mockResolvedValue({
@@ -348,16 +433,19 @@ describe("PracticePage progress", () => {
     getSession.mockResolvedValue(null);
     getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
 
     render(await PracticePage());
 
-    expect(screen.getByText("6 problems")).toBeInTheDocument();
-    expect(screen.getByLabelText("6 problems")).toHaveTextContent("6 problems");
+    expect(screen.getByText("12 problems")).toBeInTheDocument();
+    expect(screen.getByLabelText("12 problems")).toHaveTextContent("12 problems");
     expect(
       screen.queryByText("Saved privately to your account"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "Filter problems" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Open the playground" }),
@@ -368,9 +456,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.queryByRole("heading", { name: "Choose the skill you need next." }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText("Accepted 0 of 6")).not.toBeInTheDocument();
+    expect(screen.queryByText("Accepted 0 of 12")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Start step 1 of 6" }),
+      screen.getByRole("link", { name: "Start step 1 of 12" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
     expect(getProgress).toHaveBeenCalledWith(null);
     expect(getBookmarks).not.toHaveBeenCalled();
@@ -386,33 +474,31 @@ describe("PracticePage progress", () => {
     expect(screen.queryByText("Private review session")).not.toBeInTheDocument();
   });
 
-  it("shows one completed six-step outcome without inventing another step", async () => {
+  it("shows one completed 12-step outcome without inventing another step", async () => {
     getSession.mockResolvedValue({
       user: { id: "complete-learner" },
     } as Awaited<ReturnType<typeof auth.api.getSession>>);
     getProgress.mockResolvedValue({
-      completedCount: 6,
-      totalCount: 6,
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedCount: 12,
+      totalCount: 12,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
     });
 
     render(await PracticePage());
 
     expect(
       screen.getByText(
-        "Six-step path complete. Every Accepted result is saved.",
+        "Twelve-problem path complete. Every Accepted result is saved.",
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Review the six-step path" }),
+      screen.getByRole("link", { name: "Review the 12-problem path" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
-    expect(screen.getAllByText("Accepted")).toHaveLength(6);
+    expect(document.querySelectorAll(".problem-state")).toHaveLength(12);
+    expect(
+      Array.from(document.querySelectorAll(".problem-state")).every(
+        (state) => state.textContent === "Accepted",
+      ),
+    ).toBe(true);
   });
 });

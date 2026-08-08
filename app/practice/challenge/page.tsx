@@ -10,23 +10,39 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Private timed JavaScript practice | Lovable Original",
   description:
-    "Work through three existing JavaScript problems with a private browser-only 30-minute timer.",
+    "Work through four timed JavaScript sets with private browser-only 30-minute timers and saved Accepted progress.",
   robots: {
     index: false,
     follow: false,
   },
 };
 
-export default async function TimedCodingChallengePage() {
+type TimedCodingChallengePageProps = {
+  searchParams?: Promise<{ set?: string | string[] }>;
+};
+
+export default async function TimedCodingChallengePage({
+  searchParams,
+}: TimedCodingChallengePageProps) {
+  const setParam = (await searchParams)?.set;
+  const selectedSetId = typeof setParam === "string" ? setParam : null;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    redirect("/account?mode=signin&next=/practice/challenge");
+    const destination = selectedSetId
+      ? `/practice/challenge?set=${encodeURIComponent(selectedSetId)}`
+      : "/practice/challenge";
+    redirect(`/account?mode=signin&next=${encodeURIComponent(destination)}`);
   }
 
   const progress = await getCodingCatalogProgress(session.user.id);
 
-  return <TimedCodingChallengeView completedSlugs={progress.completedSlugs} />;
+  return (
+    <TimedCodingChallengeView
+      completedSlugs={progress.completedSlugs}
+      selectedSetId={selectedSetId}
+    />
+  );
 }

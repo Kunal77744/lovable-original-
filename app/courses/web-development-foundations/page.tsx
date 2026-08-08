@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
+const javascriptProblemCount = CODING_PROBLEMS.length;
+
 const courseDescription =
-  "Follow one beginner coding path through semantic HTML, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
+  `Follow one beginner coding path through semantic HTML, a reviewed field guide, ${javascriptProblemCount} JavaScript problems, and six CSS challenges.`;
 const courseShareImageAlt =
-  "Web Development Foundations: three practical lessons, a reviewed field guide, six JavaScript problems, and six CSS challenges.";
+  `Web Development Foundations: three practical lessons, a reviewed field guide, ${javascriptProblemCount} JavaScript problems, and six CSS challenges.`;
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
@@ -61,7 +64,7 @@ const courseSteps = [
     number: "03",
     label: "JavaScript practice",
     title: "Solve one small problem at a time.",
-    copy: "Continue through six ordered beginner problems and return to the next unfinished step.",
+    copy: `Continue through ${javascriptProblemCount} ordered beginner problems and return to the next unfinished step.`,
     href: "/learn/beginner-javascript-practice",
     linkLabel: "See the JavaScript path",
   },
@@ -122,8 +125,9 @@ export default function WebDevelopmentFoundationsPage() {
             </h1>
             <p className="course-overview-lede">
               Read three practical lessons, build a reviewed semantic HTML field
-              guide, then keep practicing through six JavaScript problems and
-              six CSS challenges. Your next unfinished step waits when you
+              guide, then keep practicing through {javascriptProblemCount}{" "}
+              JavaScript problems and six CSS challenges. Your next unfinished
+              step waits when you
               return.
             </p>
             <Link
@@ -134,8 +138,8 @@ export default function WebDevelopmentFoundationsPage() {
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              Three lessons · Six-check project · Six JavaScript + six CSS
-              challenges
+              Three lessons · Six-check project · {javascriptProblemCount}{" "}
+              JavaScript + six CSS challenges
             </p>
           </div>
 
@@ -193,7 +197,7 @@ export default function WebDevelopmentFoundationsPage() {
             <span>HTML and CSS practice</span>
           </div>
           <div>
-            <strong>6 + 6 + 6</strong>
+            <strong>6 + {javascriptProblemCount} + 6</strong>
             <span>Project checks, JS problems, and CSS challenges</span>
           </div>
         </section>

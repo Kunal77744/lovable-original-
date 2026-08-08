@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import PracticeReviewPage, { metadata } from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -37,7 +38,7 @@ describe("PracticeReviewPage", () => {
     mocks.getBookmarks.mockResolvedValue([]);
     mocks.getProgress.mockResolvedValue({
       completedCount: 0,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: [],
     });
   });
@@ -94,7 +95,7 @@ describe("PracticeReviewPage", () => {
     ]);
     mocks.getProgress.mockResolvedValue({
       completedCount: 1,
-      totalCount: 6,
+      totalCount: 12,
       completedSlugs: ["reverse-a-word"],
     });
 
@@ -135,16 +136,9 @@ describe("PracticeReviewPage", () => {
   it("shows a completed state when the full path has no saved weak spots", async () => {
     mocks.getSession.mockResolvedValue({ user: { id: "complete-learner" } });
     mocks.getProgress.mockResolvedValue({
-      completedCount: 6,
-      totalCount: 6,
-      completedSlugs: [
-        "sum-two-numbers",
-        "even-or-odd",
-        "multiplication-table",
-        "largest-value",
-        "reverse-a-word",
-        "fizz-buzz",
-      ],
+      completedCount: 12,
+      totalCount: 12,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
     });
 
     render(await PracticeReviewPage());

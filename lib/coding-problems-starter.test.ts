@@ -9,7 +9,7 @@ describe("JavaScript problem starter code", () => {
     expect(CODING_SOLUTION_SCAFFOLD).toContain("function solve(input)");
     expect(CODING_SOLUTION_SCAFFOLD).toContain('return ""');
     expect(CODING_PROBLEMS.map((problem) => problem.starterCode)).toEqual(
-      Array.from({ length: 6 }, () => CODING_SOLUTION_SCAFFOLD),
+      Array.from({ length: CODING_PROBLEMS.length }, () => CODING_SOLUTION_SCAFFOLD),
     );
     expect(
       CODING_PROBLEMS.every((problem) =>

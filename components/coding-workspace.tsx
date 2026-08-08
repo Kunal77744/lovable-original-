@@ -31,6 +31,7 @@ type CodingWorkspaceProps = {
   isSignedIn: boolean;
   isPracticeFeedbackEligible: boolean;
   isReviewSession?: boolean;
+  dailyChallengeDate?: string | null;
   loadedSubmission?: {
     createdAt: string;
     verdict: string;
@@ -68,6 +69,8 @@ type SubmissionResponse = {
   createdAt: string;
   hasSource: boolean;
   isFirstAcceptedResult: boolean;
+  dailyChallengeCompleted: boolean;
+  dailyChallengeDate: string | null;
   error?: string;
 };
 
@@ -102,6 +105,7 @@ type RunState =
       completedCount: number;
       totalCount: number;
       nextProblemSlug: string | null;
+      dailyChallengeCompleted: boolean;
     }
   | { kind: "timeout"; message: string }
   | { kind: "error"; message: string; debugOutput?: string[] };
@@ -164,6 +168,7 @@ export function CodingWorkspace({
   isSignedIn,
   isPracticeFeedbackEligible,
   isReviewSession = false,
+  dailyChallengeDate = null,
   loadedSubmission = null,
   problem,
 }: CodingWorkspaceProps) {
@@ -547,6 +552,7 @@ export function CodingWorkspace({
           mode: "submit",
           code,
           outputs: result.outputs,
+          dailyChallengeDate,
         }),
       });
       const payload = (await response.json()) as SubmissionResponse;
@@ -581,9 +587,12 @@ export function CodingWorkspace({
         completedCount: payload.completedCount,
         totalCount: payload.totalCount,
         nextProblemSlug: payload.nextProblemSlug,
+        dailyChallengeCompleted: payload.dailyChallengeCompleted,
         message:
           payload.verdict === "Accepted"
-            ? `${problem.title} is complete. Your code and result are saved.`
+            ? payload.dailyChallengeCompleted
+              ? `${problem.title} is complete. Today’s daily challenge is saved.`
+              : `${problem.title} is complete. Your code and result are saved.`
             : `${payload.passedTests} of ${payload.totalTests} checks passed. Your attempt is saved.`,
       });
 
@@ -1045,6 +1054,14 @@ export function CodingWorkspace({
               Practice progress · {runState.completedCount}/{runState.totalCount} accepted
             </p>
             <div className="accepted-actions">
+              {runState.dailyChallengeCompleted ? (
+                <Link
+                  className="accepted-next-action"
+                  href="/practice/daily"
+                >
+                  Return to today’s challenge
+                </Link>
+              ) : null}
               {isReviewSession ? (
                 <Link
                   className="accepted-next-action"
@@ -1055,7 +1072,7 @@ export function CodingWorkspace({
               ) : null}
               <Link
                 className={
-                  isReviewSession
+                  isReviewSession || runState.dailyChallengeCompleted
                     ? "accepted-secondary-action"
                     : "accepted-next-action"
                 }
