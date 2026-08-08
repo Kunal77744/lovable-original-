@@ -14,6 +14,7 @@ const requiredTables = [
   "course_certificate",
   "course_feedback",
   "coding_problem_bookmark",
+  "coding_practice_goal",
   "coding_lab_exercise_progress",
   "coding_problem_progress",
   "coding_problem_test_case_set",
@@ -41,6 +42,13 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  coding_practice_goal: [
+    "id",
+    "user_id",
+    "target_active_days",
+    "created_at",
+    "updated_at",
+  ],
   coding_lab_exercise_progress: [
     "id",
     "user_id",

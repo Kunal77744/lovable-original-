@@ -15,7 +15,17 @@ describe("CodingActivity", () => {
       ],
     });
 
-    render(<CodingActivity activity={activity} />);
+    render(
+      <CodingActivity
+        activity={activity}
+        weeklyGoal={{
+          targetActiveDays: 3,
+          currentActiveDays: 1,
+          weekStart: "2026-08-03",
+          weekEnd: "2026-08-09",
+        }}
+      />,
+    );
 
     expect(
       screen.getByRole("heading", { name: "See when you actually practiced." }),
@@ -24,6 +34,9 @@ describe("CodingActivity", () => {
     expect(screen.getByText("active day")).toBeInTheDocument();
     expect(screen.getByText("2", { selector: "dd" })).toBeInTheDocument();
     expect(screen.getByText("Consecutive active days")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "2 practice days to go." }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "28-day coding activity" }).children).toHaveLength(28);
     expect(
       screen.getAllByRole("link", { name: /Continue problem 02/ }),

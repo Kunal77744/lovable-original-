@@ -475,6 +475,27 @@ export const codingSubmission = pgTable(
   ],
 );
 
+export const codingPracticeGoal = pgTable(
+  "coding_practice_goal",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    targetActiveDays: integer("target_active_days").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_practice_goal_user_unique").on(table.userId),
+    index("coding_practice_goal_user_id_idx").on(table.userId),
+  ],
+);
+
 export const codingProblemBookmark = pgTable(
   "coding_problem_bookmark",
   {

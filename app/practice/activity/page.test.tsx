@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   }),
   getActivityDays: vi.fn(),
   getProgress: vi.fn(),
+  getGoal: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -31,6 +32,10 @@ vi.mock("@/db/coding-practice", () => ({
   getCodingCatalogProgress: mocks.getProgress,
 }));
 
+vi.mock("@/db/coding-practice-goal", () => ({
+  getCodingPracticeGoalForStudent: mocks.getGoal,
+}));
+
 describe("CodingActivityPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,6 +45,7 @@ describe("CodingActivityPage", () => {
       totalCount: 12,
       completedSlugs: [],
     });
+    mocks.getGoal.mockResolvedValue(null);
   });
 
   afterEach(() => cleanup());
@@ -56,6 +62,7 @@ describe("CodingActivityPage", () => {
     );
     expect(mocks.getActivityDays).not.toHaveBeenCalled();
     expect(mocks.getProgress).not.toHaveBeenCalled();
+    expect(mocks.getGoal).not.toHaveBeenCalled();
   });
 
   it("loads only the signed-in learner's saved activity", async () => {
@@ -68,6 +75,10 @@ describe("CodingActivityPage", () => {
       totalCount: 12,
       completedSlugs: ["sum-two-numbers"],
     });
+    mocks.getGoal.mockResolvedValue({
+      targetActiveDays: 3,
+      updatedAt: "2026-08-05T12:00:00.000Z",
+    });
 
     render(await CodingActivityPage());
 
@@ -79,6 +90,10 @@ describe("CodingActivityPage", () => {
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(mocks.getActivityDays).toHaveBeenCalledWith("learner-activity-1");
     expect(mocks.getProgress).toHaveBeenCalledWith("learner-activity-1");
+    expect(mocks.getGoal).toHaveBeenCalledWith("learner-activity-1");
+    expect(
+      screen.getByRole("heading", { name: /practice days? to go/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("learner-activity-1")).not.toBeInTheDocument();
   });
 });
