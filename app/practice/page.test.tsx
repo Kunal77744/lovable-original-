@@ -218,6 +218,27 @@ describe("PracticePage progress", () => {
       document.querySelectorAll(".problem-row.is-complete"),
     ).toHaveLength(2);
     expect(
+      screen.getByRole("heading", { name: "Language foundations" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Data and iteration" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Collections and structure" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Search patterns" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "All 12" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", { name: "Unfinished 10" }),
+    ).toHaveAttribute("href", "/practice?status=unfinished");
+    expect(
+      screen.getByRole("link", { name: "Accepted 2" }),
+    ).toHaveAttribute("href", "/practice?status=accepted");
+    expect(
       screen.getByRole("link", { name: "Continue at step 2 of 12" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(
@@ -308,6 +329,66 @@ describe("PracticePage progress", () => {
     ).toHaveAttribute("href", "/practice/foundations");
   });
 
+  it("filters a signed-in catalog by saved Accepted status", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "filter-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 12,
+      completedSlugs: ["sum-two-numbers", "balanced-brackets"],
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({ status: "accepted" }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Accepted 2" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(document.querySelectorAll(".problem-row")).toHaveLength(2);
+    expect(
+      document.querySelector('[href="/practice/sum-two-numbers"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[href="/practice/balanced-brackets"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('[href="/practice/even-or-odd"]'),
+    ).not.toHaveClass("problem-row");
+    expect(
+      screen.getByRole("link", { name: "Continue at step 2 of 12" }),
+    ).toHaveAttribute("href", "/practice/even-or-odd");
+  });
+
+  it("shows a truthful empty Unfinished view after all problems are Accepted", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "complete-filter-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 12,
+      totalCount: 12,
+      completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({ status: "unfinished" }),
+      }),
+    );
+
+    expect(screen.getByText("Every problem is Accepted.")).toBeInTheDocument();
+    expect(document.querySelectorAll(".problem-row")).toHaveLength(0);
+    expect(
+      screen.getByRole("link", { name: "Show all 12 problems" }),
+    ).toHaveAttribute("href", "/practice");
+    expect(
+      screen.getByRole("link", { name: "Review the 12-problem path" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers");
+  });
+
   it("opens problem 01 after all four foundations steps are saved", async () => {
     getSession.mockResolvedValue({
       user: { id: "foundations-complete" },
@@ -361,6 +442,9 @@ describe("PracticePage progress", () => {
       screen.queryByText("Saved privately to your account"),
     ).not.toBeInTheDocument();
     expect(
+      screen.queryByRole("navigation", { name: "Filter problems" }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.queryByRole("link", { name: "Open the playground" }),
     ).not.toBeInTheDocument();
     expect(
@@ -407,6 +491,11 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Review the 12-problem path" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
-    expect(screen.getAllByText("Accepted")).toHaveLength(12);
+    expect(document.querySelectorAll(".problem-state")).toHaveLength(12);
+    expect(
+      Array.from(document.querySelectorAll(".problem-state")).every(
+        (state) => state.textContent === "Accepted",
+      ),
+    ).toBe(true);
   });
 });
