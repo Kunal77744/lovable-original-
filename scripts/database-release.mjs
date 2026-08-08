@@ -285,6 +285,7 @@ async function run() {
       where table_schema = 'public'
         and table_name in (
           'coding_lab_exercise_progress',
+          'coding_practice_goal',
           'css_practice_attempt',
           'css_practice_feedback',
           'css_practice_progress',
