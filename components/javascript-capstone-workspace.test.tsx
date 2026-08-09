@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -41,7 +42,10 @@ describe("JavaScriptCapstoneWorkspace", () => {
     mocks.captureProjectCompleted.mockReset();
   });
 
-  afterEach(() => cleanup());
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
 
   it("keeps newer code visibly unsaved when an older save finishes", async () => {
     let resolveSave: ((value: Response) => void) | undefined;
@@ -65,7 +69,7 @@ describe("JavaScriptCapstoneWorkspace", () => {
 
     const editor = screen.getByLabelText("JavaScript project");
     fireEvent.change(editor, { target: { value: firstRevision } });
-    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save now" }));
     fireEvent.change(editor, { target: { value: newerRevision } });
 
     resolveSave?.({
@@ -85,7 +89,137 @@ describe("JavaScriptCapstoneWorkspace", () => {
     );
     expect(editor).toHaveValue(newerRevision);
     expect(screen.getByText("Unsaved")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save draft" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Save now" })).toBeEnabled();
+  });
+
+  it("saves the latest private draft after typing pauses", async () => {
+    vi.useFakeTimers();
+    const editedCode = `${JAVASCRIPT_CAPSTONE_STARTER}\n// autosaved revision`;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ...starterProject,
+        code: editedCode,
+        saved: true,
+        updatedAt: "2026-08-09T18:00:00.000Z",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <JavaScriptCapstoneWorkspace
+        projectSlug="javascript-expense-report"
+        initialProject={starterProject}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("JavaScript project"), {
+      target: { value: editedCode },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/javascript-expense-report",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ action: "save", code: editedCode }),
+      }),
+    );
+    expect(screen.getByText("Saved privately to your account.")).toBeInTheDocument();
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+
+  it("keeps a failed autosave retryable without clearing the editor", async () => {
+    vi.useFakeTimers();
+    const editedCode = `${JAVASCRIPT_CAPSTONE_STARTER}\n// keep this revision`;
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+
+    render(
+      <JavaScriptCapstoneWorkspace
+        projectSlug="javascript-expense-report"
+        initialProject={starterProject}
+      />,
+    );
+    const editor = screen.getByLabelText("JavaScript project");
+    fireEvent.change(editor, { target: { value: editedCode } });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    expect(editor).toHaveValue(editedCode);
+    expect(
+      screen.getByText(
+        "The draft could not be saved. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save now" })).toBeEnabled();
+  });
+
+  it("queues the exact newer draft while an autosave is in flight", async () => {
+    vi.useFakeTimers();
+    let resolveFirstSave: ((value: Response) => void) | undefined;
+    const firstRevision = `${JAVASCRIPT_CAPSTONE_STARTER}\n// first autosave`;
+    const newerRevision = `${firstRevision}\n// newer autosave`;
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(
+        new Promise<Response>((resolve) => {
+          resolveFirstSave = resolve;
+        }),
+      )
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...starterProject,
+          code: newerRevision,
+          saved: true,
+          updatedAt: "2026-08-09T18:01:00.000Z",
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <JavaScriptCapstoneWorkspace
+        projectSlug="javascript-expense-report"
+        initialProject={starterProject}
+      />,
+    );
+    const editor = screen.getByLabelText("JavaScript project");
+    fireEvent.change(editor, { target: { value: firstRevision } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+    fireEvent.change(editor, { target: { value: newerRevision } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    await act(async () => {
+      resolveFirstSave?.({
+        ok: true,
+        json: async () => ({
+          ...starterProject,
+          code: firstRevision,
+          saved: true,
+          updatedAt: "2026-08-09T18:00:00.000Z",
+        }),
+      } as Response);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]?.[1]).toEqual(
+      expect.objectContaining({
+        body: JSON.stringify({ action: "save", code: newerRevision }),
+      }),
+    );
+    expect(editor).toHaveValue(newerRevision);
+    expect(screen.getByText("Saved privately to your account.")).toBeInTheDocument();
   });
 
   it("turns a failed review into one bounded first repair", async () => {
