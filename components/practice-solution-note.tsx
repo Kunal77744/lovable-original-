@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   MAX_PRACTICE_JOURNAL_FIELD_LENGTH,
   MAX_PRACTICE_SOLUTION_NOTE_LENGTH,
@@ -49,6 +49,7 @@ export function PracticeSolutionNote({
 }: PracticeSolutionNoteProps) {
   const initialJournal = parsePracticeJournal(initialNote?.content ?? "");
   const [journal, setJournal] = useState(initialJournal);
+  const latestJournal = useRef(initialJournal);
   const [savedJournal, setSavedJournal] = useState(initialJournal);
   const [isSaving, setIsSaving] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -70,6 +71,7 @@ export function PracticeSolutionNote({
 
   function updateField(field: keyof PracticeJournal, value: string) {
     const nextJournal = { ...journal, [field]: value };
+    latestJournal.current = nextJournal;
     setJournal(nextJournal);
     setIsError(false);
     setMessage(
@@ -80,19 +82,29 @@ export function PracticeSolutionNote({
   }
 
   async function saveJournal() {
-    if (!isAccepted && !hasCompletePlan) {
+    const submittedJournal = latestJournal.current;
+    const submittedContent = serializePracticeJournal(submittedJournal);
+    const submittedPlanIsComplete = PLAN_FIELDS.every(
+      ({ key }) => submittedJournal[key].trim().length > 0,
+    );
+
+    if (!isAccepted && !submittedPlanIsComplete) {
       setIsError(true);
       setMessage("Name the input shape, one edge case, and your ordered approach.");
       return;
     }
 
-    if (isAccepted && !hasCompletePlan && journal.reflection.trim().length === 0) {
+    if (
+      isAccepted &&
+      !submittedPlanIsComplete &&
+      submittedJournal.reflection.trim().length === 0
+    ) {
       setIsError(true);
       setMessage("Complete the plan or add your post-Accepted reflection.");
       return;
     }
 
-    if (serializedJournal.length > MAX_PRACTICE_SOLUTION_NOTE_LENGTH) {
+    if (submittedContent.length > MAX_PRACTICE_SOLUTION_NOTE_LENGTH) {
       setIsError(true);
       setMessage("Shorten your journal before saving.");
       return;
@@ -106,7 +118,7 @@ export function PracticeSolutionNote({
       const response = await fetch(`/api/practice/${problemSlug}/note`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: serializedJournal }),
+        body: JSON.stringify({ content: submittedContent }),
       });
       const payload = (await response.json()) as {
         error?: string;
@@ -120,8 +132,17 @@ export function PracticeSolutionNote({
       }
 
       const saved = parsePracticeJournal(payload.note.content);
-      setJournal(saved);
       setSavedJournal(saved);
+
+      if (serializePracticeJournal(latestJournal.current) !== submittedContent) {
+        setMessage(
+          "Your earlier journal is saved. Newer writing is still unsaved.",
+        );
+        return;
+      }
+
+      latestJournal.current = saved;
+      setJournal(saved);
       setMessage(
         isAccepted
           ? "Journal saved. Your plan and reflection will return together."

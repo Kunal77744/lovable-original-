@@ -134,4 +134,88 @@ describe("PracticeSolutionNote", () => {
       screen.getByDisplayValue("Convert both input tokens before addition."),
     ).toBeInTheDocument();
   });
+
+  it("keeps newer journal writing unsaved when an older save finishes late", async () => {
+    const firstJournal = {
+      inputShape: "Two integers.",
+      edgeCase: "Negative values.",
+      steps: "Split, convert, add.",
+      reflection: "Converting both tokens avoids string concatenation.",
+    };
+    const newerReflection =
+      "Converting both tokens avoids string concatenation and handles whitespace.";
+    let resolveFirstSave: (response: Response) => void = () => undefined;
+    const firstSave = new Promise<Response>((resolve) => {
+      resolveFirstSave = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(firstSave)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            note: {
+              content: serializePracticeJournal({
+                ...firstJournal,
+                reflection: newerReflection,
+              }),
+              updatedAt: "2026-08-09T13:01:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <PracticeSolutionNote
+        problemSlug="sum-two-numbers"
+        initialNote={{
+          content: serializePracticeJournal({
+            ...firstJournal,
+            reflection: "",
+          }),
+          updatedAt: "2026-08-09T13:00:00.000Z",
+        }}
+        isAccepted
+      />,
+    );
+
+    const reflection = screen.getByLabelText("Post-Accepted reflection");
+    fireEvent.change(reflection, {
+      target: { value: firstJournal.reflection },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Update journal" }));
+
+    fireEvent.change(reflection, { target: { value: newerReflection } });
+    resolveFirstSave(
+      new Response(
+        JSON.stringify({
+          note: {
+            content: serializePracticeJournal(firstJournal),
+            updatedAt: "2026-08-09T13:00:30.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    expect(
+      await screen.findByText(
+        "Your earlier journal is saved. Newer writing is still unsaved.",
+      ),
+    ).toBeInTheDocument();
+    expect(reflection).toHaveValue(newerReflection);
+
+    fireEvent.click(screen.getByRole("button", { name: "Update journal" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const secondRequest = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    const secondBody = JSON.parse(String(secondRequest.body)) as {
+      content: string;
+    };
+    expect(parsePracticeJournal(secondBody.content).reflection).toBe(
+      newerReflection,
+    );
+  });
 });
