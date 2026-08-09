@@ -181,4 +181,83 @@ describe("CourseFeedback", () => {
       }),
     );
   });
+
+  it("keeps newer lesson feedback unsaved when an older save finishes late", async () => {
+    let resolveFirstSave: (response: Response) => void = () => undefined;
+    const firstSave = new Promise<Response>((resolve) => {
+      resolveFirstSave = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(firstSave)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            feedback: {
+              usefulness: "very",
+              comment: "The first explanation helped.",
+              updatedAt: "2026-08-09T12:00:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CourseFeedback
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        initialFeedback={null}
+      />,
+    );
+
+    const comment = screen.getByRole("textbox", {
+      name: "What should we improve next? Optional",
+    });
+    fireEvent.click(screen.getByLabelText("Very useful"));
+    fireEvent.change(comment, {
+      target: { value: "The first explanation helped." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
+
+    fireEvent.click(screen.getByLabelText("Somewhat"));
+    fireEvent.change(comment, {
+      target: { value: "Add one more landmark example." },
+    });
+    resolveFirstSave(
+      new Response(
+        JSON.stringify({
+          feedback: {
+            usefulness: "very",
+            comment: "The first explanation helped.",
+            updatedAt: "2026-08-09T11:59:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    expect(
+      await screen.findByText(
+        "Your earlier feedback is saved. Newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Somewhat")).toBeChecked();
+    expect(comment).toHaveValue("Add one more landmark example.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Update feedback" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/courses/web-development-foundations/feedback",
+      expect.objectContaining({
+        body: JSON.stringify({
+          usefulness: "somewhat",
+          comment: "Add one more landmark example.",
+        }),
+      }),
+    );
+  });
 });

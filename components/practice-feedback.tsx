@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import {
   MAX_PRACTICE_FEEDBACK_COMMENT_LENGTH,
   type PracticeFeedbackUsefulness,
@@ -30,6 +30,10 @@ export function PracticeFeedback({
     PracticeFeedbackUsefulness | ""
   >(initialFeedback?.usefulness ?? "");
   const [comment, setComment] = useState(initialFeedback?.comment ?? "");
+  const latestUsefulness = useRef<PracticeFeedbackUsefulness | "">(
+    initialFeedback?.usefulness ?? "",
+  );
+  const latestComment = useRef(initialFeedback?.comment ?? "");
   const [savedFeedback, setSavedFeedback] = useState(initialFeedback);
   const [message, setMessage] = useState<string | null>(
     initialFeedback
@@ -46,19 +50,25 @@ export function PracticeFeedback({
     setMessage(null);
     setIsError(false);
 
-    if (!usefulness) {
+    if (!latestUsefulness.current) {
       setIsError(true);
       setMessage("Choose how useful that first Accepted result felt.");
       return;
     }
 
+    const submittedUsefulness = latestUsefulness.current;
+    const submittedComment = latestComment.current;
     setIsSaving(true);
 
     try {
       const response = await fetch("/api/practice/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ problemSlug, usefulness, comment }),
+        body: JSON.stringify({
+          problemSlug,
+          usefulness: submittedUsefulness,
+          comment: submittedComment,
+        }),
       });
       const payload = (await response.json()) as {
         feedback?: SavedPracticeFeedback;
@@ -72,11 +82,25 @@ export function PracticeFeedback({
       }
 
       setSavedFeedback(payload.feedback);
+      capturePracticeFeedbackSubmitted(payload.feedback.usefulness);
+
+      if (
+        latestUsefulness.current !== submittedUsefulness ||
+        latestComment.current !== submittedComment
+      ) {
+        setMessage(
+          "Your earlier response is saved. Newer changes are still unsaved.",
+        );
+        return;
+      }
+
+      latestUsefulness.current = payload.feedback.usefulness;
+      latestComment.current = payload.feedback.comment;
+      setUsefulness(payload.feedback.usefulness);
       setComment(payload.feedback.comment);
       setMessage(
         "Thanks. Your private response is saved, and you can revise it anytime.",
       );
-      capturePracticeFeedbackSubmitted(payload.feedback.usefulness);
     } catch {
       setIsError(true);
       setMessage(
@@ -111,7 +135,10 @@ export function PracticeFeedback({
                   name="practice-usefulness"
                   value={choice.value}
                   checked={usefulness === choice.value}
-                  onChange={() => setUsefulness(choice.value)}
+                  onChange={() => {
+                    latestUsefulness.current = choice.value;
+                    setUsefulness(choice.value);
+                  }}
                 />
                 <span>{choice.label}</span>
               </label>
@@ -128,7 +155,10 @@ export function PracticeFeedback({
             value={comment}
             maxLength={MAX_PRACTICE_FEEDBACK_COMMENT_LENGTH}
             rows={3}
-            onChange={(event) => setComment(event.target.value)}
+            onChange={(event) => {
+              latestComment.current = event.target.value;
+              setComment(event.target.value);
+            }}
             placeholder="One detail about the problem, checks, or next step"
           />
           <span

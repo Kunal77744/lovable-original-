@@ -37,6 +37,10 @@ export function CourseFeedback({
     (initialFeedback?.usefulness ?? "") as CourseFeedbackUsefulness | "",
   );
   const [comment, setComment] = useState(initialFeedback?.comment ?? "");
+  const latestUsefulness = useRef<CourseFeedbackUsefulness | "">(
+    (initialFeedback?.usefulness ?? "") as CourseFeedbackUsefulness | "",
+  );
+  const latestComment = useRef(initialFeedback?.comment ?? "");
   const [savedFeedback, setSavedFeedback] = useState(initialFeedback);
   const [message, setMessage] = useState<string | null>(
     initialFeedback ? "Your feedback is saved. You can revise it anytime." : null,
@@ -52,20 +56,25 @@ export function CourseFeedback({
     setMessage(null);
     setIsError(false);
 
-    if (!usefulness) {
+    if (!latestUsefulness.current) {
       setIsError(true);
       setMessage("Choose how useful the lesson was.");
       firstUsefulnessChoiceRef.current?.focus();
       return;
     }
 
+    const submittedUsefulness = latestUsefulness.current;
+    const submittedComment = latestComment.current;
     setIsSaving(true);
 
     try {
       const response = await fetch(`/api/courses/${courseSlug}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usefulness, comment }),
+        body: JSON.stringify({
+          usefulness: submittedUsefulness,
+          comment: submittedComment,
+        }),
       });
       const payload = (await response.json()) as {
         feedback?: SavedCourseFeedback;
@@ -79,12 +88,28 @@ export function CourseFeedback({
       }
 
       setSavedFeedback(payload.feedback);
-      setComment(payload.feedback.comment);
-      setMessage("Thanks. Your feedback is saved, and you can revise it anytime.");
       captureLearnerEventOnce("feedback_submitted", {
         course_slug: courseSlug,
         lesson_slug: lessonSlug,
       });
+
+      if (
+        latestUsefulness.current !== submittedUsefulness ||
+        latestComment.current !== submittedComment
+      ) {
+        setMessage(
+          "Your earlier feedback is saved. Newer changes are still unsaved.",
+        );
+        return;
+      }
+
+      const savedUsefulness = payload.feedback
+        .usefulness as CourseFeedbackUsefulness;
+      latestUsefulness.current = savedUsefulness;
+      latestComment.current = payload.feedback.comment;
+      setUsefulness(savedUsefulness);
+      setComment(payload.feedback.comment);
+      setMessage("Thanks. Your feedback is saved, and you can revise it anytime.");
     } catch {
       setIsError(true);
       setMessage("We couldn’t save your feedback. Check your connection and try again.");
@@ -127,7 +152,10 @@ export function CourseFeedback({
                   aria-describedby={
                     isError && !usefulness ? "course-feedback-status" : undefined
                   }
-                  onChange={() => setUsefulness(choice.value)}
+                  onChange={() => {
+                    latestUsefulness.current = choice.value;
+                    setUsefulness(choice.value);
+                  }}
                 />
                 <span>{choice.label}</span>
               </label>
@@ -146,7 +174,10 @@ export function CourseFeedback({
             value={comment}
             maxLength={MAX_COURSE_FEEDBACK_COMMENT_LENGTH}
             rows={3}
-            onChange={(event) => setComment(event.target.value)}
+            onChange={(event) => {
+              latestComment.current = event.target.value;
+              setComment(event.target.value);
+            }}
             placeholder="One detail that felt clear, confusing, or missing"
           />
           <span className="course-feedback-note">
