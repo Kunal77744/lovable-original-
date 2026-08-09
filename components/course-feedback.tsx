@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import {
   MAX_COURSE_FEEDBACK_COMMENT_LENGTH,
   type CourseFeedbackUsefulness,
@@ -43,6 +43,7 @@ export function CourseFeedback({
   );
   const [isError, setIsError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const firstUsefulnessChoiceRef = useRef<HTMLInputElement>(null);
   const remainingCommentCharacters =
     MAX_COURSE_FEEDBACK_COMMENT_LENGTH - comment.length;
 
@@ -54,6 +55,7 @@ export function CourseFeedback({
     if (!usefulness) {
       setIsError(true);
       setMessage("Choose how useful the lesson was.");
+      firstUsefulnessChoiceRef.current?.focus();
       return;
     }
 
@@ -92,26 +94,39 @@ export function CourseFeedback({
   }
 
   return (
-    <div className="course-feedback">
+    <section
+      className="course-feedback"
+      aria-labelledby="course-feedback-title"
+    >
       <div className="course-feedback-heading">
         <div>
           <p className="quiz-kicker">Optional · 30 seconds</p>
-          <h3>Did this lesson help you build with more confidence?</h3>
+          <h3 id="course-feedback-title">
+            Did this lesson help you build with more confidence?
+          </h3>
         </div>
         {savedFeedback ? <span>Saved</span> : null}
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} aria-busy={isSaving}>
         <fieldset>
           <legend>How useful was this lesson?</legend>
           <div className="course-feedback-choices">
             {usefulnessChoices.map((choice) => (
               <label key={choice.value}>
                 <input
+                  ref={
+                    choice.value === "not_yet"
+                      ? firstUsefulnessChoiceRef
+                      : undefined
+                  }
                   type="radio"
                   name="usefulness"
                   value={choice.value}
                   checked={usefulness === choice.value}
+                  aria-describedby={
+                    isError && !usefulness ? "course-feedback-status" : undefined
+                  }
                   onChange={() => setUsefulness(choice.value)}
                 />
                 <span>{choice.label}</span>
@@ -120,22 +135,26 @@ export function CourseFeedback({
           </div>
         </fieldset>
 
-        <label className="course-feedback-comment">
-          <span>What should we improve next? <small>Optional</small></span>
+        <div className="course-feedback-comment">
+          <label htmlFor="course-feedback-comment">
+            What should we improve next? <small>Optional</small>
+          </label>
           <textarea
-            aria-describedby="course-feedback-comment-note"
+            id="course-feedback-comment"
+            name="comment"
+            aria-describedby="course-feedback-comment-help course-feedback-comment-count"
             value={comment}
             maxLength={MAX_COURSE_FEEDBACK_COMMENT_LENGTH}
             rows={3}
             onChange={(event) => setComment(event.target.value)}
             placeholder="One detail that felt clear, confusing, or missing"
           />
-          <span
-            id="course-feedback-comment-note"
-            className="course-feedback-note"
-          >
-            <span>Don’t include passwords or personal information.</span>
+          <span className="course-feedback-note">
+            <span id="course-feedback-comment-help">
+              Don’t include passwords or personal information.
+            </span>
             <span
+              id="course-feedback-comment-count"
               className="course-feedback-remaining"
               aria-live="polite"
               aria-atomic="true"
@@ -144,7 +163,7 @@ export function CourseFeedback({
               {remainingCommentCharacters === 1 ? "character" : "characters"} remaining
             </span>
           </span>
-        </label>
+        </div>
 
         <div className="course-feedback-submit">
           <button type="submit" disabled={isSaving}>
@@ -154,11 +173,16 @@ export function CourseFeedback({
                 ? "Update feedback"
                 : "Save feedback"}
           </button>
-          <p className={isError ? "is-error" : ""} aria-live="polite">
+          <p
+            id="course-feedback-status"
+            className={isError ? "is-error" : ""}
+            role={isError ? "alert" : "status"}
+            aria-atomic="true"
+          >
             {message ?? "Only your account can return to this response."}
           </p>
         </div>
       </form>
-    </div>
+    </section>
   );
 }
