@@ -2,11 +2,14 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   getJavaScriptCapstoneForStudent,
+  getJavaScriptCapstoneSummary,
   saveJavaScriptCapstoneDraft,
   submitJavaScriptCapstone,
 } from "@/db/javascript-capstone";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import {
+  getJavaScriptCapstoneAccess,
   hasValidJavaScriptCapstoneCode,
   MAX_JAVASCRIPT_CAPSTONE_LENGTH,
 } from "@/lib/javascript-capstone";
@@ -19,6 +22,25 @@ async function getSessionUserId() {
   return session?.user.id ?? null;
 }
 
+async function hasCapstoneAccess(userId: string) {
+  const [summary, labProgress] = await Promise.all([
+    getJavaScriptCapstoneSummary(userId),
+    getJavaScriptLabCatalogProgress(userId),
+  ]);
+
+  return getJavaScriptCapstoneAccess(summary, labProgress).available;
+}
+
+function lockedResponse() {
+  return NextResponse.json(
+    {
+      error:
+        "Complete the guided JavaScript path before opening this capstone.",
+    },
+    { status: 403 },
+  );
+}
+
 export async function GET() {
   const userId = await getSessionUserId();
 
@@ -27,6 +49,10 @@ export async function GET() {
       { error: "Sign in to restore your saved JavaScript project." },
       { status: 401 },
     );
+  }
+
+  if (!(await hasCapstoneAccess(userId))) {
+    return lockedResponse();
   }
 
   return NextResponse.json(await getJavaScriptCapstoneForStudent(userId));
@@ -40,6 +66,10 @@ export async function POST(request: Request) {
       { error: "Sign in to save and review this project." },
       { status: 401 },
     );
+  }
+
+  if (!(await hasCapstoneAccess(userId))) {
+    return lockedResponse();
   }
 
   let payload: unknown;

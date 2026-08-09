@@ -2301,8 +2301,187 @@ h1 {
   font-size: 17px;
 }
 
+.dashboard-daily-plan {
+  margin-top: 52px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 19px;
+  background: var(--surface);
+  box-shadow: 0 25px 55px rgba(23, 35, 30, 0.1);
+}
+
+.dashboard-daily-plan-focus {
+  min-height: 390px;
+  padding: 42px 46px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  color: white;
+  background: var(--ink);
+}
+
+.dashboard-daily-plan-focus .course-kicker {
+  color: #9fd9b8;
+}
+
+.dashboard-daily-plan-focus h2 {
+  max-width: 650px;
+  margin: 54px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(40px, 4.7vw, 58px);
+  line-height: 0.98;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.dashboard-daily-plan-focus > p:not(.course-kicker) {
+  max-width: 56ch;
+  margin: 18px 0 0;
+  color: #c3cec7;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.dashboard-daily-plan-focus > span {
+  margin-top: 25px;
+  color: #9baba2;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.dashboard-daily-plan-action {
+  min-height: 50px;
+  margin-top: auto;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 8px;
+  color: var(--ink);
+  background: #f2f5ef;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease-out,
+    transform 160ms ease-out;
+}
+
+.dashboard-daily-plan-action:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+.dashboard-daily-plan-action:focus-visible,
+.dashboard-daily-plan-support a:focus-visible {
+  outline: 3px solid rgba(159, 217, 184, 0.55);
+  outline-offset: 3px;
+}
+
+.dashboard-daily-plan-support {
+  padding: 38px 34px 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-daily-plan-support h3 {
+  margin: 7px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-daily-plan-support ul {
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-daily-plan-support li {
+  padding: 18px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.dashboard-daily-plan-support li > div {
+  min-width: 0;
+  display: grid;
+}
+
+.dashboard-daily-plan-support li > div > span {
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #58655d;
+  background: #edf0eb;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-daily-plan-support li.is-due > div > span {
+  color: #165437;
+  background: #dff0e4;
+}
+
+.dashboard-daily-plan-support li.is-complete > div > span {
+  color: #4b6354;
+  background: #e5ede7;
+}
+
+.dashboard-daily-plan-support strong {
+  margin-top: 9px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.dashboard-daily-plan-support li p {
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-daily-plan-support li > a {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--accent-deep);
+  text-decoration: none;
+}
+
+.dashboard-daily-plan-support li > a:hover {
+  border-color: var(--accent);
+  background: #edf7f0;
+}
+
+.dashboard-daily-plan-empty {
+  max-width: 30ch;
+  margin: auto 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .dashboard-learning-path {
-  margin-top: 64px;
+  margin-top: 40px;
   overflow: hidden;
   border: 1px solid rgba(23, 35, 30, 0.16);
   border-radius: 19px;
@@ -12032,6 +12211,18 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-daily-plan {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-daily-plan-focus {
+    min-height: 360px;
+  }
+
+  .dashboard-daily-plan-support {
+    min-height: 280px;
+  }
+
   .dashboard-learning-path-heading {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -13044,6 +13235,34 @@ footer {
     align-items: flex-start;
     flex-direction: column;
     gap: 28px;
+  }
+
+  .dashboard-daily-plan {
+    margin-top: 42px;
+    border-radius: 15px;
+  }
+
+  .dashboard-daily-plan-focus {
+    min-height: 420px;
+    padding: 30px 24px;
+  }
+
+  .dashboard-daily-plan-focus h2 {
+    margin-top: 44px;
+    font-size: 43px;
+  }
+
+  .dashboard-daily-plan-action {
+    width: 100%;
+  }
+
+  .dashboard-daily-plan-support {
+    min-height: 0;
+    padding: 28px 24px;
+  }
+
+  .dashboard-daily-plan-empty {
+    margin-top: 34px;
   }
 
   .dashboard-course {
@@ -21291,6 +21510,31 @@ footer {
   color: #f5f7f2;
   text-decoration: none;
   box-shadow: 0 22px 42px rgba(23, 35, 30, 0.13);
+}
+
+.practice-capstone-entry.is-locked {
+  border-color: rgba(23, 35, 30, 0.16);
+  background: #eef0e9;
+  color: #17231e;
+  box-shadow: none;
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-number,
+.practice-capstone-entry.is-locked .practice-capstone-copy small,
+.practice-capstone-entry.is-locked .practice-capstone-state small {
+  color: #287652;
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-copy > span {
+  color: #536159;
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-state {
+  border-left-color: rgba(23, 35, 30, 0.14);
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-state > span {
+  color: #17231e;
 }
 
 .practice-capstone-number {

@@ -5,10 +5,12 @@ import { redirect } from "next/navigation";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { getCssPracticeCatalogProgress } from "@/db/css-practice";
+import { getDailyCodingChallengeCompletionForStudent } from "@/db/daily-coding-challenge";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
+import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { getWebFoundationsReviewResultForStudent } from "@/db/web-foundations-review";
 import { auth } from "@/lib/auth";
 import {
@@ -16,11 +18,16 @@ import {
   getNextUnfinishedCodingProblemSlug,
 } from "@/lib/coding-problems";
 import { getCssPracticeChallenge } from "@/lib/css-practice-challenges";
-import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
+import { buildDailyLearningPlan } from "@/lib/daily-learning-plan";
 import {
-  formatWebFoundationsReviewDueDate,
-  isWebFoundationsReviewDue,
-} from "@/lib/web-foundations-review";
+  getDailyCodingChallenge,
+  toUtcDateKey,
+} from "@/lib/daily-coding-challenge";
+import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
+import { buildJavaScriptMixedReviewSession } from "@/lib/javascript-mixed-review";
+import { getJavaScriptFoundationsEntry } from "@/lib/javascript-lab-progress";
+import { buildLearnerProfile } from "@/lib/learner-profile";
+import { DailyLearningPlan } from "@/components/daily-learning-plan";
 import { LearnerMilestoneChecklist } from "@/components/learner-milestone-checklist";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SiteFooter, SiteNav } from "../site-chrome";
@@ -44,6 +51,8 @@ export default async function DashboardPage() {
     redirect("/account?mode=signin");
   }
 
+  const now = new Date();
+  const todayKey = toUtcDateKey(now);
   const [
     firstCourse,
     practiceProgress,
@@ -53,6 +62,8 @@ export default async function DashboardPage() {
     javascriptLabProgress,
     javascriptCapstone,
     foundationsReview,
+    javascriptReview,
+    dailyChallengeCompletion,
   ] = await Promise.all([
     getOrCreateFirstCourseAssignment(session.user.id),
     getCodingCatalogProgress(session.user.id),
@@ -62,6 +73,8 @@ export default async function DashboardPage() {
     getJavaScriptLabCatalogProgress(session.user.id),
     getJavaScriptCapstoneSummary(session.user.id),
     getWebFoundationsReviewResultForStudent(session.user.id),
+    getJavaScriptMixedReviewResultForStudent(session.user.id),
+    getDailyCodingChallengeCompletionForStudent(session.user.id, todayKey),
   ]);
   const guidedProjectCompleted =
     guidedProject?.submission?.status === "completed";
@@ -82,6 +95,39 @@ export default async function DashboardPage() {
     throw new Error("The assigned course has no lessons.");
   }
 
+  const learnerProfile = buildLearnerProfile({
+    course: firstCourse,
+    practice: practiceProgress,
+    cssPractice: cssPracticeProgress,
+    attempts: [],
+    projectCompleted: guidedProjectCompleted,
+    htmlCssCapstone,
+    labPractice: javascriptLabProgress,
+    javascriptCapstone,
+  });
+  const dailyChallengeProblem = getDailyCodingChallenge(now);
+  const dailyChallengeAvailable = !getJavaScriptFoundationsEntry(
+    javascriptLabProgress,
+    practiceProgress.completedCount,
+  );
+  const dailyPlan = buildDailyLearningPlan({
+    continuation: learnerProfile.nextAction,
+    courseCompleted: firstCourse.courseCompleted,
+    foundationsReview,
+    javascriptReviewAvailable:
+      buildJavaScriptMixedReviewSession(javascriptLabProgress.labs).length > 0,
+    javascriptReview,
+    dailyChallenge: dailyChallengeAvailable
+      ? {
+          number: dailyChallengeProblem.number,
+          title: dailyChallengeProblem.title,
+          completed:
+            dailyChallengeCompletion?.problemSlug === dailyChallengeProblem.slug,
+        }
+      : null,
+    now,
+  });
+
   return (
     <main>
       <SiteNav currentPage="dashboard" />
@@ -98,6 +144,8 @@ export default async function DashboardPage() {
           </div>
           <SignOutButton />
         </div>
+
+        <DailyLearningPlan plan={dailyPlan} />
 
         <LearnerMilestoneChecklist
           course={{
@@ -144,42 +192,6 @@ export default async function DashboardPage() {
             capstone: javascriptCapstone,
           }}
         />
-
-        {firstCourse.courseCompleted ? (
-          <section
-            className="dashboard-foundations-review"
-            aria-labelledby="dashboard-foundations-review-title"
-          >
-            <div>
-              <p className="course-kicker">Spaced foundations review</p>
-              <h2 id="dashboard-foundations-review-title">
-                {foundationsReview &&
-                !isWebFoundationsReviewDue(foundationsReview)
-                  ? `Your next HTML and CSS review is set for ${formatWebFoundationsReviewDueDate(foundationsReview.nextDueAt)}.`
-                  : "Bring four HTML and CSS decisions back before they fade."}
-              </h2>
-              <p>
-                {foundationsReview &&
-                !isWebFoundationsReviewDue(foundationsReview)
-                  ? `Last recall ${foundationsReview.correctCount}/${foundationsReview.totalCount}. Your project remains the next milestone.`
-                  : "Four authored prompts adapt the next due date without storing your choices or changing course completion."}
-              </p>
-            </div>
-            <div>
-              <span>About 4 minutes</span>
-              <Link
-                className="dashboard-foundations-review-action"
-                href="/courses/web-development-foundations/review"
-              >
-                {foundationsReview &&
-                !isWebFoundationsReviewDue(foundationsReview)
-                  ? "View review schedule"
-                  : "Review due concepts"}
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </section>
-        ) : null}
 
         <section
           className="dashboard-account-tools"

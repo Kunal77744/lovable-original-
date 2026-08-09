@@ -145,9 +145,7 @@ export default async function LessonPage({
   const [workspace, lessonNote, courseFeedback, readingProgress] = session
     ? await Promise.all([
         getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
-        isSemanticLesson
-          ? getFirstLessonNote(session.user.id, studentLesson.lessonSlug)
-          : Promise.resolve({ note: null }),
+        getFirstLessonNote(session.user.id, studentLesson.lessonSlug),
         getCourseFeedbackForStudent(session.user.id, courseSlug),
         getLessonReadingProgressForStudent(
           session.user.id,
@@ -240,14 +238,16 @@ export default async function LessonPage({
             <CssBoxModelLessonContent />
           )}
 
+          {isSemanticLesson ? <SemanticHtmlTutor /> : null}
+
+          <LessonNotes
+            lessonSlug={studentLesson.lessonSlug}
+            initialNote={lessonNote.note}
+            isSignedIn={Boolean(session)}
+          />
+
           {isSemanticLesson ? (
             <>
-              <SemanticHtmlTutor />
-              <LessonNotes
-                lessonSlug={studentLesson.lessonSlug}
-                initialNote={lessonNote.note}
-                isSignedIn={Boolean(session)}
-              />
               <SemanticHtmlWorkspace
                 lessonSlug={studentLesson.lessonSlug}
                 initialHtml={workspace.html}
