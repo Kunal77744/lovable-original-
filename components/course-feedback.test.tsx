@@ -30,19 +30,25 @@ describe("CourseFeedback", () => {
       />,
     );
 
-    const comment = screen.getByPlaceholderText(
-      "One detail that felt clear, confusing, or missing",
-    );
+    const comment = screen.getByRole("textbox", {
+      name: "What should we improve next? Optional",
+    });
 
     expect(screen.getByText("500 characters remaining")).toBeInTheDocument();
+    expect(comment).toHaveAttribute("id", "course-feedback-comment");
+    expect(comment).toHaveAttribute("name", "comment");
     expect(comment).toHaveAttribute("maxlength", "500");
     expect(comment).toHaveAttribute(
       "aria-describedby",
-      "course-feedback-comment-note",
+      "course-feedback-comment-help course-feedback-comment-count",
     );
-    expect(
-      screen.getByText("500 characters remaining"),
-    ).toHaveAttribute("aria-live", "polite");
+    expect(screen.getByText(/Don’t include passwords/)).toHaveAttribute(
+      "id",
+      "course-feedback-comment-help",
+    );
+    const remainingCount = screen.getByText("500 characters remaining");
+    expect(remainingCount).toHaveAttribute("id", "course-feedback-comment-count");
+    expect(remainingCount).toHaveAttribute("aria-live", "polite");
 
     fireEvent.change(comment, { target: { value: "Clear." } });
     expect(screen.getByText("494 characters remaining")).toBeInTheDocument();
@@ -52,6 +58,28 @@ describe("CourseFeedback", () => {
 
     fireEvent.change(comment, { target: { value: "x".repeat(500) } });
     expect(screen.getByText("0 characters remaining")).toBeInTheDocument();
+  });
+
+  it("focuses and describes the usefulness choices when a response is missing", () => {
+    render(
+      <CourseFeedback
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        initialFeedback={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
+
+    const firstChoice = screen.getByLabelText("Not yet");
+    expect(firstChoice).toHaveFocus();
+    expect(firstChoice).toHaveAttribute(
+      "aria-describedby",
+      "course-feedback-status",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Choose how useful the lesson was.",
+    );
   });
 
   it("saves an optional response without sending its content to analytics", async () => {
@@ -89,6 +117,7 @@ describe("CourseFeedback", () => {
     await waitFor(() =>
       expect(screen.getByText(/Your feedback is saved/)).toBeInTheDocument(),
     );
+    expect(screen.getByRole("status")).toHaveAttribute("aria-atomic", "true");
     expect(captureLearnerEventOnce).toHaveBeenCalledWith(
       "feedback_submitted",
       {

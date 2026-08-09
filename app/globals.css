@@ -3947,7 +3947,7 @@ h1 {
 }
 
 .course-feedback legend,
-.course-feedback-comment > span:first-child {
+.course-feedback-comment > label {
   margin-bottom: 10px;
   color: #34413a;
   font-size: 12px;
