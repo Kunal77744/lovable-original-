@@ -119,28 +119,47 @@ export function JavaScriptReadinessCheck({
 
     setIsSaving(true);
     setStatus("Saving your private readiness result.");
-    const response = await fetch("/api/practice/readiness", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        answers: JAVASCRIPT_READINESS_QUESTIONS.map((item) => ({
-          questionId: item.id,
-          optionId: answers[item.id],
-        })),
-      }),
-    }).catch(() => null);
+    try {
+      const response = await fetch("/api/practice/readiness", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          answers: JAVASCRIPT_READINESS_QUESTIONS.map((item) => ({
+            questionId: item.id,
+            optionId: answers[item.id],
+          })),
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | SavedJavaScriptReadinessResult
+        | null;
+      const resultIsValid =
+        response.ok &&
+        result !== null &&
+        Number.isInteger(result.correctCount) &&
+        result.correctCount >= 0 &&
+        result.correctCount <= JAVASCRIPT_READINESS_QUESTIONS.length &&
+        result.totalCount === JAVASCRIPT_READINESS_QUESTIONS.length &&
+        recommendationLabs.some(
+          (lab) => lab.slug === result.recommendedLabSlug,
+        ) &&
+        typeof result.completedAt === "string";
 
-    if (!response?.ok) {
-      setIsSaving(false);
+      if (!resultIsValid) {
+        setStatus(
+          "Your result was not saved. Try again without losing your choices.",
+        );
+        return;
+      }
+
+      setSavedResult(result);
+      setIsRetaking(false);
+      setStatus("Readiness result saved privately.");
+    } catch {
       setStatus("Your result was not saved. Try again without losing your choices.");
-      return;
+    } finally {
+      setIsSaving(false);
     }
-
-    const result = (await response.json()) as SavedJavaScriptReadinessResult;
-    setSavedResult(result);
-    setIsRetaking(false);
-    setIsSaving(false);
-    setStatus("Readiness result saved privately.");
   }
 
   return (
@@ -170,7 +189,7 @@ export function JavaScriptReadinessCheck({
           void continueCheck();
         }}
       >
-        <fieldset>
+        <fieldset disabled={isSaving}>
           <legend>
             <span>{question.concept}</span>
             <strong id="readiness-question-title">{question.prompt}</strong>

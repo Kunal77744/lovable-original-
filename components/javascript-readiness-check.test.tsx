@@ -211,4 +211,43 @@ describe("JavaScriptReadinessCheck", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Inside that function's scope")).toBeChecked();
   });
+
+  it("keeps the final choice retryable when a successful response is invalid", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response("{}", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+      />,
+    );
+
+    for (const [index, question] of JAVASCRIPT_READINESS_QUESTIONS.entries()) {
+      const option = question.options.find(
+        (candidate) => candidate.id === question.correctOptionId,
+      )!;
+      fireEvent.click(screen.getByLabelText(option.label));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: index === JAVASCRIPT_READINESS_QUESTIONS.length - 1
+            ? "Save my result"
+            : "Next concept",
+        }),
+      );
+    }
+
+    expect(
+      await screen.findByText(
+        "Your result was not saved. Try again without losing your choices.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Inside that function's scope")).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: "Save my result" }),
+    ).toBeEnabled();
+  });
 });
