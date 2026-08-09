@@ -13861,6 +13861,7 @@ footer {
 
 .interview-start-action button,
 .interview-save-row button,
+.interview-finish-action button,
 .interview-finish-action a {
   min-height: 48px;
   padding: 0 20px;
@@ -13880,6 +13881,7 @@ footer {
 
 .interview-start-action button:hover:not(:disabled),
 .interview-save-row button:hover:not(:disabled),
+.interview-finish-action button:hover:not(:disabled),
 .interview-finish-action a:hover {
   border-color: var(--ink);
   background: var(--ink);
@@ -13887,19 +13889,22 @@ footer {
 
 .interview-start-action button:active:not(:disabled),
 .interview-save-row button:active:not(:disabled),
+.interview-finish-action button:active:not(:disabled),
 .interview-finish-action a:active {
   transform: translateY(1px);
 }
 
 .interview-start-action button:focus-visible,
 .interview-save-row button:focus-visible,
+.interview-finish-action button:focus-visible,
 .interview-finish-action a:focus-visible {
   outline: 3px solid rgba(40, 118, 82, 0.3);
   outline-offset: 3px;
 }
 
 .interview-start-action button:disabled,
-.interview-save-row button:disabled {
+.interview-save-row button:disabled,
+.interview-finish-action button:disabled {
   opacity: 0.65;
   cursor: wait;
 }
@@ -13978,6 +13983,14 @@ footer {
   font-weight: 600;
   letter-spacing: -0.035em;
   text-wrap: balance;
+}
+
+.interview-review-note {
+  max-width: 62ch;
+  margin: 18px 0 -12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .interview-answer-field {
@@ -14120,6 +14133,24 @@ footer {
   min-width: 168px;
 }
 
+.interview-save-row:has(.interview-summary-button) {
+  grid-template-columns: auto auto 1fr;
+}
+
+.interview-save-row .interview-summary-button {
+  min-width: 0;
+  padding: 0 8px;
+  color: var(--accent-deep);
+  border-color: transparent;
+  background: transparent;
+}
+
+.interview-save-row .interview-summary-button:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: transparent;
+  background: transparent;
+}
+
 .interview-complete {
   padding: 54px 58px 58px;
 }
@@ -14247,12 +14278,45 @@ footer {
   gap: 20px;
 }
 
+.interview-finish-action button {
+  gap: 22px;
+}
+
 .interview-finish-action a {
   gap: 22px;
 }
 
-.interview-finish-action > p {
+.interview-finish-action > div {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.interview-finish-action > div > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
   text-align: left;
+}
+
+.interview-finish-action .interview-summary-link {
+  min-height: 0;
+  padding: 0;
+  display: inline;
+  color: var(--accent-deep);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.interview-finish-action .interview-summary-link:hover {
+  color: var(--ink);
+  border-color: transparent;
+  background: transparent;
 }
 
 @media (max-width: 800px) {
@@ -14332,6 +14396,7 @@ footer {
 
   .interview-start-action button,
   .interview-save-row button,
+  .interview-finish-action button,
   .interview-finish-action a {
     width: 100%;
   }
@@ -14349,6 +14414,7 @@ footer {
   }
 
   .interview-save-row,
+  .interview-save-row:has(.interview-summary-button),
   .interview-complete-heading,
   .interview-finish-action {
     grid-template-columns: 1fr;
@@ -14358,7 +14424,11 @@ footer {
     min-height: 130px;
   }
 
-  .interview-finish-action > p {
+  .interview-finish-action > div {
+    justify-items: center;
+  }
+
+  .interview-finish-action > div > p {
     text-align: center;
   }
 
@@ -14371,6 +14441,7 @@ footer {
   .dashboard-interview-action,
   .interview-start-action button,
   .interview-save-row button,
+  .interview-finish-action button,
   .interview-finish-action a {
     transition: none;
   }
