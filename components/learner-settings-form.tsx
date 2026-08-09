@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   MAX_CERTIFICATE_DISPLAY_NAME_LENGTH,
   type LearnerSettings,
@@ -26,10 +26,12 @@ export function LearnerSettingsForm({
   );
   const [isError, setIsError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const currentNameRef = useRef(initialSettings.certificateDisplayName);
   const hasChanges = certificateDisplayName !== savedName;
 
   async function saveSettings(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submittedName = certificateDisplayName;
     setIsSaving(true);
     setIsError(false);
     setMessage("Saving your certificate name…");
@@ -53,11 +55,19 @@ export function LearnerSettingsForm({
         return;
       }
 
-      setCertificateDisplayName(payload.settings.certificateDisplayName);
       setSavedName(payload.settings.certificateDisplayName);
-      setMessage(
-        "Certificate name saved. It will return with your account.",
-      );
+
+      if (currentNameRef.current === submittedName) {
+        currentNameRef.current = payload.settings.certificateDisplayName;
+        setCertificateDisplayName(payload.settings.certificateDisplayName);
+        setMessage(
+          "Certificate name saved. It will return with your account.",
+        );
+      } else {
+        setMessage(
+          "Certificate name saved. Your newer changes are still unsaved.",
+        );
+      }
     } catch {
       setIsError(true);
       setMessage(
@@ -80,6 +90,7 @@ export function LearnerSettingsForm({
           maxLength={MAX_CERTIFICATE_DISPLAY_NAME_LENGTH}
           autoComplete="name"
           onChange={(event) => {
+            currentNameRef.current = event.target.value;
             setCertificateDisplayName(event.target.value);
             setIsError(false);
             setMessage(
