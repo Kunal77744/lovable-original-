@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import {
   CODING_PRACTICE_GOAL_OPTIONS,
   type CodingPracticeGoalTarget,
@@ -22,6 +22,9 @@ export function CodingPracticeGoal({
 }) {
   const [selectedTarget, setSelectedTarget] =
     useState<CodingPracticeGoalTarget>(goal.targetActiveDays ?? 3);
+  const latestSelectedTarget = useRef<CodingPracticeGoalTarget>(
+    goal.targetActiveDays ?? 3,
+  );
   const [savedTarget, setSavedTarget] =
     useState<CodingPracticeGoalTarget | null>(goal.targetActiveDays);
   const [saving, setSaving] = useState(false);
@@ -38,6 +41,7 @@ export function CodingPracticeGoal({
     event.preventDefault();
     if (saving || selectedTarget === savedTarget) return;
 
+    const submittedTarget = latestSelectedTarget.current;
     setSaving(true);
     setStatus("Saving your weekly target…");
 
@@ -45,20 +49,28 @@ export function CodingPracticeGoal({
       const response = await fetch("/api/practice/goal", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ targetActiveDays: selectedTarget }),
+        body: JSON.stringify({ targetActiveDays: submittedTarget }),
       });
       const body = (await response.json().catch(() => null)) as {
         targetActiveDays?: unknown;
         error?: string;
       } | null;
 
-      if (!response.ok || body?.targetActiveDays !== selectedTarget) {
+      if (!response.ok || body?.targetActiveDays !== submittedTarget) {
         throw new Error(body?.error ?? "Weekly target could not be saved");
       }
 
-      setSavedTarget(selectedTarget);
+      setSavedTarget(submittedTarget);
+
+      if (latestSelectedTarget.current !== submittedTarget) {
+        setStatus(
+          `Your earlier ${submittedTarget}-day target is saved. Your newer ${latestSelectedTarget.current}-day choice is still unsaved.`,
+        );
+        return;
+      }
+
       setStatus(
-        `Saved privately: ${selectedTarget} active ${selectedTarget === 1 ? "day" : "days"} each week.`,
+        `Saved privately: ${submittedTarget} active ${submittedTarget === 1 ? "day" : "days"} each week.`,
       );
     } catch {
       setStatus("Your target was not saved. Try again.");
@@ -111,6 +123,7 @@ export function CodingPracticeGoal({
                   value={option}
                   checked={selectedTarget === option}
                   onChange={() => {
+                    latestSelectedTarget.current = option;
                     setSelectedTarget(option);
                     setStatus("");
                   }}
