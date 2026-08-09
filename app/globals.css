@@ -21293,6 +21293,31 @@ footer {
   box-shadow: 0 22px 42px rgba(23, 35, 30, 0.13);
 }
 
+.practice-capstone-entry.is-locked {
+  border-color: rgba(23, 35, 30, 0.16);
+  background: #eef0e9;
+  color: #17231e;
+  box-shadow: none;
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-number,
+.practice-capstone-entry.is-locked .practice-capstone-copy small,
+.practice-capstone-entry.is-locked .practice-capstone-state small {
+  color: #287652;
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-copy > span {
+  color: #536159;
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-state {
+  border-left-color: rgba(23, 35, 30, 0.14);
+}
+
+.practice-capstone-entry.is-locked .practice-capstone-state > span {
+  color: #17231e;
+}
+
 .practice-capstone-number {
   align-self: start;
   color: #66dc9d;
