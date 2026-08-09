@@ -14240,6 +14240,13 @@ footer {
   box-shadow: 0 0 0 3px rgba(40, 118, 82, 0.15);
 }
 
+.interview-answer-field textarea:disabled {
+  color: #536158;
+  border-color: #d3dad4;
+  background: #f1f4ef;
+  cursor: wait;
+}
+
 .interview-answer-field small {
   margin-top: 7px;
   color: var(--muted);
@@ -14309,6 +14316,11 @@ footer {
   color: var(--accent-deep);
   border-color: #79a489;
   background: #edf5ed;
+}
+
+.interview-rating label:has(input:disabled) {
+  opacity: 0.72;
+  cursor: wait;
 }
 
 .interview-rating input {
