@@ -9,8 +9,11 @@ describe("public sitemap", () => {
       productionUrl,
       `${productionUrl}/about`,
       `${productionUrl}/courses/web-development-foundations`,
+      `${productionUrl}/learn/web-development-foundations/css-selectors-box-model`,
       `${productionUrl}/practice`,
       `${productionUrl}/learn/semantic-html`,
+      `${productionUrl}/learn/semantic-html-project`,
+      `${productionUrl}/learn/semantic-html-cheat-sheet`,
       `${productionUrl}/learn/beginner-javascript-practice`,
     ]);
   });
@@ -20,7 +23,12 @@ describe("public sitemap", () => {
     "/profile",
     "/interview/javascript-fundamentals",
     "/playground",
+    "/practice/mixed-review",
+    "/projects",
     "/projects/semantic-html-article",
+    "/projects/javascript-expense-report",
+    "/projects/html-css-resource-library",
+    "/projects/html-css-resource-library/debrief",
     "/settings",
     "/certificate",
   ])("excludes the private route %s", (privateRoute) => {

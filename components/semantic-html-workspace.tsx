@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   buildSandboxedPreviewDocument,
   type SemanticHtmlCheck,
@@ -37,6 +37,7 @@ export function SemanticHtmlWorkspace({
   isSignedIn = true,
 }: SemanticHtmlWorkspaceProps) {
   const [html, setHtml] = useState(initialHtml);
+  const htmlRef = useRef(initialHtml);
   const [checks, setChecks] = useState(initialChecks);
   const [hasSubmitted, setHasSubmitted] = useState(initiallySaved);
   const [saveState, setSaveState] = useState<
@@ -64,6 +65,8 @@ export function SemanticHtmlWorkspace({
       return;
     }
 
+    const submittedHtml = htmlRef.current;
+
     setSaveState("saving");
     setMessage("Submitting and checking your structure…");
 
@@ -71,7 +74,7 @@ export function SemanticHtmlWorkspace({
       const response = await fetch(`/api/lessons/${lessonSlug}/workspace`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html }),
+        body: JSON.stringify({ html: submittedHtml }),
       });
       const payload = (await response.json()) as WorkspaceResponse;
 
@@ -83,6 +86,15 @@ export function SemanticHtmlWorkspace({
 
       setChecks(payload.checks);
       setHasSubmitted(true);
+
+      if (htmlRef.current !== submittedHtml) {
+        setSaveState("unsaved");
+        setMessage(
+          "Your submitted result is saved. Newer changes are still unsaved.",
+        );
+        return;
+      }
+
       setSaveState("saved");
       setMessage(
         payload.submission?.status === "completed"
@@ -159,7 +171,8 @@ export function SemanticHtmlWorkspace({
             id="semantic-html-editor"
             value={html}
             onChange={(event) => {
-              setHtml(event.target.value);
+              htmlRef.current = event.target.value;
+              setHtml(htmlRef.current);
               setSaveState("unsaved");
               setMessage("You have unsaved changes.");
             }}

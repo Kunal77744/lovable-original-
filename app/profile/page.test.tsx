@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ProfilePage, { metadata } from "./page";
 
 const mocks = vi.hoisted(() => ({
@@ -9,8 +9,12 @@ const mocks = vi.hoisted(() => ({
   }),
   getCourse: vi.fn(),
   getPractice: vi.fn(),
+  getCssPractice: vi.fn(),
   getAttempts: vi.fn(),
   getProject: vi.fn(),
+  getHtmlCssCapstone: vi.fn(),
+  getLabPractice: vi.fn(),
+  getJavaScriptCapstone: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -38,8 +42,24 @@ vi.mock("@/db/coding-practice", () => ({
   getRecentCodingAttempts: mocks.getAttempts,
 }));
 
+vi.mock("@/db/css-practice", () => ({
+  getCssPracticeCatalogProgress: mocks.getCssPractice,
+}));
+
 vi.mock("@/db/guided-project", () => ({
   getGuidedProjectForStudent: mocks.getProject,
+}));
+
+vi.mock("@/db/html-css-capstone", () => ({
+  getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
+}));
+
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: mocks.getLabPractice,
+}));
+
+vi.mock("@/db/javascript-capstone", () => ({
+  getJavaScriptCapstoneSummary: mocks.getJavaScriptCapstone,
 }));
 
 describe("ProfilePage", () => {
@@ -65,10 +85,36 @@ describe("ProfilePage", () => {
       totalCount: 6,
       completedSlugs: [],
     });
+    mocks.getCssPractice.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 6,
+      completedSlugs: [],
+    });
     mocks.getAttempts.mockResolvedValue([]);
     mocks.getProject.mockResolvedValue({
       submission: null,
     });
+    mocks.getHtmlCssCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
+    });
+    mocks.getLabPractice.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 55,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/foundations",
+      nextExerciseNumber: 1,
+      labs: [],
+    });
+    mocks.getJavaScriptCapstone.mockResolvedValue({
+      state: "not-started",
+      passedChecks: 0,
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("describes saved progress as private account activity", () => {
@@ -77,6 +123,8 @@ describe("ProfilePage", () => {
     expect(preview).toContain("Your private course and practice progress");
     expect(preview).toContain("saved course progress");
     expect(preview).toContain("accepted JavaScript problems");
+    expect(preview).toContain("guided practice");
+    expect(preview).toContain("completed CSS challenges");
     expect(preview).toContain("private account view");
     expect(preview).not.toMatch(/public profile|rankings?|social/i);
   });
@@ -92,12 +140,15 @@ describe("ProfilePage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(ProfilePage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fprofile",
     );
     expect(mocks.getCourse).not.toHaveBeenCalled();
     expect(mocks.getPractice).not.toHaveBeenCalled();
+    expect(mocks.getCssPractice).not.toHaveBeenCalled();
+    expect(mocks.getLabPractice).not.toHaveBeenCalled();
     expect(mocks.getAttempts).not.toHaveBeenCalled();
     expect(mocks.getProject).not.toHaveBeenCalled();
+    expect(mocks.getJavaScriptCapstone).not.toHaveBeenCalled();
   });
 
   it("loads only the signed-in learner's account-backed record", async () => {
@@ -118,16 +169,25 @@ describe("ProfilePage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("0/1")).toBeInTheDocument();
     expect(
-      screen.getByText("problems accepted").parentElement,
+      screen.getByText("JavaScript Accepted").parentElement,
     ).toHaveTextContent("0/6");
+    expect(screen.getByText("CSS completed").parentElement).toHaveTextContent(
+      "0/6",
+    );
+    expect(screen.getByText("Guided JavaScript").parentElement?.parentElement).toHaveTextContent(
+      "0/55",
+    );
     expect(screen.getByText("Not started")).toBeInTheDocument();
     expect(mocks.getCourse).toHaveBeenCalledWith("learner-1");
     expect(mocks.getPractice).toHaveBeenCalledWith("learner-1");
+    expect(mocks.getCssPractice).toHaveBeenCalledWith("learner-1");
+    expect(mocks.getLabPractice).toHaveBeenCalledWith("learner-1");
     expect(mocks.getAttempts).toHaveBeenCalledWith("learner-1");
     expect(mocks.getProject).toHaveBeenCalledWith(
       "learner-1",
       "semantic-html-article",
     );
+    expect(mocks.getJavaScriptCapstone).toHaveBeenCalledWith("learner-1");
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Start the course/ }),
@@ -135,6 +195,45 @@ describe("ProfilePage", () => {
       "href",
       "/learn/web-development-foundations/semantic-html",
     );
+    expect(
+      screen.getByRole("link", { name: /View private projects/ }),
+    ).toHaveAttribute("href", "/projects");
+  });
+
+  it("restores distinct JavaScript and CSS totals for a returning learner", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: {
+        id: "learner-1",
+        name: "Verification Learner",
+        email: "private@example.com",
+      },
+    });
+    mocks.getPractice.mockResolvedValue({
+      completedCount: 2,
+      totalCount: 6,
+      completedSlugs: ["sum-two-numbers", "even-or-odd"],
+    });
+    mocks.getCssPractice.mockResolvedValue({
+      completedCount: 4,
+      totalCount: 6,
+      completedSlugs: [
+        "class-selector",
+        "descendant-selector",
+        "padding",
+        "border",
+      ],
+    });
+
+    const { container } = render(await ProfilePage());
+    const returningProfile = container.querySelector(".profile-practice-counts");
+
+    expect(returningProfile).not.toBeNull();
+    expect(returningProfile).toHaveTextContent("JavaScript Accepted");
+    expect(returningProfile).toHaveTextContent(
+      "2/6",
+    );
+    expect(returningProfile).toHaveTextContent("CSS completed");
+    expect(returningProfile).toHaveTextContent("4/6");
   });
 
   it("routes a completed learner into an unfinished private project", async () => {

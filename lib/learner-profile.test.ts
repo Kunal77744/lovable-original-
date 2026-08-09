@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CODING_PROBLEMS } from "./coding-problems";
 import { buildLearnerProfile } from "./learner-profile";
 
 const baseCourse = {
@@ -19,8 +20,50 @@ const baseCourse = {
 
 const emptyPractice = {
   completedCount: 0,
+  totalCount: 12,
+  completedSlugs: [] as string[],
+};
+
+const completePractice = {
+  completedCount: CODING_PROBLEMS.length,
+  totalCount: CODING_PROBLEMS.length,
+  completedSlugs: CODING_PROBLEMS.map((problem) => problem.slug),
+};
+
+const emptyCssPractice = {
+  completedCount: 0,
   totalCount: 6,
   completedSlugs: [] as string[],
+};
+
+const emptyLabPractice = {
+  completedCount: 0,
+  totalCount: 55,
+  nextLabSlug: "foundations" as const,
+  nextLabTitle: "JavaScript foundations",
+  nextHref: "/practice/foundations",
+  nextExerciseNumber: 1,
+  labs: [
+    {
+      slug: "foundations" as const,
+      title: "JavaScript foundations",
+      href: "/practice/judge-basics",
+      completedCount: 0,
+      totalCount: 4,
+      nextExerciseNumber: 1,
+      state: "not-started" as const,
+    },
+  ],
+};
+
+const completeLabPractice = {
+  completedCount: 55,
+  totalCount: 55,
+  nextLabSlug: null,
+  nextLabTitle: null,
+  nextHref: "/practice/foundations",
+  nextExerciseNumber: null,
+  labs: [],
 };
 
 describe("buildLearnerProfile", () => {
@@ -28,6 +71,7 @@ describe("buildLearnerProfile", () => {
     const profile = buildLearnerProfile({
       course: baseCourse,
       practice: emptyPractice,
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: false,
     });
@@ -50,9 +94,10 @@ describe("buildLearnerProfile", () => {
       },
       practice: {
         completedCount: 1,
-        totalCount: 6,
+        totalCount: 12,
         completedSlugs: ["sum-two-numbers"],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: false,
     });
@@ -61,6 +106,44 @@ describe("buildLearnerProfile", () => {
     expect(profile.isFreshLearner).toBe(false);
     expect(profile.nextAction.label).toBe("Continue course");
     expect(profile.nextAction.description).toContain("75% pass mark");
+  });
+
+  it("does not call a learner fresh when only CSS progress exists", () => {
+    const profile = buildLearnerProfile({
+      course: baseCourse,
+      practice: emptyPractice,
+      cssPractice: {
+        completedCount: 1,
+        totalCount: 6,
+        completedSlugs: ["class-selector"],
+      },
+      attempts: [],
+      projectCompleted: false,
+    });
+
+    expect(profile.isFreshLearner).toBe(false);
+    expect(profile.cssPractice.completedCount).toBe(1);
+  });
+
+  it("does not call a learner fresh when only guided lab progress exists", () => {
+    const profile = buildLearnerProfile({
+      course: baseCourse,
+      practice: emptyPractice,
+      cssPractice: emptyCssPractice,
+      labPractice: {
+        ...emptyLabPractice,
+        completedCount: 1,
+        nextHref: "/practice/tracing",
+        nextLabSlug: "tracing",
+        nextLabTitle: "Code tracing",
+        nextExerciseNumber: 2,
+      },
+      attempts: [],
+      projectCompleted: false,
+    });
+
+    expect(profile.isFreshLearner).toBe(false);
+    expect(profile.labPractice.completedCount).toBe(1);
   });
 
   it("routes a completed course into the unfinished guided project", () => {
@@ -78,9 +161,10 @@ describe("buildLearnerProfile", () => {
       },
       practice: {
         completedCount: 1,
-        totalCount: 6,
+        totalCount: 12,
         completedSlugs: ["sum-two-numbers"],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: false,
     });
@@ -109,11 +193,14 @@ describe("buildLearnerProfile", () => {
       },
       practice: {
         completedCount: 1,
-        totalCount: 6,
+        totalCount: 12,
         completedSlugs: ["sum-two-numbers"],
       },
+      cssPractice: emptyCssPractice,
       attempts: [],
       projectCompleted: true,
+      labPractice: completeLabPractice,
+      javascriptCapstone: { state: "completed", passedChecks: 6 },
     });
 
     expect(profile.nextAction).toEqual(
@@ -122,6 +209,50 @@ describe("buildLearnerProfile", () => {
         href: "/practice/even-or-odd",
       }),
     );
+  });
+
+  it("resumes foundations before problem 01 after project completion", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: emptyPractice,
+      cssPractice: emptyCssPractice,
+      labPractice: {
+        ...emptyLabPractice,
+        completedCount: 2,
+        nextHref: "/practice/foundations",
+        nextExerciseNumber: 3,
+        labs: [
+          {
+            ...emptyLabPractice.labs[0],
+            href: "/practice/foundations",
+            completedCount: 2,
+            nextExerciseNumber: 3,
+            state: "in-progress",
+          },
+        ],
+      },
+      attempts: [],
+      projectCompleted: true,
+    });
+
+    expect(profile.nextAction).toEqual({
+      label: "Continue foundations · step 3 of 4",
+      href: "/practice/foundations",
+      kicker: "2/4 foundations steps saved",
+      title: "JavaScript foundations",
+      description:
+        "Learn the judge contract, parsing, branching, and loops before problem 01.",
+    });
   });
 
   it("sends a completed learner to revision", () => {
@@ -137,17 +268,51 @@ describe("buildLearnerProfile", () => {
           quizScore: 100,
         },
       },
-      practice: {
+      practice: completePractice,
+      cssPractice: {
         completedCount: 6,
         totalCount: 6,
         completedSlugs: [
-          "sum-two-numbers",
-          "even-or-odd",
-          "multiplication-table",
-          "largest-value",
-          "reverse-a-word",
-          "fizz-buzz",
+          "class-selector",
+          "descendant-selector",
+          "predictable-width",
+          "inside-and-between",
+          "link-hit-area",
+          "centered-card",
         ],
+      },
+      attempts: [],
+      projectCompleted: true,
+      labPractice: completeLabPractice,
+      javascriptCapstone: { state: "completed", passedChecks: 6 },
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Review the course",
+        href: "/learn/web-development-foundations/semantic-html#revision-pack",
+      }),
+    );
+  });
+
+  it("continues a JavaScript completer into the next CSS challenge", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: completePractice,
+      cssPractice: {
+        completedCount: 2,
+        totalCount: 6,
+        completedSlugs: ["class-selector", "descendant-selector"],
       },
       attempts: [],
       projectCompleted: true,
@@ -155,8 +320,102 @@ describe("buildLearnerProfile", () => {
 
     expect(profile.nextAction).toEqual(
       expect.objectContaining({
-        label: "Review the course",
-        href: "/learn/web-development-foundations/semantic-html#revision-pack",
+        label: "Complete CSS 03",
+        href: "/practice/css/predictable-width",
+        title: "Keep the width predictable",
+      }),
+    );
+  });
+
+  it("continues the completed main path at the exact unfinished guided exercise", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: completePractice,
+      cssPractice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "class-selector",
+          "descendant-selector",
+          "predictable-width",
+          "inside-and-between",
+          "link-hit-area",
+          "centered-card",
+        ],
+      },
+      labPractice: {
+        ...emptyLabPractice,
+        completedCount: 12,
+        nextLabSlug: "tracing",
+        nextLabTitle: "Code tracing",
+        nextHref: "/practice/tracing",
+        nextExerciseNumber: 3,
+      },
+      attempts: [],
+      projectCompleted: true,
+      htmlCssCapstone: { state: "completed", passedChecks: 6 },
+      javascriptCapstone: { state: "not-started", passedChecks: 0 },
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Continue exercise 3",
+        href: "/practice/tracing",
+        kicker: "12/55 guided steps saved",
+        title: "Code tracing",
+      }),
+    );
+  });
+
+  it("opens the JavaScript capstone after every guided exercise is saved", () => {
+    const profile = buildLearnerProfile({
+      course: {
+        ...baseCourse,
+        completedLessons: 1,
+        progressPercent: 100,
+        courseCompleted: true,
+        nextLesson: {
+          ...baseCourse.nextLesson,
+          completed: true,
+          quizScore: 100,
+        },
+      },
+      practice: completePractice,
+      cssPractice: {
+        completedCount: 6,
+        totalCount: 6,
+        completedSlugs: [
+          "class-selector",
+          "descendant-selector",
+          "predictable-width",
+          "inside-and-between",
+          "link-hit-area",
+          "centered-card",
+        ],
+      },
+      labPractice: completeLabPractice,
+      attempts: [],
+      projectCompleted: true,
+      htmlCssCapstone: { state: "completed", passedChecks: 6 },
+      javascriptCapstone: { state: "in-progress", passedChecks: 4 },
+    });
+
+    expect(profile.nextAction).toEqual(
+      expect.objectContaining({
+        label: "Resume the capstone",
+        href: "/projects/javascript-expense-report",
+        kicker: "4/6 outcomes passing",
+        title: "JavaScript expense report",
       }),
     );
   });

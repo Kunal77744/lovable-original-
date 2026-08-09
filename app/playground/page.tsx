@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { JavaScriptPlayground } from "@/components/javascript-playground";
 import { getPlaygroundFile } from "@/db/javascript-playground";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Private saved JavaScript playground | Lovable Original",
   description:
-    "Write, run, save, and restore one private JavaScript file in your account-only workspace.",
+    "Write, run, check, save, and restore one private JavaScript file in your account-only workspace.",
   robots: {
     index: false,
     follow: false,
@@ -25,7 +26,7 @@ export default async function PlaygroundPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin&next=/playground");
+    redirect(getSignInHref("/playground"));
   }
 
   const file = await getPlaygroundFile(session.user.id);
@@ -50,8 +51,8 @@ export default async function PlaygroundPage() {
           </div>
           <div className="playground-intro-copy">
             <p>
-              Write ordinary JavaScript, run it without leaving the page, and
-              save the exact file to your account.
+              Write ordinary JavaScript, test the behavior you expect without
+              leaving the page, and save the exact file to your account.
             </p>
             <Link href="/practice">Prefer a guided problem? Open practice →</Link>
           </div>
@@ -59,6 +60,7 @@ export default async function PlaygroundPage() {
 
         <JavaScriptPlayground
           initialCode={file.code}
+          initialQuickChecks={file.quickChecks}
           initialUpdatedAt={file.updatedAt}
         />
 

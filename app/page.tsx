@@ -1,21 +1,24 @@
 import Link from "next/link";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav, SkipLink } from "./site-chrome";
+
+const javascriptProblemCount = CODING_PROBLEMS.length;
 
 const learningLoop = [
   {
     number: "01",
-    title: "Learn the structure",
-    copy: "Three focused sections show how semantic HTML gives a page meaning before styling begins.",
+    title: "Learn one idea clearly",
+    copy: "Start with a complete 18-minute lesson on the semantic HTML choices that give a page meaning.",
   },
   {
     number: "02",
-    title: "Check your recall",
-    copy: "A four-question quiz tests the choices that make a page clearer for browsers and people.",
+    title: "Build and check real work",
+    copy: "Build a private semantic HTML field guide, then revise it against six clear checks.",
   },
   {
     number: "03",
-    title: "Complete the course",
-    copy: "Build and save your page, pass at 75%, and return to your best score and progress from the dashboard.",
+    title: "Keep practicing",
+    copy: `Move into ${javascriptProblemCount} browser-run JavaScript problems and return to the first unfinished step after sign-in.`,
   },
 ];
 
@@ -57,14 +60,11 @@ export default function Home() {
       <main id="main-content" tabIndex={-1}>
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow">Web Development Foundations</p>
-            <h1 id="hero-title">
-              Lovable Original helps you build a page the browser understands.
-            </h1>
+            <p className="eyebrow">Coding practice for adult beginners</p>
+            <h1 id="hero-title">Learn coding by doing.</h1>
             <p className="hero-lede">
-              In one 18-minute semantic HTML lesson, build and save an article
-              page, check your recall with four questions, and keep your course
-              result.
+              Take a short lesson, build and check real work, then keep
+              practicing from where you left off.
             </p>
             <Link
               className="primary-action"
@@ -74,8 +74,8 @@ export default function Home() {
               <ArrowIcon />
             </Link>
             <p className="launch-note">
-              One focused lesson. One practical result. Your best quiz score
-              stays with your free student account.
+              Start with one public 18-minute lesson. A free account keeps your
+              work, quiz result, and practice progress.
             </p>
             <p className="spelling-note">
               Searched for &quot;Loveable Original&quot;? You&apos;re in the
@@ -92,7 +92,7 @@ export default function Home() {
                 <span className="window-logo">L</span>
                 <span>Web Development Foundations</span>
               </div>
-              <span className="progress-label">Preview · 32% complete</span>
+              <span className="progress-label">Path preview · step 1 of 3</span>
             </div>
 
             <div className="course-content">
@@ -110,15 +110,15 @@ export default function Home() {
               <div className="lesson-checklist">
                 <div>
                   <CheckIcon />
-                  <span>Three focused lesson sections</span>
+                  <span>Read one complete 18-minute lesson</span>
                 </div>
                 <div>
                   <CheckIcon />
-                  <span>Four recall questions</span>
+                  <span>Build and check a guided project</span>
                 </div>
                 <div className="current-step">
                   <span className="step-dot" />
-                  <span>Saved best score and progress</span>
+                  <span>Continue into JavaScript practice</span>
                 </div>
               </div>
             </div>
@@ -135,8 +135,8 @@ export default function Home() {
           aria-labelledby="path-title"
         >
           <div className="section-heading">
-            <p className="eyebrow">A better learning loop</p>
-            <h2 id="path-title">From first lesson to real confidence.</h2>
+            <p className="eyebrow">One connected learning loop</p>
+            <h2 id="path-title">Learn it. Build it. Keep going.</h2>
           </div>
           <div className="path-grid">
             {learningLoop.map((step) => (

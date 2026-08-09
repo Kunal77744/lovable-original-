@@ -1,9 +1,5 @@
-import { and, asc, eq } from "drizzle-orm";
-import {
-  FIRST_COURSE,
-  FIRST_COURSE_LESSONS,
-  FIRST_LESSON_PASS_PERCENT,
-} from "@/lib/first-course-content";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { FIRST_COURSE, FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { getDefaultCertificateDisplayName } from "@/lib/learner-settings";
 import { buildCourseProgress } from "@/lib/course-progress";
 import { getDatabase } from "./index";
@@ -22,6 +18,14 @@ import {
   gradeSemanticHtml,
   SEMANTIC_HTML_STARTER,
 } from "@/lib/semantic-html-workspace";
+import {
+  CSS_BOX_MODEL_STARTER,
+  gradeCssBoxModel,
+} from "@/lib/css-box-model-practice";
+import {
+  gradeResponsiveCss,
+  RESPONSIVE_CSS_STARTER,
+} from "@/lib/responsive-css-practice";
 
 async function ensureFirstCourse() {
   const database = getDatabase();
@@ -141,6 +145,39 @@ export async function getOrCreateFirstCourseAssignment(userId: string) {
   };
 }
 
+export async function getFirstCourseProgressSummary(userId: string) {
+  const lessonIds = FIRST_COURSE_LESSONS.map((courseLesson) => courseLesson.id);
+  const progressRows = await getDatabase()
+    .select({
+      lessonId: lessonProgress.lessonId,
+      progressStatus: lessonProgress.status,
+      quizScore: lessonProgress.quizScore,
+    })
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        inArray(lessonProgress.lessonId, lessonIds),
+      ),
+    );
+  const progressByLesson = new Map(
+    progressRows.map((row) => [row.lessonId, row]),
+  );
+  const progress = buildCourseProgress(
+    FIRST_COURSE_LESSONS.map((courseLesson) => ({
+      ...courseLesson,
+      progressStatus:
+        progressByLesson.get(courseLesson.id)?.progressStatus ?? null,
+      quizScore: progressByLesson.get(courseLesson.id)?.quizScore ?? null,
+    })),
+  );
+
+  return {
+    slug: FIRST_COURSE.slug,
+    ...progress,
+  };
+}
+
 export async function getFirstCourseLessonForStudent(
   userId: string,
   courseSlug: string,
@@ -174,10 +211,7 @@ export async function getFirstCourseLessonForStudent(
       ),
     )
     .where(
-      and(
-        eq(courseAssignment.userId, userId),
-        eq(course.slug, courseSlug),
-      ),
+      and(eq(courseAssignment.userId, userId), eq(course.slug, courseSlug)),
     )
     .orderBy(asc(lesson.position));
 
@@ -292,7 +326,9 @@ export async function saveFirstLessonQuizResult(
       },
     });
 
-  if (completed && bestScore >= FIRST_LESSON_PASS_PERCENT) {
+  const courseProgress = await getOrCreateFirstCourseAssignment(userId);
+
+  if (courseProgress.courseCompleted) {
     await database
       .insert(courseCertificate)
       .values({
@@ -308,6 +344,67 @@ export async function saveFirstLessonQuizResult(
     completed,
     quizScore: bestScore,
   };
+}
+
+export async function getLessonReadingProgressForStudent(
+  userId: string,
+  lessonSlug: string,
+) {
+  const database = getDatabase();
+  await ensureFirstCourseAssignment(userId);
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const [progress] = await database
+    .select({ furthestSection: lessonProgress.furthestSection })
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId),
+      ),
+    )
+    .limit(1);
+
+  return { furthestSection: progress?.furthestSection ?? 0 };
+}
+
+export async function saveLessonReadingProgressForStudent(
+  userId: string,
+  lessonSlug: string,
+  furthestSection: number,
+) {
+  const database = getDatabase();
+  await ensureFirstCourseAssignment(userId);
+  const lessonId = await getAssignedLessonId(userId, lessonSlug);
+
+  if (!lessonId) {
+    return null;
+  }
+
+  const now = new Date();
+  const [savedProgress] = await database
+    .insert(lessonProgress)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      lessonId,
+      furthestSection,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [lessonProgress.userId, lessonProgress.lessonId],
+      set: {
+        furthestSection: sql`greatest(${lessonProgress.furthestSection}, ${furthestSection})`,
+        updatedAt: now,
+      },
+    })
+    .returning({ furthestSection: lessonProgress.furthestSection });
+
+  return savedProgress ?? null;
 }
 
 export async function getLearnerSettingsForStudent(
@@ -368,42 +465,17 @@ export async function getFirstCourseCertificateForStudent(
   const database = getDatabase();
   await ensureFirstCourseAssignment(userId);
 
-  const [completedLesson] = await database
-    .select({
-      completedAt: lessonProgress.completedAt,
-      quizScore: lessonProgress.quizScore,
-    })
-    .from(courseAssignment)
-    .innerJoin(course, eq(courseAssignment.courseId, course.id))
-    .innerJoin(lesson, eq(lesson.courseId, course.id))
-    .innerJoin(
-      lessonProgress,
-      and(
-        eq(lessonProgress.lessonId, lesson.id),
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.status, "completed"),
-      ),
-    )
-    .where(
-      and(
-        eq(courseAssignment.userId, userId),
-        eq(course.id, FIRST_COURSE.id),
-      ),
-    )
-    .limit(1);
+  const courseProgress = await getOrCreateFirstCourseAssignment(userId);
+  const eligible = courseProgress.courseCompleted;
 
-  const eligible =
-    Boolean(completedLesson?.completedAt) &&
-    (completedLesson?.quizScore ?? 0) >= FIRST_LESSON_PASS_PERCENT;
-
-  if (eligible && completedLesson?.completedAt) {
+  if (eligible) {
     await database
       .insert(courseCertificate)
       .values({
         id: crypto.randomUUID(),
         userId,
         courseId: FIRST_COURSE.id,
-        awardedAt: completedLesson.completedAt,
+        awardedAt: new Date(),
       })
       .onConflictDoNothing();
   }
@@ -428,14 +500,15 @@ export async function getFirstCourseCertificateForStudent(
 
   return {
     eligible,
-    certificate: certificateRow
-      ? {
-          id: certificateRow.id,
-          awardedAt: certificateRow.awardedAt.toISOString(),
-          displayName: settings.certificateDisplayName,
-          courseTitle: FIRST_COURSE.title,
-        }
-      : null,
+    certificate:
+      eligible && certificateRow
+        ? {
+            id: certificateRow.id,
+            awardedAt: certificateRow.awardedAt.toISOString(),
+            displayName: settings.certificateDisplayName,
+            courseTitle: FIRST_COURSE.title,
+          }
+        : null,
   };
 }
 
@@ -456,6 +529,37 @@ async function getAssignedLessonId(userId: string, lessonSlug: string) {
     .limit(1);
 
   return assignedLesson?.id ?? null;
+}
+
+function getLessonPractice(lessonSlug: string, savedContent?: string) {
+  if (lessonSlug === "semantic-html") {
+    const html = savedContent ?? SEMANTIC_HTML_STARTER;
+
+    return {
+      html,
+      checks: gradeSemanticHtml(html),
+    };
+  }
+
+  if (lessonSlug === "css-selectors-box-model") {
+    const html = savedContent ?? CSS_BOX_MODEL_STARTER;
+
+    return {
+      html,
+      checks: gradeCssBoxModel(html),
+    };
+  }
+
+  if (lessonSlug === "responsive-css-grid") {
+    const html = savedContent ?? RESPONSIVE_CSS_STARTER;
+
+    return {
+      html,
+      checks: gradeResponsiveCss(html),
+    };
+  }
+
+  return null;
 }
 
 export async function getFirstLessonArtifact(
@@ -482,8 +586,13 @@ export async function getFirstLessonArtifact(
       ),
     )
     .limit(1);
-  const html = artifact?.html ?? SEMANTIC_HTML_STARTER;
-  const checks = gradeSemanticHtml(html);
+  const practice = getLessonPractice(lessonSlug, artifact?.html);
+
+  if (!practice) {
+    return null;
+  }
+
+  const { html, checks } = practice;
   const passedChecks = checks.filter((check) => check.passed).length;
 
   return {
@@ -534,7 +643,13 @@ export async function saveFirstLessonArtifact(
         updatedAt: now,
       },
     });
-  const checks = gradeSemanticHtml(html);
+  const practice = getLessonPractice(lessonSlug, html);
+
+  if (!practice) {
+    return null;
+  }
+
+  const checks = practice.checks;
   const passedChecks = checks.filter((check) => check.passed).length;
 
   return {
@@ -554,10 +669,7 @@ export async function saveFirstLessonArtifact(
   };
 }
 
-export async function getFirstLessonNote(
-  userId: string,
-  lessonSlug: string,
-) {
+export async function getFirstLessonNote(userId: string, lessonSlug: string) {
   const database = getDatabase();
   const lessonId = await getAssignedLessonId(userId, lessonSlug);
 
@@ -572,10 +684,7 @@ export async function getFirstLessonNote(
     })
     .from(lessonNote)
     .where(
-      and(
-        eq(lessonNote.userId, userId),
-        eq(lessonNote.lessonId, lessonId),
-      ),
+      and(eq(lessonNote.userId, userId), eq(lessonNote.lessonId, lessonId)),
     )
     .limit(1);
 
@@ -674,19 +783,16 @@ export async function saveCourseFeedbackForStudent(
   comment: string | null,
 ) {
   const database = getDatabase();
+  const courseProgress = await getOrCreateFirstCourseAssignment(userId);
+
+  if (!courseProgress.courseCompleted) {
+    return null;
+  }
+
   const [completedCourse] = await database
     .select({ courseId: course.id })
     .from(courseAssignment)
     .innerJoin(course, eq(courseAssignment.courseId, course.id))
-    .innerJoin(lesson, eq(lesson.courseId, course.id))
-    .innerJoin(
-      lessonProgress,
-      and(
-        eq(lessonProgress.lessonId, lesson.id),
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.status, "completed"),
-      ),
-    )
     .where(
       and(eq(courseAssignment.userId, userId), eq(course.slug, courseSlug)),
     )

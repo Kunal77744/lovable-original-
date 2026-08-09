@@ -21,10 +21,19 @@ describe("focused public learner entry pages", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /see the 18-minute course/i }),
-    ).toHaveAttribute("href", "/courses/web-development-foundations");
+      screen.getByRole("link", { name: /read the full 18-minute lesson/i }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
+    expect(screen.getByText(/free to read/i)).toBeInTheDocument();
     expect(screen.getByText("5/5 checks")).toBeInTheDocument();
     expect(screen.getByText(/75% quiz pass mark/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /keep the html semantic tags cheat sheet nearby/i,
+      }),
+    ).toHaveAttribute("href", "/learn/semantic-html-cheat-sheet");
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
   });
 
@@ -33,17 +42,18 @@ describe("focused public learner entry pages", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /make your first six problems count/i,
+        name: /make your first 12 problems count/i,
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Six problems, one beginner path"),
+      screen.getByText("Twelve problems, one ordered path"),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /start problem 01/i }),
     ).toHaveAttribute("href", `/practice/${CODING_PROBLEMS[0].slug}`);
     expect(screen.getByText("4 of 4 passed")).toBeInTheDocument();
-    expect(screen.getAllByText("Beginner")).toHaveLength(6);
+    expect(screen.getAllByText("Beginner")).toHaveLength(8);
+    expect(screen.getAllByText("Intermediate")).toHaveLength(4);
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
   });
 
@@ -55,7 +65,7 @@ describe("focused public learner entry pages", () => {
       canonical: "/learn/semantic-html",
     });
     expect(javascriptMetadata.title).toBe(
-      "Beginner JavaScript Practice: 6 Free Problems | Lovable Original",
+      "JavaScript Practice: 12 Free Problems | Lovable Original",
     );
     expect(javascriptMetadata.alternates).toEqual({
       canonical: "/learn/beginner-javascript-practice",
@@ -63,7 +73,7 @@ describe("focused public learner entry pages", () => {
 
     const previews = JSON.stringify({ semanticMetadata, javascriptMetadata });
     expect(previews).toContain("18-minute lesson");
-    expect(previews).toContain("six free problems");
+    expect(previews).toContain("12 free problems");
     expect(previews).not.toMatch(
       /AI tutor|certificate|contest|job placement|recruiter/i,
     );
@@ -74,6 +84,9 @@ describe("focused public learner entry pages", () => {
 
     expect(urls).toContain(
       "https://lovable-original-eight.vercel.app/learn/semantic-html",
+    );
+    expect(urls).toContain(
+      "https://lovable-original-eight.vercel.app/learn/semantic-html-cheat-sheet",
     );
     expect(urls).toContain(
       "https://lovable-original-eight.vercel.app/learn/beginner-javascript-practice",

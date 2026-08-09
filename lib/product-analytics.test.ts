@@ -12,8 +12,13 @@ vi.mock("posthog-js", () => ({
 
 import {
   captureAccountCreated,
+  captureCssPracticeCompleted,
+  captureCssPathFeedbackSubmitted,
+  captureJavaScriptPracticeCompleted,
   captureLearnerEventOnce,
+  captureLessonCompleted,
   captureProjectCompleted,
+  capturePracticeFeedbackSubmitted,
   capturePracticeProblemAccepted,
   capturePracticeProblemStarted,
   capturePublicPageview,
@@ -101,6 +106,45 @@ describe("product analytics", () => {
     });
   });
 
+  it("captures the founder-warm lesson source without private learner fields", () => {
+    const warmLessonStart = {
+      course_slug: "web-development-foundations",
+      lesson_slug: "semantic-html",
+      entry_source: "founder_warm" as const,
+      email: "learner@example.com",
+      note: "private learner note",
+      answer: "private learner answer",
+    };
+
+    captureLearnerEventOnce("lesson_started", warmLessonStart);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "lesson_started",
+      expect.objectContaining({
+        course_slug: "web-development-foundations",
+        lesson_slug: "semantic-html",
+        entry_source: "founder_warm",
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "course_slug",
+        "deployment_environment",
+        "entry_source",
+        "is_test",
+        "journey_id",
+        "lesson_slug",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /learner@example\.com|private learner note|private learner answer/i,
+    );
+  });
+
   it("captures one privacy-safe completed project result", () => {
     const completedProject = {
       projectSlug: "semantic-html-article",
@@ -141,6 +185,46 @@ describe("product analytics", () => {
     );
   });
 
+  it("captures one privacy-safe lesson completion", () => {
+    const completedLesson = {
+      courseSlug: "web-development-foundations",
+      completionState: "completed" as const,
+      note: "private learner note",
+      code: "private learner code",
+      answers: "private quiz answers",
+      feedback: "private feedback text",
+      email: "learner@example.com",
+      displayName: "Private Learner",
+    };
+
+    expect(captureLessonCompleted(completedLesson)).toBe(true);
+    expect(captureLessonCompleted(completedLesson)).toBe(false);
+
+    expect(posthogMocks.capture).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "lesson_completed",
+      expect.objectContaining({
+        course_slug: "web-development-foundations",
+        completion_state: "completed",
+      }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      [
+        "completion_state",
+        "course_slug",
+        "deployment_environment",
+        "is_test",
+        "journey_id",
+      ].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private learner note|private learner code|private quiz answers|private feedback text|learner@example\.com|Private Learner/i,
+    );
+  });
+
   it("captures one privacy-safe Accepted result for each problem", () => {
     const acceptedResult = {
       problemSlug: "sum-two-numbers",
@@ -177,6 +261,106 @@ describe("product analytics", () => {
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /private learner code|private input|private output|learner@example\.com|private account note/i,
+    );
+  });
+
+  it("captures each completed 12-step practice path once without private work", () => {
+    const javascriptCompletion = {
+      pathSlug: "beginner-javascript",
+      completionState: "completed" as const,
+      code: "private learner code",
+      answers: "private learner answers",
+      attempts: "private attempt history",
+      feedback: "private feedback text",
+      email: "learner@example.com",
+      accountId: "private-account-id",
+    };
+    const cssCompletion = {
+      pathSlug: "css-selectors-box-model",
+      completionState: "completed" as const,
+      css: "private learner CSS",
+      answers: "private learner answers",
+      attempts: "private attempt history",
+      feedback: "private feedback text",
+      email: "learner@example.com",
+      accountId: "private-account-id",
+    };
+
+    expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(true);
+    expect(captureJavaScriptPracticeCompleted(javascriptCompletion)).toBe(
+      false,
+    );
+    expect(captureCssPracticeCompleted(cssCompletion)).toBe(true);
+    expect(captureCssPracticeCompleted(cssCompletion)).toBe(false);
+
+    expect(posthogMocks.capture.mock.calls.map(([event]) => event)).toEqual([
+      "javascript_practice_completed",
+      "css_practice_completed",
+    ]);
+
+    for (const [, properties] of posthogMocks.capture.mock.calls) {
+      expect(Object.keys(properties).sort()).toEqual(
+        [
+          "completion_state",
+          "deployment_environment",
+          "is_test",
+          "journey_id",
+          "path_slug",
+        ].sort(),
+      );
+    }
+    expect(JSON.stringify(posthogMocks.capture.mock.calls)).not.toMatch(
+      /private learner code|private learner CSS|private learner answers|private attempt history|private feedback text|learner@example\.com|private-account-id/i,
+    );
+  });
+
+  it("captures only the bounded practice usefulness choice", () => {
+    const privateResponse = {
+      usefulness: "very",
+      comment: "private feedback comment",
+      code: "private learner code",
+      email: "learner@example.com",
+    } as const;
+
+    capturePracticeFeedbackSubmitted(privateResponse.usefulness);
+
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "practice_feedback_submitted",
+      expect.objectContaining({ usefulness: "very" }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      ["deployment_environment", "is_test", "journey_id", "usefulness"].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private feedback comment|private learner code|learner@example\.com/i,
+    );
+  });
+
+  it("captures only the bounded CSS path usefulness choice", () => {
+    const privateResponse = {
+      usefulness: "somewhat",
+      comment: "private CSS path feedback",
+      css: "private learner CSS",
+      email: "learner@example.com",
+    } as const;
+
+    captureCssPathFeedbackSubmitted(privateResponse.usefulness);
+
+    expect(posthogMocks.capture).toHaveBeenCalledWith(
+      "css_path_feedback_submitted",
+      expect.objectContaining({ usefulness: "somewhat" }),
+    );
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(Object.keys(properties).sort()).toEqual(
+      ["deployment_environment", "is_test", "journey_id", "usefulness"].sort(),
+    );
+    expect(JSON.stringify(properties)).not.toMatch(
+      /private CSS path feedback|private learner CSS|learner@example\.com/i,
     );
   });
 

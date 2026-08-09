@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import {
   MAX_PROJECT_FEEDBACK_COMMENT_LENGTH,
   type ProjectFeedbackConfidence,
@@ -29,6 +29,10 @@ export function ProjectFeedback({
     ProjectFeedbackConfidence | ""
   >(initialFeedback?.confidence ?? "");
   const [comment, setComment] = useState(initialFeedback?.comment ?? "");
+  const latestConfidence = useRef<ProjectFeedbackConfidence | "">(
+    initialFeedback?.confidence ?? "",
+  );
+  const latestComment = useRef(initialFeedback?.comment ?? "");
   const [savedFeedback, setSavedFeedback] = useState(initialFeedback);
   const [message, setMessage] = useState<string | null>(
     initialFeedback
@@ -45,19 +49,24 @@ export function ProjectFeedback({
     setMessage(null);
     setIsError(false);
 
-    if (!confidence) {
+    if (!latestConfidence.current) {
       setIsError(true);
       setMessage("Choose how confident you feel after this project.");
       return;
     }
 
+    const submittedConfidence = latestConfidence.current;
+    const submittedComment = latestComment.current;
     setIsSaving(true);
 
     try {
       const response = await fetch(`/api/projects/${projectSlug}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confidence, comment }),
+        body: JSON.stringify({
+          confidence: submittedConfidence,
+          comment: submittedComment,
+        }),
       });
       const payload = (await response.json()) as {
         feedback?: SavedProjectFeedback;
@@ -71,6 +80,20 @@ export function ProjectFeedback({
       }
 
       setSavedFeedback(payload.feedback);
+
+      if (
+        latestConfidence.current !== submittedConfidence ||
+        latestComment.current !== submittedComment
+      ) {
+        setMessage(
+          "Your earlier feedback is saved. Newer changes are still unsaved.",
+        );
+        return;
+      }
+
+      latestConfidence.current = payload.feedback.confidence;
+      latestComment.current = payload.feedback.comment;
+      setConfidence(payload.feedback.confidence);
       setComment(payload.feedback.comment);
       setMessage(
         "Thanks. Your private feedback is saved, and you can revise it anytime.",
@@ -113,7 +136,10 @@ export function ProjectFeedback({
                   name="project-confidence"
                   value={choice.value}
                   checked={confidence === choice.value}
-                  onChange={() => setConfidence(choice.value)}
+                  onChange={() => {
+                    latestConfidence.current = choice.value;
+                    setConfidence(choice.value);
+                  }}
                 />
                 <span>{choice.label}</span>
               </label>
@@ -130,7 +156,10 @@ export function ProjectFeedback({
             value={comment}
             maxLength={MAX_PROJECT_FEEDBACK_COMMENT_LENGTH}
             rows={3}
-            onChange={(event) => setComment(event.target.value)}
+            onChange={(event) => {
+              latestComment.current = event.target.value;
+              setComment(event.target.value);
+            }}
             placeholder="One step, check, or idea that felt unclear"
           />
           <span

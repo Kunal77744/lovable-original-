@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav, SkipLink } from "../site-chrome";
 
+const javascriptProblemCount = CODING_PROBLEMS.length;
+
 export const metadata: Metadata = {
-  title: "About Lovable Original | Learn, recall, and build",
+  title: "About Lovable Original | Learn coding by doing",
   description:
-    "See how Lovable Original turns one semantic HTML lesson into a saved page, a four-question recall check, and progress you can return to.",
+    "See how Lovable Original connects a short coding lesson, checked real work, and saved beginner practice you can return to.",
   alternates: {
     canonical: "/about",
   },
@@ -14,18 +17,18 @@ export const metadata: Metadata = {
 const learningLoop = [
   {
     number: "01",
-    title: "Learn it clearly",
-    copy: "Three focused sections explain how semantic HTML gives a page meaning.",
+    title: "Learn one idea",
+    copy: "Read a complete 18-minute semantic HTML lesson before you decide whether to sign up.",
   },
   {
     number: "02",
-    title: "Recall it actively",
-    copy: "Four questions check the choices that make a page clearer.",
+    title: "Build and check it",
+    copy: "Save an article page, test your recall, and revise a guided project against six checks.",
   },
   {
     number: "03",
-    title: "Use it for real",
-    copy: "Build and save an accessible article page in your course workspace.",
+    title: "Practice what comes next",
+    copy: `Solve ${javascriptProblemCount} browser-run JavaScript problems and resume at the first unfinished step.`,
   },
 ];
 
@@ -53,13 +56,12 @@ export default function AboutPage() {
         <section className="about-hero" aria-labelledby="about-title">
           <div className="about-hero-copy">
             <p className="eyebrow">About Lovable Original</p>
-            <h1 id="about-title">
-              Learning should end in something you can do.
-            </h1>
+            <h1 id="about-title">Learn coding by doing, then keep going.</h1>
             <p className="about-lede">
-              Lovable Original begins with Web Development Foundations: one
-              18-minute semantic HTML lesson, a saved coding workspace, four
-              recall questions, and progress you can return to.
+              Take a short lesson, build and check real work, then keep
+              practicing from where you left off. The first path connects
+              semantic HTML, a guided project, and {javascriptProblemCount}{" "}
+              JavaScript problems.
             </p>
             <Link
               className="primary-action"
@@ -74,7 +76,7 @@ export default function AboutPage() {
             className="about-loop"
             aria-label="The Lovable Original learning loop"
           >
-            <p className="about-loop-label">One continuous learning loop</p>
+            <p className="about-loop-label">Learn · build · practice</p>
             <ol>
               {learningLoop.map((step) => (
                 <li key={step.number}>
@@ -103,9 +105,10 @@ export default function AboutPage() {
               one connected path.
             </p>
             <p>
-              The first focused course is live now. Web Development Foundations
-              takes one 18-minute lesson from explanation to a saved semantic
-              HTML page, then records your best quiz score and progress.
+              The first learner path is live now. It starts with one public
+              18-minute lesson, continues through a private six-check field
+              guide, and moves into {javascriptProblemCount} judged JavaScript
+              problems you can return to.
             </p>
           </div>
         </section>
@@ -113,38 +116,33 @@ export default function AboutPage() {
         <section className="about-standard" aria-labelledby="standard-title">
           <div className="about-standard-heading">
             <p className="eyebrow">The standard</p>
-            <h2 id="standard-title">Every lesson has somewhere to go.</h2>
+            <h2 id="standard-title">Every result should lead to the next try.</h2>
           </div>
           <div className="about-standard-details">
             <p className="about-standard-label">Live now</p>
             <ul className="about-standard-list">
               <li>
-                One complete 18-minute semantic HTML lesson with a saved
-                workspace, assignment, quiz, notes, and revision.
+                Read one complete 18-minute semantic HTML lesson, then save your
+                workspace, assignment, quiz result, notes, and revision.
               </li>
               <li>
-                A lesson-bound semantic HTML tutor that answers from the course
-                and cites the relevant section.
-              </li>
-              <li>A private course certificate after passing at 75%.</li>
-              <li>
-                A private learner profile for saved course and JavaScript
-                progress.
+                Build a private semantic HTML field guide and revise it against
+                six clear review checks.
               </li>
               <li>
-                A private five-question JavaScript fundamentals interview
-                drill.
+                Work through {javascriptProblemCount} browser-run JavaScript
+                problems with saved code, verdicts, and Accepted progress.
               </li>
-              <li>A private saved JavaScript playground.</li>
               <li>
-                Six beginner JavaScript problems with browser-run verdicts and
-                saved Accepted progress.
+                Return after sign-in to your best quiz result, private learner
+                profile, and first unfinished practice step.
               </li>
             </ul>
             <p className="about-standard-planned">
-              <span>Planned next</span>
-              The guided semantic HTML field-guide project and its six-check
-              review are not live yet.
+              <span>Also live</span>
+              A lesson-bound semantic HTML tutor, private course certificate,
+              five-question JavaScript fundamentals interview drill, and
+              private saved JavaScript playground.
             </p>
           </div>
         </section>

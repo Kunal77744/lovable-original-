@@ -9,6 +9,7 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import type { GuidedProjectCheck } from "@/lib/guided-project";
 
 export const user = pgTable(
@@ -19,7 +20,9 @@ export const user = pgTable(
     email: text("email").notNull(),
     emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -33,7 +36,9 @@ export const session = pgTable(
     id: text("id").primaryKey(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     token: text("token").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -69,7 +74,9 @@ export const account = pgTable(
     }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -90,7 +97,9 @@ export const verification = pgTable(
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -117,7 +126,9 @@ export const course = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     status: text("status").notNull().default("topic-selection"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -160,7 +171,9 @@ export const courseFeedback = pgTable(
       .references(() => course.id, { onDelete: "cascade" }),
     usefulness: text("usefulness").notNull(),
     comment: text("comment"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -182,14 +195,14 @@ export const learnerSetting = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     certificateDisplayName: text("certificate_display_name").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    uniqueIndex("learner_setting_user_unique").on(table.userId),
-  ],
+  (table) => [uniqueIndex("learner_setting_user_unique").on(table.userId)],
 );
 
 export const lesson = pgTable(
@@ -205,14 +218,19 @@ export const lesson = pgTable(
     moduleTitle: text("module_title").notNull(),
     position: integer("position").notNull(),
     estimatedMinutes: integer("estimated_minutes").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [
     uniqueIndex("lesson_course_slug_unique").on(table.courseId, table.slug),
-    uniqueIndex("lesson_course_position_unique").on(table.courseId, table.position),
+    uniqueIndex("lesson_course_position_unique").on(
+      table.courseId,
+      table.position,
+    ),
     index("lesson_course_id_idx").on(table.courseId),
   ],
 );
@@ -229,7 +247,10 @@ export const lessonProgress = pgTable(
       .references(() => lesson.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("in-progress"),
     quizScore: integer("quiz_score").notNull().default(0),
-    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    furthestSection: integer("furthest_section").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -255,7 +276,9 @@ export const lessonArtifact = pgTable(
       .notNull()
       .references(() => lesson.id, { onDelete: "cascade" }),
     html: text("html").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -280,7 +303,9 @@ export const lessonNote = pgTable(
       .notNull()
       .references(() => lesson.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -309,7 +334,9 @@ export const guidedProject = pgTable(
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     completionId: text("completion_id"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -333,7 +360,9 @@ export const guidedProjectFeedback = pgTable(
     projectSlug: text("project_slug").notNull(),
     confidence: text("confidence").notNull(),
     comment: text("comment"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -382,7 +411,9 @@ export const earlyAccessSignup = pgTable(
     id: text("id").primaryKey(),
     email: text("email").notNull(),
     courseSlug: text("course_slug").notNull().default("first-course"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("early_access_signup_email_course_unique").on(
@@ -403,7 +434,9 @@ export const codingProblemProgress = pgTable(
     code: text("code").notNull(),
     bestVerdict: text("best_verdict"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -425,10 +458,13 @@ export const codingSubmission = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     problemSlug: text("problem_slug").notNull(),
+    code: text("code"),
     verdict: text("verdict").notNull(),
     passedTests: integer("passed_tests").notNull(),
     totalTests: integer("total_tests").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     index("coding_submission_user_problem_idx").on(
@@ -436,6 +472,337 @@ export const codingSubmission = pgTable(
       table.problemSlug,
     ),
     index("coding_submission_user_id_idx").on(table.userId),
+  ],
+);
+
+export const codingPracticeGoal = pgTable(
+  "coding_practice_goal",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    targetActiveDays: integer("target_active_days").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_practice_goal_user_unique").on(table.userId),
+    index("coding_practice_goal_user_id_idx").on(table.userId),
+  ],
+);
+
+export const dailyCodingChallengeCompletion = pgTable(
+  "daily_coding_challenge_completion",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeDate: text("challenge_date").notNull(),
+    problemSlug: text("problem_slug").notNull(),
+    submissionId: text("submission_id")
+      .notNull()
+      .references(() => codingSubmission.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("daily_coding_challenge_user_date_unique").on(
+      table.userId,
+      table.challengeDate,
+    ),
+    index("daily_coding_challenge_user_id_idx").on(table.userId),
+  ],
+);
+
+export const codingProblemBookmark = pgTable(
+  "coding_problem_bookmark",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_bookmark_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_bookmark_user_id_idx").on(table.userId),
+  ],
+);
+
+export const codingProblemNote = pgTable(
+  "coding_problem_note",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_note_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_note_user_id_idx").on(table.userId),
+  ],
+);
+
+export const codingProblemTestCaseSet = pgTable(
+  "coding_problem_test_case_set",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    inputs: jsonb("inputs").$type<string[]>().notNull(),
+    expectedOutputs: jsonb("expected_outputs")
+      .$type<(string | null)[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_problem_test_case_set_user_problem_unique").on(
+      table.userId,
+      table.problemSlug,
+    ),
+    index("coding_problem_test_case_set_user_id_idx").on(table.userId),
+  ],
+);
+
+export const cssPracticeProgress = pgTable(
+  "css_practice_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSlug: text("challenge_slug").notNull(),
+    css: text("css").notNull(),
+    bestVerdict: text("best_verdict"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_practice_progress_user_challenge_unique").on(
+      table.userId,
+      table.challengeSlug,
+    ),
+    index("css_practice_progress_user_id_idx").on(table.userId),
+  ],
+);
+
+export const cssPracticeAttempt = pgTable(
+  "css_practice_attempt",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSlug: text("challenge_slug").notNull(),
+    verdict: text("verdict").notNull(),
+    passedChecks: integer("passed_checks").notNull(),
+    totalChecks: integer("total_checks").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("css_practice_attempt_user_challenge_idx").on(
+      table.userId,
+      table.challengeSlug,
+    ),
+    index("css_practice_attempt_user_id_idx").on(table.userId),
+  ],
+);
+
+export const cssPracticeFeedback = pgTable(
+  "css_practice_feedback",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    pathSlug: text("path_slug").notNull(),
+    usefulness: text("usefulness").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_practice_feedback_user_path_unique").on(
+      table.userId,
+      table.pathSlug,
+    ),
+    index("css_practice_feedback_user_id_idx").on(table.userId),
+  ],
+);
+
+export const practiceFeedback = pgTable(
+  "practice_feedback",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    problemSlug: text("problem_slug").notNull(),
+    usefulness: text("usefulness").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("practice_feedback_user_unique").on(table.userId),
+    index("practice_feedback_user_id_idx").on(table.userId),
+  ],
+);
+
+export const codingLabExerciseProgress = pgTable(
+  "coding_lab_exercise_progress",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    labSlug: text("lab_slug").notNull(),
+    exerciseId: text("exercise_id").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_lab_progress_user_lab_exercise_unique").on(
+      table.userId,
+      table.labSlug,
+      table.exerciseId,
+    ),
+    index("coding_lab_progress_user_id_idx").on(table.userId),
+  ],
+);
+
+export const javascriptReadinessResult = pgTable(
+  "javascript_readiness_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    recommendedLabSlug: text("recommended_lab_slug").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("javascript_readiness_result_user_unique").on(table.userId),
+    index("javascript_readiness_result_user_id_idx").on(table.userId),
+  ],
+);
+
+export const javascriptMixedReviewResult = pgTable(
+  "javascript_mixed_review_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    nextDueAt: timestamp("next_due_at", { withTimezone: true }).notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("javascript_mixed_review_result_user_unique").on(table.userId),
+    index("javascript_mixed_review_result_user_id_idx").on(table.userId),
+  ],
+);
+
+export const webFoundationsReviewResult = pgTable(
+  "web_foundations_review_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    nextDueAt: timestamp("next_due_at", { withTimezone: true }).notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("web_foundations_review_result_user_unique").on(table.userId),
+    index("web_foundations_review_result_user_id_idx").on(table.userId),
   ],
 );
 
@@ -450,7 +817,9 @@ export const courseCertificate = pgTable(
       .notNull()
       .references(() => course.id, { onDelete: "cascade" }),
     awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     uniqueIndex("course_certificate_user_course_unique").on(
@@ -469,7 +838,10 @@ export const playgroundFile = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     code: text("code").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    quickChecks: text("quick_checks").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

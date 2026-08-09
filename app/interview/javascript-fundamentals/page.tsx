@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { InterviewDrill } from "@/components/interview-drill";
 import { getInterviewDrillForStudent } from "@/db/interview-drill";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { JAVASCRIPT_INTERVIEW_DRILL } from "@/lib/interview-drill";
 import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
 
@@ -25,7 +26,7 @@ export default async function JavaScriptInterviewDrillPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/interview/javascript-fundamentals"));
   }
 
   const progress = await getInterviewDrillForStudent(

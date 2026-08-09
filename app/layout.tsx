@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import "./globals.css";
 import { PublicPageviews } from "./public-pageviews";
 
+const javascriptProblemCount = CODING_PROBLEMS.length;
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://lovable-original-eight.vercel.app"),
-  title: "Lovable Original | Web Development Foundations",
+  title: "Lovable Original | Learn coding by doing",
   description:
-    "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
+    `Take one 18-minute semantic HTML lesson, build and check saved work, then continue into ${javascriptProblemCount} browser-run JavaScript problems.`,
   alternates: {
     canonical: "/",
   },
@@ -15,24 +18,23 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "/",
     siteName: "Lovable Original",
-    title: "Lovable Original | Web Development Foundations",
+    title: "Lovable Original | Learn coding by doing",
     description:
-      "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
+      `Take one 18-minute semantic HTML lesson, build and check saved work, then continue into ${javascriptProblemCount} browser-run JavaScript problems.`,
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt:
-          "Lovable Original Web Development Foundations: learn semantic HTML, build and save a page, and check your recall.",
+        alt: `Lovable Original: learn coding through a short lesson, saved semantic HTML work, and ${javascriptProblemCount} JavaScript problems.`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lovable Original | Web Development Foundations",
+    title: "Lovable Original | Learn coding by doing",
     description:
-      "Build and save a semantic HTML page in one 18-minute lesson, check your recall with four questions, and return to your saved result.",
+      `Take one 18-minute semantic HTML lesson, build and check saved work, then continue into ${javascriptProblemCount} browser-run JavaScript problems.`,
     images: ["/opengraph-image"],
   },
 };
@@ -43,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
         {children}
         <PublicPageviews />

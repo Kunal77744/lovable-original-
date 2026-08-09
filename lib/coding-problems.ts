@@ -1,4 +1,4 @@
-export type CodingProblemDifficulty = "Beginner";
+export type CodingProblemDifficulty = "Beginner" | "Intermediate";
 
 export type CodingProblemExample = {
   input: string;
@@ -11,6 +11,12 @@ export type CodingProblemTestCase = {
   expectedOutput: string;
 };
 
+export type CodingProblemExplanation = {
+  concept: string;
+  whyItWorks: string;
+  commonMistake: string;
+};
+
 export type CodingProblem = {
   slug: string;
   number: number;
@@ -20,10 +26,18 @@ export type CodingProblem = {
   statement: string;
   inputFormat: string;
   outputFormat: string;
+  recoveryHint: string;
+  recoveryHints: [string, string];
+  acceptedExplanation: CodingProblemExplanation;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
 };
+
+export const CODING_SOLUTION_SCAFFOLD = `function solve(input) {
+  // Read the problem, use input, and return the exact output.
+  return "";
+}`;
 
 export const CODING_PROBLEMS: CodingProblem[] = [
   {
@@ -36,6 +50,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read two whole numbers from one line and return their sum. The numbers may be positive, negative, or zero.",
     inputFormat: "One line containing two space-separated integers: a b.",
     outputFormat: "One integer: a + b.",
+    recoveryHint:
+      "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
+    recoveryHints: [
+      "Inspect the two input tokens before you add them. If either still behaves like text, arithmetic will not produce the intended total.",
+      "Use one negative case and the zero case from your private tests. The same conversion and return path should handle both without a special branch.",
+    ],
+    acceptedExplanation: {
+      concept: "Parse text before arithmetic",
+      whyItWorks:
+        "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
+      commonMistake:
+        'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    },
     examples: [
       {
         input: "4 9",
@@ -48,11 +75,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "Adding 3 to -8 gives -5.",
       },
     ],
-    starterCode: `function solve(input) {
-  const [a, b] = input.trim().split(/\\s+/).map(Number);
-
-  return String(a + b);
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "4 9", expectedOutput: "13" },
       { input: "-8 3", expectedOutput: "-5" },
@@ -70,6 +93,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read one whole number. Return "Even" when it is divisible by 2 and "Odd" otherwise.',
     inputFormat: "One integer n.",
     outputFormat: 'The exact word "Even" or "Odd".',
+    recoveryHint:
+      "Trace the remainder for zero, an even positive number, and a negative odd number. Then check the exact capitalization of the word you return.",
+    recoveryHints: [
+      "Write down the remainder produced by dividing the input by 2. Only one remainder should map to Even.",
+      "Check the exact returned word after the condition. The judge compares capitalization as well as the branch.",
+    ],
+    acceptedExplanation: {
+      concept: "Remainders reveal divisibility",
+      whyItWorks:
+        "Every even integer leaves a remainder of zero when divided by 2. Odd integers do not, including negative ones.",
+      commonMistake:
+        'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
+    },
     examples: [
       {
         input: "17",
@@ -82,11 +118,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "24 is divisible by 2.",
       },
     ],
-    starterCode: `function solve(input) {
-  const number = Number(input.trim());
-
-  return number % 2 === 0 ? "Even" : "Odd";
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "17", expectedOutput: "Odd" },
       { input: "24", expectedOutput: "Even" },
@@ -104,6 +136,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one whole number and return its first ten multiples, from 1 × n through 10 × n.",
     inputFormat: "One integer n.",
     outputFormat: "Ten multiples separated by a single space.",
+    recoveryHint:
+      "Count your loop boundaries. The result needs exactly ten values, starting with the first multiple and ending with the tenth, separated by single spaces.",
+    recoveryHints: [
+      "List the first and last multiplier your loop visits. They should account for ten results, not nine or eleven.",
+      "Build the ten values first, then join them once. Extra separators or line breaks change the judged output.",
+    ],
+    acceptedExplanation: {
+      concept: "Loop boundaries define the sequence",
+      whyItWorks:
+        "Visiting multipliers 1 through 10 once creates ten ordered values. Joining them once keeps the spacing exact.",
+      commonMistake:
+        "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
+    },
     examples: [
       {
         input: "5",
@@ -111,16 +156,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "These are 5 multiplied by 1 through 10.",
       },
     ],
-    starterCode: `function solve(input) {
-  const number = Number(input.trim());
-  const multiples = [];
-
-  for (let step = 1; step <= 10; step += 1) {
-    multiples.push(number * step);
-  }
-
-  return multiples.join(" ");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5", expectedOutput: "5 10 15 20 25 30 35 40 45 50" },
       { input: "1", expectedOutput: "1 2 3 4 5 6 7 8 9 10" },
@@ -139,6 +175,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n space-separated integers.",
     outputFormat: "The largest integer in the list.",
+    recoveryHint:
+      "Separate the leading count from the values you compare. Test an all-negative list so a starting value of zero cannot hide the mistake.",
+    recoveryHints: [
+      "Ignore the first token after using it as the count. Only the values on the list should compete for the maximum.",
+      "Choose the first list value as your starting comparison. That keeps an all-negative list below zero instead of inventing zero.",
+    ],
+    acceptedExplanation: {
+      concept: "Compare only the data values",
+      whyItWorks:
+        "Separating the leading count leaves only the values that should compete for the maximum, including values below zero.",
+      commonMistake:
+        "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
+    },
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -146,12 +195,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "19 is greater than every other value in the list.",
       },
     ],
-    starterCode: `function solve(input) {
-  const values = input.trim().split(/\\s+/).map(Number);
-  const numbers = values.slice(1);
-
-  return String(Math.max(...numbers));
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5\n7 2 19 4 11", expectedOutput: "19" },
       { input: "4\n-8 -3 -21 -6", expectedOutput: "-3" },
@@ -169,6 +213,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one lowercase word and return its characters in reverse order.",
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: "The same word reversed.",
+    recoveryHint:
+      "Trace one character from each end of the word. Check that every character appears once and that the returned text has no extra spaces.",
+    recoveryHints: [
+      "Check the index of the first character you append and the last character you append. They should be opposite ends of the word.",
+      "Compare the output length with the input length. A mismatch means a character was skipped, repeated, or joined with extra text.",
+    ],
+    acceptedExplanation: {
+      concept: "Order can change without changing characters",
+      whyItWorks:
+        "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
+      commonMistake:
+        "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+    },
     examples: [
       {
         input: "semantic",
@@ -181,11 +238,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "A palindrome is unchanged when reversed.",
       },
     ],
-    starterCode: `function solve(input) {
-  const word = input.trim();
-
-  return word.split("").reverse().join("");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "semantic", expectedOutput: "citnames" },
       { input: "level", expectedOutput: "level" },
@@ -203,6 +256,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Return the numbers from 1 to n. Replace multiples of 3 with "Fizz", multiples of 5 with "Buzz", and multiples of both with "FizzBuzz".',
     inputFormat: "One positive integer n.",
     outputFormat: "The sequence from 1 to n, separated by a single space.",
+    recoveryHint:
+      "Check the overlap before either single divisibility case. A multiple of both 3 and 5 needs one token, and the sequence still needs to include n.",
+    recoveryHints: [
+      "For 15, decide which condition should win before you handle divisibility by only 3 or only 5.",
+      "Count from 1 through the input, including the final value, and collect one token per number before joining the sequence.",
+    ],
+    acceptedExplanation: {
+      concept: "Handle overlapping rules first",
+      whyItWorks:
+        "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
+      commonMistake:
+        "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+    },
     examples: [
       {
         input: "5",
@@ -210,19 +276,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation: "3 becomes Fizz and 5 becomes Buzz.",
       },
     ],
-    starterCode: `function solve(input) {
-  const limit = Number(input.trim());
-  const answer = [];
-
-  for (let number = 1; number <= limit; number += 1) {
-    if (number % 15 === 0) answer.push("FizzBuzz");
-    else if (number % 3 === 0) answer.push("Fizz");
-    else if (number % 5 === 0) answer.push("Buzz");
-    else answer.push(String(number));
-  }
-
-  return answer.join(" ");
-}`,
+    starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
       { input: "5", expectedOutput: "1 2 Fizz 4 Buzz" },
       {
@@ -236,6 +290,265 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         expectedOutput:
           "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz 16 17 Fizz 19 Buzz",
       },
+    ],
+  },
+  {
+    slug: "count-vowels",
+    number: 7,
+    title: "Count vowels",
+    skill: "String traversal",
+    difficulty: "Beginner",
+    statement:
+      "Read one lowercase word and return how many characters are vowels. Treat a, e, i, o, and u as vowels.",
+    inputFormat: "One lowercase word with no spaces.",
+    outputFormat: "One integer: the number of vowels in the word.",
+    recoveryHint:
+      "Visit every character once and compare it with the complete five-vowel set. Test a word with repeated vowels and a word with none.",
+    recoveryHints: [
+      "Trace the counter after every character in a word such as queue. It should change for each vowel, including repeated vowels.",
+      "Keep all five lowercase vowels in one membership check. A word with no matching characters should return zero without a special case.",
+    ],
+    acceptedExplanation: {
+      concept: "Traverse and classify each character",
+      whyItWorks:
+        "Checking each character against the vowel set counts every match once, including repeated vowels, while consonants leave the total unchanged.",
+      commonMistake:
+        "Checking only whether a word contains a vowel returns a yes-or-no result instead of counting every occurrence.",
+    },
+    examples: [
+      {
+        input: "javascript",
+        output: "3",
+        explanation: "The vowels are a, a, and i.",
+      },
+      {
+        input: "rhythm",
+        output: "0",
+        explanation: "None of the five lowercase vowels appears.",
+      },
+    ],
+    starterCode: CODING_SOLUTION_SCAFFOLD,
+    tests: [
+      { input: "javascript", expectedOutput: "3" },
+      { input: "rhythm", expectedOutput: "0" },
+      { input: "queue", expectedOutput: "4" },
+      { input: "a", expectedOutput: "1" },
+    ],
+  },
+  {
+    slug: "unique-values",
+    number: 8,
+    title: "Keep unique values",
+    skill: "Sets",
+    difficulty: "Beginner",
+    statement:
+      "Read a list of whole numbers and return each value only the first time it appears, preserving the original order.",
+    inputFormat:
+      "The first line contains n. The second line contains n space-separated integers.",
+    outputFormat: "The unique values in their original order, separated by one space.",
+    recoveryHint:
+      "Separate the leading count from the values, then track what you have already emitted. Test repeated negatives and a list containing only one value.",
+    recoveryHints: [
+      "Walk from left to right and decide whether each value has appeared earlier. Preserve the value only on its first visit.",
+      "Do not sort the values before removing duplicates. The required order is the same order as each value's first appearance.",
+    ],
+    acceptedExplanation: {
+      concept: "Use a set to remember prior values",
+      whyItWorks:
+        "A set answers whether a value was seen before, while the left-to-right traversal preserves first-appearance order in the result.",
+      commonMistake:
+        "Converting the list to a sorted set changes the required order even when the unique values are correct.",
+    },
+    examples: [
+      {
+        input: "7\n4 2 4 3 2 3 9",
+        output: "4 2 3 9",
+        explanation: "Only the first appearance of each value remains.",
+      },
+    ],
+    starterCode: CODING_SOLUTION_SCAFFOLD,
+    tests: [
+      { input: "7\n4 2 4 3 2 3 9", expectedOutput: "4 2 3 9" },
+      { input: "5\n-1 -1 2 -1 2", expectedOutput: "-1 2" },
+      { input: "1\n8", expectedOutput: "8" },
+      { input: "6\n1 2 3 4 5 6", expectedOutput: "1 2 3 4 5 6" },
+    ],
+  },
+  {
+    slug: "balanced-brackets",
+    number: 9,
+    title: "Balanced brackets",
+    skill: "Stacks",
+    difficulty: "Intermediate",
+    statement:
+      'Read a string containing only (), [], and {}. Return "Balanced" when every opening bracket closes in the correct order, otherwise return "Not balanced".',
+    inputFormat: "One non-empty string containing only bracket characters.",
+    outputFormat: 'The exact words "Balanced" or "Not balanced".',
+    recoveryHint:
+      "Track the most recent unmatched opening bracket. Test crossed pairs, an early closing bracket, and leftover openings after the input ends.",
+    recoveryHints: [
+      "When a closing bracket arrives, compare it with the most recent unmatched opening bracket rather than any earlier opening.",
+      "A correct traversal can still finish with unmatched openings. Check that the stored opening-bracket stack is empty at the end.",
+    ],
+    acceptedExplanation: {
+      concept: "Last opened means first closed",
+      whyItWorks:
+        "A stack keeps the most recent unmatched opening bracket on top, so each closing bracket can be checked against the only valid partner.",
+      commonMistake:
+        "Counting opening and closing brackets can miss crossed pairs such as ([)] because the totals still match.",
+    },
+    examples: [
+      {
+        input: "{[()]}",
+        output: "Balanced",
+        explanation: "Every closing bracket matches the latest unmatched opening.",
+      },
+      {
+        input: "([)]",
+        output: "Not balanced",
+        explanation: "The pairs cross instead of closing in stack order.",
+      },
+    ],
+    starterCode: CODING_SOLUTION_SCAFFOLD,
+    tests: [
+      { input: "{[()]}", expectedOutput: "Balanced" },
+      { input: "([)]", expectedOutput: "Not balanced" },
+      { input: "]", expectedOutput: "Not balanced" },
+      { input: "(([]){})", expectedOutput: "Balanced" },
+      { input: "(()", expectedOutput: "Not balanced" },
+    ],
+  },
+  {
+    slug: "first-unique-character",
+    number: 10,
+    title: "First unique character",
+    skill: "Frequency maps",
+    difficulty: "Intermediate",
+    statement:
+      'Read one lowercase word and return its first character that appears exactly once. Return "None" when every character repeats.',
+    inputFormat: "One lowercase word with no spaces.",
+    outputFormat: 'The first non-repeating character, or the exact word "None".',
+    recoveryHint:
+      "Count every character before choosing the answer, then scan in the original order. Test a unique character near the end and a word with no answer.",
+    recoveryHints: [
+      "Build the complete frequency count first. A character that looks unique early may appear again later in the word.",
+      "Use a second left-to-right pass to choose the answer. Iterating map keys alone can make the intended original-order rule less explicit.",
+    ],
+    acceptedExplanation: {
+      concept: "Separate counting from ordered selection",
+      whyItWorks:
+        "The frequency map proves which characters occur once, and the second pass preserves the word's order when selecting the first one.",
+      commonMistake:
+        "Returning the first character before the complete count is known can choose a character that repeats later.",
+    },
+    examples: [
+      {
+        input: "swiss",
+        output: "w",
+        explanation: "s repeats, while w is the first character seen exactly once.",
+      },
+      {
+        input: "aabb",
+        output: "None",
+        explanation: "Every character appears more than once.",
+      },
+    ],
+    starterCode: CODING_SOLUTION_SCAFFOLD,
+    tests: [
+      { input: "swiss", expectedOutput: "w" },
+      { input: "aabb", expectedOutput: "None" },
+      { input: "level", expectedOutput: "v" },
+      { input: "z", expectedOutput: "z" },
+    ],
+  },
+  {
+    slug: "binary-search-index",
+    number: 11,
+    title: "Binary search index",
+    skill: "Binary search",
+    difficulty: "Intermediate",
+    statement:
+      "Read a sorted list of distinct whole numbers and a target. Return the zero-based index of the target, or -1 when it is absent.",
+    inputFormat:
+      "The first line contains n. The second line contains n sorted integers. The third line contains the target.",
+    outputFormat: "The target's zero-based index, or -1 when the target is absent.",
+    recoveryHint:
+      "Keep an inclusive left and right boundary, recompute the midpoint after each change, and test the first, last, missing, and single-value cases.",
+    recoveryHints: [
+      "After comparing the midpoint with the target, discard the midpoint itself from the half that cannot contain the answer.",
+      "Use a loop condition that still checks a one-value search range. The first and last positions should both remain reachable.",
+    ],
+    acceptedExplanation: {
+      concept: "Discard half of a sorted range",
+      whyItWorks:
+        "Comparing the target with the midpoint proves which half cannot contain it, shrinking the remaining sorted range until found or empty.",
+      commonMistake:
+        "Keeping the midpoint inside the next range can cause an infinite loop when only one or two positions remain.",
+    },
+    examples: [
+      {
+        input: "6\n-4 0 3 7 12 20\n7",
+        output: "3",
+        explanation: "7 appears at zero-based index 3.",
+      },
+      {
+        input: "4\n2 5 8 11\n6",
+        output: "-1",
+        explanation: "6 does not appear in the sorted list.",
+      },
+    ],
+    starterCode: CODING_SOLUTION_SCAFFOLD,
+    tests: [
+      { input: "6\n-4 0 3 7 12 20\n7", expectedOutput: "3" },
+      { input: "4\n2 5 8 11\n6", expectedOutput: "-1" },
+      { input: "5\n1 4 9 15 22\n1", expectedOutput: "0" },
+      { input: "5\n1 4 9 15 22\n22", expectedOutput: "4" },
+      { input: "1\n-3\n-3", expectedOutput: "0" },
+    ],
+  },
+  {
+    slug: "maximum-window-sum",
+    number: 12,
+    title: "Maximum window sum",
+    skill: "Sliding windows",
+    difficulty: "Intermediate",
+    statement:
+      "Read a list of whole numbers and a window size k. Return the largest sum among all contiguous groups of exactly k values.",
+    inputFormat:
+      "The first line contains n and k. The second line contains n space-separated integers, where 1 ≤ k ≤ n.",
+    outputFormat: "One integer: the largest sum of any contiguous window of size k.",
+    recoveryHint:
+      "Build the first complete window, then move one position at a time by removing the outgoing value and adding the incoming value. Test all-negative data.",
+    recoveryHints: [
+      "Compute the sum of exactly the first k values before comparing windows. Each later step should exchange one outgoing value for one incoming value.",
+      "Initialize the best sum from a real window rather than zero. Otherwise an all-negative list can produce a sum that no window actually has.",
+    ],
+    acceptedExplanation: {
+      concept: "Reuse overlapping window work",
+      whyItWorks:
+        "Adjacent windows share all but two values, so subtracting the outgoing value and adding the incoming one updates each sum in constant time.",
+      commonMistake:
+        "Starting the best sum at zero gives the wrong answer when every valid window has a negative sum.",
+    },
+    examples: [
+      {
+        input: "6 3\n2 1 5 1 3 2",
+        output: "9",
+        explanation: "The window 5 1 3 has the largest sum, 9.",
+      },
+      {
+        input: "4 2\n-5 -2 -8 -1",
+        output: "-7",
+        explanation: "The first two values form the least-negative window sum.",
+      },
+    ],
+    starterCode: CODING_SOLUTION_SCAFFOLD,
+    tests: [
+      { input: "6 3\n2 1 5 1 3 2", expectedOutput: "9" },
+      { input: "4 2\n-5 -2 -8 -1", expectedOutput: "-7" },
+      { input: "5 1\n4 9 2 7 3", expectedOutput: "9" },
+      { input: "5 5\n1 2 3 4 5", expectedOutput: "15" },
+      { input: "7 2\n3 3 3 10 -5 8 8", expectedOutput: "16" },
     ],
   },
 ];
@@ -255,7 +568,7 @@ export function getCodingProblemPreview(slug: string) {
 
   return {
     title: `${problem.title} JavaScript problem | Lovable Original`,
-    description: `${problem.title}: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
+    description: `${problem.title}: solve this ${problem.difficulty.toLowerCase()} JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
   };
 }
 

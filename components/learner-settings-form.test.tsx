@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -97,5 +98,80 @@ describe("LearnerSettingsForm", () => {
       ).toBeInTheDocument(),
     );
     expect(screen.getByDisplayValue("Asha!")).toBeInTheDocument();
+  });
+
+  it("keeps a newer certificate name visibly unsaved when an older save finishes", async () => {
+    let finishSave: ((value: unknown) => void) | undefined;
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishSave = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          settings: {
+            certificateDisplayName: "Asha Singh Patel",
+            updatedAt: "2026-07-28T03:00:00.000Z",
+          },
+        }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LearnerSettingsForm
+        initialSettings={{
+          certificateDisplayName: "Asha",
+          updatedAt: "2026-07-28T01:00:00.000Z",
+        }}
+      />,
+    );
+
+    const nameInput = screen.getByLabelText("Certificate display name");
+    fireEvent.change(nameInput, { target: { value: "Asha Singh" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save certificate name" }),
+    );
+
+    fireEvent.change(nameInput, { target: { value: "Asha Singh Patel" } });
+
+    await act(async () => {
+      finishSave?.({
+        ok: true,
+        json: async () => ({
+          settings: {
+            certificateDisplayName: "Asha Singh",
+            updatedAt: "2026-07-28T02:00:00.000Z",
+          },
+        }),
+      });
+    });
+
+    expect(nameInput).toHaveValue("Asha Singh Patel");
+    expect(
+      screen.getByText(
+        "Certificate name saved. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save certificate name" }),
+    ).toBeEnabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save certificate name" }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/api/settings",
+      expect.objectContaining({
+        body: JSON.stringify({
+          certificateDisplayName: "Asha Singh Patel",
+        }),
+      }),
+    );
   });
 });

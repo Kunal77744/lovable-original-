@@ -3,9 +3,19 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CodingWorkspace } from "@/components/coding-workspace";
+import { ProblemBookmarkButton } from "@/components/problem-bookmark-button";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
-import { getCodingProblemForStudent } from "@/db/coding-practice";
+import {
+  getCodingProblemBookmarkForStudent,
+  getCodingProblemForStudent,
+  getCodingSubmissionForStudent,
+  getPracticeFeedbackForStudent,
+} from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import {
+  formatDailyCodingChallengeDate,
+  isCurrentDailyCodingChallenge,
+} from "@/lib/daily-coding-challenge";
 import {
   CODING_PROBLEM_COUNT,
   CODING_PROBLEMS,
@@ -18,6 +28,11 @@ export const dynamic = "force-dynamic";
 
 type ProblemPageProps = {
   params: Promise<{ problemSlug: string }>;
+  searchParams?: Promise<{
+    review?: string | string[];
+    submission?: string | string[];
+    daily?: string | string[];
+  }>;
 };
 
 export async function generateMetadata({
@@ -39,8 +54,14 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProblemPage({ params }: ProblemPageProps) {
+export default async function ProblemPage({ params, searchParams }: ProblemPageProps) {
   const { problemSlug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const submissionParam = resolvedSearchParams?.submission;
+  const requestedSubmissionId =
+    typeof submissionParam === "string" ? submissionParam : null;
+  const reviewParam = resolvedSearchParams?.review;
+  const dailyParam = resolvedSearchParams?.daily;
   const problem = getCodingProblem(problemSlug);
 
   if (!problem) notFound();
@@ -48,15 +69,50 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const studentState = await getCodingProblemForStudent(
-    session?.user.id ?? null,
-    problemSlug,
-  );
+  const [studentState, isBookmarked, requestedSubmission] = await Promise.all([
+    getCodingProblemForStudent(session?.user.id ?? null, problemSlug),
+    session
+      ? getCodingProblemBookmarkForStudent(session.user.id, problemSlug)
+      : Promise.resolve(false),
+    session && requestedSubmissionId
+      ? getCodingSubmissionForStudent(session.user.id, requestedSubmissionId)
+      : Promise.resolve(null),
+  ]);
 
   if (!studentState) notFound();
 
+  const practiceFeedbackState = session
+    ? await getPracticeFeedbackForStudent(session.user.id, problemSlug)
+    : { isEligible: false, feedback: null };
+
+  if (!practiceFeedbackState) notFound();
+
+  const isReviewSession = Boolean(session) && reviewParam === "1";
+  const dailyChallengeDate =
+    session &&
+    typeof dailyParam === "string" &&
+    isCurrentDailyCodingChallenge({
+      dateKey: dailyParam,
+      problemSlug,
+    })
+      ? dailyParam
+      : null;
+  const isDailyChallenge = Boolean(dailyChallengeDate);
+
   const previousProblem = CODING_PROBLEMS[problem.number - 2] ?? null;
   const nextProblem = CODING_PROBLEMS[problem.number] ?? null;
+  const loadedSubmission =
+    requestedSubmission?.problemSlug === problemSlug &&
+    requestedSubmission.code !== null
+      ? {
+          id: requestedSubmission.id,
+          code: requestedSubmission.code,
+          createdAt: requestedSubmission.createdAt,
+          verdict: requestedSubmission.verdict,
+          passedTests: requestedSubmission.passedTests,
+          totalTests: requestedSubmission.totalTests,
+        }
+      : null;
 
   return (
     <main>
@@ -70,9 +126,23 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
         tabIndex={-1}
       >
         <nav className="problem-breadcrumbs" aria-label="Problem navigation">
-          <Link href="/practice">Practice arena</Link>
+          <Link
+            href={
+              isDailyChallenge
+                ? "/practice/daily"
+                : isReviewSession
+                  ? "/practice/review"
+                  : "/practice"
+            }
+          >
+            {isDailyChallenge
+              ? "Daily challenge"
+              : isReviewSession
+                ? "Private review session"
+                : "Practice arena"}
+          </Link>
           <span aria-hidden="true">/</span>
-          <span>
+          <span aria-current="step">
             Step {problem.number} of {CODING_PROBLEM_COUNT}
           </span>
         </nav>
@@ -83,12 +153,24 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
               <p className="eyebrow">
                 Step {problem.number} of {CODING_PROBLEM_COUNT} · {problem.skill}
               </p>
+              {dailyChallengeDate ? (
+                <p className="daily-problem-context">
+                  Daily challenge · {formatDailyCodingChallengeDate(dailyChallengeDate)} UTC
+                </p>
+              ) : null}
               <h1>{problem.title}</h1>
               <div className="problem-meta">
                 <span>{problem.difficulty}</span>
                 <span>JavaScript</span>
                 <span>1,000 ms</span>
               </div>
+              {session ? (
+                <ProblemBookmarkButton
+                  initialBookmarked={Boolean(isBookmarked)}
+                  problemSlug={problem.slug}
+                  problemTitle={problem.title}
+                />
+              ) : null}
             </div>
 
             <section>
@@ -124,13 +206,32 @@ export default async function ProblemPage({ params }: ProblemPageProps) {
           </article>
 
           <CodingWorkspace
+            key={loadedSubmission?.id ?? "current-editor"}
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
-            initialCode={studentState.code}
+            initialCode={loadedSubmission?.code ?? studentState.code}
+            initialAcceptedCode={
+              loadedSubmission
+                ? loadedSubmission.verdict === "Accepted"
+                  ? loadedSubmission.code
+                  : null
+                : studentState.latestAcceptedCode
+            }
+            initialCustomTestCases={studentState.customTestCases}
+            initialPracticeFeedback={practiceFeedbackState.feedback}
+            initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}
+            isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
+            isReviewSession={isReviewSession}
+            dailyChallengeDate={dailyChallengeDate}
+            loadedSubmission={loadedSubmission}
             problem={{
               slug: problem.slug,
               title: problem.title,
+              recoveryHint: problem.recoveryHint,
+              recoveryHints: problem.recoveryHints,
+              acceptedExplanation: problem.acceptedExplanation,
+              starterCode: problem.starterCode,
               tests: problem.tests.map((test) => ({ input: test.input })),
               example: {
                 input: problem.examples[0].input,

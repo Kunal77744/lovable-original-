@@ -8,11 +8,11 @@ import {
 } from "./coding-problems";
 
 describe("coding problems", () => {
-  it("defines six distinct beginner problems with deterministic tests", () => {
-    expect(CODING_PROBLEMS).toHaveLength(6);
-    expect(new Set(CODING_PROBLEMS.map((problem) => problem.slug)).size).toBe(6);
+  it("defines 12 distinct ordered problems with deterministic tests", () => {
+    expect(CODING_PROBLEMS).toHaveLength(12);
+    expect(new Set(CODING_PROBLEMS.map((problem) => problem.slug)).size).toBe(12);
     expect(CODING_PROBLEMS.map((problem) => problem.number)).toEqual([
-      1, 2, 3, 4, 5, 6,
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
     ]);
     expect(CODING_PROBLEMS.map((problem) => problem.skill)).toEqual([
       "Input handling",
@@ -21,16 +21,58 @@ describe("coding problems", () => {
       "Arrays",
       "Strings",
       "Simple algorithms",
+      "String traversal",
+      "Sets",
+      "Stacks",
+      "Frequency maps",
+      "Binary search",
+      "Sliding windows",
     ]);
 
     for (const problem of CODING_PROBLEMS) {
       expect(problem.tests.length).toBeGreaterThanOrEqual(4);
       expect(problem.examples.length).toBeGreaterThan(0);
       expect(problem.starterCode).toContain("function solve(input)");
+      expect(problem.recoveryHint.length).toBeGreaterThan(80);
+      expect(problem.recoveryHints).toHaveLength(2);
+      expect(new Set(problem.recoveryHints).size).toBe(2);
+      for (const hint of problem.recoveryHints) {
+        expect(hint.length).toBeGreaterThan(80);
+        expect(hint).not.toContain("function solve");
+      }
+      expect(problem.acceptedExplanation.concept).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.whyItWorks).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.commonMistake).not.toHaveLength(0);
+      expect(JSON.stringify(problem.acceptedExplanation)).not.toContain(
+        "function solve",
+      );
     }
+    expect(
+      new Set(CODING_PROBLEMS.map((problem) => problem.recoveryHint)).size,
+    ).toBe(12);
+    expect(
+      new Set(
+        CODING_PROBLEMS.map(
+          (problem) => problem.acceptedExplanation.concept,
+        ),
+      ).size,
+    ).toBe(12);
   });
 
   it("grades normalized outputs without executing learner code", () => {
+    for (const problem of CODING_PROBLEMS) {
+      expect(
+        gradeCodingOutputs(
+          problem.slug,
+          problem.tests.map((test) => `${test.expectedOutput}\n`),
+        ),
+      ).toEqual({
+        verdict: "Accepted",
+        passedTests: problem.tests.length,
+        totalTests: problem.tests.length,
+      });
+    }
+
     expect(
       gradeCodingOutputs("sum-two-numbers", ["13\n", "-5", "0", "1000"]),
     ).toEqual({
@@ -60,61 +102,17 @@ describe("coding problems", () => {
       preview: getCodingProblemPreview(problem.slug),
     }));
 
-    expect(previews).toEqual([
-      {
-        slug: "sum-two-numbers",
-        preview: {
-          title: "Sum two numbers JavaScript problem | Lovable Original",
-          description:
-            "Sum two numbers: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
-        },
-      },
-      {
-        slug: "even-or-odd",
-        preview: {
-          title: "Even or odd JavaScript problem | Lovable Original",
-          description:
-            "Even or odd: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
-        },
-      },
-      {
-        slug: "multiplication-table",
-        preview: {
-          title:
-            "Multiplication table JavaScript problem | Lovable Original",
-          description:
-            "Multiplication table: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
-        },
-      },
-      {
-        slug: "largest-value",
-        preview: {
-          title: "Largest value JavaScript problem | Lovable Original",
-          description:
-            "Largest value: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
-        },
-      },
-      {
-        slug: "reverse-a-word",
-        preview: {
-          title: "Reverse a word JavaScript problem | Lovable Original",
-          description:
-            "Reverse a word: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
-        },
-      },
-      {
-        slug: "fizz-buzz",
-        preview: {
-          title: "FizzBuzz sequence JavaScript problem | Lovable Original",
-          description:
-            "FizzBuzz sequence: solve this beginner JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.",
-        },
-      },
-    ]);
+    for (const { slug, preview } of previews) {
+      const problem = CODING_PROBLEMS.find((candidate) => candidate.slug === slug);
+      expect(preview).toEqual({
+        title: `${problem?.title} JavaScript problem | Lovable Original`,
+        description: `${problem?.title}: solve this ${problem?.difficulty.toLowerCase()} JavaScript problem with browser-run checks. Sign in to save your code, attempts, and Accepted result.`,
+      });
+    }
 
-    expect(new Set(previews.map(({ preview }) => preview?.title)).size).toBe(6);
+    expect(new Set(previews.map(({ preview }) => preview?.title)).size).toBe(12);
     expect(new Set(previews.map(({ preview }) => preview?.description)).size).toBe(
-      6,
+      12,
     );
     expect(getCodingProblemPreview("missing-problem")).toBeNull();
   });

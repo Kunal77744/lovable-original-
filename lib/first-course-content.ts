@@ -18,7 +18,33 @@ export const FIRST_LESSON = {
   estimatedMinutes: 18,
 } as const;
 
-export const FIRST_COURSE_LESSONS = [FIRST_LESSON] as const;
+export const SECOND_LESSON = {
+  id: "web-development-foundations-css-selectors-box-model",
+  slug: "css-selectors-box-model",
+  title: "Style a card without guessing",
+  description:
+    "Use CSS selectors and the box model to style a predictable learning card, then return to your saved practice after sign-in.",
+  moduleTitle: "Module 2 · CSS foundations",
+  position: 2,
+  estimatedMinutes: 16,
+} as const;
+
+export const THIRD_LESSON = {
+  id: "web-development-foundations-responsive-css-grid",
+  slug: "responsive-css-grid",
+  title: "Build a layout that adapts",
+  description:
+    "Use CSS Grid, minmax(), and gap to make a resource layout respond to available space, then recover the exact saved practice after sign-in.",
+  moduleTitle: "Module 3 · Responsive layout",
+  position: 3,
+  estimatedMinutes: 17,
+} as const;
+
+export const FIRST_COURSE_LESSONS = [
+  FIRST_LESSON,
+  SECOND_LESSON,
+  THIRD_LESSON,
+] as const;
 
 export type QuizChoice = {
   id: string;
@@ -65,12 +91,12 @@ export const FIRST_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
   },
   {
     id: "article-choice",
-    prompt:
-      "When is <article> a better choice than a generic <div>?",
+    prompt: "When is <article> a better choice than a generic <div>?",
     choices: [
       {
         id: "standalone",
-        label: "When the content can stand on its own or be reused independently",
+        label:
+          "When the content can stand on its own or be reused independently",
       },
       {
         id: "green",
@@ -109,6 +135,130 @@ export const FIRST_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
   },
 ] as const;
 
+export const SECOND_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
+  {
+    id: "class-selector",
+    prompt: 'Which selector targets every element with class="learning-card"?',
+    choices: [
+      { id: "class", label: ".learning-card" },
+      { id: "element", label: "learning-card" },
+      { id: "id", label: "#learning-card" },
+    ],
+    correctChoiceId: "class",
+    explanation:
+      "A leading dot targets a class, so .learning-card matches every element carrying that class name.",
+  },
+  {
+    id: "descendant-selector",
+    prompt: "What does .learning-card strong select?",
+    choices: [
+      {
+        id: "nested-strong",
+        label: "Every <strong> element inside .learning-card",
+      },
+      {
+        id: "both-classes",
+        label: "Elements with both learning-card and strong classes",
+      },
+      { id: "next-strong", label: "Only the next <strong> sibling" },
+    ],
+    correctChoiceId: "nested-strong",
+    explanation:
+      "The space creates a descendant selector: strong elements anywhere inside .learning-card are matched.",
+  },
+  {
+    id: "box-width",
+    prompt: "With box-sizing: border-box, what does width: 280px include?",
+    choices: [
+      {
+        id: "whole-box",
+        label: "Content, padding, and border inside the declared width",
+      },
+      { id: "content-only", label: "Only the content width" },
+      { id: "margin", label: "Content, padding, border, and margin" },
+    ],
+    correctChoiceId: "whole-box",
+    explanation:
+      "border-box keeps padding and border inside the declared width; margin always remains outside it.",
+  },
+  {
+    id: "spacing-choice",
+    prompt: "Which property creates space between a card’s content and border?",
+    choices: [
+      { id: "padding", label: "padding" },
+      { id: "margin", label: "margin" },
+      { id: "outline", label: "outline" },
+    ],
+    correctChoiceId: "padding",
+    explanation:
+      "Padding creates inner space between content and border; margin separates the entire element from its neighbours.",
+  },
+] as const;
+
+export const THIRD_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
+  {
+    id: "grid-container",
+    prompt: "What does display: grid change on .resource-grid?",
+    choices: [
+      {
+        id: "children",
+        label: "It arranges the container’s direct children as grid items",
+      },
+      { id: "text", label: "It turns every child into inline text" },
+      { id: "viewport", label: "It fixes the page to one viewport width" },
+    ],
+    correctChoiceId: "children",
+    explanation:
+      "display: grid creates a grid formatting context for the container’s direct children.",
+  },
+  {
+    id: "minmax-purpose",
+    prompt: "What does minmax(14rem, 1fr) describe?",
+    choices: [
+      {
+        id: "range",
+        label: "A track that stays at least 14rem and can share extra space",
+      },
+      { id: "fixed", label: "A track that is always exactly 14rem" },
+      { id: "margin", label: "A 14rem margin around every card" },
+    ],
+    correctChoiceId: "range",
+    explanation:
+      "minmax() gives the track a readable minimum while 1fr lets it grow with available space.",
+  },
+  {
+    id: "auto-fit-purpose",
+    prompt: "Why combine repeat() with auto-fit?",
+    choices: [
+      {
+        id: "available-space",
+        label:
+          "The browser can fit as many useful tracks as the container allows",
+      },
+      { id: "three", label: "The layout always creates exactly three columns" },
+      { id: "animation", label: "The cards animate when the page loads" },
+    ],
+    correctChoiceId: "available-space",
+    explanation:
+      "auto-fit responds to the container by adding or collapsing tracks as room changes.",
+  },
+  {
+    id: "gap-choice",
+    prompt: "Why is gap a strong choice for space between grid cards?",
+    choices: [
+      {
+        id: "container-rule",
+        label: "One container rule spaces every row and column consistently",
+      },
+      { id: "content", label: "It adds padding inside each card’s content" },
+      { id: "width", label: "It sets the minimum width of each card" },
+    ],
+    correctChoiceId: "container-rule",
+    explanation:
+      "gap belongs to the layout relationship, so it spaces tracks without per-card edge exceptions.",
+  },
+] as const;
+
 export const FIRST_LESSON_PASS_PERCENT = 75;
 
 export const FIRST_LESSON_REVISION = {
@@ -127,29 +277,44 @@ export const FIRST_LESSON_REVISION = {
       {
         id: "document-structure",
         label: "Document structure",
-        detail: "The page establishes its language and separates metadata from visible content.",
-        concepts: ["<html lang=\"en\">", "<head> metadata", "<body> content"],
+        detail:
+          "The page establishes its language and separates metadata from visible content.",
+        concepts: ['<html lang="en">', "<head> metadata", "<body> content"],
         selfCheck: "Can a browser identify the language and visible document?",
       },
       {
         id: "semantic-landmarks",
         label: "Semantic landmarks",
         detail: "Major regions name their purpose before styling is applied.",
-        concepts: ["<header> introduces", "<main> focuses", "<footer> supports"],
+        concepts: [
+          "<header> introduces",
+          "<main> focuses",
+          "<footer> supports",
+        ],
         selfCheck: "Is the article inside one clear <main> landmark?",
       },
       {
         id: "heading-outline",
         label: "Heading outline",
-        detail: "Headings turn the page topic and its direct sections into a readable hierarchy.",
-        concepts: ["One page <h1>", "Direct sections use <h2>", "Levels show hierarchy"],
+        detail:
+          "Headings turn the page topic and its direct sections into a readable hierarchy.",
+        concepts: [
+          "One page <h1>",
+          "Direct sections use <h2>",
+          "Levels show hierarchy",
+        ],
         selfCheck: "Can someone scan the headings and understand the article?",
       },
       {
         id: "article-assignment",
         label: "Article assignment",
-        detail: "The saved build combines standalone content with themed sections.",
-        concepts: ["<article> stands alone", "<section> groups a theme", "Each element has a job"],
+        detail:
+          "The saved build combines standalone content with themed sections.",
+        concepts: [
+          "<article> stands alone",
+          "<section> groups a theme",
+          "Each element has a job",
+        ],
         selfCheck: "Can you explain why every structural element is there?",
       },
     ],
@@ -172,8 +337,7 @@ export const FIRST_LESSON_REVISION = {
     },
     {
       label: "Outline",
-      detail:
-        "Use one clear <h1>, then <h2> headings for its direct sections.",
+      detail: "Use one clear <h1>, then <h2> headings for its direct sections.",
     },
   ],
   flashcards: [
@@ -203,7 +367,7 @@ export const FIRST_LESSON_REVISION = {
     },
     {
       id: "language",
-      prompt: "Why add lang=\"en\" to the <html> element?",
+      prompt: 'Why add lang="en" to the <html> element?',
       answer:
         "It tells assistive technology which pronunciation rules to use, making the page easier to understand.",
     },
@@ -212,14 +376,43 @@ export const FIRST_LESSON_REVISION = {
 
 export type QuizAnswers = Record<string, string>;
 
-export function gradeFirstLessonQuiz(answers: QuizAnswers) {
+export type QuizAttemptReviewItem = {
+  questionId: string;
+  correct: boolean;
+  explanation: string;
+};
+
+function getGradedLessonQuiz(lessonSlug: string) {
+  if (lessonSlug === FIRST_LESSON.slug) {
+    return FIRST_LESSON_QUIZ;
+  }
+
+  if (lessonSlug === SECOND_LESSON.slug) {
+    return SECOND_LESSON_QUIZ;
+  }
+
+  if (lessonSlug === THIRD_LESSON.slug) {
+    return THIRD_LESSON_QUIZ;
+  }
+
+  return null;
+}
+
+export function gradeLessonQuiz(lessonSlug: string, answers: QuizAnswers) {
+  const quiz = getGradedLessonQuiz(lessonSlug);
+
+  if (!quiz) {
+    return {
+      valid: false as const,
+      error: "Lesson not found.",
+    };
+  }
+
   const answeredQuestionIds = Object.keys(answers);
-  const knownQuestionIds = new Set(
-    FIRST_LESSON_QUIZ.map((question) => question.id),
-  );
+  const knownQuestionIds = new Set(quiz.map((question) => question.id));
 
   if (
-    answeredQuestionIds.length !== FIRST_LESSON_QUIZ.length ||
+    answeredQuestionIds.length !== quiz.length ||
     answeredQuestionIds.some((questionId) => !knownQuestionIds.has(questionId))
   ) {
     return {
@@ -228,24 +421,42 @@ export function gradeFirstLessonQuiz(answers: QuizAnswers) {
     };
   }
 
-  const correctCount = FIRST_LESSON_QUIZ.filter(
-    (question) => answers[question.id] === question.correctChoiceId,
-  ).length;
-  const score = Math.round((correctCount / FIRST_LESSON_QUIZ.length) * 100);
+  const review: QuizAttemptReviewItem[] = quiz.map((question) => ({
+    questionId: question.id,
+    correct: answers[question.id] === question.correctChoiceId,
+    explanation: question.explanation,
+  }));
+  const correctCount = review.filter((item) => item.correct).length;
+  const score = Math.round((correctCount / quiz.length) * 100);
 
   return {
     valid: true as const,
     score,
     passed: score >= FIRST_LESSON_PASS_PERCENT,
     correctCount,
-    totalCount: FIRST_LESSON_QUIZ.length,
+    totalCount: quiz.length,
+    review,
   };
 }
 
+export function gradeFirstLessonQuiz(answers: QuizAnswers) {
+  return gradeLessonQuiz(FIRST_LESSON.slug, answers);
+}
+
+export function getPublicLessonQuiz(
+  lessonSlug: string,
+): readonly QuizQuestion[] | null {
+  const quiz = getGradedLessonQuiz(lessonSlug);
+
+  return (
+    quiz?.map(({ id, prompt, choices }) => ({
+      id,
+      prompt,
+      choices,
+    })) ?? null
+  );
+}
+
 export function getPublicFirstLessonQuiz(): readonly QuizQuestion[] {
-  return FIRST_LESSON_QUIZ.map(({ id, prompt, choices }) => ({
-    id,
-    prompt,
-    choices,
-  }));
+  return getPublicLessonQuiz(FIRST_LESSON.slug) ?? [];
 }

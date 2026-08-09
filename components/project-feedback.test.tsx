@@ -123,4 +123,82 @@ describe("ProjectFeedback", () => {
       }),
     );
   });
+
+  it("keeps newer project feedback unsaved when an older save finishes late", async () => {
+    let resolveFirstSave: (response: Response) => void = () => undefined;
+    const firstSave = new Promise<Response>((resolve) => {
+      resolveFirstSave = resolve;
+    });
+    const fetchMock = vi
+      .fn()
+      .mockReturnValueOnce(firstSave)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            feedback: {
+              confidence: "confident",
+              comment: "The updated structure is clear.",
+              updatedAt: "2026-08-09T12:05:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ProjectFeedback
+        projectSlug="semantic-html-article"
+        initialFeedback={null}
+      />,
+    );
+
+    const comment = screen.getByPlaceholderText(
+      "One step, check, or idea that felt unclear",
+    );
+    fireEvent.click(screen.getByLabelText("Somewhat"));
+    fireEvent.change(comment, {
+      target: { value: "The first structure was confusing." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save feedback" }));
+
+    fireEvent.click(screen.getByLabelText("Confident"));
+    fireEvent.change(comment, {
+      target: { value: "The updated structure is clear." },
+    });
+    resolveFirstSave(
+      new Response(
+        JSON.stringify({
+          feedback: {
+            confidence: "somewhat",
+            comment: "The first structure was confusing.",
+            updatedAt: "2026-08-09T12:04:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    expect(
+      await screen.findByText(
+        "Your earlier feedback is saved. Newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Confident")).toBeChecked();
+    expect(comment).toHaveValue("The updated structure is clear.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Update feedback" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/projects/semantic-html-article/feedback",
+      expect.objectContaining({
+        body: JSON.stringify({
+          confidence: "confident",
+          comment: "The updated structure is clear.",
+        }),
+      }),
+    );
+  });
 });
