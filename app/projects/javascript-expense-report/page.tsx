@@ -3,9 +3,14 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { JavaScriptCapstoneWorkspace } from "@/components/javascript-capstone-workspace";
-import { getJavaScriptCapstoneForStudent } from "@/db/javascript-capstone";
+import {
+  getJavaScriptCapstoneForStudent,
+  getJavaScriptCapstoneSummary,
+} from "@/db/javascript-capstone";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 import {
+  getJavaScriptCapstoneAccess,
   JAVASCRIPT_CAPSTONE_SLUG,
   JAVASCRIPT_CAPSTONE_TITLE,
 } from "@/lib/javascript-capstone";
@@ -30,6 +35,16 @@ export default async function JavaScriptExpenseReportPage() {
 
   if (!session) {
     redirect("/account?mode=signin");
+  }
+
+  const [summary, labProgress] = await Promise.all([
+    getJavaScriptCapstoneSummary(session.user.id),
+    getJavaScriptLabCatalogProgress(session.user.id),
+  ]);
+  const access = getJavaScriptCapstoneAccess(summary, labProgress);
+
+  if (!access.available) {
+    redirect(access.continuationHref);
   }
 
   const project = await getJavaScriptCapstoneForStudent(session.user.id);
