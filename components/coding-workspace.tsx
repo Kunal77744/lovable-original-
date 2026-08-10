@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { KeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
@@ -708,6 +709,31 @@ export function CodingWorkspace({
     }
   }
 
+  function handleEditorKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    const usesPrimaryModifier = event.ctrlKey || event.metaKey;
+
+    if (
+      event.key !== "Enter" ||
+      !usesPrimaryModifier ||
+      event.altKey ||
+      event.repeat ||
+      event.nativeEvent.isComposing ||
+      (event.shiftKey && !isSignedIn)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (runState.kind === "running") return;
+
+    if (event.shiftKey) {
+      void submitSolution();
+      return;
+    }
+
+    void runExample();
+  }
+
   const visibleDebugOutput =
     runState.kind === "sample" ||
     runState.kind === "test-suite" ||
@@ -804,8 +830,10 @@ export function CodingWorkspace({
         <textarea
           id="coding-solution"
           aria-label="JavaScript solution"
+          aria-describedby="coding-editor-keyboard-hint"
           value={code}
           onChange={(event) => updateCode(event.target.value)}
+          onKeyDown={handleEditorKeyDown}
           onBlur={isCleanPractice ? undefined : saveDraftNow}
           spellCheck={false}
         />
@@ -862,16 +890,18 @@ export function CodingWorkspace({
       <div className="coding-actions">
         <span
           className="coding-keyboard-hint"
-          id="run-example-keyboard-hint"
+          id="coding-editor-keyboard-hint"
         >
-          Keyboard: Tab to Run, then Enter
+          {isSignedIn
+            ? "Keyboard: Ctrl/⌘ + Enter to run · add Shift to submit"
+            : "Keyboard: Ctrl/⌘ + Enter to run"}
         </span>
         <button
           className="secondary-code-action"
           type="button"
           onClick={runExample}
           disabled={runState.kind === "running"}
-          aria-describedby="run-example-keyboard-hint"
+          aria-describedby="coding-editor-keyboard-hint"
         >
           Run example
         </button>
@@ -881,6 +911,7 @@ export function CodingWorkspace({
             type="button"
             onClick={submitSolution}
             disabled={runState.kind === "running"}
+            aria-describedby="coding-editor-keyboard-hint"
           >
             {runState.kind === "running" ? "Running checks…" : "Submit solution"}
           </button>
