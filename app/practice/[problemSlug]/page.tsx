@@ -210,6 +210,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
             initialCode={loadedSubmission?.code ?? studentState.code}
+            hasSavedCode={studentState.hasSavedCode}
             initialAcceptedCode={
               loadedSubmission
                 ? loadedSubmission.verdict === "Accepted"

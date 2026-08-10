@@ -7987,23 +7987,36 @@ h1 {
   line-height: 1.5;
 }
 
-.loaded-submission-cue a {
+.loaded-submission-cue a,
+.anonymous-draft-cue button {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   color: #dce8df;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
   font-size: 11px;
   font-weight: 750;
+  text-decoration: underline;
   text-underline-offset: 4px;
+  cursor: pointer;
 }
 
-.loaded-submission-cue a:hover {
+.loaded-submission-cue a:hover,
+.anonymous-draft-cue button:hover {
   color: white;
 }
 
-.loaded-submission-cue a:focus-visible {
+.loaded-submission-cue a:focus-visible,
+.anonymous-draft-cue button:focus-visible {
   outline: 3px solid rgba(102, 220, 157, 0.38);
   outline-offset: 3px;
+}
+
+.anonymous-draft-cue button:disabled {
+  color: #91a198;
+  cursor: wait;
 }
 
 .starter-restore {
@@ -12684,7 +12697,8 @@ footer {
     gap: 10px;
   }
 
-  .loaded-submission-cue a {
+  .loaded-submission-cue a,
+  .anonymous-draft-cue button {
     justify-self: start;
   }
 
