@@ -58,7 +58,7 @@ type CodingWorkspaceProps = {
       };
     };
     starterCode: string;
-    tests: { input: string }[];
+    tests: { label: string; input: string }[];
     example: {
       input: string;
       expectedOutput: string;
@@ -80,6 +80,7 @@ type SubmissionResponse = {
   isFirstAcceptedResult: boolean;
   dailyChallengeCompleted: boolean;
   dailyChallengeDate: string | null;
+  checks?: { label: string; passed: boolean }[];
   error?: string;
 };
 
@@ -115,6 +116,7 @@ type RunState =
       totalCount: number;
       nextProblemSlug: string | null;
       dailyChallengeCompleted: boolean;
+      checks: { label: string; passed: boolean }[];
     }
   | { kind: "timeout"; message: string }
   | { kind: "error"; message: string; debugOutput?: string[] };
@@ -183,6 +185,24 @@ function clearAnonymousDraft(problemSlug: string) {
   } catch {
     // A blocked storage cleanup must not interrupt saving or submission.
   }
+}
+
+function getJudgeChecks(
+  checks: SubmissionResponse["checks"],
+  tests: CodingWorkspaceProps["problem"]["tests"],
+) {
+  if (
+    !Array.isArray(checks) ||
+    checks.length !== tests.length ||
+    checks.some(
+      (check, index) =>
+        check.label !== tests[index]?.label || typeof check.passed !== "boolean",
+    )
+  ) {
+    return [];
+  }
+
+  return checks;
 }
 
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
@@ -689,7 +709,7 @@ export function CodingWorkspace({
     setRevealedRecoveryHintCount(0);
     setRunState({
       kind: "running",
-      message: "Running four deterministic checks in your browser…",
+      message: `Running ${problem.tests.length} deterministic checks in your browser…`,
     });
     const result = await runCodingSolution(
       editorCode,
@@ -754,6 +774,7 @@ export function CodingWorkspace({
         totalCount: payload.totalCount,
         nextProblemSlug: payload.nextProblemSlug,
         dailyChallengeCompleted: payload.dailyChallengeCompleted,
+        checks: getJudgeChecks(payload.checks, problem.tests),
         message:
           payload.verdict === "Accepted"
             ? payload.dailyChallengeCompleted
@@ -1235,6 +1256,32 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
+        {runState.kind === "verdict" && runState.checks.length > 0 ? (
+          <section
+            className="judge-check-results"
+            aria-labelledby={`judge-check-results-${problem.slug}`}
+          >
+            <div>
+              <span>Judge coverage</span>
+              <h3 id={`judge-check-results-${problem.slug}`}>
+                What passed, and what needs work
+              </h3>
+            </div>
+            <ol>
+              {runState.checks.map((check) => (
+                <li className={check.passed ? "is-passed" : "is-revisit"} key={check.label}>
+                  <span aria-hidden="true">{check.passed ? "✓" : "·"}</span>
+                  <strong>{check.label}</strong>
+                  <small>{check.passed ? "Passed" : "Needs work"}</small>
+                </li>
+              ))}
+            </ol>
+            <p>
+              Check names describe coverage only. Inputs, expected outputs, and
+              solution code stay hidden.
+            </p>
+          </section>
+        ) : null}
         {runState.kind === "sample" || runState.kind === "custom" ? (
           <div className="sample-output">
             <span>Your output</span>

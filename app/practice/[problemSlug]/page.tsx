@@ -250,7 +250,10 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               recoveryHints: problem.recoveryHints,
               acceptedExplanation: problem.acceptedExplanation,
               starterCode: problem.starterCode,
-              tests: problem.tests.map((test) => ({ input: test.input })),
+              tests: problem.tests.map((test) => ({
+                label: test.label,
+                input: test.input,
+              })),
               example: {
                 input: problem.examples[0].input,
                 expectedOutput: problem.examples[0].output,
