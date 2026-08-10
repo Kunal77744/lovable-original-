@@ -31,6 +31,7 @@ type CodingWorkspaceProps = {
   isSignedIn: boolean;
   isPracticeFeedbackEligible: boolean;
   isReviewSession?: boolean;
+  isCleanPractice?: boolean;
   dailyChallengeDate?: string | null;
   loadedSubmission?: {
     createdAt: string;
@@ -182,6 +183,7 @@ export function CodingWorkspace({
   isSignedIn,
   isPracticeFeedbackEligible,
   isReviewSession = false,
+  isCleanPractice = false,
   dailyChallengeDate = null,
   loadedSubmission = null,
   problem,
@@ -221,7 +223,9 @@ export function CodingWorkspace({
   );
   const [runState, setRunState] = useState<RunState>({
     kind: "idle",
-    message: loadedSubmission
+    message: isCleanPractice
+      ? "Clean starter loaded. Run freely; your saved solution stays untouched until you submit."
+      : loadedSubmission
       ? "A past submission is loaded as an unsaved copy. Loading it did not change your saved work."
       : isSignedIn
         ? initialBestVerdict === "Accepted"
@@ -236,16 +240,27 @@ export function CodingWorkspace({
   const hasPendingDraft = useRef(false);
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
-    (runState.kind === "idle" && initialBestVerdict === "Accepted");
+    (!isCleanPractice &&
+      runState.kind === "idle" &&
+      initialBestVerdict === "Accepted");
   const acceptedReview =
-    isSignedIn && acceptedCode
+    isSignedIn &&
+    acceptedCode &&
+    (!isCleanPractice ||
+      (runState.kind === "verdict" && runState.verdict === "Accepted"))
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
+  const cleanPracticeCompleted =
+    isCleanPractice &&
+    runState.kind === "verdict" &&
+    runState.verdict === "Accepted";
+  const cleanPracticeSubmitted =
+    isCleanPractice && runState.kind === "verdict";
   const runnerRecovery = getRunnerRecovery(runState);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
-      if (!isSignedIn || !hasPendingDraft.current) return;
+      if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
 
       if (draftTimer.current) {
         clearTimeout(draftTimer.current);
@@ -271,10 +286,10 @@ export function CodingWorkspace({
       window.removeEventListener("pagehide", savePendingDraftBeforeLeave);
       if (draftTimer.current) clearTimeout(draftTimer.current);
     };
-  }, [isSignedIn, problem.slug]);
+  }, [isCleanPractice, isSignedIn, problem.slug]);
 
   async function saveDraft(nextCode: string) {
-    if (!isSignedIn) return;
+    if (!isSignedIn || isCleanPractice) return;
 
     setSaveState("saving");
     try {
@@ -302,6 +317,9 @@ export function CodingWorkspace({
     setCode(nextCode);
     setSaveState("unsaved");
     latestCode.current = nextCode;
+
+    if (isCleanPractice) return;
+
     hasPendingDraft.current = true;
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
@@ -328,7 +346,7 @@ export function CodingWorkspace({
   }
 
   function saveDraftNow() {
-    if (!isSignedIn || !hasPendingDraft.current) return;
+    if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
 
     if (draftTimer.current) {
       clearTimeout(draftTimer.current);
@@ -719,15 +737,19 @@ export function CodingWorkspace({
         <div className="code-editor-bar">
           <span>solution.js</span>
           <span>
-            {isSignedIn
-              ? saveState === "saving"
-                ? "Saving…"
-                : saveState === "saved"
-                  ? "Saved"
-                  : saveState === "error"
-                    ? "Save failed"
-                    : "Unsaved"
-              : "Local only"}
+            {isCleanPractice
+              ? cleanPracticeSubmitted
+                ? "Submitted"
+                : "Practice copy"
+              : isSignedIn
+                ? saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "saved"
+                    ? "Saved"
+                    : saveState === "error"
+                      ? "Save failed"
+                      : "Unsaved"
+                : "Local only"}
           </span>
         </div>
         {loadedSubmission ? (
@@ -756,16 +778,38 @@ export function CodingWorkspace({
             <Link href={`/practice/${problem.slug}`}>Restore saved editor</Link>
           </div>
         ) : null}
+        {isCleanPractice ? (
+          <div className="clean-practice-cue" role="status">
+            <div>
+              <span>Clean practice copy</span>
+              <strong>
+                {cleanPracticeSubmitted
+                  ? "This practice copy has been submitted."
+                  : "Solve from the starter, not the saved answer."}
+              </strong>
+            </div>
+            <p>
+              {cleanPracticeSubmitted
+                ? "Your attempt and editor are saved. Earlier source stays hidden until you leave clean practice."
+                : "Typing and browser runs stay local. Your saved solution changes only if you deliberately submit this copy."}
+            </p>
+            <Link href={`/practice/${problem.slug}`}>
+              {cleanPracticeSubmitted
+                ? "Open saved editor"
+                : "Return to saved solution"}
+            </Link>
+          </div>
+        ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <textarea
           id="coding-solution"
           aria-label="JavaScript solution"
           value={code}
           onChange={(event) => updateCode(event.target.value)}
-          onBlur={saveDraftNow}
+          onBlur={isCleanPractice ? undefined : saveDraftNow}
           spellCheck={false}
         />
-        {isSignedIn ? (
+        {isSignedIn && !isCleanPractice ? (
           <div className="starter-restore">
             {isRestoreConfirmationOpen ? (
               <div
@@ -1012,7 +1056,8 @@ export function CodingWorkspace({
               : " is-wrong"
             : runState.kind === "sample" && runState.passed
               ? " is-accepted"
-              : runState.kind === "idle" &&
+              : !isCleanPractice &&
+                  runState.kind === "idle" &&
                   initialBestVerdict === "Accepted"
                 ? " is-accepted"
               : ""
@@ -1039,7 +1084,7 @@ export function CodingWorkspace({
                         ? "Time limit exceeded"
                         : runState.kind === "running"
                           ? "Judging"
-                          : initialBestVerdict === "Accepted"
+                          : !isCleanPractice && initialBestVerdict === "Accepted"
                             ? "Accepted"
                             : "Ready"}
           </span>
@@ -1242,14 +1287,18 @@ export function CodingWorkspace({
         <div className="practice-recovery-cue">
           <span aria-hidden="true" />
           <p>
-            {isSignedIn
+            {isCleanPractice && !cleanPracticeCompleted
+              ? cleanPracticeSubmitted
+                ? "This attempt and editor are saved. Earlier Accepted source remains hidden in clean practice."
+                : "Your saved Accepted solution stays untouched until you submit this practice copy."
+              : isSignedIn
               ? "Your saved code, attempts, and Accepted progress return after sign-in."
               : "Sign in to save this work. Your code, attempts, and Accepted progress return with your account."}
           </p>
         </div>
       </div>
 
-      {isSignedIn ? (
+      {isSignedIn && (!isCleanPractice || cleanPracticeCompleted) ? (
         <PracticeSolutionNote
           problemSlug={problem.slug}
           initialNote={initialSolutionNote}
@@ -1257,63 +1306,79 @@ export function CodingWorkspace({
         />
       ) : null}
 
-      {showPracticeFeedback ? (
+      {showPracticeFeedback && (!isCleanPractice || cleanPracticeCompleted) ? (
         <PracticeFeedback
           problemSlug={problem.slug}
           initialFeedback={initialPracticeFeedback}
         />
       ) : null}
 
-      <section className="attempt-history" aria-labelledby="attempt-history-title">
-        <div>
-          <p className="quiz-kicker">Saved attempts</p>
-          <h3 id="attempt-history-title">Verdict history</h3>
-        </div>
-        {attempts.length > 0 ? (
-          <ol>
-            {attempts.map((attempt, index) => (
-              <li key={attempt.id}>
-                <span>#{attempts.length - index}</span>
-                <strong
-                  className={
-                    attempt.verdict === "Accepted"
-                      ? "attempt-accepted"
-                      : "attempt-wrong"
-                  }
-                >
-                  {attempt.verdict}
-                </strong>
-                <span>
-                  {attempt.passedTests}/{attempt.totalTests} checks
-                </span>
-                <time dateTime={attempt.createdAt}>
-                  {new Intl.DateTimeFormat("en", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(new Date(attempt.createdAt))}
-                </time>
-                {attempt.hasSource ? (
-                  <Link
-                    className="attempt-source-link"
-                    href={`/submissions/${attempt.id}`}
-                    aria-label={`Review source for attempt ${attempts.length - index}`}
-                  >
-                    Review source <span aria-hidden="true">→</span>
-                  </Link>
-                ) : (
-                  <span className="attempt-source-state">Result only</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="attempt-history-empty">
-            No saved submissions yet. Your first verdict will appear here.
+      {isCleanPractice && !cleanPracticeCompleted ? (
+        <section
+          className="clean-practice-history"
+          aria-label="Saved work hidden"
+        >
+          <strong>Saved work stays out of view.</strong>
+          <p>
+            Finish this retrieval attempt first, or return to your saved
+            solution to review earlier source and notes.
           </p>
-        )}
-      </section>
+        </section>
+      ) : (
+        <section
+          className="attempt-history"
+          aria-labelledby="attempt-history-title"
+        >
+          <div>
+            <p className="quiz-kicker">Saved attempts</p>
+            <h3 id="attempt-history-title">Verdict history</h3>
+          </div>
+          {attempts.length > 0 ? (
+            <ol>
+              {attempts.map((attempt, index) => (
+                <li key={attempt.id}>
+                  <span>#{attempts.length - index}</span>
+                  <strong
+                    className={
+                      attempt.verdict === "Accepted"
+                        ? "attempt-accepted"
+                        : "attempt-wrong"
+                    }
+                  >
+                    {attempt.verdict}
+                  </strong>
+                  <span>
+                    {attempt.passedTests}/{attempt.totalTests} checks
+                  </span>
+                  <time dateTime={attempt.createdAt}>
+                    {new Intl.DateTimeFormat("en", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(attempt.createdAt))}
+                  </time>
+                  {attempt.hasSource ? (
+                    <Link
+                      className="attempt-source-link"
+                      href={`/submissions/${attempt.id}`}
+                      aria-label={`Review source for attempt ${attempts.length - index}`}
+                    >
+                      Review source <span aria-hidden="true">→</span>
+                    </Link>
+                  ) : (
+                    <span className="attempt-source-state">Result only</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="attempt-history-empty">
+              No saved submissions yet. Your first verdict will appear here.
+            </p>
+          )}
+        </section>
+      )}
     </section>
   );
 }

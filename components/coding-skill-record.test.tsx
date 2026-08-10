@@ -85,7 +85,7 @@ describe("CodingSkillRecord", () => {
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByRole("link", { name: "Review Sum two numbers" })).toHaveAttribute(
       "href",
-      "/practice/sum-two-numbers",
+      "/practice/sum-two-numbers?mode=clean",
     );
     expect(
       screen.getByRole("heading", { name: "Your saved practice record" }),

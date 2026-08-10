@@ -56,13 +56,29 @@ const problem = {
 };
 
 function renderWorkspace({
+  attempts = [],
+  bestVerdict = null,
+  initialAcceptedCode = null,
+  initialCode = "function solve(input) { return input; }",
   initialCustomTestCases = [],
   initialPracticeFeedback = null,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
+  isCleanPractice = false,
   dailyChallengeDate = null,
 }: {
+  attempts?: {
+    id: string;
+    verdict: string;
+    passedTests: number;
+    totalTests: number;
+    createdAt: string;
+    hasSource: boolean;
+  }[];
+  bestVerdict?: string | null;
+  initialAcceptedCode?: string | null;
+  initialCode?: string;
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
     problemSlug: string;
@@ -73,18 +89,21 @@ function renderWorkspace({
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
+  isCleanPractice?: boolean;
   dailyChallengeDate?: string | null;
 } = {}) {
   return render(
     <CodingWorkspace
-      attempts={[]}
-      bestVerdict={null}
-      initialCode="function solve(input) { return input; }"
+      attempts={attempts}
+      bestVerdict={bestVerdict}
+      initialCode={initialCode}
+      initialAcceptedCode={initialAcceptedCode}
       initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       isReviewSession={isReviewSession}
+      isCleanPractice={isCleanPractice}
       dailyChallengeDate={dailyChallengeDate}
       problem={problem}
     />,
@@ -260,6 +279,99 @@ describe("CodingWorkspace", () => {
         name: "Plan the behavior before the syntax.",
       }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps a clean retry local and hides the saved answer until deliberate submission", async () => {
+    vi.useFakeTimers();
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn(() => true);
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const savedAcceptedCode =
+      "function solve(input) { return input.split(' ').map(Number).reduce((sum, value) => sum + value, 0); }";
+    const retryCode =
+      "function solve(input) { const [a, b] = input.split(' ').map(Number); return a + b; }";
+
+    try {
+      renderWorkspace({
+        attempts: [
+          {
+            id: "accepted-source",
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-08-09T10:00:00.000Z",
+            hasSource: true,
+          },
+        ],
+        bestVerdict: "Accepted",
+        initialAcceptedCode: savedAcceptedCode,
+        initialCode: problem.starterCode,
+        isCleanPractice: true,
+      });
+
+      const editor = screen.getByLabelText("JavaScript solution");
+      expect(editor).toHaveValue(problem.starterCode);
+      expect(editor).not.toHaveValue(savedAcceptedCode);
+      expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+      expect(screen.getByText("Practice copy")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Return to saved solution" }),
+      ).toHaveAttribute("href", "/practice/sum-two-numbers");
+      expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+      expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "Review source for attempt 1" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", {
+          name: "Plan the behavior before the syntax.",
+        }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.change(editor, { target: { value: retryCode } });
+      fireEvent.blur(editor);
+      fireEvent(window, new Event("pagehide"));
+      await vi.advanceTimersByTimeAsync(800);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(screen.getByText("Practice copy")).toBeInTheDocument();
+
+      vi.useRealTimers();
+      runCodingSolution.mockResolvedValue({
+        status: "finished",
+        outputs: ["13", "-5", "0", "1000"],
+        debugOutput: [],
+      });
+      fetchSpy.mockResolvedValue(submissionResponse("Accepted", 4));
+      fireEvent.click(screen.getByRole("button", { name: "Run example" }));
+      await screen.findByText("Example passed");
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"mode":"submit"'),
+        }),
+      );
+      expect(await screen.findByText("Private code review")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Review source for attempt 2" }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+      vi.useRealTimers();
+    }
   });
 
   it("opens the structured private planning stage before submission", () => {
