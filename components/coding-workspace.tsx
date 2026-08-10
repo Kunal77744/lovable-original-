@@ -115,6 +115,20 @@ type RunnerRecovery = {
   guidance: string;
 };
 
+function codingTestCasesMatch(
+  left: CodingTestCase[],
+  right: CodingTestCase[],
+) {
+  return (
+    left.length === right.length &&
+    left.every(
+      (testCase, index) =>
+        testCase.input === right[index]?.input &&
+        testCase.expectedOutput === right[index]?.expectedOutput,
+    )
+  );
+}
+
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
     return {
@@ -185,6 +199,9 @@ export function CodingWorkspace({
   const [customTestCases, setCustomTestCases] = useState(
     initialCustomTestCases,
   );
+  const latestCustomTestCases = useRef(initialCustomTestCases);
+  const testCaseSavePending = useRef(false);
+  const [isTestCaseSaving, setIsTestCaseSaving] = useState(false);
   const [testCaseSaveState, setTestCaseSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >("saved");
@@ -430,7 +447,7 @@ export function CodingWorkspace({
   }
 
   async function persistCustomTestCases(nextCases: CodingTestCase[]) {
-    if (!isSignedIn) return false;
+    if (!isSignedIn || testCaseSavePending.current) return false;
 
     const validation = validateCodingTestCases(nextCases);
 
@@ -440,6 +457,12 @@ export function CodingWorkspace({
       return false;
     }
 
+    const submittedCases = validation.cases;
+    const casesWhenSaveStarted = latestCustomTestCases.current.map((testCase) => ({
+      ...testCase,
+    }));
+    testCaseSavePending.current = true;
+    setIsTestCaseSaving(true);
     setTestCaseSaveState("saving");
     setTestCaseMessage("Saving private test cases…");
 
@@ -449,7 +472,7 @@ export function CodingWorkspace({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cases: validation.cases }),
+          body: JSON.stringify({ cases: submittedCases }),
         },
       );
       const payload = (await response.json()) as {
@@ -465,6 +488,20 @@ export function CodingWorkspace({
         return false;
       }
 
+      if (
+        !codingTestCasesMatch(
+          latestCustomTestCases.current,
+          casesWhenSaveStarted,
+        )
+      ) {
+        setTestCaseSaveState("unsaved");
+        setTestCaseMessage(
+          "Your earlier test cases are saved. Your newer changes are still unsaved.",
+        );
+        return true;
+      }
+
+      latestCustomTestCases.current = payload.testCases.cases;
       setCustomTestCases(payload.testCases.cases);
       setTestCaseSaveState("saved");
       setTestCaseMessage(
@@ -479,45 +516,66 @@ export function CodingWorkspace({
         "Your test cases could not be saved. Check your connection and try again.",
       );
       return false;
+    } finally {
+      testCaseSavePending.current = false;
+      setIsTestCaseSaving(false);
     }
   }
 
   async function saveCurrentCustomInput() {
-    if (customTestCases.some((testCase) => testCase.input === customInput)) {
+    if (
+      latestCustomTestCases.current.some(
+        (testCase) => testCase.input === customInput,
+      )
+    ) {
       setTestCaseSaveState("error");
       setTestCaseMessage("That exact input is already saved.");
       return;
     }
 
     await persistCustomTestCases([
-      ...customTestCases,
+      ...latestCustomTestCases.current,
       { input: customInput, expectedOutput: null },
     ]);
   }
 
   function updateCustomTestCase(index: number, input: string) {
-    setCustomTestCases((current) =>
-      current.map((testCase, savedIndex) =>
+    setCustomTestCases((current) => {
+      const nextCases = current.map((testCase, savedIndex) =>
         savedIndex === index ? { ...testCase, input } : testCase,
-      ),
-    );
+      );
+      latestCustomTestCases.current = nextCases;
+      return nextCases;
+    });
     setTestCaseSaveState("unsaved");
-    setTestCaseMessage("Test case changes are not saved yet.");
+    setTestCaseMessage(
+      isTestCaseSaving
+        ? "Saving your earlier test cases. Your newer changes are still unsaved."
+        : "Test case changes are not saved yet.",
+    );
   }
 
   function updateExpectedOutput(index: number, expectedOutput: string | null) {
-    setCustomTestCases((current) =>
-      current.map((testCase, savedIndex) =>
+    setCustomTestCases((current) => {
+      const nextCases = current.map((testCase, savedIndex) =>
         savedIndex === index ? { ...testCase, expectedOutput } : testCase,
-      ),
-    );
+      );
+      latestCustomTestCases.current = nextCases;
+      return nextCases;
+    });
     setTestCaseSaveState("unsaved");
-    setTestCaseMessage("Test case changes are not saved yet.");
+    setTestCaseMessage(
+      isTestCaseSaving
+        ? "Saving your earlier test cases. Your newer changes are still unsaved."
+        : "Test case changes are not saved yet.",
+    );
   }
 
   async function removeCustomTestCase(index: number) {
     await persistCustomTestCases(
-      customTestCases.filter((_, savedIndex) => savedIndex !== index),
+      latestCustomTestCases.current.filter(
+        (_, savedIndex) => savedIndex !== index,
+      ),
     );
   }
 
@@ -820,12 +878,12 @@ export function CodingWorkspace({
                 type="button"
                 onClick={() => void saveCurrentCustomInput()}
                 disabled={
-                  testCaseSaveState === "saving" ||
+                  isTestCaseSaving ||
                   customInput.trim().length === 0 ||
                   customTestCases.length >= MAX_CODING_TEST_CASES
                 }
               >
-                {testCaseSaveState === "saving" ? "Saving…" : "Save test case"}
+                {isTestCaseSaving ? "Saving…" : "Save test case"}
               </button>
             ) : null}
           </div>
@@ -912,7 +970,7 @@ export function CodingWorkspace({
                         <button
                           type="button"
                           onClick={() => void removeCustomTestCase(index)}
-                          disabled={testCaseSaveState === "saving"}
+                          disabled={isTestCaseSaving}
                         >
                           Remove
                         </button>
@@ -931,8 +989,9 @@ export function CodingWorkspace({
                 className="private-test-cases-save"
                 type="button"
                 onClick={() => void persistCustomTestCases(customTestCases)}
+                disabled={isTestCaseSaving}
               >
-                Save changes
+                {isTestCaseSaving ? "Saving…" : "Save changes"}
               </button>
             ) : null}
             <p

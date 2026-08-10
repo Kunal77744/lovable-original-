@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -651,6 +652,90 @@ describe("CodingWorkspace", () => {
       expect.objectContaining({ body: JSON.stringify({ cases: [] }) }),
     );
     expect(screen.getByText("No saved cases yet. Try an input above, then save it here.")).toBeInTheDocument();
+  });
+
+  it("keeps newer private test case edits unsaved when an older save finishes", async () => {
+    let finishFirstSave!: (response: Response) => void;
+    const firstSave = new Promise<Response>((resolve) => {
+      finishFirstSave = resolve;
+    });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(firstSave)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              cases: [{ input: "34 8", expectedOutput: "99" }],
+              updatedAt: "2026-08-04T10:01:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    renderWorkspace({
+      initialCustomTestCases: [{ input: "19 23", expectedOutput: "42" }],
+    });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
+      target: { value: "21 21" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
+      target: { value: "34 8" },
+    });
+    fireEvent.change(screen.getByLabelText("Expected output"), {
+      target: { value: "99" },
+    });
+
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("34 8");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("99");
+    const savingButtons = screen.getAllByRole("button", { name: "Saving…" });
+    expect(savingButtons).toHaveLength(2);
+    savingButtons.forEach((button) => expect(button).toBeDisabled());
+    expect(
+      screen.getByText(
+        "Saving your earlier test cases. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      finishFirstSave(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              cases: [{ input: "21 21", expectedOutput: "42" }],
+              updatedAt: "2026-08-04T10:00:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("34 8");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("99");
+    expect(
+      await screen.findByText(
+        "Your earlier test cases are saved. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByText("1 private test case saved.")).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "/api/practice/sum-two-numbers/test-cases",
+      expect.objectContaining({
+        body: JSON.stringify({
+          cases: [{ input: "34 8", expectedOutput: "99" }],
+        }),
+      }),
+    );
   });
 
   it("keeps signed-out custom runs local and hides private saving controls", () => {
