@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -518,6 +519,36 @@ export const dailyCodingChallengeCompletion = pgTable(
       table.challengeDate,
     ),
     index("daily_coding_challenge_user_id_idx").on(table.userId),
+  ],
+);
+
+export const timedCodingChallengeResult = pgTable(
+  "timed_coding_challenge_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSetId: text("challenge_set_id").notNull(),
+    solvedCount: integer("solved_count").notNull(),
+    elapsedSeconds: integer("elapsed_seconds").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("timed_coding_challenge_result_user_completed_idx").on(
+      table.userId,
+      table.completedAt,
+    ),
+    check(
+      "timed_coding_challenge_result_solved_count_check",
+      sql`${table.solvedCount} between 0 and 3`,
+    ),
+    check(
+      "timed_coding_challenge_result_elapsed_seconds_check",
+      sql`${table.elapsedSeconds} between 0 and 1800`,
+    ),
   ],
 );
 

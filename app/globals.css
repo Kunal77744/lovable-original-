@@ -15482,6 +15482,32 @@ footer {
   text-underline-offset: 4px;
 }
 
+.challenge-timer-actions .challenge-timer-finish {
+  color: #eef4ef;
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.challenge-timer-actions .challenge-timer-finish:hover {
+  color: #eef4ef;
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.challenge-timer-actions button:disabled {
+  opacity: 0.56;
+  cursor: wait;
+}
+
+.challenge-result-save-status {
+  min-height: 18px;
+  margin: 18px 0 0;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.5;
+}
+
 .challenge-timer-boundary {
   margin: 24px 0 0;
   padding-top: 20px;
@@ -15735,6 +15761,123 @@ footer {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.challenge-result-history {
+  margin-top: 72px;
+  padding-top: 56px;
+  border-top: 1px solid rgba(23, 35, 30, 0.14);
+}
+
+.challenge-result-history-heading {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.challenge-result-history-heading .eyebrow {
+  margin-bottom: 8px;
+}
+
+.challenge-result-history-heading h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(34px, 3.8vw, 48px);
+  line-height: 1.04;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.challenge-result-history-heading > span,
+.challenge-result-history-list time {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.challenge-result-history-empty {
+  margin: 0;
+  padding: 28px 30px;
+  color: var(--muted);
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 14px 14px 5px 14px;
+  background: rgba(255, 255, 255, 0.56);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.challenge-result-history-list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 14px 14px 5px 14px;
+  background: rgba(255, 255, 255, 0.65);
+  list-style: none;
+}
+
+.challenge-result-history-list li {
+  min-height: 88px;
+  padding: 18px 24px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(230px, 0.8fr) auto;
+  align-items: center;
+  gap: 30px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.12);
+}
+
+.challenge-result-history-list li:last-child {
+  border-bottom: 0;
+}
+
+.challenge-result-history-list li > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.challenge-result-history-list li > div:first-child span {
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.challenge-result-history-list strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.challenge-result-history-list dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.challenge-result-history-list dl > div {
+  display: grid;
+  gap: 4px;
+}
+
+.challenge-result-history-list dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.challenge-result-history-list dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
 }
 
 .practice-foundations-entry {
@@ -16626,6 +16769,27 @@ footer {
 
   .challenge-rules > div:last-child {
     border-bottom: 0;
+  }
+
+  .challenge-result-history {
+    margin-top: 56px;
+    padding-top: 44px;
+  }
+
+  .challenge-result-history-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .challenge-result-history-list li {
+    padding: 20px;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .challenge-result-history-list dl {
+    max-width: 320px;
   }
 
   .practice-foundations-entry {
