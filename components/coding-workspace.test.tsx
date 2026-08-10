@@ -395,6 +395,25 @@ describe("CodingWorkspace", () => {
     }
   });
 
+  it("keeps a recovered browser draft out of clean retry mode", () => {
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      "function solve(input) { return 'anonymous'; }",
+    );
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isCleanPractice: true,
+      hasSavedCode: false,
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      problem.starterCode,
+    );
+    expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
   it("opens the structured private planning stage before submission", () => {
     renderWorkspace();
 
