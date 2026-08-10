@@ -407,6 +407,7 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
         <textarea
           value={answer}
           onChange={(event) => setAnswer(event.target.value)}
+          disabled={isSaving}
           maxLength={2000}
           placeholder="Explain it as if the interviewer asked one follow-up."
         />
@@ -436,6 +437,7 @@ export function InterviewDrill({ initialProgress }: InterviewDrillProps) {
                 value={option.value}
                 checked={rating === option.value}
                 onChange={() => setRating(option.value)}
+                disabled={isSaving}
               />
               <span>{option.label}</span>
             </label>

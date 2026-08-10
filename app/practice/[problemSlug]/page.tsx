@@ -32,6 +32,7 @@ type ProblemPageProps = {
     review?: string | string[];
     submission?: string | string[];
     daily?: string | string[];
+    mode?: string | string[];
   }>;
 };
 
@@ -62,6 +63,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
     typeof submissionParam === "string" ? submissionParam : null;
   const reviewParam = resolvedSearchParams?.review;
   const dailyParam = resolvedSearchParams?.daily;
+  const modeParam = resolvedSearchParams?.mode;
   const problem = getCodingProblem(problemSlug);
 
   if (!problem) notFound();
@@ -113,6 +115,11 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
           totalTests: requestedSubmission.totalTests,
         }
       : null;
+  const isCleanPractice =
+    Boolean(session) &&
+    modeParam === "clean" &&
+    studentState.bestVerdict === "Accepted" &&
+    loadedSubmission === null;
 
   return (
     <main>
@@ -206,16 +213,26 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
           </article>
 
           <CodingWorkspace
-            key={loadedSubmission?.id ?? "current-editor"}
+            key={
+              loadedSubmission?.id ??
+              (isCleanPractice ? "clean-practice" : "current-editor")
+            }
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
-            initialCode={loadedSubmission?.code ?? studentState.code}
+            initialCode={
+              isCleanPractice
+                ? problem.starterCode
+                : loadedSubmission?.code ?? studentState.code
+            }
+            hasSavedCode={studentState.hasSavedCode}
             initialAcceptedCode={
-              loadedSubmission
-                ? loadedSubmission.verdict === "Accepted"
-                  ? loadedSubmission.code
-                  : null
-                : studentState.latestAcceptedCode
+              isCleanPractice
+                ? null
+                : loadedSubmission
+                  ? loadedSubmission.verdict === "Accepted"
+                    ? loadedSubmission.code
+                    : null
+                  : studentState.latestAcceptedCode
             }
             initialCustomTestCases={studentState.customTestCases}
             initialPracticeFeedback={practiceFeedbackState.feedback}
@@ -223,6 +240,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
             isSignedIn={Boolean(session)}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             isReviewSession={isReviewSession}
+            isCleanPractice={isCleanPractice}
             dailyChallengeDate={dailyChallengeDate}
             loadedSubmission={loadedSubmission}
             problem={{
@@ -232,7 +250,10 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               recoveryHints: problem.recoveryHints,
               acceptedExplanation: problem.acceptedExplanation,
               starterCode: problem.starterCode,
-              tests: problem.tests.map((test) => ({ input: test.input })),
+              tests: problem.tests.map((test) => ({
+                label: test.label,
+                input: test.input,
+              })),
               example: {
                 input: problem.examples[0].input,
                 expectedOutput: problem.examples[0].output,

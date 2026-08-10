@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
@@ -29,8 +31,10 @@ type CodingWorkspaceProps = {
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
+  hasSavedCode?: boolean;
   isPracticeFeedbackEligible: boolean;
   isReviewSession?: boolean;
+  isCleanPractice?: boolean;
   dailyChallengeDate?: string | null;
   loadedSubmission?: {
     createdAt: string;
@@ -47,9 +51,14 @@ type CodingWorkspaceProps = {
       concept: string;
       whyItWorks: string;
       commonMistake: string;
+      efficiency: {
+        time: string;
+        space: string;
+        explanation: string;
+      };
     };
     starterCode: string;
-    tests: { input: string }[];
+    tests: { label: string; input: string }[];
     example: {
       input: string;
       expectedOutput: string;
@@ -71,6 +80,7 @@ type SubmissionResponse = {
   isFirstAcceptedResult: boolean;
   dailyChallengeCompleted: boolean;
   dailyChallengeDate: string | null;
+  checks?: { label: string; passed: boolean }[];
   error?: string;
 };
 
@@ -106,6 +116,7 @@ type RunState =
       totalCount: number;
       nextProblemSlug: string | null;
       dailyChallengeCompleted: boolean;
+      checks: { label: string; passed: boolean }[];
     }
   | { kind: "timeout"; message: string }
   | { kind: "error"; message: string; debugOutput?: string[] };
@@ -114,6 +125,85 @@ type RunnerRecovery = {
   label: string;
   guidance: string;
 };
+
+function codingTestCasesMatch(
+  left: CodingTestCase[],
+  right: CodingTestCase[],
+) {
+  return (
+    left.length === right.length &&
+    left.every(
+      (testCase, index) =>
+        testCase.input === right[index]?.input &&
+        testCase.expectedOutput === right[index]?.expectedOutput,
+    )
+  );
+}
+
+const ANONYMOUS_DRAFT_KEY_PREFIX = "lovable-original:practice-draft:v1:";
+const ANONYMOUS_DRAFT_EVENT = "lovable-original:practice-draft-changed";
+
+function getAnonymousDraftKey(problemSlug: string) {
+  return `${ANONYMOUS_DRAFT_KEY_PREFIX}${problemSlug}`;
+}
+
+function readAnonymousDraft(problemSlug: string) {
+  try {
+    return window.localStorage.getItem(getAnonymousDraftKey(problemSlug));
+  } catch {
+    return null;
+  }
+}
+
+function subscribeToAnonymousDrafts(onStoreChange: () => void) {
+  window.addEventListener(ANONYMOUS_DRAFT_EVENT, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(ANONYMOUS_DRAFT_EVENT, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function announceAnonymousDraftChange() {
+  window.dispatchEvent(new Event(ANONYMOUS_DRAFT_EVENT));
+}
+
+function writeAnonymousDraft(problemSlug: string, code: string) {
+  try {
+    window.localStorage.setItem(getAnonymousDraftKey(problemSlug), code);
+    announceAnonymousDraftChange();
+  } catch {
+    // The editor still works when browser storage is unavailable.
+  }
+}
+
+function clearAnonymousDraft(problemSlug: string) {
+  try {
+    window.localStorage.removeItem(getAnonymousDraftKey(problemSlug));
+    announceAnonymousDraftChange();
+  } catch {
+    // A blocked storage cleanup must not interrupt saving or submission.
+  }
+}
+
+function getJudgeChecks(
+  checks: SubmissionResponse["checks"],
+  tests: CodingWorkspaceProps["problem"]["tests"],
+) {
+  if (
+    !Array.isArray(checks) ||
+    checks.length !== tests.length ||
+    checks.some(
+      (check, index) =>
+        check.label !== tests[index]?.label || typeof check.passed !== "boolean",
+    )
+  ) {
+    return [];
+  }
+
+  return checks;
+}
 
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
@@ -166,8 +256,10 @@ export function CodingWorkspace({
   initialPracticeFeedback,
   initialSolutionNote = null,
   isSignedIn,
+  hasSavedCode = false,
   isPracticeFeedbackEligible,
   isReviewSession = false,
+  isCleanPractice = false,
   dailyChallengeDate = null,
   loadedSubmission = null,
   problem,
@@ -179,12 +271,16 @@ export function CodingWorkspace({
   const [showPracticeFeedback, setShowPracticeFeedback] = useState(
     isPracticeFeedbackEligible,
   );
+  const [anonymousDraftDismissed, setAnonymousDraftDismissed] = useState(false);
   const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
     useState(false);
   const [customInput, setCustomInput] = useState(problem.example.input);
   const [customTestCases, setCustomTestCases] = useState(
     initialCustomTestCases,
   );
+  const latestCustomTestCases = useRef(initialCustomTestCases);
+  const testCaseSavePending = useRef(false);
+  const [isTestCaseSaving, setIsTestCaseSaving] = useState(false);
   const [testCaseSaveState, setTestCaseSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >("saved");
@@ -204,7 +300,9 @@ export function CodingWorkspace({
   );
   const [runState, setRunState] = useState<RunState>({
     kind: "idle",
-    message: loadedSubmission
+    message: isCleanPractice
+      ? "Clean starter loaded. Run freely; your saved solution stays untouched until you submit."
+      : loadedSubmission
       ? "A past submission is loaded as an unsaved copy. Loading it did not change your saved work."
       : isSignedIn
         ? initialBestVerdict === "Accepted"
@@ -219,16 +317,45 @@ export function CodingWorkspace({
   const hasPendingDraft = useRef(false);
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
-    (runState.kind === "idle" && initialBestVerdict === "Accepted");
+    (!isCleanPractice &&
+      runState.kind === "idle" &&
+      initialBestVerdict === "Accepted");
   const acceptedReview =
-    isSignedIn && acceptedCode
+    isSignedIn &&
+    acceptedCode &&
+    (!isCleanPractice ||
+      (runState.kind === "verdict" && runState.verdict === "Accepted"))
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
+  const cleanPracticeCompleted =
+    isCleanPractice &&
+    runState.kind === "verdict" &&
+    runState.verdict === "Accepted";
+  const cleanPracticeSubmitted =
+    isCleanPractice && runState.kind === "verdict";
   const runnerRecovery = getRunnerRecovery(runState);
+  const anonymousDraft = useSyncExternalStore(
+    subscribeToAnonymousDrafts,
+    () => readAnonymousDraft(problem.slug),
+    () => null,
+  );
+  const canUseAnonymousDraft =
+    !anonymousDraftDismissed &&
+    !isCleanPractice &&
+    !loadedSubmission &&
+    (!isSignedIn || !hasSavedCode) &&
+    anonymousDraft !== null &&
+    anonymousDraft !== initialCode;
+  const recoveredAnonymousDraft = isSignedIn && canUseAnonymousDraft;
+  const editorCode = canUseAnonymousDraft ? anonymousDraft : code;
+
+  useEffect(() => {
+    latestCode.current = editorCode;
+  }, [editorCode]);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
-      if (!isSignedIn || !hasPendingDraft.current) return;
+      if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
 
       if (draftTimer.current) {
         clearTimeout(draftTimer.current);
@@ -254,10 +381,10 @@ export function CodingWorkspace({
       window.removeEventListener("pagehide", savePendingDraftBeforeLeave);
       if (draftTimer.current) clearTimeout(draftTimer.current);
     };
-  }, [isSignedIn, problem.slug]);
+  }, [isCleanPractice, isSignedIn, problem.slug]);
 
   async function saveDraft(nextCode: string) {
-    if (!isSignedIn) return;
+    if (!isSignedIn || isCleanPractice) return;
 
     setSaveState("saving");
     try {
@@ -274,6 +401,9 @@ export function CodingWorkspace({
 
       if (latestCode.current === nextCode) {
         hasPendingDraft.current = false;
+        setCode(nextCode);
+        setAnonymousDraftDismissed(true);
+        clearAnonymousDraft(problem.slug);
         setSaveState("saved");
       }
     } catch {
@@ -285,7 +415,16 @@ export function CodingWorkspace({
     setCode(nextCode);
     setSaveState("unsaved");
     latestCode.current = nextCode;
+
+    if (isCleanPractice) return;
+
     hasPendingDraft.current = true;
+
+    if (!isSignedIn) {
+      writeAnonymousDraft(problem.slug, nextCode);
+    } else if (recoveredAnonymousDraft) {
+      setAnonymousDraftDismissed(true);
+    }
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
@@ -303,6 +442,8 @@ export function CodingWorkspace({
     setCode(problem.starterCode);
     setSaveState("unsaved");
     setIsRestoreConfirmationOpen(false);
+    setAnonymousDraftDismissed(true);
+    clearAnonymousDraft(problem.slug);
     setRunState({
       kind: "idle",
       message:
@@ -311,7 +452,7 @@ export function CodingWorkspace({
   }
 
   function saveDraftNow() {
-    if (!isSignedIn || !hasPendingDraft.current) return;
+    if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
 
     if (draftTimer.current) {
       clearTimeout(draftTimer.current);
@@ -323,7 +464,7 @@ export function CodingWorkspace({
 
   async function runExample() {
     setRunState({ kind: "running", message: "Running the example in your browser…" });
-    const result = await runCodingSolution(code, [problem.example.input]);
+    const result = await runCodingSolution(editorCode, [problem.example.input]);
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -357,7 +498,7 @@ export function CodingWorkspace({
       kind: "running",
       message: "Running your custom input in the browser…",
     });
-    const result = await runCodingSolution(code, [customInput]);
+    const result = await runCodingSolution(editorCode, [customInput]);
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -384,7 +525,7 @@ export function CodingWorkspace({
       message: `Running ${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} in your browser…`,
     });
     const result = await runCodingSolution(
-      code,
+      editorCode,
       customTestCases.map((testCase) => testCase.input),
     );
 
@@ -430,7 +571,7 @@ export function CodingWorkspace({
   }
 
   async function persistCustomTestCases(nextCases: CodingTestCase[]) {
-    if (!isSignedIn) return false;
+    if (!isSignedIn || testCaseSavePending.current) return false;
 
     const validation = validateCodingTestCases(nextCases);
 
@@ -440,6 +581,12 @@ export function CodingWorkspace({
       return false;
     }
 
+    const submittedCases = validation.cases;
+    const casesWhenSaveStarted = latestCustomTestCases.current.map((testCase) => ({
+      ...testCase,
+    }));
+    testCaseSavePending.current = true;
+    setIsTestCaseSaving(true);
     setTestCaseSaveState("saving");
     setTestCaseMessage("Saving private test cases…");
 
@@ -449,7 +596,7 @@ export function CodingWorkspace({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cases: validation.cases }),
+          body: JSON.stringify({ cases: submittedCases }),
         },
       );
       const payload = (await response.json()) as {
@@ -465,6 +612,20 @@ export function CodingWorkspace({
         return false;
       }
 
+      if (
+        !codingTestCasesMatch(
+          latestCustomTestCases.current,
+          casesWhenSaveStarted,
+        )
+      ) {
+        setTestCaseSaveState("unsaved");
+        setTestCaseMessage(
+          "Your earlier test cases are saved. Your newer changes are still unsaved.",
+        );
+        return true;
+      }
+
+      latestCustomTestCases.current = payload.testCases.cases;
       setCustomTestCases(payload.testCases.cases);
       setTestCaseSaveState("saved");
       setTestCaseMessage(
@@ -479,45 +640,66 @@ export function CodingWorkspace({
         "Your test cases could not be saved. Check your connection and try again.",
       );
       return false;
+    } finally {
+      testCaseSavePending.current = false;
+      setIsTestCaseSaving(false);
     }
   }
 
   async function saveCurrentCustomInput() {
-    if (customTestCases.some((testCase) => testCase.input === customInput)) {
+    if (
+      latestCustomTestCases.current.some(
+        (testCase) => testCase.input === customInput,
+      )
+    ) {
       setTestCaseSaveState("error");
       setTestCaseMessage("That exact input is already saved.");
       return;
     }
 
     await persistCustomTestCases([
-      ...customTestCases,
+      ...latestCustomTestCases.current,
       { input: customInput, expectedOutput: null },
     ]);
   }
 
   function updateCustomTestCase(index: number, input: string) {
-    setCustomTestCases((current) =>
-      current.map((testCase, savedIndex) =>
+    setCustomTestCases((current) => {
+      const nextCases = current.map((testCase, savedIndex) =>
         savedIndex === index ? { ...testCase, input } : testCase,
-      ),
-    );
+      );
+      latestCustomTestCases.current = nextCases;
+      return nextCases;
+    });
     setTestCaseSaveState("unsaved");
-    setTestCaseMessage("Test case changes are not saved yet.");
+    setTestCaseMessage(
+      isTestCaseSaving
+        ? "Saving your earlier test cases. Your newer changes are still unsaved."
+        : "Test case changes are not saved yet.",
+    );
   }
 
   function updateExpectedOutput(index: number, expectedOutput: string | null) {
-    setCustomTestCases((current) =>
-      current.map((testCase, savedIndex) =>
+    setCustomTestCases((current) => {
+      const nextCases = current.map((testCase, savedIndex) =>
         savedIndex === index ? { ...testCase, expectedOutput } : testCase,
-      ),
-    );
+      );
+      latestCustomTestCases.current = nextCases;
+      return nextCases;
+    });
     setTestCaseSaveState("unsaved");
-    setTestCaseMessage("Test case changes are not saved yet.");
+    setTestCaseMessage(
+      isTestCaseSaving
+        ? "Saving your earlier test cases. Your newer changes are still unsaved."
+        : "Test case changes are not saved yet.",
+    );
   }
 
   async function removeCustomTestCase(index: number) {
     await persistCustomTestCases(
-      customTestCases.filter((_, savedIndex) => savedIndex !== index),
+      latestCustomTestCases.current.filter(
+        (_, savedIndex) => savedIndex !== index,
+      ),
     );
   }
 
@@ -527,10 +709,10 @@ export function CodingWorkspace({
     setRevealedRecoveryHintCount(0);
     setRunState({
       kind: "running",
-      message: "Running four deterministic checks in your browser…",
+      message: `Running ${problem.tests.length} deterministic checks in your browser…`,
     });
     const result = await runCodingSolution(
-      code,
+      editorCode,
       problem.tests.map((test) => test.input),
     );
 
@@ -550,7 +732,7 @@ export function CodingWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "submit",
-          code,
+          code: editorCode,
           outputs: result.outputs,
           dailyChallengeDate,
         }),
@@ -566,7 +748,11 @@ export function CodingWorkspace({
       }
 
       setBestVerdict(payload.bestVerdict);
-      if (payload.verdict === "Accepted") setAcceptedCode(code);
+      if (payload.verdict === "Accepted") setAcceptedCode(editorCode);
+      hasPendingDraft.current = false;
+      setCode(editorCode);
+      setAnonymousDraftDismissed(true);
+      clearAnonymousDraft(problem.slug);
       setSaveState("saved");
       setAttempts((current) => [
         {
@@ -588,6 +774,7 @@ export function CodingWorkspace({
         totalCount: payload.totalCount,
         nextProblemSlug: payload.nextProblemSlug,
         dailyChallengeCompleted: payload.dailyChallengeCompleted,
+        checks: getJudgeChecks(payload.checks, problem.tests),
         message:
           payload.verdict === "Accepted"
             ? payload.dailyChallengeCompleted
@@ -632,6 +819,31 @@ export function CodingWorkspace({
     }
   }
 
+  function handleEditorKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    const usesPrimaryModifier = event.ctrlKey || event.metaKey;
+
+    if (
+      event.key !== "Enter" ||
+      !usesPrimaryModifier ||
+      event.altKey ||
+      event.repeat ||
+      event.nativeEvent.isComposing ||
+      (event.shiftKey && !isSignedIn)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (runState.kind === "running") return;
+
+    if (event.shiftKey) {
+      void submitSolution();
+      return;
+    }
+
+    void runExample();
+  }
+
   const visibleDebugOutput =
     runState.kind === "sample" ||
     runState.kind === "test-suite" ||
@@ -661,15 +873,19 @@ export function CodingWorkspace({
         <div className="code-editor-bar">
           <span>solution.js</span>
           <span>
-            {isSignedIn
-              ? saveState === "saving"
-                ? "Saving…"
-                : saveState === "saved"
-                  ? "Saved"
-                  : saveState === "error"
-                    ? "Save failed"
-                    : "Unsaved"
-              : "Local only"}
+            {isCleanPractice
+              ? cleanPracticeSubmitted
+                ? "Submitted"
+                : "Practice copy"
+              : isSignedIn
+                ? saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "saved"
+                    ? "Saved"
+                    : saveState === "error"
+                      ? "Save failed"
+                      : "Unsaved"
+                : "Local only"}
           </span>
         </div>
         {loadedSubmission ? (
@@ -698,16 +914,60 @@ export function CodingWorkspace({
             <Link href={`/practice/${problem.slug}`}>Restore saved editor</Link>
           </div>
         ) : null}
+        {isCleanPractice ? (
+          <div className="clean-practice-cue" role="status">
+            <div>
+              <span>Clean practice copy</span>
+              <strong>
+                {cleanPracticeSubmitted
+                  ? "This practice copy has been submitted."
+                  : "Solve from the starter, not the saved answer."}
+              </strong>
+            </div>
+            <p>
+              {cleanPracticeSubmitted
+                ? "Your attempt and editor are saved. Earlier source stays hidden until you leave clean practice."
+                : "Typing and browser runs stay local. Your saved solution changes only if you deliberately submit this copy."}
+            </p>
+            <Link href={`/practice/${problem.slug}`}>
+              {cleanPracticeSubmitted
+                ? "Open saved editor"
+                : "Return to saved solution"}
+            </Link>
+          </div>
+        ) : null}
+        {recoveredAnonymousDraft ? (
+          <div className="loaded-submission-cue anonymous-draft-cue" role="status">
+            <div>
+              <span>Local draft recovered</span>
+              <strong>Your work is back after sign-in</strong>
+              <small>Not saved to your account yet</small>
+            </div>
+            <p>
+              This browser copy did not replace account-owned code. Save it as
+              your current draft, keep editing, or submit when you’re ready.
+            </p>
+            <button
+              type="button"
+              onClick={() => void saveDraft(editorCode)}
+              disabled={saveState === "saving"}
+            >
+              {saveState === "saving" ? "Saving…" : "Save recovered draft"}
+            </button>
+          </div>
+        ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <textarea
           id="coding-solution"
           aria-label="JavaScript solution"
-          value={code}
+          aria-describedby="coding-editor-keyboard-hint"
+          value={editorCode}
           onChange={(event) => updateCode(event.target.value)}
-          onBlur={saveDraftNow}
+          onKeyDown={handleEditorKeyDown}
+          onBlur={isCleanPractice ? undefined : saveDraftNow}
           spellCheck={false}
         />
-        {isSignedIn ? (
+        {isSignedIn && !isCleanPractice ? (
           <div className="starter-restore">
             {isRestoreConfirmationOpen ? (
               <div
@@ -746,9 +1006,9 @@ export function CodingWorkspace({
                 onClick={() => {
                   setIsRestoreConfirmationOpen(true);
                 }}
-                disabled={code === problem.starterCode}
+                disabled={editorCode === problem.starterCode}
               >
-                {code === problem.starterCode
+                {editorCode === problem.starterCode
                   ? "Clean starter loaded"
                   : "Restore clean starter"}
               </button>
@@ -760,16 +1020,18 @@ export function CodingWorkspace({
       <div className="coding-actions">
         <span
           className="coding-keyboard-hint"
-          id="run-example-keyboard-hint"
+          id="coding-editor-keyboard-hint"
         >
-          Keyboard: Tab to Run, then Enter
+          {isSignedIn
+            ? "Keyboard: Ctrl/⌘ + Enter to run · add Shift to submit"
+            : "Keyboard: Ctrl/⌘ + Enter to run"}
         </span>
         <button
           className="secondary-code-action"
           type="button"
           onClick={runExample}
           disabled={runState.kind === "running"}
-          aria-describedby="run-example-keyboard-hint"
+          aria-describedby="coding-editor-keyboard-hint"
         >
           Run example
         </button>
@@ -779,13 +1041,14 @@ export function CodingWorkspace({
             type="button"
             onClick={submitSolution}
             disabled={runState.kind === "running"}
+            aria-describedby="coding-editor-keyboard-hint"
           >
             {runState.kind === "running" ? "Running checks…" : "Submit solution"}
           </button>
         ) : (
           <Link
             className="submit-code-action"
-            href="/account?mode=signin"
+            href={getSignInHref(`/practice/${problem.slug}`)}
           >
             Sign in to submit
           </Link>
@@ -820,12 +1083,12 @@ export function CodingWorkspace({
                 type="button"
                 onClick={() => void saveCurrentCustomInput()}
                 disabled={
-                  testCaseSaveState === "saving" ||
+                  isTestCaseSaving ||
                   customInput.trim().length === 0 ||
                   customTestCases.length >= MAX_CODING_TEST_CASES
                 }
               >
-                {testCaseSaveState === "saving" ? "Saving…" : "Save test case"}
+                {isTestCaseSaving ? "Saving…" : "Save test case"}
               </button>
             ) : null}
           </div>
@@ -912,7 +1175,7 @@ export function CodingWorkspace({
                         <button
                           type="button"
                           onClick={() => void removeCustomTestCase(index)}
-                          disabled={testCaseSaveState === "saving"}
+                          disabled={isTestCaseSaving}
                         >
                           Remove
                         </button>
@@ -931,8 +1194,9 @@ export function CodingWorkspace({
                 className="private-test-cases-save"
                 type="button"
                 onClick={() => void persistCustomTestCases(customTestCases)}
+                disabled={isTestCaseSaving}
               >
-                Save changes
+                {isTestCaseSaving ? "Saving…" : "Save changes"}
               </button>
             ) : null}
             <p
@@ -953,7 +1217,8 @@ export function CodingWorkspace({
               : " is-wrong"
             : runState.kind === "sample" && runState.passed
               ? " is-accepted"
-              : runState.kind === "idle" &&
+              : !isCleanPractice &&
+                  runState.kind === "idle" &&
                   initialBestVerdict === "Accepted"
                 ? " is-accepted"
               : ""
@@ -980,7 +1245,7 @@ export function CodingWorkspace({
                         ? "Time limit exceeded"
                         : runState.kind === "running"
                           ? "Judging"
-                          : initialBestVerdict === "Accepted"
+                          : !isCleanPractice && initialBestVerdict === "Accepted"
                             ? "Accepted"
                             : "Ready"}
           </span>
@@ -991,6 +1256,32 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
+        {runState.kind === "verdict" && runState.checks.length > 0 ? (
+          <section
+            className="judge-check-results"
+            aria-labelledby={`judge-check-results-${problem.slug}`}
+          >
+            <div>
+              <span>Judge coverage</span>
+              <h3 id={`judge-check-results-${problem.slug}`}>
+                What passed, and what needs work
+              </h3>
+            </div>
+            <ol>
+              {runState.checks.map((check) => (
+                <li className={check.passed ? "is-passed" : "is-revisit"} key={check.label}>
+                  <span aria-hidden="true">{check.passed ? "✓" : "·"}</span>
+                  <strong>{check.label}</strong>
+                  <small>{check.passed ? "Passed" : "Needs work"}</small>
+                </li>
+              ))}
+            </ol>
+            <p>
+              Check names describe coverage only. Inputs, expected outputs, and
+              solution code stay hidden.
+            </p>
+          </section>
+        ) : null}
         {runState.kind === "sample" || runState.kind === "custom" ? (
           <div className="sample-output">
             <span>Your output</span>
@@ -1147,6 +1438,26 @@ export function CodingWorkspace({
               <span>Common mistake</span>
               <p>{problem.acceptedExplanation.commonMistake}</p>
             </div>
+            <div className="accepted-efficiency">
+              <div>
+                <span>Efficiency target</span>
+                <dl>
+                  <div>
+                    <dt>Time</dt>
+                    <dd>{problem.acceptedExplanation.efficiency.time}</dd>
+                  </div>
+                  <div>
+                    <dt>Extra space</dt>
+                    <dd>{problem.acceptedExplanation.efficiency.space}</dd>
+                  </div>
+                </dl>
+              </div>
+              <p>{problem.acceptedExplanation.efficiency.explanation}</p>
+              <small>
+                This is the target for a direct approach, not an analysis of
+                your exact source.
+              </small>
+            </div>
           </section>
         ) : null}
         {acceptedReview ? (
@@ -1183,14 +1494,18 @@ export function CodingWorkspace({
         <div className="practice-recovery-cue">
           <span aria-hidden="true" />
           <p>
-            {isSignedIn
+            {isCleanPractice && !cleanPracticeCompleted
+              ? cleanPracticeSubmitted
+                ? "This attempt and editor are saved. Earlier Accepted source remains hidden in clean practice."
+                : "Your saved Accepted solution stays untouched until you submit this practice copy."
+              : isSignedIn
               ? "Your saved code, attempts, and Accepted progress return after sign-in."
               : "Sign in to save this work. Your code, attempts, and Accepted progress return with your account."}
           </p>
         </div>
       </div>
 
-      {isSignedIn ? (
+      {isSignedIn && (!isCleanPractice || cleanPracticeCompleted) ? (
         <PracticeSolutionNote
           problemSlug={problem.slug}
           initialNote={initialSolutionNote}
@@ -1198,63 +1513,79 @@ export function CodingWorkspace({
         />
       ) : null}
 
-      {showPracticeFeedback ? (
+      {showPracticeFeedback && (!isCleanPractice || cleanPracticeCompleted) ? (
         <PracticeFeedback
           problemSlug={problem.slug}
           initialFeedback={initialPracticeFeedback}
         />
       ) : null}
 
-      <section className="attempt-history" aria-labelledby="attempt-history-title">
-        <div>
-          <p className="quiz-kicker">Saved attempts</p>
-          <h3 id="attempt-history-title">Verdict history</h3>
-        </div>
-        {attempts.length > 0 ? (
-          <ol>
-            {attempts.map((attempt, index) => (
-              <li key={attempt.id}>
-                <span>#{attempts.length - index}</span>
-                <strong
-                  className={
-                    attempt.verdict === "Accepted"
-                      ? "attempt-accepted"
-                      : "attempt-wrong"
-                  }
-                >
-                  {attempt.verdict}
-                </strong>
-                <span>
-                  {attempt.passedTests}/{attempt.totalTests} checks
-                </span>
-                <time dateTime={attempt.createdAt}>
-                  {new Intl.DateTimeFormat("en", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(new Date(attempt.createdAt))}
-                </time>
-                {attempt.hasSource ? (
-                  <Link
-                    className="attempt-source-link"
-                    href={`/submissions/${attempt.id}`}
-                    aria-label={`Review source for attempt ${attempts.length - index}`}
-                  >
-                    Review source <span aria-hidden="true">→</span>
-                  </Link>
-                ) : (
-                  <span className="attempt-source-state">Result only</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="attempt-history-empty">
-            No saved submissions yet. Your first verdict will appear here.
+      {isCleanPractice && !cleanPracticeCompleted ? (
+        <section
+          className="clean-practice-history"
+          aria-label="Saved work hidden"
+        >
+          <strong>Saved work stays out of view.</strong>
+          <p>
+            Finish this retrieval attempt first, or return to your saved
+            solution to review earlier source and notes.
           </p>
-        )}
-      </section>
+        </section>
+      ) : (
+        <section
+          className="attempt-history"
+          aria-labelledby="attempt-history-title"
+        >
+          <div>
+            <p className="quiz-kicker">Saved attempts</p>
+            <h3 id="attempt-history-title">Verdict history</h3>
+          </div>
+          {attempts.length > 0 ? (
+            <ol>
+              {attempts.map((attempt, index) => (
+                <li key={attempt.id}>
+                  <span>#{attempts.length - index}</span>
+                  <strong
+                    className={
+                      attempt.verdict === "Accepted"
+                        ? "attempt-accepted"
+                        : "attempt-wrong"
+                    }
+                  >
+                    {attempt.verdict}
+                  </strong>
+                  <span>
+                    {attempt.passedTests}/{attempt.totalTests} checks
+                  </span>
+                  <time dateTime={attempt.createdAt}>
+                    {new Intl.DateTimeFormat("en", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(attempt.createdAt))}
+                  </time>
+                  {attempt.hasSource ? (
+                    <Link
+                      className="attempt-source-link"
+                      href={`/submissions/${attempt.id}`}
+                      aria-label={`Review source for attempt ${attempts.length - index}`}
+                    >
+                      Review source <span aria-hidden="true">→</span>
+                    </Link>
+                  ) : (
+                    <span className="attempt-source-state">Result only</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="attempt-history-empty">
+              No saved submissions yet. Your first verdict will appear here.
+            </p>
+          )}
+        </section>
+      )}
     </section>
   );
 }

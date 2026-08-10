@@ -85,7 +85,7 @@ describe("CodingSkillRecord", () => {
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByRole("link", { name: "Review Sum two numbers" })).toHaveAttribute(
       "href",
-      "/practice/sum-two-numbers",
+      "/practice/sum-two-numbers?mode=clean",
     );
     expect(
       screen.getByRole("heading", { name: "Your saved practice record" }),
@@ -99,5 +99,26 @@ describe("CodingSkillRecord", () => {
         name: "Continue Code tracing at exercise 3",
       }),
     ).toHaveAttribute("href", "/practice/tracing");
+  });
+
+  it("adds the private completion record only after every problem is Accepted", () => {
+    const { rerender } = render(
+      <CodingSkillRecord record={record} labProgress={labProgress} />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: "Open completion record" }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <CodingSkillRecord
+        record={{ ...record, acceptedCount: 2 }}
+        labProgress={labProgress}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Open completion record" }),
+    ).toHaveAttribute("href", "/practice/completion-record");
   });
 });

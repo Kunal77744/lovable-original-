@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -42,12 +43,23 @@ const problem = {
       "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
     commonMistake:
       'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    efficiency: {
+      time: "O(1)",
+      space: "O(1)",
+      explanation:
+        "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
+    },
   },
   starterCode: `function solve(input) {
   // Read the problem, use input, and return the exact output.
   return "";
 }`,
-  tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
+  tests: [
+    { label: "Positive values", input: "4 9" },
+    { label: "Negative result", input: "-8 3" },
+    { label: "Zero values", input: "0 0" },
+    { label: "Larger total", input: "120 880" },
+  ],
   example: {
     input: "4 9",
     expectedOutput: "13",
@@ -55,13 +67,30 @@ const problem = {
 };
 
 function renderWorkspace({
+  attempts = [],
+  bestVerdict = null,
+  initialAcceptedCode = null,
+  initialCode = "function solve(input) { return input; }",
   initialCustomTestCases = [],
   initialPracticeFeedback = null,
+  hasSavedCode = false,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
+  isCleanPractice = false,
   dailyChallengeDate = null,
 }: {
+  attempts?: {
+    id: string;
+    verdict: string;
+    passedTests: number;
+    totalTests: number;
+    createdAt: string;
+    hasSource: boolean;
+  }[];
+  bestVerdict?: string | null;
+  initialAcceptedCode?: string | null;
+  initialCode?: string;
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
     problemSlug: string;
@@ -69,21 +98,26 @@ function renderWorkspace({
     comment: string;
     updatedAt: string;
   } | null;
+  hasSavedCode?: boolean;
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
+  isCleanPractice?: boolean;
   dailyChallengeDate?: string | null;
 } = {}) {
   return render(
     <CodingWorkspace
-      attempts={[]}
-      bestVerdict={null}
-      initialCode="function solve(input) { return input; }"
+      attempts={attempts}
+      bestVerdict={bestVerdict}
+      initialCode={initialCode}
+      initialAcceptedCode={initialAcceptedCode}
       initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
+      hasSavedCode={hasSavedCode}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       isReviewSession={isReviewSession}
+      isCleanPractice={isCleanPractice}
       dailyChallengeDate={dailyChallengeDate}
       problem={problem}
     />,
@@ -109,13 +143,20 @@ function submissionResponse(
       isFirstAcceptedResult: verdict === "Accepted",
       dailyChallengeCompleted: false,
       dailyChallengeDate: null,
+      checks: problem.tests.map((test, index) => ({
+        label: test.label,
+        passed: index < passedTests,
+      })),
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
 }
 
 describe("CodingWorkspace", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    window.localStorage.clear();
+  });
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -261,6 +302,118 @@ describe("CodingWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps a clean retry local and hides the saved answer until deliberate submission", async () => {
+    vi.useFakeTimers();
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn(() => true);
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const savedAcceptedCode =
+      "function solve(input) { return input.split(' ').map(Number).reduce((sum, value) => sum + value, 0); }";
+    const retryCode =
+      "function solve(input) { const [a, b] = input.split(' ').map(Number); return a + b; }";
+
+    try {
+      renderWorkspace({
+        attempts: [
+          {
+            id: "accepted-source",
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-08-09T10:00:00.000Z",
+            hasSource: true,
+          },
+        ],
+        bestVerdict: "Accepted",
+        initialAcceptedCode: savedAcceptedCode,
+        initialCode: problem.starterCode,
+        isCleanPractice: true,
+      });
+
+      const editor = screen.getByLabelText("JavaScript solution");
+      expect(editor).toHaveValue(problem.starterCode);
+      expect(editor).not.toHaveValue(savedAcceptedCode);
+      expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+      expect(screen.getByText("Practice copy")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Return to saved solution" }),
+      ).toHaveAttribute("href", "/practice/sum-two-numbers");
+      expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+      expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "Review source for attempt 1" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", {
+          name: "Plan the behavior before the syntax.",
+        }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.change(editor, { target: { value: retryCode } });
+      fireEvent.blur(editor);
+      fireEvent(window, new Event("pagehide"));
+      await vi.advanceTimersByTimeAsync(800);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(screen.getByText("Practice copy")).toBeInTheDocument();
+
+      vi.useRealTimers();
+      runCodingSolution.mockResolvedValue({
+        status: "finished",
+        outputs: ["13", "-5", "0", "1000"],
+        debugOutput: [],
+      });
+      fetchSpy.mockResolvedValue(submissionResponse("Accepted", 4));
+      fireEvent.click(screen.getByRole("button", { name: "Run example" }));
+      await screen.findByText("Example passed");
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"mode":"submit"'),
+        }),
+      );
+      expect(await screen.findByText("Private code review")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Review source for attempt 2" }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps a recovered browser draft out of clean retry mode", () => {
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      "function solve(input) { return 'anonymous'; }",
+    );
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isCleanPractice: true,
+      hasSavedCode: false,
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      problem.starterCode,
+    );
+    expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
   it("opens the structured private planning stage before submission", () => {
     renderWorkspace();
 
@@ -287,14 +440,21 @@ describe("CodingWorkspace", () => {
 
     renderWorkspace({ isSignedIn: false });
 
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
     const runButton = screen.getByRole("button", { name: "Run example" });
 
     expect(
-      screen.getByText("Keyboard: Tab to Run, then Enter"),
+      screen.getByText("Keyboard: Ctrl/⌘ + Enter to run"),
     ).toBeInTheDocument();
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint",
+    );
     expect(runButton).toHaveAttribute(
       "aria-describedby",
-      "run-example-keyboard-hint",
+      "coding-editor-keyboard-hint",
     );
     expect(
       screen.getByText(
@@ -302,8 +462,8 @@ describe("CodingWorkspace", () => {
       ),
     ).toBeInTheDocument();
 
-    runButton.focus();
-    fireEvent.click(runButton);
+    editor.focus();
+    fireEvent.keyDown(editor, { key: "Enter", ctrlKey: true });
 
     const status = screen.getByRole("status");
     expect(await screen.findByText("Example passed")).toBeInTheDocument();
@@ -319,6 +479,75 @@ describe("CodingWorkspace", () => {
       "href",
       expect.stringContaining("/account?mode=signin"),
     );
+  });
+
+  it("submits from the editor with Command, Shift, and Enter", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      submissionResponse("Accepted", 4),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const submitButton = screen.getByRole("button", {
+      name: "Submit solution",
+    });
+
+    expect(
+      screen.getByText(
+        "Keyboard: Ctrl/⌘ + Enter to run · add Shift to submit",
+      ),
+    ).toBeInTheDocument();
+    expect(submitButton).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint",
+    );
+
+    fireEvent.keyDown(editor, {
+      key: "Enter",
+      metaKey: true,
+      shiftKey: true,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Accepted"),
+    );
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      problem.tests.map((test) => test.input),
+    );
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"mode":"submit"'),
+        }),
+      ),
+    );
+  });
+
+  it("keeps plain Enter and signed-out submit shortcuts inside the editor", () => {
+    renderWorkspace({ isSignedIn: false });
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+
+    fireEvent.keyDown(editor, { key: "Enter" });
+    fireEvent.keyDown(editor, {
+      key: "Enter",
+      ctrlKey: true,
+      shiftKey: true,
+    });
+
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Sign in to submit" })).toBeVisible();
   });
 
   it("saves the exact latest draft when the editor loses focus", async () => {
@@ -414,12 +643,99 @@ describe("CodingWorkspace", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(sendBeacon).not.toHaveBeenCalled();
       expect(screen.getByText("Local only")).toBeInTheDocument();
+      expect(
+        window.localStorage.getItem(
+          "lovable-original:practice-draft:v1:sum-two-numbers",
+        ),
+      ).toBe("function solve(input) { return input.trim(); }");
+      expect(
+        screen.getByRole("link", { name: "Sign in to submit" }),
+      ).toHaveAttribute(
+        "href",
+        "/account?mode=signin&next=%2Fpractice%2Fsum-two-numbers",
+      );
     } finally {
       Object.defineProperty(navigator, "sendBeacon", {
         configurable: true,
         value: originalSendBeacon,
       });
     }
+  });
+
+  it("recovers a signed-out draft after sign-in without saving it automatically", async () => {
+    const localDraft =
+      "function solve(input) { return input.split(' ').map(Number).reduce((a, b) => a + b, 0); }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      localDraft,
+    );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isSignedIn: true,
+      hasSavedCode: false,
+    });
+
+    expect(await screen.findByLabelText("JavaScript solution")).toHaveValue(
+      localDraft,
+    );
+    expect(screen.getByText("Local draft recovered")).toBeInTheDocument();
+    expect(screen.getByText("Not saved to your account yet")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("saves an explicitly recovered draft and removes the browser copy", async () => {
+    const localDraft = "function solve(input) { return '13'; }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      localDraft,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ savedAt: "now" })));
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isSignedIn: true,
+      hasSavedCode: false,
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save recovered draft" }),
+    );
+
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/practice/sum-two-numbers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: localDraft }),
+      }),
+    );
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:practice-draft:v1:sum-two-numbers",
+      ),
+    ).toBeNull();
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
+  it("keeps account-owned code ahead of an anonymous browser draft", () => {
+    const accountCode = "function solve(input) { return Number(input); }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      "function solve(input) { return 'anonymous'; }",
+    );
+
+    renderWorkspace({
+      initialCode: accountCode,
+      isSignedIn: true,
+      hasSavedCode: true,
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(accountCode);
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
   });
 
   it("runs editable custom input without saving an attempt", async () => {
@@ -653,6 +969,90 @@ describe("CodingWorkspace", () => {
     expect(screen.getByText("No saved cases yet. Try an input above, then save it here.")).toBeInTheDocument();
   });
 
+  it("keeps newer private test case edits unsaved when an older save finishes", async () => {
+    let finishFirstSave!: (response: Response) => void;
+    const firstSave = new Promise<Response>((resolve) => {
+      finishFirstSave = resolve;
+    });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(firstSave)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              cases: [{ input: "34 8", expectedOutput: "99" }],
+              updatedAt: "2026-08-04T10:01:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    renderWorkspace({
+      initialCustomTestCases: [{ input: "19 23", expectedOutput: "42" }],
+    });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
+      target: { value: "21 21" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
+      target: { value: "34 8" },
+    });
+    fireEvent.change(screen.getByLabelText("Expected output"), {
+      target: { value: "99" },
+    });
+
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("34 8");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("99");
+    const savingButtons = screen.getAllByRole("button", { name: "Saving…" });
+    expect(savingButtons).toHaveLength(2);
+    savingButtons.forEach((button) => expect(button).toBeDisabled());
+    expect(
+      screen.getByText(
+        "Saving your earlier test cases. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      finishFirstSave(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              cases: [{ input: "21 21", expectedOutput: "42" }],
+              updatedAt: "2026-08-04T10:00:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("34 8");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("99");
+    expect(
+      await screen.findByText(
+        "Your earlier test cases are saved. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByText("1 private test case saved.")).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "/api/practice/sum-two-numbers/test-cases",
+      expect.objectContaining({
+        body: JSON.stringify({
+          cases: [{ input: "34 8", expectedOutput: "99" }],
+        }),
+      }),
+    );
+  });
+
   it("keeps signed-out custom runs local and hides private saving controls", () => {
     renderWorkspace({ isSignedIn: false });
 
@@ -690,6 +1090,11 @@ describe("CodingWorkspace", () => {
       }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("Practice progress · 1/12 accepted")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "What passed, and what needs work" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Positive values")).toBeInTheDocument();
+    expect(screen.getAllByText("Passed")).toHaveLength(4);
     expect(screen.getByText("Concept unlocked")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -699,6 +1104,15 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
     expect(screen.getByText("Common mistake")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Efficiency target")).toBeInTheDocument();
+    expect(screen.getByText("Time")).toBeInTheDocument();
+    expect(screen.getByText("Extra space")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      problem.acceptedExplanation.efficiency.explanation,
+    );
+    expect(status).toHaveTextContent(
+      "This is the target for a direct approach, not an analysis of your exact source.",
+    );
     expect(screen.getByText("Private code review")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -894,6 +1308,10 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveClass("is-accepted");
     expect(status).toHaveTextContent("Accepted");
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Efficiency target")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      problem.acceptedExplanation.efficiency.explanation,
+    );
     expect(screen.getByText("Private code review")).toBeInTheDocument();
     expect(status).toHaveTextContent(
       "Your source explicitly turns input text into numbers before adding the two values.",
@@ -1035,6 +1453,11 @@ describe("CodingWorkspace", () => {
       ),
     );
     expect(screen.getByText("Try this next")).toBeInTheDocument();
+    expect(screen.getByText("Positive values")).toBeInTheDocument();
+    expect(screen.getAllByText("Passed")).toHaveLength(3);
+    expect(screen.getByText("Needs work")).toBeInTheDocument();
+    expect(status).not.toHaveTextContent("4 9");
+    expect(status).not.toHaveTextContent("13");
     expect(
       screen.queryByRole("link", { name: "Return to refreshed review" }),
     ).not.toBeInTheDocument();
@@ -1143,7 +1566,7 @@ describe("CodingWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "JudgingRunning four deterministic checks in your browser…",
+      "JudgingRunning 4 deterministic checks in your browser…",
     );
     expect(screen.getByRole("button", { name: "Running checks…" })).toBeDisabled();
 

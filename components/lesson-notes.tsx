@@ -103,7 +103,7 @@ export function LessonNotes({
           <h2 id="lesson-notes-title">Put the idea in your own words.</h2>
           <p>
             Capture the explanation, question, or example you want to remember
-            before you start the assignment.
+            before you start the practice.
           </p>
         </div>
         <span>{hasSavedNote ? "Saved note" : "Your space"}</span>
@@ -117,7 +117,7 @@ export function LessonNotes({
           aria-labelledby="lesson-note-label"
           maxLength={MAX_LESSON_NOTE_LENGTH}
           value={content}
-          placeholder="For example: A semantic element explains what a region does, not how it looks."
+          placeholder="For example: The rule I want to remember is…"
           onChange={(event) => {
             latestContent.current = event.target.value;
             setContent(event.target.value);

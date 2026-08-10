@@ -7,6 +7,7 @@ export type CodingProblemExample = {
 };
 
 export type CodingProblemTestCase = {
+  label: string;
   input: string;
   expectedOutput: string;
 };
@@ -15,6 +16,11 @@ export type CodingProblemExplanation = {
   concept: string;
   whyItWorks: string;
   commonMistake: string;
+  efficiency: {
+    time: string;
+    space: string;
+    explanation: string;
+  };
 };
 
 export type CodingProblem = {
@@ -62,6 +68,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
       commonMistake:
         'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+      efficiency: {
+        time: "O(1)",
+        space: "O(1)",
+        explanation:
+          "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
+      },
     },
     examples: [
       {
@@ -77,10 +89,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "4 9", expectedOutput: "13" },
-      { input: "-8 3", expectedOutput: "-5" },
-      { input: "0 0", expectedOutput: "0" },
-      { input: "120 880", expectedOutput: "1000" },
+      { label: "Positive values", input: "4 9", expectedOutput: "13" },
+      { label: "Negative result", input: "-8 3", expectedOutput: "-5" },
+      { label: "Zero values", input: "0 0", expectedOutput: "0" },
+      { label: "Larger total", input: "120 880", expectedOutput: "1000" },
     ],
   },
   {
@@ -105,6 +117,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Every even integer leaves a remainder of zero when divided by 2. Odd integers do not, including negative ones.",
       commonMistake:
         'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
+      efficiency: {
+        time: "O(1)",
+        space: "O(1)",
+        explanation:
+          "One remainder check decides the answer without a loop or any storage that grows with the input value.",
+      },
     },
     examples: [
       {
@@ -120,10 +138,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "17", expectedOutput: "Odd" },
-      { input: "24", expectedOutput: "Even" },
-      { input: "0", expectedOutput: "Even" },
-      { input: "-11", expectedOutput: "Odd" },
+      { label: "Positive odd", input: "17", expectedOutput: "Odd" },
+      { label: "Positive even", input: "24", expectedOutput: "Even" },
+      { label: "Zero", input: "0", expectedOutput: "Even" },
+      { label: "Negative odd", input: "-11", expectedOutput: "Odd" },
     ],
   },
   {
@@ -148,6 +166,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Visiting multipliers 1 through 10 once creates ten ordered values. Joining them once keeps the spacing exact.",
       commonMistake:
         "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
+      efficiency: {
+        time: "O(1)",
+        space: "O(1)",
+        explanation:
+          "The problem always produces exactly ten multiples, so both the work and output size have a fixed upper bound.",
+      },
     },
     examples: [
       {
@@ -158,10 +182,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "5", expectedOutput: "5 10 15 20 25 30 35 40 45 50" },
-      { input: "1", expectedOutput: "1 2 3 4 5 6 7 8 9 10" },
-      { input: "0", expectedOutput: "0 0 0 0 0 0 0 0 0 0" },
-      { input: "-2", expectedOutput: "-2 -4 -6 -8 -10 -12 -14 -16 -18 -20" },
+      { label: "Standard table", input: "5", expectedOutput: "5 10 15 20 25 30 35 40 45 50" },
+      { label: "Identity table", input: "1", expectedOutput: "1 2 3 4 5 6 7 8 9 10" },
+      { label: "Zero table", input: "0", expectedOutput: "0 0 0 0 0 0 0 0 0 0" },
+      { label: "Negative table", input: "-2", expectedOutput: "-2 -4 -6 -8 -10 -12 -14 -16 -18 -20" },
     ],
   },
   {
@@ -187,6 +211,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Separating the leading count leaves only the values that should compete for the maximum, including values below zero.",
       commonMistake:
         "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(1)",
+        explanation:
+          "A direct scan compares each of the n values once and needs only the best value seen so far after parsing.",
+      },
     },
     examples: [
       {
@@ -197,10 +227,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "5\n7 2 19 4 11", expectedOutput: "19" },
-      { input: "4\n-8 -3 -21 -6", expectedOutput: "-3" },
-      { input: "1\n42", expectedOutput: "42" },
-      { input: "6\n5 5 5 4 5 3", expectedOutput: "5" },
+      { label: "Mixed values", input: "5\n7 2 19 4 11", expectedOutput: "19" },
+      { label: "All negative", input: "4\n-8 -3 -21 -6", expectedOutput: "-3" },
+      { label: "Single value", input: "1\n42", expectedOutput: "42" },
+      { label: "Repeated maximum", input: "6\n5 5 5 4 5 3", expectedOutput: "5" },
     ],
   },
   {
@@ -225,6 +255,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
       commonMistake:
         "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(n)",
+        explanation:
+          "Every character must appear in the reversed result, so the work and returned string both grow with the word length.",
+      },
     },
     examples: [
       {
@@ -240,10 +276,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "semantic", expectedOutput: "citnames" },
-      { input: "level", expectedOutput: "level" },
-      { input: "javascript", expectedOutput: "tpircsavaj" },
-      { input: "a", expectedOutput: "a" },
+      { label: "Standard word", input: "semantic", expectedOutput: "citnames" },
+      { label: "Palindrome", input: "level", expectedOutput: "level" },
+      { label: "Longer word", input: "javascript", expectedOutput: "tpircsavaj" },
+      { label: "Single character", input: "a", expectedOutput: "a" },
     ],
   },
   {
@@ -268,6 +304,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
       commonMistake:
         "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(n)",
+        explanation:
+          "The sequence visits every number from 1 through n once and stores n output tokens before joining them.",
+      },
     },
     examples: [
       {
@@ -278,14 +320,16 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "5", expectedOutput: "1 2 Fizz 4 Buzz" },
+      { label: "Fizz and Buzz", input: "5", expectedOutput: "1 2 Fizz 4 Buzz" },
       {
+        label: "Combined rule",
         input: "15",
         expectedOutput:
           "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz",
       },
-      { input: "1", expectedOutput: "1" },
+      { label: "Smallest sequence", input: "1", expectedOutput: "1" },
       {
+        label: "Sequence after FizzBuzz",
         input: "20",
         expectedOutput:
           "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz 16 17 Fizz 19 Buzz",
@@ -314,6 +358,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Checking each character against the vowel set counts every match once, including repeated vowels, while consonants leave the total unchanged.",
       commonMistake:
         "Checking only whether a word contains a vowel returns a yes-or-no result instead of counting every occurrence.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(1)",
+        explanation:
+          "One pass checks each of the n characters, while the five-vowel lookup and running count stay fixed in size.",
+      },
     },
     examples: [
       {
@@ -329,10 +379,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "javascript", expectedOutput: "3" },
-      { input: "rhythm", expectedOutput: "0" },
-      { input: "queue", expectedOutput: "4" },
-      { input: "a", expectedOutput: "1" },
+      { label: "Mixed characters", input: "javascript", expectedOutput: "3" },
+      { label: "No vowels", input: "rhythm", expectedOutput: "0" },
+      { label: "Repeated vowels", input: "queue", expectedOutput: "4" },
+      { label: "Single vowel", input: "a", expectedOutput: "1" },
     ],
   },
   {
@@ -358,6 +408,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "A set answers whether a value was seen before, while the left-to-right traversal preserves first-appearance order in the result.",
       commonMistake:
         "Converting the list to a sorted set changes the required order even when the unique values are correct.",
+      efficiency: {
+        time: "O(n) average",
+        space: "O(n)",
+        explanation:
+          "A set gives an average constant-time seen check for each value, and may retain every value when all n are unique.",
+      },
     },
     examples: [
       {
@@ -368,10 +424,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "7\n4 2 4 3 2 3 9", expectedOutput: "4 2 3 9" },
-      { input: "5\n-1 -1 2 -1 2", expectedOutput: "-1 2" },
-      { input: "1\n8", expectedOutput: "8" },
-      { input: "6\n1 2 3 4 5 6", expectedOutput: "1 2 3 4 5 6" },
+      { label: "Repeated values", input: "7\n4 2 4 3 2 3 9", expectedOutput: "4 2 3 9" },
+      { label: "Repeated negatives", input: "5\n-1 -1 2 -1 2", expectedOutput: "-1 2" },
+      { label: "Single value", input: "1\n8", expectedOutput: "8" },
+      { label: "Already unique", input: "6\n1 2 3 4 5 6", expectedOutput: "1 2 3 4 5 6" },
     ],
   },
   {
@@ -396,6 +452,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "A stack keeps the most recent unmatched opening bracket on top, so each closing bracket can be checked against the only valid partner.",
       commonMistake:
         "Counting opening and closing brackets can miss crossed pairs such as ([)] because the totals still match.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(n)",
+        explanation:
+          "Each bracket is pushed or checked once, while a string of only opening brackets can grow the stack to n entries.",
+      },
     },
     examples: [
       {
@@ -411,11 +473,11 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "{[()]}", expectedOutput: "Balanced" },
-      { input: "([)]", expectedOutput: "Not balanced" },
-      { input: "]", expectedOutput: "Not balanced" },
-      { input: "(([]){})", expectedOutput: "Balanced" },
-      { input: "(()", expectedOutput: "Not balanced" },
+      { label: "Nested pairs", input: "{[()]}", expectedOutput: "Balanced" },
+      { label: "Crossed pairs", input: "([)]", expectedOutput: "Not balanced" },
+      { label: "Early closing bracket", input: "]", expectedOutput: "Not balanced" },
+      { label: "Adjacent nested groups", input: "(([]){})", expectedOutput: "Balanced" },
+      { label: "Unclosed opening bracket", input: "(()", expectedOutput: "Not balanced" },
     ],
   },
   {
@@ -440,6 +502,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "The frequency map proves which characters occur once, and the second pass preserves the word's order when selecting the first one.",
       commonMistake:
         "Returning the first character before the complete count is known can choose a character that repeats later.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(k)",
+        explanation:
+          "Two linear passes count and select in order, while the frequency map stores k distinct characters, at most 26 here.",
+      },
     },
     examples: [
       {
@@ -455,10 +523,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "swiss", expectedOutput: "w" },
-      { input: "aabb", expectedOutput: "None" },
-      { input: "level", expectedOutput: "v" },
-      { input: "z", expectedOutput: "z" },
+      { label: "Unique near the start", input: "swiss", expectedOutput: "w" },
+      { label: "No unique character", input: "aabb", expectedOutput: "None" },
+      { label: "Unique near the middle", input: "level", expectedOutput: "v" },
+      { label: "Single character", input: "z", expectedOutput: "z" },
     ],
   },
   {
@@ -484,6 +552,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Comparing the target with the midpoint proves which half cannot contain it, shrinking the remaining sorted range until found or empty.",
       commonMistake:
         "Keeping the midpoint inside the next range can cause an infinite loop when only one or two positions remain.",
+      efficiency: {
+        time: "O(log n) search",
+        space: "O(1)",
+        explanation:
+          "After parsing, each comparison halves the remaining range and an iterative search keeps only its boundaries and midpoint.",
+      },
     },
     examples: [
       {
@@ -499,11 +573,11 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "6\n-4 0 3 7 12 20\n7", expectedOutput: "3" },
-      { input: "4\n2 5 8 11\n6", expectedOutput: "-1" },
-      { input: "5\n1 4 9 15 22\n1", expectedOutput: "0" },
-      { input: "5\n1 4 9 15 22\n22", expectedOutput: "4" },
-      { input: "1\n-3\n-3", expectedOutput: "0" },
+      { label: "Target in the middle", input: "6\n-4 0 3 7 12 20\n7", expectedOutput: "3" },
+      { label: "Missing target", input: "4\n2 5 8 11\n6", expectedOutput: "-1" },
+      { label: "First position", input: "5\n1 4 9 15 22\n1", expectedOutput: "0" },
+      { label: "Last position", input: "5\n1 4 9 15 22\n22", expectedOutput: "4" },
+      { label: "Single-value range", input: "1\n-3\n-3", expectedOutput: "0" },
     ],
   },
   {
@@ -529,6 +603,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Adjacent windows share all but two values, so subtracting the outgoing value and adding the incoming one updates each sum in constant time.",
       commonMistake:
         "Starting the best sum at zero gives the wrong answer when every valid window has a negative sum.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(1)",
+        explanation:
+          "The first window is summed once, then each remaining value enters and one leaves while only the current and best sums are kept.",
+      },
     },
     examples: [
       {
@@ -544,11 +624,11 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     starterCode: CODING_SOLUTION_SCAFFOLD,
     tests: [
-      { input: "6 3\n2 1 5 1 3 2", expectedOutput: "9" },
-      { input: "4 2\n-5 -2 -8 -1", expectedOutput: "-7" },
-      { input: "5 1\n4 9 2 7 3", expectedOutput: "9" },
-      { input: "5 5\n1 2 3 4 5", expectedOutput: "15" },
-      { input: "7 2\n3 3 3 10 -5 8 8", expectedOutput: "16" },
+      { label: "Overlapping windows", input: "6 3\n2 1 5 1 3 2", expectedOutput: "9" },
+      { label: "All-negative windows", input: "4 2\n-5 -2 -8 -1", expectedOutput: "-7" },
+      { label: "One-value window", input: "5 1\n4 9 2 7 3", expectedOutput: "9" },
+      { label: "Whole-list window", input: "5 5\n1 2 3 4 5", expectedOutput: "15" },
+      { label: "Best window at the end", input: "7 2\n3 3 3 10 -5 8 8", expectedOutput: "16" },
     ],
   },
 ];
@@ -599,14 +679,12 @@ export function gradeCodingOutputs(slug: string, outputs: unknown) {
   const normalizedOutputs = outputs.map((output) =>
     normalizeCodingOutput(output as string),
   );
-  const passedTests = problem.tests.reduce(
-    (count, test, index) =>
-      count +
-      (normalizedOutputs[index] === normalizeCodingOutput(test.expectedOutput)
-        ? 1
-        : 0),
-    0,
-  );
+  const checks = problem.tests.map((test, index) => ({
+    label: test.label,
+    passed:
+      normalizedOutputs[index] === normalizeCodingOutput(test.expectedOutput),
+  }));
+  const passedTests = checks.filter((check) => check.passed).length;
 
   return {
     verdict:
@@ -615,6 +693,7 @@ export function gradeCodingOutputs(slug: string, outputs: unknown) {
         : ("Wrong Answer" as const),
     passedTests,
     totalTests: problem.tests.length,
+    checks,
   };
 }
 
