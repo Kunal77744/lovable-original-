@@ -47,6 +47,11 @@ type CodingWorkspaceProps = {
       concept: string;
       whyItWorks: string;
       commonMistake: string;
+      efficiency: {
+        time: string;
+        space: string;
+        explanation: string;
+      };
     };
     starterCode: string;
     tests: { input: string }[];
@@ -1146,6 +1151,26 @@ export function CodingWorkspace({
             <div className="accepted-mistake">
               <span>Common mistake</span>
               <p>{problem.acceptedExplanation.commonMistake}</p>
+            </div>
+            <div className="accepted-efficiency">
+              <div>
+                <span>Efficiency target</span>
+                <dl>
+                  <div>
+                    <dt>Time</dt>
+                    <dd>{problem.acceptedExplanation.efficiency.time}</dd>
+                  </div>
+                  <div>
+                    <dt>Extra space</dt>
+                    <dd>{problem.acceptedExplanation.efficiency.space}</dd>
+                  </div>
+                </dl>
+              </div>
+              <p>{problem.acceptedExplanation.efficiency.explanation}</p>
+              <small>
+                This is the target for a direct approach, not an analysis of
+                your exact source.
+              </small>
             </div>
           </section>
         ) : null}
