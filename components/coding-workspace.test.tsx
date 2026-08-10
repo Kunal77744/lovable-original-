@@ -43,6 +43,12 @@ const problem = {
       "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
     commonMistake:
       'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    efficiency: {
+      time: "O(1)",
+      space: "O(1)",
+      explanation:
+        "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
+    },
   },
   starterCode: `function solve(input) {
   // Read the problem, use input, and return the exact output.
@@ -972,6 +978,15 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
     expect(screen.getByText("Common mistake")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Efficiency target")).toBeInTheDocument();
+    expect(screen.getByText("Time")).toBeInTheDocument();
+    expect(screen.getByText("Extra space")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      problem.acceptedExplanation.efficiency.explanation,
+    );
+    expect(status).toHaveTextContent(
+      "This is the target for a direct approach, not an analysis of your exact source.",
+    );
     expect(screen.getByText("Private code review")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -1167,6 +1182,10 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveClass("is-accepted");
     expect(status).toHaveTextContent("Accepted");
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Efficiency target")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      problem.acceptedExplanation.efficiency.explanation,
+    );
     expect(screen.getByText("Private code review")).toBeInTheDocument();
     expect(status).toHaveTextContent(
       "Your source explicitly turns input text into numbers before adding the two values.",
