@@ -9269,7 +9269,8 @@ h1 {
   color: #e8efeb;
 }
 
-.private-test-suite-results {
+.private-test-suite-results,
+.example-run-results {
   margin: 15px 0 0;
   padding: 0;
   display: grid;
@@ -9277,7 +9278,8 @@ h1 {
   list-style: none;
 }
 
-.private-test-suite-results li {
+.private-test-suite-results li,
+.example-run-results li {
   overflow: hidden;
   display: grid;
   grid-template-columns: 56px repeat(3, minmax(0, 1fr));
@@ -9286,7 +9288,12 @@ h1 {
   background: #111b17;
 }
 
-.private-test-suite-results li > span {
+.example-run-results li {
+  grid-template-columns: 70px repeat(3, minmax(0, 1fr));
+}
+
+.private-test-suite-results li > span,
+.example-run-results li > span {
   padding: 13px 10px;
   display: grid;
   place-items: center;
@@ -9295,18 +9302,22 @@ h1 {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
-.private-test-suite-results li > div {
+.private-test-suite-results li > div,
+.example-run-results li > div {
   min-width: 0;
   padding: 11px 12px;
 }
 
-.private-test-suite-results li > div + div {
+.private-test-suite-results li > div + div,
+.example-run-results li > div + div {
   border-left: 1px solid #34443c;
 }
 
-.coding-result .private-test-suite-results p {
+.coding-result .private-test-suite-results p,
+.coding-result .example-run-results p {
   margin: 0 0 6px;
   color: #87968e;
   font-size: 9px;
@@ -9315,7 +9326,8 @@ h1 {
   text-transform: uppercase;
 }
 
-.private-test-suite-results pre {
+.private-test-suite-results pre,
+.example-run-results pre {
   margin: 0;
   overflow: auto;
   color: #e8efeb;
@@ -9325,7 +9337,8 @@ h1 {
   white-space: pre-wrap;
 }
 
-.private-test-suite-check > span {
+.private-test-suite-check > span,
+.example-run-results li > div:last-child > span {
   width: fit-content;
   padding: 3px 7px;
   display: inline-flex;
@@ -9336,13 +9349,15 @@ h1 {
   font-weight: 800;
 }
 
-.private-test-suite-check.is-matched > span {
+.private-test-suite-check.is-matched > span,
+.example-run-results .is-matched > span {
   color: #a0e9bd;
   border-color: #49755a;
   background: rgba(131, 221, 168, 0.08);
 }
 
-.private-test-suite-check.is-mismatch > span {
+.private-test-suite-check.is-mismatch > span,
+.example-run-results .is-mismatch > span {
   color: #f1afa4;
   border-color: #745047;
   background: rgba(241, 175, 164, 0.07);
@@ -12772,11 +12787,17 @@ footer {
     grid-column: 1;
   }
 
-  .private-test-suite-results li {
+  .private-test-suite-results li,
+  .example-run-results li {
     grid-template-columns: 48px minmax(0, 1fr);
   }
 
-  .private-test-suite-results li > div + div {
+  .example-run-results li {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+
+  .private-test-suite-results li > div + div,
+  .example-run-results li > div + div {
     grid-column: 2;
     border-top: 1px solid #34443c;
     border-left: 0;

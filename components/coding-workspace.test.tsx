@@ -48,10 +48,16 @@ const problem = {
   return "";
 }`,
   tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
-  example: {
-    input: "4 9",
-    expectedOutput: "13",
-  },
+  examples: [
+    {
+      input: "4 9",
+      expectedOutput: "13",
+    },
+    {
+      input: "-8 3",
+      expectedOutput: "-5",
+    },
+  ],
 };
 
 function renderWorkspace({
@@ -277,17 +283,17 @@ describe("CodingWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("runs a public example in the browser without saving", async () => {
+  it("runs every visible example in the browser without saving", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     runCodingSolution.mockResolvedValue({
       status: "finished",
-      outputs: ["13"],
+      outputs: ["13", "-5"],
       debugOutput: ["input 4 9", "numbers [4,9]"],
     });
 
     renderWorkspace({ isSignedIn: false });
 
-    const runButton = screen.getByRole("button", { name: "Run example" });
+    const runButton = screen.getByRole("button", { name: "Run 2 examples" });
 
     expect(
       screen.getByText("Keyboard: Tab to Run, then Enter"),
@@ -306,11 +312,21 @@ describe("CodingWorkspace", () => {
     fireEvent.click(runButton);
 
     const status = screen.getByRole("status");
-    expect(await screen.findByText("Example passed")).toBeInTheDocument();
+    expect(await screen.findByText("Examples passed")).toBeInTheDocument();
     expect(status).toHaveAttribute("aria-live", "polite");
     expect(status).toHaveAttribute("aria-atomic", "true");
     expect(status).toHaveTextContent(
-      "Example passedExample passed. Submit when you’re ready for all four checks.",
+      "Examples passed2 of 2 visible examples passed. Submit when you’re ready for all four checks.",
+    );
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      ["4 9", "-8 3"],
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 1Input4 9Your output13Expected13Matched",
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 2Input-8 3Your output-5Expected-5Matched",
     );
     expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
     expect(screen.getByText(/input 4 9\s+numbers \[4,9\]/)).toBeInTheDocument();
@@ -318,6 +334,29 @@ describe("CodingWorkspace", () => {
     expect(screen.getByRole("link", { name: "Sign in to submit" })).toHaveAttribute(
       "href",
       expect.stringContaining("/account?mode=signin"),
+    );
+  });
+
+  it("shows which visible example differs before submission", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-4"],
+      debugOutput: [],
+    });
+
+    renderWorkspace({ isSignedIn: false });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+
+    expect(await screen.findByText("Examples differ")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 of 2 visible examples passed. Compare the differing output before you submit.",
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 1Input4 9Your output13Expected13Matched",
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 2Input-8 3Your output-4Expected-5Mismatch",
     );
   });
 
