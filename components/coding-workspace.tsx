@@ -57,6 +57,9 @@ type CodingWorkspaceProps = {
         explanation: string;
       };
     };
+    workedTrace: {
+      steps: [string, string, string];
+    };
     starterCode: string;
     tests: { label: string; input: string }[];
     examples: {
@@ -1481,6 +1484,39 @@ export function CodingWorkspace({
               </h3>
             </div>
             <p>{problem.acceptedExplanation.whyItWorks}</p>
+            <section
+              className="accepted-worked-trace"
+              aria-labelledby={`accepted-worked-trace-${problem.slug}`}
+            >
+              <div className="accepted-worked-trace-heading">
+                <span>Worked trace</span>
+                <h4 id={`accepted-worked-trace-${problem.slug}`}>
+                  Follow the first example
+                </h4>
+              </div>
+              <div className="accepted-worked-trace-values">
+                <div>
+                  <span>Input</span>
+                  <pre>{problem.example.input}</pre>
+                </div>
+                <div>
+                  <span>Expected output</span>
+                  <pre>{problem.example.expectedOutput}</pre>
+                </div>
+              </div>
+              <ol>
+                {problem.workedTrace.steps.map((step, index) => (
+                  <li key={step}>
+                    <span aria-hidden="true">{index + 1}</span>
+                    <p>{step}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="accepted-worked-trace-note">
+                This follows the public example above. It does not analyze your
+                source or reveal a solution.
+              </p>
+            </section>
             <div className="accepted-mistake">
               <span>Common mistake</span>
               <p>{problem.acceptedExplanation.commonMistake}</p>

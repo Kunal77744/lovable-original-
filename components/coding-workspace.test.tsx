@@ -50,6 +50,13 @@ const problem = {
         "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
     },
   },
+  workedTrace: {
+    steps: [
+      "Split the input into the two text values 4 and 9.",
+      "Treat both values as numbers, then add them to get 13.",
+      "Return 13 so the result matches the expected output exactly.",
+    ] as [string, string, string],
+  },
   starterCode: `function solve(input) {
   // Read the problem, use input, and return the exact output.
   return "";
@@ -1141,6 +1148,16 @@ describe("CodingWorkspace", () => {
       }),
     ).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
+    expect(screen.getByText("Worked trace")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Follow the first example" }),
+    ).toBeInTheDocument();
+    for (const step of problem.workedTrace.steps) {
+      expect(status).toHaveTextContent(step);
+    }
+    expect(status).toHaveTextContent(
+      "This follows the public example above. It does not analyze your source or reveal a solution.",
+    );
     expect(screen.getByText("Common mistake")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
     expect(screen.getByText("Efficiency target")).toBeInTheDocument();
@@ -1351,6 +1368,12 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent(
       problem.acceptedExplanation.efficiency.explanation,
     );
+    expect(
+      screen.getByRole("heading", { name: "Follow the first example" }),
+    ).toBeInTheDocument();
+    for (const step of problem.workedTrace.steps) {
+      expect(status).toHaveTextContent(step);
+    }
     expect(screen.getByText("Private code review")).toBeInTheDocument();
     expect(status).toHaveTextContent(
       "Your source explicitly turns input text into numbers before adding the two values.",
@@ -1375,6 +1398,7 @@ describe("CodingWorkspace", () => {
     );
 
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+    expect(screen.queryByText("Worked trace")).not.toBeInTheDocument();
     signedInView.unmount();
 
     render(

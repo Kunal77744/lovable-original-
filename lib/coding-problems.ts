@@ -23,6 +23,10 @@ export type CodingProblemExplanation = {
   };
 };
 
+export type CodingProblemWorkedTrace = {
+  steps: [string, string, string];
+};
+
 export type CodingProblem = {
   slug: string;
   number: number;
@@ -35,6 +39,7 @@ export type CodingProblem = {
   recoveryHint: string;
   recoveryHints: [string, string];
   acceptedExplanation: CodingProblemExplanation;
+  workedTrace: CodingProblemWorkedTrace;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
@@ -74,6 +79,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation:
           "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
       },
+    },
+    workedTrace: {
+      steps: [
+        "Separate the example input into the two values 4 and 9.",
+        "Treat both values as numbers, then add them: 4 + 9 = 13.",
+        "Return 13 as the exact output.",
+      ],
     },
     examples: [
       {
@@ -124,6 +136,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
           "One remainder check decides the answer without a loop or any storage that grows with the input value.",
       },
     },
+    workedTrace: {
+      steps: [
+        "Read 17 as the whole number to classify.",
+        "Dividing 17 by 2 leaves a remainder of 1, so 17 is not divisible by 2.",
+        'Choose the odd branch and return the exact word "Odd".',
+      ],
+    },
     examples: [
       {
         input: "17",
@@ -173,6 +192,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
           "The problem always produces exactly ten multiples, so both the work and output size have a fixed upper bound.",
       },
     },
+    workedTrace: {
+      steps: [
+        "Use 5 as the value that every multiplier will act on.",
+        "Pair 5 with the multipliers 1 through 10 to produce 5, 10, 15, and the remaining multiples through 50.",
+        "Keep those ten values in order and separate them with single spaces.",
+      ],
+    },
     examples: [
       {
         input: "5",
@@ -218,6 +244,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
           "A direct scan compares each of the n values once and needs only the best value seen so far after parsing.",
       },
     },
+    workedTrace: {
+      steps: [
+        "Use the leading 5 as the count, leaving 7, 2, 19, 4, and 11 as the values to compare.",
+        "Start with 7, keep it after 2, then replace it with 19; neither 4 nor 11 is larger.",
+        "Return the surviving maximum, 19.",
+      ],
+    },
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -261,6 +294,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation:
           "Every character must appear in the reversed result, so the work and returned string both grow with the word length.",
       },
+    },
+    workedTrace: {
+      steps: [
+        'Start at the final character of "semantic", which is c.',
+        "Move left one character at a time to collect c, i, t, n, a, m, e, s.",
+        'Join those characters without separators to return "citnames".',
+      ],
     },
     examples: [
       {
@@ -310,6 +350,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation:
           "The sequence visits every number from 1 through n once and stores n output tokens before joining them.",
       },
+    },
+    workedTrace: {
+      steps: [
+        "Build the ordered sequence from 1 through the example limit, 5.",
+        "Keep 1, 2, and 4 as numbers; replace 3 with Fizz and 5 with Buzz.",
+        'Join the five results in order to return "1 2 Fizz 4 Buzz".',
+      ],
     },
     examples: [
       {
@@ -365,6 +412,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
           "One pass checks each of the n characters, while the five-vowel lookup and running count stay fixed in size.",
       },
     },
+    workedTrace: {
+      steps: [
+        'Inspect "javascript" from left to right and start the count at zero.',
+        "The letters a, a, and i are vowels, so the count moves from 0 to 1, then 2, then 3.",
+        "Return the final count, 3.",
+      ],
+    },
     examples: [
       {
         input: "javascript",
@@ -415,6 +469,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
           "A set gives an average constant-time seen check for each value, and may retain every value when all n are unique.",
       },
     },
+    workedTrace: {
+      steps: [
+        "Use the leading 7 as the count, then inspect 4, 2, 4, 3, 2, 3, 9 in order.",
+        "Keep the first 4 and 2, skip their repeats, keep the first 3, skip its repeat, then keep 9.",
+        'Join the kept values in their original order to return "4 2 3 9".',
+      ],
+    },
     examples: [
       {
         input: "7\n4 2 4 3 2 3 9",
@@ -458,6 +519,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation:
           "Each bracket is pushed or checked once, while a string of only opening brackets can grow the stack to n entries.",
       },
+    },
+    workedTrace: {
+      steps: [
+        "Record the opening brackets {, [, and ( in the order they appear.",
+        "The closing ), ], and } each match the most recent unmatched opening bracket.",
+        'No opening bracket remains, so return "Balanced".',
+      ],
     },
     examples: [
       {
@@ -509,6 +577,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
           "Two linear passes count and select in order, while the frequency map stores k distinct characters, at most 26 here.",
       },
     },
+    workedTrace: {
+      steps: [
+        'Count every character in "swiss": s appears three times, while w and i appear once each.',
+        "Scan from the beginning again: s is repeated, and w is the first character with a count of one.",
+        'Return "w" without checking later unique characters.',
+      ],
+    },
     examples: [
       {
         input: "swiss",
@@ -558,6 +633,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation:
           "After parsing, each comparison halves the remaining range and an iterative search keeps only its boundaries and midpoint.",
       },
+    },
+    workedTrace: {
+      steps: [
+        "Start with indexes 0 through 5; the middle index 2 holds 3, so 7 must be to its right.",
+        "In indexes 3 through 5, the middle index 4 holds 12, so 7 must be to its left.",
+        "Index 3 holds 7, so return the zero-based index 3.",
+      ],
     },
     examples: [
       {
@@ -609,6 +691,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         explanation:
           "The first window is summed once, then each remaining value enters and one leaves while only the current and best sums are kept.",
       },
+    },
+    workedTrace: {
+      steps: [
+        "Add the first three values: 2 + 1 + 5 = 8, making 8 the first best sum.",
+        "Slide the window: removing 2 and adding 1 gives 7; removing 1 and adding 3 gives 9.",
+        "The final slide gives 6, so return the largest recorded sum, 9.",
+      ],
     },
     examples: [
       {
