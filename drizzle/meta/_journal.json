@@ -204,6 +204,13 @@
       "when": 1786208400000,
       "tag": "0028_daily-coding-challenge",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1786320000000,
+      "tag": "0029_timed-coding-challenge-results",
+      "breakpoints": true
     }
   ]
 }
