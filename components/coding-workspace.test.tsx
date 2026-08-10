@@ -179,6 +179,13 @@ describe("CodingWorkspace", () => {
     capturePracticeFeedbackSubmitted.mockReset();
   });
 
+  it("labels a restored account draft as saved before the first submission", () => {
+    renderWorkspace({ hasSavedCode: true });
+
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved")).not.toBeInTheDocument();
+  });
+
   it("shows the fresh scaffold without offering a destructive restore", () => {
     render(
       <CodingWorkspace

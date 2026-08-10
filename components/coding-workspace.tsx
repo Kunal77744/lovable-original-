@@ -301,7 +301,7 @@ export function CodingWorkspace({
   >(
     loadedSubmission
       ? "unsaved"
-      : isSignedIn && initialAttempts.length > 0
+      : isSignedIn && hasSavedCode
         ? "saved"
         : "unsaved",
   );

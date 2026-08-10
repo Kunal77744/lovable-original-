@@ -218,6 +218,8 @@ describe("practice problem metadata", () => {
       "returning-learner",
       problem.slug,
     );
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved")).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Try your own input"));
     expect(screen.getByDisplayValue("19 23")).toBeInTheDocument();
     expect(screen.getByDisplayValue("-5 8")).toBeInTheDocument();

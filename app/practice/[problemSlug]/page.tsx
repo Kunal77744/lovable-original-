@@ -246,6 +246,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
             initialPracticeFeedback={practiceFeedbackState.feedback}
             initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}
+            hasSavedCode={studentState.hasSavedCode}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             isReviewSession={isReviewSession}
             isCleanPractice={isCleanPractice}
