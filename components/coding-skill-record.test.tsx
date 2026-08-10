@@ -100,4 +100,25 @@ describe("CodingSkillRecord", () => {
       }),
     ).toHaveAttribute("href", "/practice/tracing");
   });
+
+  it("adds the private completion record only after every problem is Accepted", () => {
+    const { rerender } = render(
+      <CodingSkillRecord record={record} labProgress={labProgress} />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: "Open completion record" }),
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <CodingSkillRecord
+        record={{ ...record, acceptedCount: 2 }}
+        labProgress={labProgress}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Open completion record" }),
+    ).toHaveAttribute("href", "/practice/completion-record");
+  });
 });
