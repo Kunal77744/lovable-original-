@@ -29,6 +29,7 @@ type CodingWorkspaceProps = {
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
+  hasSavedCode?: boolean;
   isPracticeFeedbackEligible: boolean;
   isReviewSession?: boolean;
   dailyChallengeDate?: string | null;
@@ -166,6 +167,7 @@ export function CodingWorkspace({
   initialPracticeFeedback,
   initialSolutionNote = null,
   isSignedIn,
+  hasSavedCode = false,
   isPracticeFeedbackEligible,
   isReviewSession = false,
   dailyChallengeDate = null,
@@ -198,7 +200,7 @@ export function CodingWorkspace({
   >(
     loadedSubmission
       ? "unsaved"
-      : isSignedIn && initialAttempts.length > 0
+      : isSignedIn && hasSavedCode
         ? "saved"
         : "unsaved",
   );
