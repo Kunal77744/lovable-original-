@@ -35,6 +35,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${productionUrl}/learn/why-use-semantic-html`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${productionUrl}/learn/semantic-html-project`,
       changeFrequency: "monthly",
       priority: 0.8,
