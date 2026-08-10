@@ -224,6 +224,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
                 ? problem.starterCode
                 : loadedSubmission?.code ?? studentState.code
             }
+            hasSavedCode={studentState.hasSavedCode}
             initialAcceptedCode={
               isCleanPractice
                 ? null

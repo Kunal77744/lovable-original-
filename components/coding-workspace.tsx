@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
@@ -13,6 +13,7 @@ import {
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
@@ -30,6 +31,7 @@ type CodingWorkspaceProps = {
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
+  hasSavedCode?: boolean;
   isPracticeFeedbackEligible: boolean;
   isReviewSession?: boolean;
   isCleanPractice?: boolean;
@@ -136,6 +138,53 @@ function codingTestCasesMatch(
   );
 }
 
+const ANONYMOUS_DRAFT_KEY_PREFIX = "lovable-original:practice-draft:v1:";
+const ANONYMOUS_DRAFT_EVENT = "lovable-original:practice-draft-changed";
+
+function getAnonymousDraftKey(problemSlug: string) {
+  return `${ANONYMOUS_DRAFT_KEY_PREFIX}${problemSlug}`;
+}
+
+function readAnonymousDraft(problemSlug: string) {
+  try {
+    return window.localStorage.getItem(getAnonymousDraftKey(problemSlug));
+  } catch {
+    return null;
+  }
+}
+
+function subscribeToAnonymousDrafts(onStoreChange: () => void) {
+  window.addEventListener(ANONYMOUS_DRAFT_EVENT, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(ANONYMOUS_DRAFT_EVENT, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function announceAnonymousDraftChange() {
+  window.dispatchEvent(new Event(ANONYMOUS_DRAFT_EVENT));
+}
+
+function writeAnonymousDraft(problemSlug: string, code: string) {
+  try {
+    window.localStorage.setItem(getAnonymousDraftKey(problemSlug), code);
+    announceAnonymousDraftChange();
+  } catch {
+    // The editor still works when browser storage is unavailable.
+  }
+}
+
+function clearAnonymousDraft(problemSlug: string) {
+  try {
+    window.localStorage.removeItem(getAnonymousDraftKey(problemSlug));
+    announceAnonymousDraftChange();
+  } catch {
+    // A blocked storage cleanup must not interrupt saving or submission.
+  }
+}
+
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
     return {
@@ -187,6 +236,7 @@ export function CodingWorkspace({
   initialPracticeFeedback,
   initialSolutionNote = null,
   isSignedIn,
+  hasSavedCode = false,
   isPracticeFeedbackEligible,
   isReviewSession = false,
   isCleanPractice = false,
@@ -201,6 +251,7 @@ export function CodingWorkspace({
   const [showPracticeFeedback, setShowPracticeFeedback] = useState(
     isPracticeFeedbackEligible,
   );
+  const [anonymousDraftDismissed, setAnonymousDraftDismissed] = useState(false);
   const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
     useState(false);
   const [customInput, setCustomInput] = useState(problem.example.input);
@@ -263,6 +314,24 @@ export function CodingWorkspace({
   const cleanPracticeSubmitted =
     isCleanPractice && runState.kind === "verdict";
   const runnerRecovery = getRunnerRecovery(runState);
+  const anonymousDraft = useSyncExternalStore(
+    subscribeToAnonymousDrafts,
+    () => readAnonymousDraft(problem.slug),
+    () => null,
+  );
+  const canUseAnonymousDraft =
+    !anonymousDraftDismissed &&
+    !isCleanPractice &&
+    !loadedSubmission &&
+    (!isSignedIn || !hasSavedCode) &&
+    anonymousDraft !== null &&
+    anonymousDraft !== initialCode;
+  const recoveredAnonymousDraft = isSignedIn && canUseAnonymousDraft;
+  const editorCode = canUseAnonymousDraft ? anonymousDraft : code;
+
+  useEffect(() => {
+    latestCode.current = editorCode;
+  }, [editorCode]);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
@@ -312,6 +381,9 @@ export function CodingWorkspace({
 
       if (latestCode.current === nextCode) {
         hasPendingDraft.current = false;
+        setCode(nextCode);
+        setAnonymousDraftDismissed(true);
+        clearAnonymousDraft(problem.slug);
         setSaveState("saved");
       }
     } catch {
@@ -327,6 +399,12 @@ export function CodingWorkspace({
     if (isCleanPractice) return;
 
     hasPendingDraft.current = true;
+
+    if (!isSignedIn) {
+      writeAnonymousDraft(problem.slug, nextCode);
+    } else if (recoveredAnonymousDraft) {
+      setAnonymousDraftDismissed(true);
+    }
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
@@ -344,6 +422,8 @@ export function CodingWorkspace({
     setCode(problem.starterCode);
     setSaveState("unsaved");
     setIsRestoreConfirmationOpen(false);
+    setAnonymousDraftDismissed(true);
+    clearAnonymousDraft(problem.slug);
     setRunState({
       kind: "idle",
       message:
@@ -364,7 +444,7 @@ export function CodingWorkspace({
 
   async function runExample() {
     setRunState({ kind: "running", message: "Running the example in your browser…" });
-    const result = await runCodingSolution(code, [problem.example.input]);
+    const result = await runCodingSolution(editorCode, [problem.example.input]);
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -398,7 +478,7 @@ export function CodingWorkspace({
       kind: "running",
       message: "Running your custom input in the browser…",
     });
-    const result = await runCodingSolution(code, [customInput]);
+    const result = await runCodingSolution(editorCode, [customInput]);
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -425,7 +505,7 @@ export function CodingWorkspace({
       message: `Running ${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} in your browser…`,
     });
     const result = await runCodingSolution(
-      code,
+      editorCode,
       customTestCases.map((testCase) => testCase.input),
     );
 
@@ -612,7 +692,7 @@ export function CodingWorkspace({
       message: "Running four deterministic checks in your browser…",
     });
     const result = await runCodingSolution(
-      code,
+      editorCode,
       problem.tests.map((test) => test.input),
     );
 
@@ -632,7 +712,7 @@ export function CodingWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "submit",
-          code,
+          code: editorCode,
           outputs: result.outputs,
           dailyChallengeDate,
         }),
@@ -648,7 +728,11 @@ export function CodingWorkspace({
       }
 
       setBestVerdict(payload.bestVerdict);
-      if (payload.verdict === "Accepted") setAcceptedCode(code);
+      if (payload.verdict === "Accepted") setAcceptedCode(editorCode);
+      hasPendingDraft.current = false;
+      setCode(editorCode);
+      setAnonymousDraftDismissed(true);
+      clearAnonymousDraft(problem.slug);
       setSaveState("saved");
       setAttempts((current) => [
         {
@@ -831,12 +915,32 @@ export function CodingWorkspace({
             </Link>
           </div>
         ) : null}
+        {recoveredAnonymousDraft ? (
+          <div className="loaded-submission-cue anonymous-draft-cue" role="status">
+            <div>
+              <span>Local draft recovered</span>
+              <strong>Your work is back after sign-in</strong>
+              <small>Not saved to your account yet</small>
+            </div>
+            <p>
+              This browser copy did not replace account-owned code. Save it as
+              your current draft, keep editing, or submit when you’re ready.
+            </p>
+            <button
+              type="button"
+              onClick={() => void saveDraft(editorCode)}
+              disabled={saveState === "saving"}
+            >
+              {saveState === "saving" ? "Saving…" : "Save recovered draft"}
+            </button>
+          </div>
+        ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <textarea
           id="coding-solution"
           aria-label="JavaScript solution"
           aria-describedby="coding-editor-keyboard-hint"
-          value={code}
+          value={editorCode}
           onChange={(event) => updateCode(event.target.value)}
           onKeyDown={handleEditorKeyDown}
           onBlur={isCleanPractice ? undefined : saveDraftNow}
@@ -881,9 +985,9 @@ export function CodingWorkspace({
                 onClick={() => {
                   setIsRestoreConfirmationOpen(true);
                 }}
-                disabled={code === problem.starterCode}
+                disabled={editorCode === problem.starterCode}
               >
-                {code === problem.starterCode
+                {editorCode === problem.starterCode
                   ? "Clean starter loaded"
                   : "Restore clean starter"}
               </button>
@@ -923,7 +1027,7 @@ export function CodingWorkspace({
         ) : (
           <Link
             className="submit-code-action"
-            href="/account?mode=signin"
+            href={getSignInHref(`/practice/${problem.slug}`)}
           >
             Sign in to submit
           </Link>
