@@ -1,12 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TIMED_CODING_CHALLENGE_MINUTES } from "@/lib/timed-coding-challenge";
+import { useRouter } from "next/navigation";
+import {
+  TIMED_CODING_CHALLENGE_MAX_ELAPSED_SECONDS,
+  TIMED_CODING_CHALLENGE_MINUTES,
+} from "@/lib/timed-coding-challenge";
 
 const LEGACY_STORAGE_KEY = "lovable-original:timed-coding-challenge:v1";
 const DURATION_MS = TIMED_CODING_CHALLENGE_MINUTES * 60 * 1_000;
 
 type TimerStatus = "ready" | "running" | "paused" | "expired";
+type ResultSaveStatus = "idle" | "saving" | "saved" | "error";
 
 type StoredTimer = {
   status: TimerStatus;
@@ -81,9 +86,12 @@ type TimedCodingChallengeTimerProps = {
 export function TimedCodingChallengeTimer({
   challengeSetId = "core-path",
 }: TimedCodingChallengeTimerProps) {
+  const router = useRouter();
   const storageKey = getStorageKey(challengeSetId);
   const [timer, setTimer] = useState<StoredTimer>(READY_TIMER);
   const [hydrated, setHydrated] = useState(false);
+  const [resultSaveStatus, setResultSaveStatus] =
+    useState<ResultSaveStatus>("idle");
 
   useEffect(() => {
     const hydrationTimeout = window.setTimeout(() => {
@@ -129,6 +137,7 @@ export function TimedCodingChallengeTimer({
     };
     setTimer(runningTimer);
     writeTimer(storageKey, runningTimer);
+    setResultSaveStatus("idle");
   }, [storageKey, timer.remainingMs, timer.status]);
 
   const pause = useCallback(() => {
@@ -146,7 +155,63 @@ export function TimedCodingChallengeTimer({
   const reset = useCallback(() => {
     setTimer(READY_TIMER);
     writeTimer(storageKey, READY_TIMER);
+    setResultSaveStatus("idle");
   }, [storageKey]);
+
+  const finishAndSave = useCallback(async () => {
+    if (
+      timer.status === "ready" ||
+      resultSaveStatus === "saving" ||
+      !hydrated
+    ) {
+      return;
+    }
+
+    const remainingMs =
+      timer.status === "running" && timer.deadlineMs
+        ? Math.max(0, timer.deadlineMs - Date.now())
+        : timer.remainingMs;
+    const pausedTimer: StoredTimer = {
+      status: remainingMs === 0 ? "expired" : "paused",
+      remainingMs,
+      deadlineMs: null,
+    };
+    const elapsedSeconds = Math.max(
+      0,
+      Math.min(
+        TIMED_CODING_CHALLENGE_MAX_ELAPSED_SECONDS,
+        Math.round((DURATION_MS - remainingMs) / 1_000),
+      ),
+    );
+
+    setTimer(pausedTimer);
+    writeTimer(storageKey, pausedTimer);
+    setResultSaveStatus("saving");
+
+    try {
+      const response = await fetch("/api/practice/challenge/results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeSetId, elapsedSeconds }),
+      });
+
+      if (!response.ok) throw new Error("Result save failed");
+
+      setTimer(READY_TIMER);
+      writeTimer(storageKey, READY_TIMER);
+      setResultSaveStatus("saved");
+      router.refresh();
+    } catch {
+      setResultSaveStatus("error");
+    }
+  }, [
+    challengeSetId,
+    hydrated,
+    resultSaveStatus,
+    router,
+    storageKey,
+    timer,
+  ]);
 
   const timerLabel = useMemo(() => {
     if (timer.status === "running") return "Timer running";
@@ -196,15 +261,50 @@ export function TimedCodingChallengeTimer({
           </button>
         )}
         {timer.status !== "ready" ? (
-          <button className="challenge-timer-reset" type="button" onClick={reset}>
-            Reset to 30:00
-          </button>
+          <>
+            <button
+              className="challenge-timer-finish"
+              type="button"
+              disabled={resultSaveStatus === "saving"}
+              onClick={finishAndSave}
+            >
+              {resultSaveStatus === "saving"
+                ? "Saving result…"
+                : resultSaveStatus === "error"
+                  ? "Retry result save"
+                  : "Finish and save result"}
+            </button>
+            <button
+              className="challenge-timer-reset"
+              type="button"
+              disabled={resultSaveStatus === "saving"}
+              onClick={reset}
+            >
+              Reset to 30:00
+            </button>
+          </>
         ) : null}
       </div>
 
+      <p
+        className="challenge-result-save-status"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {resultSaveStatus === "saving"
+          ? "Saving this timed result privately…"
+          : resultSaveStatus === "saved"
+            ? "Timed result saved privately to your account."
+            : resultSaveStatus === "error"
+              ? "Couldn’t save this result. Your timer is paused; try again."
+              : "Finish when you choose. Nothing is saved until then."}
+      </p>
+
       <p className="challenge-timer-boundary">
-        Timer state stays in this browser, not your account. It never changes
-        grading, saved code, attempts, or Accepted progress.
+        The active timer stays in this browser. Finishing saves only this set,
+        elapsed time, and its current Accepted count. It never changes grading,
+        code, attempts, or Accepted progress.
       </p>
     </section>
   );
