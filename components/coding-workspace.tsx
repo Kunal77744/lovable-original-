@@ -217,6 +217,9 @@ export function CodingWorkspace({
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestCode = useRef(initialCode);
   const hasPendingDraft = useRef(false);
+  const draftRevision = useRef(0);
+  const lastQueuedDraftRevision = useRef(-1);
+  const draftSaveChain = useRef<Promise<void>>(Promise.resolve());
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
     (runState.kind === "idle" && initialBestVerdict === "Accepted");
@@ -256,29 +259,63 @@ export function CodingWorkspace({
     };
   }, [isSignedIn, problem.slug]);
 
-  async function saveDraft(nextCode: string) {
-    if (!isSignedIn) return;
+  function saveDraft(nextCode: string, revision: number) {
+    if (!isSignedIn) return Promise.resolve();
 
     setSaveState("saving");
-    try {
-      const response = await fetch(`/api/practice/${problem.slug}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "draft", code: nextCode }),
-      });
+    lastQueuedDraftRevision.current = revision;
+    const request = draftSaveChain.current.then(async () => {
+      try {
+        const response = await fetch(`/api/practice/${problem.slug}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "draft", code: nextCode }),
+        });
 
-      if (!response.ok) {
-        setSaveState("error");
-        return;
-      }
+        if (!response.ok) {
+          if (draftRevision.current === revision) {
+            lastQueuedDraftRevision.current = -1;
+            setSaveState("error");
+          }
+          return;
+        }
 
-      if (latestCode.current === nextCode) {
-        hasPendingDraft.current = false;
-        setSaveState("saved");
+        if (
+          latestCode.current === nextCode &&
+          draftRevision.current === revision
+        ) {
+          hasPendingDraft.current = false;
+          setSaveState("saved");
+        }
+      } catch {
+        if (draftRevision.current === revision) {
+          lastQueuedDraftRevision.current = -1;
+          setSaveState("error");
+        }
       }
-    } catch {
-      setSaveState("error");
+    });
+    draftSaveChain.current = request;
+    return request;
+  }
+
+  async function flushLatestDraft() {
+    if (!isSignedIn || !hasPendingDraft.current) {
+      await draftSaveChain.current;
+      return;
     }
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    const revision = draftRevision.current;
+    if (lastQueuedDraftRevision.current !== revision) {
+      await saveDraft(latestCode.current, revision);
+      return;
+    }
+
+    await draftSaveChain.current;
   }
 
   function updateCode(nextCode: string) {
@@ -286,11 +323,13 @@ export function CodingWorkspace({
     setSaveState("unsaved");
     latestCode.current = nextCode;
     hasPendingDraft.current = true;
+    draftRevision.current += 1;
+    const revision = draftRevision.current;
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
       draftTimer.current = null;
-      void saveDraft(nextCode);
+      void saveDraft(nextCode, revision);
     }, 700);
   }
 
@@ -301,6 +340,9 @@ export function CodingWorkspace({
     }
 
     setCode(problem.starterCode);
+    latestCode.current = problem.starterCode;
+    hasPendingDraft.current = false;
+    draftRevision.current += 1;
     setSaveState("unsaved");
     setIsRestoreConfirmationOpen(false);
     setRunState({
@@ -312,13 +354,7 @@ export function CodingWorkspace({
 
   function saveDraftNow() {
     if (!isSignedIn || !hasPendingDraft.current) return;
-
-    if (draftTimer.current) {
-      clearTimeout(draftTimer.current);
-      draftTimer.current = null;
-    }
-
-    void saveDraft(latestCode.current);
+    void flushLatestDraft();
   }
 
   async function runExample() {
@@ -524,13 +560,15 @@ export function CodingWorkspace({
   async function submitSolution() {
     if (!isSignedIn) return;
 
+    const submittedCode = code;
     setRevealedRecoveryHintCount(0);
     setRunState({
       kind: "running",
       message: "Running four deterministic checks in your browser…",
     });
+    await flushLatestDraft();
     const result = await runCodingSolution(
-      code,
+      submittedCode,
       problem.tests.map((test) => test.input),
     );
 
@@ -550,7 +588,7 @@ export function CodingWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "submit",
-          code,
+          code: submittedCode,
           outputs: result.outputs,
           dailyChallengeDate,
         }),
@@ -566,7 +604,8 @@ export function CodingWorkspace({
       }
 
       setBestVerdict(payload.bestVerdict);
-      if (payload.verdict === "Accepted") setAcceptedCode(code);
+      if (payload.verdict === "Accepted") setAcceptedCode(submittedCode);
+      hasPendingDraft.current = false;
       setSaveState("saved");
       setAttempts((current) => [
         {
@@ -705,6 +744,7 @@ export function CodingWorkspace({
           value={code}
           onChange={(event) => updateCode(event.target.value)}
           onBlur={saveDraftNow}
+          disabled={runState.kind === "running"}
           spellCheck={false}
         />
         {isSignedIn ? (
@@ -727,6 +767,7 @@ export function CodingWorkspace({
                     className="starter-restore-cancel"
                     type="button"
                     onClick={() => setIsRestoreConfirmationOpen(false)}
+                    disabled={runState.kind === "running"}
                   >
                     Keep my code
                   </button>
@@ -734,6 +775,7 @@ export function CodingWorkspace({
                     className="starter-restore-confirm"
                     type="button"
                     onClick={restoreStarter}
+                    disabled={runState.kind === "running"}
                   >
                     Restore starter
                   </button>
@@ -746,7 +788,9 @@ export function CodingWorkspace({
                 onClick={() => {
                   setIsRestoreConfirmationOpen(true);
                 }}
-                disabled={code === problem.starterCode}
+                disabled={
+                  code === problem.starterCode || runState.kind === "running"
+                }
               >
                 {code === problem.starterCode
                   ? "Clean starter loaded"
