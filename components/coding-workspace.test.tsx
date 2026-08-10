@@ -54,7 +54,12 @@ const problem = {
   // Read the problem, use input, and return the exact output.
   return "";
 }`,
-  tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
+  tests: [
+    { label: "Positive values", input: "4 9" },
+    { label: "Negative result", input: "-8 3" },
+    { label: "Zero values", input: "0 0" },
+    { label: "Larger total", input: "120 880" },
+  ],
   example: {
     input: "4 9",
     expectedOutput: "13",
@@ -138,6 +143,10 @@ function submissionResponse(
       isFirstAcceptedResult: verdict === "Accepted",
       dailyChallengeCompleted: false,
       dailyChallengeDate: null,
+      checks: problem.tests.map((test, index) => ({
+        label: test.label,
+        passed: index < passedTests,
+      })),
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
@@ -1062,6 +1071,11 @@ describe("CodingWorkspace", () => {
       }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("Practice progress · 1/12 accepted")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "What passed, and what needs work" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Positive values")).toBeInTheDocument();
+    expect(screen.getAllByText("Passed")).toHaveLength(4);
     expect(screen.getByText("Concept unlocked")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -1420,6 +1434,11 @@ describe("CodingWorkspace", () => {
       ),
     );
     expect(screen.getByText("Try this next")).toBeInTheDocument();
+    expect(screen.getByText("Positive values")).toBeInTheDocument();
+    expect(screen.getAllByText("Passed")).toHaveLength(3);
+    expect(screen.getByText("Needs work")).toBeInTheDocument();
+    expect(status).not.toHaveTextContent("4 9");
+    expect(status).not.toHaveTextContent("13");
     expect(
       screen.queryByRole("link", { name: "Return to refreshed review" }),
     ).not.toBeInTheDocument();
@@ -1528,7 +1547,7 @@ describe("CodingWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "JudgingRunning four deterministic checks in your browser…",
+      "JudgingRunning 4 deterministic checks in your browser…",
     );
     expect(screen.getByRole("button", { name: "Running checks…" })).toBeDisabled();
 
