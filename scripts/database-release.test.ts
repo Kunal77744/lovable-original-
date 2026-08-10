@@ -5,6 +5,29 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 
 describe("database release contract", () => {
+  it("adds and verifies private timed coding challenge results", async () => {
+    const [migration, releaseScript] = await Promise.all([
+      readFile(
+        path.join(root, "drizzle/0029_timed-coding-challenge-results.sql"),
+        "utf8",
+      ),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+
+    expect(migration).toContain(
+      'CREATE TABLE IF NOT EXISTS "timed_coding_challenge_result"',
+    );
+    expect(migration).toContain(
+      'CREATE INDEX IF NOT EXISTS "timed_coding_challenge_result_user_completed_idx"',
+    );
+    expect(releaseScript).toMatch(
+      /timed_coding_challenge_result:\s*\[[\s\S]*?"challenge_set_id",[\s\S]*?"elapsed_seconds"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'timed_coding_challenge_result'[\s\S]*?\)/,
+    );
+  });
+
   it("adds and verifies private daily coding challenge completion", async () => {
     const [migration, releaseScript] = await Promise.all([
       readFile(path.join(root, "drizzle/0028_daily-coding-challenge.sql"), "utf8"),
