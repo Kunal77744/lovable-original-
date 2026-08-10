@@ -3,6 +3,7 @@ import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
 import { metadata as activityMetadata } from "./practice/activity/page";
 import { metadata as challengeMetadata } from "./practice/challenge/page";
+import { metadata as javascriptCompletionRecordMetadata } from "./practice/completion-record/page";
 import { metadata as dataStructuresMetadata } from "./practice/data-structures/page";
 import { metadata as debuggingMetadata } from "./practice/debugging/page";
 import { metadata as domLabMetadata } from "./practice/dom/page";
@@ -87,6 +88,7 @@ describe("private learner routes", () => {
     const privatePracticeMetadata = [
       activityMetadata,
       challengeMetadata,
+      javascriptCompletionRecordMetadata,
       debuggingMetadata,
       foundationsMetadata,
       tracingMetadata,
@@ -143,6 +145,7 @@ describe("private learner routes", () => {
     const privatePracticePaths = [
       "activity",
       "challenge",
+      "completion-record",
       "debugging",
       "foundations",
       "tracing",

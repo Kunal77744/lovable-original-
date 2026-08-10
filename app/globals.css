@@ -10907,6 +10907,85 @@ h1 {
   gap: 22px;
 }
 
+.javascript-completion-lock-mark {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 30px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  color: var(--paper);
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.javascript-completion-lock-mark strong,
+.javascript-completion-lock-mark span {
+  display: block;
+}
+
+.javascript-completion-lock-mark strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.javascript-completion-lock-mark span {
+  margin-top: 5px;
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.javascript-completion-evidence {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  margin: 30px auto 0;
+  padding: 11px 16px;
+  border: 1px solid #c6ddcb;
+  border-radius: 999px;
+  background: #eef6ed;
+}
+
+.javascript-completion-evidence span,
+.javascript-completion-evidence strong {
+  display: inline;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.javascript-completion-evidence span {
+  margin-right: 8px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.javascript-completion-evidence strong {
+  color: var(--accent-deep);
+}
+
+.skill-record-completion-link {
+  width: fit-content;
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
+.skill-record-completion-link:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
 .profile-shell {
   width: min(1120px, calc(100% - 48px));
   margin: 0 auto;
