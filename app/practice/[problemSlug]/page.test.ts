@@ -162,6 +162,23 @@ describe("practice problem metadata", () => {
     expect(capturePracticeProblemStarted).toHaveBeenCalledOnce();
     expect(capturePracticeProblemStarted).toHaveBeenCalledWith({
       problemSlug: CODING_PROBLEMS[0].slug,
+      entrySource: undefined,
+    });
+  });
+
+  it("passes an allowlisted direct-entry source into problem 01", async () => {
+    const problem = CODING_PROBLEMS[0];
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ entry_source: "walkthrough" }),
+      }),
+    );
+
+    expect(capturePracticeProblemStarted).toHaveBeenCalledWith({
+      problemSlug: problem.slug,
+      entrySource: "walkthrough",
     });
   });
 

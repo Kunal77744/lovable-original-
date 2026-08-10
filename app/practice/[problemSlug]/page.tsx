@@ -12,6 +12,7 @@ import {
   getPracticeFeedbackForStudent,
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { parseLearnerEntrySource } from "@/lib/learner-entry-source";
 import {
   formatDailyCodingChallengeDate,
   isCurrentDailyCodingChallenge,
@@ -32,6 +33,7 @@ type ProblemPageProps = {
     review?: string | string[];
     submission?: string | string[];
     daily?: string | string[];
+    entry_source?: string | string[];
   }>;
 };
 
@@ -62,6 +64,9 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
     typeof submissionParam === "string" ? submissionParam : null;
   const reviewParam = resolvedSearchParams?.review;
   const dailyParam = resolvedSearchParams?.daily;
+  const entrySource = parseLearnerEntrySource(
+    resolvedSearchParams?.entry_source,
+  );
   const problem = getCodingProblem(problemSlug);
 
   if (!problem) notFound();
@@ -117,7 +122,10 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
   return (
     <main>
       {problem.number === 1 ? (
-        <PracticeProblemStartTracker problemSlug={problem.slug} />
+        <PracticeProblemStartTracker
+          problemSlug={problem.slug}
+          entrySource={entrySource}
+        />
       ) : null}
       <SiteNav currentPage="practice" studentSession={Boolean(session)} />
       <div
