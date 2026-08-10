@@ -17,6 +17,10 @@ export type CodingProblemExplanation = {
   commonMistake: string;
 };
 
+export type CodingProblemWorkedTrace = {
+  steps: [string, string, string];
+};
+
 export type CodingProblem = {
   slug: string;
   number: number;
@@ -29,6 +33,7 @@ export type CodingProblem = {
   recoveryHint: string;
   recoveryHints: [string, string];
   acceptedExplanation: CodingProblemExplanation;
+  workedTrace: CodingProblemWorkedTrace;
   examples: CodingProblemExample[];
   starterCode: string;
   tests: CodingProblemTestCase[];
@@ -62,6 +67,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
       commonMistake:
         'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    },
+    workedTrace: {
+      steps: [
+        "Separate the example input into the two values 4 and 9.",
+        "Treat both values as numbers, then add them: 4 + 9 = 13.",
+        "Return 13 as the exact output.",
+      ],
     },
     examples: [
       {
@@ -106,6 +118,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       commonMistake:
         'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
     },
+    workedTrace: {
+      steps: [
+        "Read 17 as the whole number to classify.",
+        "Dividing 17 by 2 leaves a remainder of 1, so 17 is not divisible by 2.",
+        'Choose the odd branch and return the exact word "Odd".',
+      ],
+    },
     examples: [
       {
         input: "17",
@@ -149,6 +168,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       commonMistake:
         "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
     },
+    workedTrace: {
+      steps: [
+        "Use 5 as the value that every multiplier will act on.",
+        "Pair 5 with the multipliers 1 through 10 to produce 5, 10, 15, and the remaining multiples through 50.",
+        "Keep those ten values in order and separate them with single spaces.",
+      ],
+    },
     examples: [
       {
         input: "5",
@@ -188,6 +214,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       commonMistake:
         "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
     },
+    workedTrace: {
+      steps: [
+        "Use the leading 5 as the count, leaving 7, 2, 19, 4, and 11 as the values to compare.",
+        "Start with 7, keep it after 2, then replace it with 19; neither 4 nor 11 is larger.",
+        "Return the surviving maximum, 19.",
+      ],
+    },
     examples: [
       {
         input: "5\n7 2 19 4 11",
@@ -225,6 +258,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
       commonMistake:
         "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+    },
+    workedTrace: {
+      steps: [
+        'Start at the final character of "semantic", which is c.',
+        "Move left one character at a time to collect c, i, t, n, a, m, e, s.",
+        'Join those characters without separators to return "citnames".',
+      ],
     },
     examples: [
       {
@@ -268,6 +308,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
       commonMistake:
         "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+    },
+    workedTrace: {
+      steps: [
+        "Build the ordered sequence from 1 through the example limit, 5.",
+        "Keep 1, 2, and 4 as numbers; replace 3 with Fizz and 5 with Buzz.",
+        'Join the five results in order to return "1 2 Fizz 4 Buzz".',
+      ],
     },
     examples: [
       {
@@ -315,6 +362,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       commonMistake:
         "Checking only whether a word contains a vowel returns a yes-or-no result instead of counting every occurrence.",
     },
+    workedTrace: {
+      steps: [
+        'Inspect "javascript" from left to right and start the count at zero.',
+        "The letters a, a, and i are vowels, so the count moves from 0 to 1, then 2, then 3.",
+        "Return the final count, 3.",
+      ],
+    },
     examples: [
       {
         input: "javascript",
@@ -359,6 +413,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       commonMistake:
         "Converting the list to a sorted set changes the required order even when the unique values are correct.",
     },
+    workedTrace: {
+      steps: [
+        "Use the leading 7 as the count, then inspect 4, 2, 4, 3, 2, 3, 9 in order.",
+        "Keep the first 4 and 2, skip their repeats, keep the first 3, skip its repeat, then keep 9.",
+        'Join the kept values in their original order to return "4 2 3 9".',
+      ],
+    },
     examples: [
       {
         input: "7\n4 2 4 3 2 3 9",
@@ -396,6 +457,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "A stack keeps the most recent unmatched opening bracket on top, so each closing bracket can be checked against the only valid partner.",
       commonMistake:
         "Counting opening and closing brackets can miss crossed pairs such as ([)] because the totals still match.",
+    },
+    workedTrace: {
+      steps: [
+        "Record the opening brackets {, [, and ( in the order they appear.",
+        "The closing ), ], and } each match the most recent unmatched opening bracket.",
+        'No opening bracket remains, so return "Balanced".',
+      ],
     },
     examples: [
       {
@@ -441,6 +509,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       commonMistake:
         "Returning the first character before the complete count is known can choose a character that repeats later.",
     },
+    workedTrace: {
+      steps: [
+        'Count every character in "swiss": s appears three times, while w and i appear once each.',
+        "Scan from the beginning again: s is repeated, and w is the first character with a count of one.",
+        'Return "w" without checking later unique characters.',
+      ],
+    },
     examples: [
       {
         input: "swiss",
@@ -484,6 +559,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Comparing the target with the midpoint proves which half cannot contain it, shrinking the remaining sorted range until found or empty.",
       commonMistake:
         "Keeping the midpoint inside the next range can cause an infinite loop when only one or two positions remain.",
+    },
+    workedTrace: {
+      steps: [
+        "Start with indexes 0 through 5; the middle index 2 holds 3, so 7 must be to its right.",
+        "In indexes 3 through 5, the middle index 4 holds 12, so 7 must be to its left.",
+        "Index 3 holds 7, so return the zero-based index 3.",
+      ],
     },
     examples: [
       {
@@ -529,6 +611,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Adjacent windows share all but two values, so subtracting the outgoing value and adding the incoming one updates each sum in constant time.",
       commonMistake:
         "Starting the best sum at zero gives the wrong answer when every valid window has a negative sum.",
+    },
+    workedTrace: {
+      steps: [
+        "Add the first three values: 2 + 1 + 5 = 8, making 8 the first best sum.",
+        "Slide the window: removing 2 and adding 1 gives 7; removing 1 and adding 3 gives 9.",
+        "The final slide gives 6, so return the largest recorded sum, 9.",
+      ],
     },
     examples: [
       {

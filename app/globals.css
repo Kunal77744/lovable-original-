@@ -8656,6 +8656,108 @@ h1 {
   line-height: 1.55;
 }
 
+.accepted-worked-trace {
+  margin-top: 4px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(131, 221, 168, 0.2);
+  border-radius: 7px;
+  background: rgba(5, 18, 12, 0.38);
+}
+
+.accepted-worked-trace-heading {
+  display: grid;
+  gap: 3px;
+}
+
+.accepted-worked-trace-heading > span,
+.accepted-worked-trace-values span {
+  color: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.accepted-worked-trace h4 {
+  margin: 0;
+  color: #edf5f0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.accepted-worked-trace-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.accepted-worked-trace-values > div {
+  min-width: 0;
+  padding: 9px 10px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid rgba(131, 221, 168, 0.14);
+  border-radius: 6px;
+  background: rgba(7, 19, 13, 0.54);
+}
+
+.accepted-worked-trace-values pre {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  color: #edf5f0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.accepted-worked-trace ol {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  list-style: none;
+}
+
+.accepted-worked-trace li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+}
+
+.accepted-worked-trace li > span {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #10231a;
+  border-radius: 999px;
+  background: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.coding-result .accepted-worked-trace li p,
+.coding-result .accepted-worked-trace-note {
+  margin: 0;
+  color: #c5d1ca;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.coding-result .accepted-worked-trace-note {
+  padding-top: 10px;
+  color: #91a39a;
+  border-top: 1px solid rgba(131, 221, 168, 0.12);
+  font-size: 10px;
+}
+
 .accepted-mistake {
   padding-top: 10px;
   display: grid;
@@ -12785,6 +12887,10 @@ footer {
   .accepted-continuation {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .accepted-worked-trace-values {
+    grid-template-columns: 1fr;
   }
 
   .accepted-next-action {
