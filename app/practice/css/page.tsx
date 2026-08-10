@@ -107,6 +107,14 @@ export default async function CssPracticePage() {
                 : `${CSS_PRACTICE_CHALLENGE_COUNT} beginner challenges`}
             </span>
             <p>{session ? "Saved privately to your account" : "No setup required"}</p>
+            {session ? (
+              <Link
+                className="catalog-submission-history-link"
+                href="/practice/css/history"
+              >
+                Review saved CSS attempts <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
           </div>
         </div>
 
