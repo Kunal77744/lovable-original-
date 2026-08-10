@@ -231,6 +231,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               recoveryHint: problem.recoveryHint,
               recoveryHints: problem.recoveryHints,
               acceptedExplanation: problem.acceptedExplanation,
+              workedTrace: problem.workedTrace,
               starterCode: problem.starterCode,
               tests: problem.tests.map((test) => ({ input: test.input })),
               example: {

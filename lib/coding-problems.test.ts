@@ -46,6 +46,12 @@ describe("coding problems", () => {
       expect(JSON.stringify(problem.acceptedExplanation)).not.toContain(
         "function solve",
       );
+      expect(problem.workedTrace.steps).toHaveLength(3);
+      expect(new Set(problem.workedTrace.steps).size).toBe(3);
+      for (const step of problem.workedTrace.steps) {
+        expect(step.length).toBeGreaterThan(25);
+        expect(step).not.toContain("function solve");
+      }
     }
     expect(
       new Set(CODING_PROBLEMS.map((problem) => problem.recoveryHint)).size,
@@ -55,6 +61,11 @@ describe("coding problems", () => {
         CODING_PROBLEMS.map(
           (problem) => problem.acceptedExplanation.concept,
         ),
+      ).size,
+    ).toBe(12);
+    expect(
+      new Set(
+        CODING_PROBLEMS.map((problem) => problem.workedTrace.steps.join("|")),
       ).size,
     ).toBe(12);
   });
