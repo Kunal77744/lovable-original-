@@ -14376,6 +14376,436 @@ footer {
   }
 }
 
+/* Why use semantic HTML answer */
+
+.semantic-answer-hero,
+.semantic-answer-content {
+  width: min(1184px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.semantic-answer-hero {
+  padding: 92px 0 104px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.93fr) minmax(430px, 0.77fr);
+  align-items: center;
+  gap: 92px;
+}
+
+.semantic-answer-copy {
+  max-width: 680px;
+}
+
+.semantic-answer-copy h1 {
+  max-width: 9ch;
+  font-size: clamp(58px, 6.6vw, 88px);
+}
+
+.semantic-answer-lede {
+  max-width: 57ch;
+  margin: 32px 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.semantic-answer-lede code,
+.semantic-answer-content code,
+.semantic-meaning-board code {
+  color: var(--accent-deep);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  font-weight: 700;
+}
+
+.semantic-meaning-board {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(23, 35, 30, 0.18);
+  border-radius: 19px 19px 7px 19px;
+  background: var(--surface);
+  box-shadow: 0 30px 60px rgba(23, 35, 30, 0.12);
+  transform: rotate(1deg);
+}
+
+.semantic-meaning-board figcaption {
+  min-height: 64px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.semantic-meaning-board figcaption span:last-child {
+  color: var(--accent-deep);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.meaning-comparison {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  background: #e9eee8;
+}
+
+.meaning-panel {
+  min-height: 316px;
+  padding: 17px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 9px;
+  border-radius: 10px;
+}
+
+.meaning-panel-label {
+  margin-bottom: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.meaning-panel > div,
+.meaning-panel > div > div {
+  padding: 11px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+}
+
+.meaning-panel > div {
+  align-content: start;
+}
+
+.meaning-panel > div > span,
+.meaning-panel > div > div > span {
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.meaning-panel-generic {
+  color: #89938d;
+  border: 1px dashed #aeb8b2;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.meaning-panel-generic code {
+  color: #657169;
+}
+
+.meaning-panel-generic > div > span,
+.meaning-panel-generic > div > div > span {
+  color: #89938d;
+}
+
+.meaning-generic-main {
+  min-height: 154px;
+}
+
+.meaning-panel-semantic {
+  color: rgba(159, 217, 184, 0.42);
+  background: var(--ink);
+}
+
+.meaning-panel-semantic .meaning-panel-label,
+.meaning-panel-semantic code {
+  color: #9fd9b8;
+}
+
+.meaning-panel-semantic > div > span,
+.meaning-panel-semantic > div > div > span {
+  color: #d4dfd8;
+}
+
+.meaning-semantic-main {
+  min-height: 154px;
+}
+
+.meaning-arrow {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.semantic-answer-content {
+  padding-bottom: 120px;
+}
+
+.semantic-answer-intro {
+  padding: 108px 0 112px;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.84fr) minmax(0, 1.16fr);
+  align-items: start;
+  column-gap: 104px;
+  border-top: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.semantic-answer-intro > .eyebrow {
+  grid-column: 1;
+}
+
+.semantic-answer-intro h2,
+.semantic-reason-heading h2,
+.semantic-example-heading h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(42px, 5vw, 64px);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.semantic-answer-intro h2 {
+  grid-column: 1;
+  max-width: 10ch;
+}
+
+.semantic-answer-intro > div {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding-top: 4px;
+}
+
+.semantic-answer-intro > div p {
+  max-width: 61ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.semantic-answer-intro > div p + p {
+  margin-top: 18px;
+}
+
+.semantic-reason-section,
+.semantic-answer-example {
+  padding: 112px 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.68fr) minmax(0, 1.32fr);
+  gap: 96px;
+  border-top: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.semantic-reason-heading {
+  align-self: start;
+  position: sticky;
+  top: 32px;
+}
+
+.semantic-reason-heading h2 {
+  max-width: 10ch;
+}
+
+.semantic-reason-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(23, 35, 30, 0.18);
+}
+
+.semantic-reason-list li {
+  padding: 30px 0 34px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 18px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.18);
+}
+
+.semantic-reason-list li > span {
+  padding-top: 5px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.semantic-reason-list h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 27px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.semantic-reason-list p {
+  max-width: 55ch;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.68;
+}
+
+.semantic-answer-example {
+  align-items: center;
+}
+
+.semantic-example-heading h2 {
+  max-width: 10ch;
+}
+
+.semantic-example-heading > p:not(.eyebrow) {
+  max-width: 43ch;
+  margin: 25px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.semantic-answer-example pre {
+  overflow-x: auto;
+  margin: 0;
+  padding: 38px 40px;
+  color: #e6eee8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 17px 17px 6px 17px;
+  background: #111b17;
+  box-shadow: 0 26px 54px rgba(23, 35, 30, 0.14);
+  font-size: 12px;
+  line-height: 1.75;
+  tab-size: 2;
+}
+
+.semantic-answer-example pre code {
+  color: inherit;
+  font-size: inherit;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .semantic-answer-hero,
+  .semantic-answer-intro,
+  .semantic-reason-section,
+  .semantic-answer-example {
+    grid-template-columns: 1fr;
+  }
+
+  .semantic-answer-hero {
+    gap: 64px;
+  }
+
+  .semantic-answer-copy h1 {
+    max-width: 11ch;
+  }
+
+  .semantic-meaning-board {
+    width: min(720px, 100%);
+    transform: none;
+  }
+
+  .semantic-answer-intro,
+  .semantic-reason-section,
+  .semantic-answer-example {
+    gap: 52px;
+  }
+
+  .semantic-answer-intro > .eyebrow,
+  .semantic-answer-intro h2,
+  .semantic-answer-intro > div {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .semantic-answer-intro > div {
+    padding-top: 0;
+  }
+
+  .semantic-answer-intro h2,
+  .semantic-reason-heading h2,
+  .semantic-example-heading h2 {
+    max-width: 13ch;
+  }
+
+  .semantic-reason-heading {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .semantic-answer-hero,
+  .semantic-answer-content {
+    width: min(100% - 32px, 1184px);
+  }
+
+  .semantic-answer-hero {
+    padding: 62px 0 76px;
+  }
+
+  .semantic-answer-copy h1 {
+    font-size: clamp(48px, 14vw, 66px);
+  }
+
+  .semantic-answer-lede {
+    font-size: 16px;
+  }
+
+  .semantic-answer-hero .primary-action {
+    width: 100%;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .semantic-meaning-board figcaption {
+    padding: 0 17px;
+  }
+
+  .meaning-comparison {
+    padding: 16px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .meaning-panel {
+    min-height: 260px;
+  }
+
+  .meaning-arrow {
+    transform: rotate(90deg);
+  }
+
+  .meaning-generic-main,
+  .meaning-semantic-main {
+    min-height: 112px;
+  }
+
+  .semantic-answer-intro,
+  .semantic-reason-section,
+  .semantic-answer-example {
+    padding: 82px 0;
+  }
+
+  .semantic-answer-intro {
+    row-gap: 22px;
+  }
+
+  .semantic-answer-intro h2,
+  .semantic-reason-heading h2,
+  .semantic-example-heading h2 {
+    font-size: clamp(40px, 12vw, 54px);
+  }
+
+  .semantic-reason-list li {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .semantic-answer-example pre {
+    padding: 28px 24px;
+    font-size: 11px;
+  }
+}
+
 /* Semantic HTML cheat sheet */
 
 .cheat-sheet-hero,
