@@ -8523,6 +8523,101 @@ h1 {
   line-height: 1.55;
 }
 
+.judge-check-results {
+  margin-top: 16px;
+  padding-top: 15px;
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid rgba(201, 211, 205, 0.16);
+}
+
+.judge-check-results > div {
+  display: grid;
+  gap: 3px;
+}
+
+.judge-check-results > div > span {
+  color: #9cada3;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.judge-check-results h3 {
+  margin: 0;
+  color: #edf5f0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.judge-check-results ol {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  list-style: none;
+}
+
+.judge-check-results li {
+  min-height: 44px;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(201, 211, 205, 0.13);
+  border-radius: 7px;
+  background: rgba(12, 23, 18, 0.34);
+}
+
+.judge-check-results li > span {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: #9daca4;
+  border: 1px solid #617168;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.judge-check-results li.is-passed > span {
+  color: #153d29;
+  border-color: #83dda8;
+  background: #83dda8;
+}
+
+.judge-check-results li strong {
+  color: #dbe5df;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.judge-check-results li small {
+  color: #9cada3;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.judge-check-results li.is-passed small {
+  color: #83dda8;
+}
+
+.coding-result .judge-check-results > p {
+  margin: 0;
+  color: #91a198;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .coding-result.is-accepted {
   border-color: #4b8f68;
   background: #1b3428;
@@ -12716,6 +12811,10 @@ footer {
 
   .coding-result {
     margin: 16px;
+  }
+
+  .judge-check-results ol {
+    grid-template-columns: 1fr;
   }
 
   .practice-solution-note {
