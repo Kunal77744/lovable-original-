@@ -205,6 +205,84 @@ describe("practice problem metadata", () => {
     expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
   });
 
+  it("opens a clean starter instead of the saved Accepted answer on all 12 routes", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "completed-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+    for (const problem of CODING_PROBLEMS) {
+      const savedCode = `function solve(input) { return ${problem.number}; }`;
+      vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+        attempts: [
+          {
+            id: `accepted-${problem.slug}`,
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-08-09T12:00:00.000Z",
+            hasSource: true,
+          },
+        ],
+        bestVerdict: "Accepted",
+        code: savedCode,
+        latestAcceptedCode: savedCode,
+        customTestCases: [],
+        solutionNote: null,
+      });
+
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+          searchParams: Promise.resolve({ mode: "clean" }),
+        }),
+      );
+
+      expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+        problem.starterCode,
+      );
+      expect(screen.getByLabelText("JavaScript solution")).not.toHaveValue(
+        savedCode,
+      );
+      expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Return to saved solution" }),
+      ).toHaveAttribute("href", `/practice/${problem.slug}`);
+      expect(
+        screen.queryByRole("link", { name: "Review source for attempt 1" }),
+      ).not.toBeInTheDocument();
+
+      cleanup();
+    }
+  });
+
+  it("ignores clean mode until a signed-in learner has an Accepted result", async () => {
+    const problem = CODING_PROBLEMS[0];
+    const savedWrongAnswer = "function solve(input) { return 'keep working'; }";
+    getSession.mockResolvedValue({
+      user: { id: "learning-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+      attempts: [],
+      bestVerdict: "Wrong Answer",
+      code: savedWrongAnswer,
+      latestAcceptedCode: null,
+      customTestCases: [],
+      solutionNote: null,
+    });
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ mode: "clean" }),
+      }),
+    );
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      savedWrongAnswer,
+    );
+    expect(screen.queryByText("Clean practice copy")).not.toBeInTheDocument();
+  });
+
   it("accepts only the exact signed-in review entry context", async () => {
     const problem = CODING_PROBLEMS[0];
     getSession.mockResolvedValue({

@@ -136,7 +136,9 @@ export function CodingSkillRecord({
                 <span>{skill.resultLabel}</span>
               </div>
               <Link
-                href={`/practice/${skill.slug}`}
+                href={`/practice/${skill.slug}${
+                  skill.state === "accepted" ? "?mode=clean" : ""
+                }`}
                 aria-label={`${
                   skill.state === "retry"
                     ? "Retry"
