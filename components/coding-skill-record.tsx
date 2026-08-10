@@ -92,6 +92,14 @@ export function CodingSkillRecord({
             <strong>Private to your account.</strong> Last activity:{" "}
             {formatPracticeDate(record.lastPracticedAt)}.
           </p>
+          {record.acceptedCount === record.totalCount ? (
+            <Link
+              className="skill-record-completion-link"
+              href="/practice/completion-record"
+            >
+              Open completion record <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
         </aside>
       </header>
 
