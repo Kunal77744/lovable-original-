@@ -287,14 +287,21 @@ describe("CodingWorkspace", () => {
 
     renderWorkspace({ isSignedIn: false });
 
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
     const runButton = screen.getByRole("button", { name: "Run example" });
 
     expect(
-      screen.getByText("Keyboard: Tab to Run, then Enter"),
+      screen.getByText("Keyboard: Ctrl/⌘ + Enter to run"),
     ).toBeInTheDocument();
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint",
+    );
     expect(runButton).toHaveAttribute(
       "aria-describedby",
-      "run-example-keyboard-hint",
+      "coding-editor-keyboard-hint",
     );
     expect(
       screen.getByText(
@@ -302,8 +309,8 @@ describe("CodingWorkspace", () => {
       ),
     ).toBeInTheDocument();
 
-    runButton.focus();
-    fireEvent.click(runButton);
+    editor.focus();
+    fireEvent.keyDown(editor, { key: "Enter", ctrlKey: true });
 
     const status = screen.getByRole("status");
     expect(await screen.findByText("Example passed")).toBeInTheDocument();
@@ -319,6 +326,75 @@ describe("CodingWorkspace", () => {
       "href",
       expect.stringContaining("/account?mode=signin"),
     );
+  });
+
+  it("submits from the editor with Command, Shift, and Enter", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      submissionResponse("Accepted", 4),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const submitButton = screen.getByRole("button", {
+      name: "Submit solution",
+    });
+
+    expect(
+      screen.getByText(
+        "Keyboard: Ctrl/⌘ + Enter to run · add Shift to submit",
+      ),
+    ).toBeInTheDocument();
+    expect(submitButton).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint",
+    );
+
+    fireEvent.keyDown(editor, {
+      key: "Enter",
+      metaKey: true,
+      shiftKey: true,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Accepted"),
+    );
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      problem.tests.map((test) => test.input),
+    );
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"mode":"submit"'),
+        }),
+      ),
+    );
+  });
+
+  it("keeps plain Enter and signed-out submit shortcuts inside the editor", () => {
+    renderWorkspace({ isSignedIn: false });
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+
+    fireEvent.keyDown(editor, { key: "Enter" });
+    fireEvent.keyDown(editor, {
+      key: "Enter",
+      ctrlKey: true,
+      shiftKey: true,
+    });
+
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Sign in to submit" })).toBeVisible();
   });
 
   it("saves the exact latest draft when the editor loses focus", async () => {
