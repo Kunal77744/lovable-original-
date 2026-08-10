@@ -334,14 +334,68 @@ describe("CodingWorkspace", () => {
     fireEvent.change(editor, { target: { value: latestCode } });
     fireEvent.blur(editor);
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "/api/practice/sum-two-numbers",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ mode: "draft", code: latestCode }),
-      }),
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ mode: "draft", code: latestCode }),
+        }),
+      ),
     );
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves drafts in order before judging the exact submitted source", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    let finishOlderDraft: ((response: Response) => void) | undefined;
+    const olderDraft = new Promise<Response>((resolve) => {
+      finishOlderDraft = resolve;
+    });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementationOnce(() => olderDraft)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ savedAt: "later" })))
+      .mockResolvedValueOnce(submissionResponse("Accepted", 4));
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const olderCode = "function solve(input) { return 'older'; }";
+    const submittedCode = "function solve(input) { return 'newer'; }";
+
+    fireEvent.change(editor, { target: { value: olderCode } });
+    fireEvent.blur(editor);
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(editor, { target: { value: submittedCode } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    expect(editor).toBeDisabled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    finishOlderDraft?.(new Response(JSON.stringify({ savedAt: "earlier" })));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(3));
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      submittedCode,
+      problem.tests.map((test) => test.input),
+    );
+    expect(fetchSpy.mock.calls.map(([, options]) => options?.body)).toEqual([
+      JSON.stringify({ mode: "draft", code: olderCode }),
+      JSON.stringify({ mode: "draft", code: submittedCode }),
+      JSON.stringify({
+        mode: "submit",
+        code: submittedCode,
+        outputs: ["13", "-5", "0", "1000"],
+        dailyChallengeDate: null,
+      }),
+    ]);
+    await waitFor(() => expect(editor).not.toBeDisabled());
   });
 
   it("queues the exact pending draft when the learner leaves immediately", async () => {
