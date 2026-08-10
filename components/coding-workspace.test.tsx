@@ -55,13 +55,16 @@ const problem = {
 };
 
 function renderWorkspace({
+  initialCode = "function solve(input) { return input; }",
   initialCustomTestCases = [],
   initialPracticeFeedback = null,
+  hasSavedCode = false,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
   dailyChallengeDate = null,
 }: {
+  initialCode?: string;
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
     problemSlug: string;
@@ -69,6 +72,7 @@ function renderWorkspace({
     comment: string;
     updatedAt: string;
   } | null;
+  hasSavedCode?: boolean;
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
@@ -78,9 +82,10 @@ function renderWorkspace({
     <CodingWorkspace
       attempts={[]}
       bestVerdict={null}
-      initialCode="function solve(input) { return input; }"
+      initialCode={initialCode}
       initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
+      hasSavedCode={hasSavedCode}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       isReviewSession={isReviewSession}
@@ -115,7 +120,10 @@ function submissionResponse(
 }
 
 describe("CodingWorkspace", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    window.localStorage.clear();
+  });
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -414,12 +422,99 @@ describe("CodingWorkspace", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(sendBeacon).not.toHaveBeenCalled();
       expect(screen.getByText("Local only")).toBeInTheDocument();
+      expect(
+        window.localStorage.getItem(
+          "lovable-original:practice-draft:v1:sum-two-numbers",
+        ),
+      ).toBe("function solve(input) { return input.trim(); }");
+      expect(
+        screen.getByRole("link", { name: "Sign in to submit" }),
+      ).toHaveAttribute(
+        "href",
+        "/account?mode=signin&next=%2Fpractice%2Fsum-two-numbers",
+      );
     } finally {
       Object.defineProperty(navigator, "sendBeacon", {
         configurable: true,
         value: originalSendBeacon,
       });
     }
+  });
+
+  it("recovers a signed-out draft after sign-in without saving it automatically", async () => {
+    const localDraft =
+      "function solve(input) { return input.split(' ').map(Number).reduce((a, b) => a + b, 0); }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      localDraft,
+    );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isSignedIn: true,
+      hasSavedCode: false,
+    });
+
+    expect(await screen.findByLabelText("JavaScript solution")).toHaveValue(
+      localDraft,
+    );
+    expect(screen.getByText("Local draft recovered")).toBeInTheDocument();
+    expect(screen.getByText("Not saved to your account yet")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("saves an explicitly recovered draft and removes the browser copy", async () => {
+    const localDraft = "function solve(input) { return '13'; }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      localDraft,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ savedAt: "now" })));
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isSignedIn: true,
+      hasSavedCode: false,
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save recovered draft" }),
+    );
+
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/practice/sum-two-numbers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: localDraft }),
+      }),
+    );
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:practice-draft:v1:sum-two-numbers",
+      ),
+    ).toBeNull();
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
+  it("keeps account-owned code ahead of an anonymous browser draft", () => {
+    const accountCode = "function solve(input) { return Number(input); }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      "function solve(input) { return 'anonymous'; }",
+    );
+
+    renderWorkspace({
+      initialCode: accountCode,
+      isSignedIn: true,
+      hasSavedCode: true,
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(accountCode);
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
   });
 
   it("runs editable custom input without saving an attempt", async () => {
