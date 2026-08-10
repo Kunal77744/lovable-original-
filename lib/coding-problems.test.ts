@@ -43,6 +43,11 @@ describe("coding problems", () => {
       expect(problem.acceptedExplanation.concept).not.toHaveLength(0);
       expect(problem.acceptedExplanation.whyItWorks).not.toHaveLength(0);
       expect(problem.acceptedExplanation.commonMistake).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.efficiency.time).toMatch(/^O\(/);
+      expect(problem.acceptedExplanation.efficiency.space).toMatch(/^O\(/);
+      expect(
+        problem.acceptedExplanation.efficiency.explanation.length,
+      ).toBeGreaterThan(80);
       expect(JSON.stringify(problem.acceptedExplanation)).not.toContain(
         "function solve",
       );

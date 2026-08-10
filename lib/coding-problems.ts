@@ -15,6 +15,11 @@ export type CodingProblemExplanation = {
   concept: string;
   whyItWorks: string;
   commonMistake: string;
+  efficiency: {
+    time: string;
+    space: string;
+    explanation: string;
+  };
 };
 
 export type CodingProblem = {
@@ -62,6 +67,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
       commonMistake:
         'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+      efficiency: {
+        time: "O(1)",
+        space: "O(1)",
+        explanation:
+          "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
+      },
     },
     examples: [
       {
@@ -105,6 +116,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Every even integer leaves a remainder of zero when divided by 2. Odd integers do not, including negative ones.",
       commonMistake:
         'Testing only positive numbers or returning "even" and "odd" with the wrong capitalization.',
+      efficiency: {
+        time: "O(1)",
+        space: "O(1)",
+        explanation:
+          "One remainder check decides the answer without a loop or any storage that grows with the input value.",
+      },
     },
     examples: [
       {
@@ -148,6 +165,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Visiting multipliers 1 through 10 once creates ten ordered values. Joining them once keeps the spacing exact.",
       commonMistake:
         "Stopping before 10 misses the final multiple, while starting at 0 adds an extra value.",
+      efficiency: {
+        time: "O(1)",
+        space: "O(1)",
+        explanation:
+          "The problem always produces exactly ten multiples, so both the work and output size have a fixed upper bound.",
+      },
     },
     examples: [
       {
@@ -187,6 +210,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Separating the leading count leaves only the values that should compete for the maximum, including values below zero.",
       commonMistake:
         "Starting the maximum at 0 gives the wrong answer when every value in the list is negative.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(1)",
+        explanation:
+          "A direct scan compares each of the n values once and needs only the best value seen so far after parsing.",
+      },
     },
     examples: [
       {
@@ -225,6 +254,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Reversing the character order once and joining it back together preserves the word's length. Palindromes naturally stay unchanged.",
       commonMistake:
         "Dropping an end character or returning extra spaces instead of the exact reversed word.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(n)",
+        explanation:
+          "Every character must appear in the reversed result, so the work and returned string both grow with the word length.",
+      },
     },
     examples: [
       {
@@ -268,6 +303,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Checking the shared 3-and-5 case first protects FizzBuzz. The single rules and number fallback then cover every other value.",
       commonMistake:
         "Checking divisibility by 3 or 5 first hides the combined case when the value is divisible by both.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(n)",
+        explanation:
+          "The sequence visits every number from 1 through n once and stores n output tokens before joining them.",
+      },
     },
     examples: [
       {
@@ -314,6 +355,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Checking each character against the vowel set counts every match once, including repeated vowels, while consonants leave the total unchanged.",
       commonMistake:
         "Checking only whether a word contains a vowel returns a yes-or-no result instead of counting every occurrence.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(1)",
+        explanation:
+          "One pass checks each of the n characters, while the five-vowel lookup and running count stay fixed in size.",
+      },
     },
     examples: [
       {
@@ -358,6 +405,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "A set answers whether a value was seen before, while the left-to-right traversal preserves first-appearance order in the result.",
       commonMistake:
         "Converting the list to a sorted set changes the required order even when the unique values are correct.",
+      efficiency: {
+        time: "O(n) average",
+        space: "O(n)",
+        explanation:
+          "A set gives an average constant-time seen check for each value, and may retain every value when all n are unique.",
+      },
     },
     examples: [
       {
@@ -396,6 +449,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "A stack keeps the most recent unmatched opening bracket on top, so each closing bracket can be checked against the only valid partner.",
       commonMistake:
         "Counting opening and closing brackets can miss crossed pairs such as ([)] because the totals still match.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(n)",
+        explanation:
+          "Each bracket is pushed or checked once, while a string of only opening brackets can grow the stack to n entries.",
+      },
     },
     examples: [
       {
@@ -440,6 +499,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "The frequency map proves which characters occur once, and the second pass preserves the word's order when selecting the first one.",
       commonMistake:
         "Returning the first character before the complete count is known can choose a character that repeats later.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(k)",
+        explanation:
+          "Two linear passes count and select in order, while the frequency map stores k distinct characters, at most 26 here.",
+      },
     },
     examples: [
       {
@@ -484,6 +549,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Comparing the target with the midpoint proves which half cannot contain it, shrinking the remaining sorted range until found or empty.",
       commonMistake:
         "Keeping the midpoint inside the next range can cause an infinite loop when only one or two positions remain.",
+      efficiency: {
+        time: "O(log n) search",
+        space: "O(1)",
+        explanation:
+          "After parsing, each comparison halves the remaining range and an iterative search keeps only its boundaries and midpoint.",
+      },
     },
     examples: [
       {
@@ -529,6 +600,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
         "Adjacent windows share all but two values, so subtracting the outgoing value and adding the incoming one updates each sum in constant time.",
       commonMistake:
         "Starting the best sum at zero gives the wrong answer when every valid window has a negative sum.",
+      efficiency: {
+        time: "O(n)",
+        space: "O(1)",
+        explanation:
+          "The first window is summed once, then each remaining value enters and one leaves while only the current and best sums are kept.",
+      },
     },
     examples: [
       {

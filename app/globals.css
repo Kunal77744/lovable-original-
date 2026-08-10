@@ -8628,7 +8628,8 @@ h1 {
 }
 
 .accepted-explanation > div:first-child > span,
-.accepted-mistake > span {
+.accepted-mistake > span,
+.accepted-efficiency > div > span {
   color: #83dda8;
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 10px;
@@ -8648,7 +8649,8 @@ h1 {
 }
 
 .coding-result .accepted-explanation > p,
-.coding-result .accepted-mistake p {
+.coding-result .accepted-mistake p,
+.coding-result .accepted-efficiency > p {
   max-width: 64ch;
   margin: 0;
   color: #c5d1ca;
@@ -8665,6 +8667,60 @@ h1 {
 
 .accepted-mistake > span {
   color: #a9b7af;
+}
+
+.accepted-efficiency {
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(131, 221, 168, 0.18);
+  border-radius: 7px;
+  background: rgba(8, 24, 16, 0.42);
+}
+
+.accepted-efficiency > div {
+  display: grid;
+  gap: 7px;
+}
+
+.accepted-efficiency dl {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accepted-efficiency dl > div {
+  min-width: 118px;
+  padding: 7px 9px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 6px;
+  background: rgba(131, 221, 168, 0.08);
+}
+
+.accepted-efficiency dt {
+  color: #a9b7af;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.accepted-efficiency dd {
+  margin: 0;
+  color: #edf5f0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.accepted-efficiency small {
+  color: #8f9d95;
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .accepted-code-review {
