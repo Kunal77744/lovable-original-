@@ -254,10 +254,10 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
                 label: test.label,
                 input: test.input,
               })),
-              example: {
-                input: problem.examples[0].input,
-                expectedOutput: problem.examples[0].output,
-              },
+              examples: problem.examples.map((example) => ({
+                input: example.input,
+                expectedOutput: example.output,
+              })),
             }}
           />
         </div>
