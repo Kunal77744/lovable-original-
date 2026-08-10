@@ -54,5 +54,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${productionUrl}/learn/what-is-the-css-box-model`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${productionUrl}/learn/how-to-practice-javascript`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
   ];
 }
