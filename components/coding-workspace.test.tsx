@@ -57,6 +57,7 @@ const problem = {
 function renderWorkspace({
   initialCustomTestCases = [],
   initialPracticeFeedback = null,
+  hasSavedCode = false,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
@@ -69,6 +70,7 @@ function renderWorkspace({
     comment: string;
     updatedAt: string;
   } | null;
+  hasSavedCode?: boolean;
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
@@ -81,6 +83,7 @@ function renderWorkspace({
       initialCode="function solve(input) { return input; }"
       initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
+      hasSavedCode={hasSavedCode}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       isReviewSession={isReviewSession}
@@ -123,6 +126,13 @@ describe("CodingWorkspace", () => {
     captureJavaScriptPracticeCompleted.mockReset();
     capturePracticeProblemAccepted.mockReset();
     capturePracticeFeedbackSubmitted.mockReset();
+  });
+
+  it("labels a restored account draft as saved before the first submission", () => {
+    renderWorkspace({ hasSavedCode: true });
+
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved")).not.toBeInTheDocument();
   });
 
   it("shows the fresh scaffold without offering a destructive restore", () => {
