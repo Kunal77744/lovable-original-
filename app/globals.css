@@ -1260,6 +1260,82 @@ h1 {
   font-size: 11px;
 }
 
+.submission-history-filters {
+  margin-top: 28px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.3fr) minmax(160px, 0.8fr) auto auto;
+  align-items: end;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #f3f5ef;
+}
+
+.submission-history-filters label {
+  display: grid;
+  gap: 7px;
+}
+
+.submission-history-filters label > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.submission-history-filters select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 34px 0 12px;
+  color: var(--ink);
+  border: 1px solid #bdc8bf;
+  border-radius: 7px;
+  background: white;
+  font: inherit;
+  font-size: 12px;
+}
+
+.submission-history-filters button {
+  min-height: 42px;
+  padding: 0 15px;
+  color: var(--ink);
+  border: 1px solid #aebbb1;
+  border-radius: 7px;
+  background: white;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.submission-history-filters > a {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.submission-history-filters select:focus-visible,
+.submission-history-filters button:focus-visible,
+.submission-history-filters > a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.submission-history-filters button:hover {
+  border-color: var(--accent-deep);
+  background: #edf3ed;
+}
+
+.submission-history-filters > a:hover {
+  color: var(--accent);
+}
+
 .submission-history-record ol {
   margin: 28px 0 0;
   padding: 0;
@@ -1926,6 +2002,15 @@ h1 {
     grid-template-columns: 36px minmax(180px, 1fr) 112px 82px;
   }
 
+  .submission-history-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .submission-history-filters button,
+  .submission-history-filters > a {
+    width: fit-content;
+  }
+
   .submission-attempt-navigation {
     grid-template-columns: 1fr;
     align-items: start;
@@ -1993,6 +2078,15 @@ h1 {
     align-items: flex-start;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .submission-history-filters {
+    padding: 16px;
+    grid-template-columns: 1fr;
+  }
+
+  .submission-history-filters button {
+    width: 100%;
   }
 
   .submission-history-record li {
