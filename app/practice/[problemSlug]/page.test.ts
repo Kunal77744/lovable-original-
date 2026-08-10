@@ -127,6 +127,12 @@ describe("practice problem metadata", () => {
         ),
       ).toBeInTheDocument();
       expect(
+        screen.getByRole("heading", { name: "Constraints" }),
+      ).toBeInTheDocument();
+      for (const constraint of problem.constraints) {
+        expect(screen.getByText(constraint)).toBeInTheDocument();
+      }
+      expect(
         screen.getAllByText(
           `Step ${problem.number} of ${CODING_PROBLEMS.length}`,
           { exact: false },
