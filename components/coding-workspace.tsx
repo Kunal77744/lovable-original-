@@ -50,10 +50,10 @@ type CodingWorkspaceProps = {
     };
     starterCode: string;
     tests: { input: string }[];
-    example: {
+    examples: {
       input: string;
       expectedOutput: string;
-    };
+    }[];
   };
 };
 
@@ -78,11 +78,15 @@ type RunState =
   | { kind: "idle"; message: string }
   | { kind: "running"; message: string }
   | {
-      kind: "sample";
+      kind: "examples";
       message: string;
-      output: string;
+      results: {
+        input: string;
+        output: string;
+        expectedOutput: string;
+        passed: boolean;
+      }[];
       debugOutput: string[];
-      passed: boolean;
     }
   | { kind: "custom"; message: string; output: string }
   | {
@@ -181,7 +185,7 @@ export function CodingWorkspace({
   );
   const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
     useState(false);
-  const [customInput, setCustomInput] = useState(problem.example.input);
+  const [customInput, setCustomInput] = useState(problem.examples[0]?.input ?? "");
   const [customTestCases, setCustomTestCases] = useState(
     initialCustomTestCases,
   );
@@ -321,9 +325,15 @@ export function CodingWorkspace({
     void saveDraft(latestCode.current);
   }
 
-  async function runExample() {
-    setRunState({ kind: "running", message: "Running the example in your browser…" });
-    const result = await runCodingSolution(code, [problem.example.input]);
+  async function runExamples() {
+    setRunState({
+      kind: "running",
+      message: `Running ${problem.examples.length} ${problem.examples.length === 1 ? "example" : "examples"} in your browser…`,
+    });
+    const result = await runCodingSolution(
+      code,
+      problem.examples.map((example) => example.input),
+    );
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -339,16 +349,27 @@ export function CodingWorkspace({
       return;
     }
 
-    const output = result.outputs[0] ?? "";
-    const passed = output.trim() === problem.example.expectedOutput.trim();
+    const results = problem.examples.map((example, index) => {
+      const output = result.outputs[index] ?? "";
+
+      return {
+        ...example,
+        output,
+        passed:
+          normalizeCodingOutput(output) ===
+          normalizeCodingOutput(example.expectedOutput),
+      };
+    });
+    const passedCount = results.filter((example) => example.passed).length;
+    const allPassed = passedCount === results.length;
+
     setRunState({
-      kind: "sample",
-      output,
+      kind: "examples",
+      results,
       debugOutput: result.debugOutput,
-      passed,
-      message: passed
-        ? "Example passed. Submit when you’re ready for all four checks."
-        : "The example output doesn’t match yet.",
+      message: allPassed
+        ? `${passedCount} of ${results.length} visible ${results.length === 1 ? "example" : "examples"} passed. Submit when you’re ready for all four checks.`
+        : `${passedCount} of ${results.length} visible ${results.length === 1 ? "example" : "examples"} passed. Compare the differing output before you submit.`,
     });
   }
 
@@ -633,7 +654,7 @@ export function CodingWorkspace({
   }
 
   const visibleDebugOutput =
-    runState.kind === "sample" ||
+    runState.kind === "examples" ||
     runState.kind === "test-suite" ||
     runState.kind === "error"
       ? (runState.debugOutput ?? [])
@@ -648,7 +669,7 @@ export function CodingWorkspace({
           <p>
             Define <code>solve(input)</code> and return the exact output. Network
             access is blocked and the runner stops after 1,000 ms. Run the
-            example to inspect local <code>console.log</code> output.
+            visible examples together to inspect local <code>console.log</code> output.
           </p>
         </div>
         <div className={bestVerdict === "Accepted" ? "best-verdict is-accepted" : "best-verdict"}>
@@ -767,11 +788,11 @@ export function CodingWorkspace({
         <button
           className="secondary-code-action"
           type="button"
-          onClick={runExample}
+          onClick={runExamples}
           disabled={runState.kind === "running"}
           aria-describedby="run-example-keyboard-hint"
         >
-          Run example
+          {`Run ${problem.examples.length} ${problem.examples.length === 1 ? "example" : "examples"}`}
         </button>
         {isSignedIn ? (
           <button
@@ -951,7 +972,8 @@ export function CodingWorkspace({
             ? runState.verdict === "Accepted"
               ? " is-accepted"
               : " is-wrong"
-            : runState.kind === "sample" && runState.passed
+            : runState.kind === "examples" &&
+                runState.results.every((example) => example.passed)
               ? " is-accepted"
               : runState.kind === "idle" &&
                   initialBestVerdict === "Accepted"
@@ -966,10 +988,10 @@ export function CodingWorkspace({
           <span>
             {runState.kind === "verdict"
               ? runState.verdict
-              : runState.kind === "sample"
-                ? runState.passed
-                  ? "Example passed"
-                  : "Example differs"
+              : runState.kind === "examples"
+                ? runState.results.every((example) => example.passed)
+                  ? "Examples passed"
+                  : "Examples differ"
                 : runState.kind === "custom"
                   ? "Custom run"
                   : runState.kind === "test-suite"
@@ -991,11 +1013,36 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
-        {runState.kind === "sample" || runState.kind === "custom" ? (
+        {runState.kind === "custom" ? (
           <div className="sample-output">
             <span>Your output</span>
             <pre>{runState.output || "(empty)"}</pre>
           </div>
+        ) : null}
+        {runState.kind === "examples" ? (
+          <ol
+            className="example-run-results"
+            aria-label="Visible example results"
+          >
+            {runState.results.map((result, index) => (
+              <li key={`${index}-${result.input}`}>
+                <span>Example {index + 1}</span>
+                <div>
+                  <p>Input</p>
+                  <pre>{result.input}</pre>
+                </div>
+                <div>
+                  <p>Your output</p>
+                  <pre>{result.output || "(empty)"}</pre>
+                </div>
+                <div className={result.passed ? "is-matched" : "is-mismatch"}>
+                  <p>Expected</p>
+                  <pre>{result.expectedOutput || "(empty)"}</pre>
+                  <span>{result.passed ? "Matched" : "Mismatch"}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
         ) : null}
         {runState.kind === "test-suite" ? (
           <ol
