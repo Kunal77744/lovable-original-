@@ -350,6 +350,30 @@ export const guidedProject = pgTable(
   ],
 );
 
+export const projectReviewAttempt = pgTable(
+  "project_review_attempt",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectSlug: text("project_slug").notNull(),
+    status: text("status").notNull(),
+    passedChecks: integer("passed_checks").notNull(),
+    totalChecks: integer("total_checks").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("project_review_attempt_user_id_idx").on(table.userId),
+    index("project_review_attempt_user_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const guidedProjectFeedback = pgTable(
   "guided_project_feedback",
   {
