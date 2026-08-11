@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import type { SavedTimedCodingChallengeResult } from "@/db/timed-coding-challenge";
 import {
+  formatTimedCodingChallengeElapsedTime,
   getNextTimedCodingChallengeProblem,
   getRecommendedTimedCodingChallengeSet,
   getTimedCodingChallengeSet,
@@ -12,11 +14,22 @@ import { TimedCodingChallengeTimer } from "./timed-coding-challenge-timer";
 
 type TimedCodingChallengeViewProps = {
   completedSlugs: string[];
+  recentResults: SavedTimedCodingChallengeResult[];
   selectedSetId?: string | null;
 };
 
+function formatResultDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(value));
+}
+
 export function TimedCodingChallengeView({
   completedSlugs,
+  recentResults,
   selectedSetId,
 }: TimedCodingChallengeViewProps) {
   const completed = new Set(completedSlugs);
@@ -173,13 +186,71 @@ export function TimedCodingChallengeView({
               <p>Every submission uses the same deterministic checks as practice.</p>
             </div>
             <div>
-              <strong>No extra record</strong>
+              <strong>One private result</strong>
               <p>
-                Timed sets create no score, rating, leaderboard, or analytics
-                event.
+                Finishing saves the set, elapsed time, and current Accepted
+                count. It creates no score, rating, leaderboard, or analytics event.
               </p>
             </div>
           </aside>
+        </section>
+
+        <section
+          className="challenge-result-history"
+          aria-labelledby="challenge-result-history-title"
+        >
+          <div className="challenge-result-history-heading">
+            <div>
+              <p className="eyebrow">Saved to this account</p>
+              <h2 id="challenge-result-history-title">Recent timed results</h2>
+            </div>
+            <span>Latest {Math.min(recentResults.length, 6)} of 6</span>
+          </div>
+
+          {recentResults.length === 0 ? (
+            <p className="challenge-result-history-empty">
+              No timed result yet. Start any set, then finish when you choose to
+              save its current Accepted count and elapsed time.
+            </p>
+          ) : (
+            <ol className="challenge-result-history-list">
+              {recentResults.map((result) => {
+                const resultSet = getTimedCodingChallengeSet(
+                  result.challengeSetId,
+                );
+                if (!resultSet) return null;
+                const resultSetIndex = TIMED_CODING_CHALLENGE_SETS.findIndex(
+                  (challengeSet) => challengeSet.id === resultSet.id,
+                );
+
+                return (
+                  <li key={result.id}>
+                    <div>
+                      <span>Set {String(resultSetIndex + 1).padStart(2, "0")}</span>
+                      <strong>{resultSet.title}</strong>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Accepted</dt>
+                        <dd>{result.solvedCount} of 3</dd>
+                      </div>
+                      <div>
+                        <dt>Elapsed</dt>
+                        <dd>
+                          {formatTimedCodingChallengeElapsedTime(
+                            result.elapsedSeconds,
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                    <time dateTime={result.completedAt}>
+                      {formatResultDate(result.completedAt)}
+                    </time>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
         </section>
       </div>
       <SiteFooter />

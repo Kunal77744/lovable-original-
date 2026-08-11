@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
-import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -16,17 +25,41 @@ type CheckState =
 const readyMessage =
   "Finish the missing function logic, then run three private browser checks.";
 
-const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map((exercise) => exercise.slug);
+const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map(
+  (exercise) => exercise.slug,
+);
 
-export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
-  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
+export function JavaScriptFunctionsScopeLab({
+  completedExerciseIds = [],
+  initialDrafts = {},
+}: {
+  completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
+}) {
+  const [exerciseIndex, setExerciseIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
+  );
   const exercise = JAVASCRIPT_FUNCTION_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode);
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "functions",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_FUNCTION_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
-  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [completedIds, setCompletedIds] = useState(
+    () => new Set(completedExerciseIds),
+  );
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -52,11 +85,15 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("functions", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "functions",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -77,10 +114,11 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -98,7 +136,6 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -137,11 +174,15 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     (completedCount / JAVASCRIPT_FUNCTION_EXERCISES.length) * 100;
 
   return (
-    <section className="function-lab-workbench" aria-labelledby="function-lab-title">
+    <section
+      className="function-lab-workbench"
+      aria-labelledby="function-lab-title"
+    >
       <header className="function-lab-progress">
         <div>
           <span>
-            Function idea {exercise.number} of {JAVASCRIPT_FUNCTION_EXERCISES.length}
+            Function idea {exercise.number} of{" "}
+            {JAVASCRIPT_FUNCTION_EXERCISES.length}
           </span>
           <strong>{exercise.concept}</strong>
         </div>
@@ -206,9 +247,11 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
-          <label htmlFor="function-lab-code">JavaScript functions and scope code</label>
+          <label htmlFor="function-lab-code">
+            JavaScript functions and scope code
+          </label>
           <textarea
             id="function-lab-code"
             value={code}
@@ -219,7 +262,12 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="function-lab-actions">
@@ -249,7 +297,9 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
                 onClick={runChecks}
                 type="button"
               >
-                {checkState.kind === "running" ? "Running checks…" : "Run 3 checks"}
+                {checkState.kind === "running"
+                  ? "Running checks…"
+                  : "Run 3 checks"}
               </button>
             )}
           </div>
@@ -272,7 +322,9 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
               </span>
               <strong>{checkState.message}</strong>
             </div>
-            {checkState.kind === "failed" ? <p>{exercise.recoveryCue}</p> : null}
+            {checkState.kind === "failed" ? (
+              <p>{exercise.recoveryCue}</p>
+            ) : null}
             {checkState.kind === "passed" ? (
               <p className="function-lab-takeaway">
                 <span>Keep this:</span> {exercise.takeaway}
@@ -281,8 +333,8 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
           </div>
 
           <p className="function-lab-privacy">
-            Code, checks, answers, and progress stay in this browser tab. No
-            code stays in this browser; completed exercises save privately.
+            Your draft and completion save privately to your account. Check
+            output stays in this browser.
           </p>
         </div>
       </div>

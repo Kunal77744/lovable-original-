@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { runCodingSolution } from "@/lib/coding-runner";
 import {
-  JAVASCRIPT_SEARCH_SORT_EXERCISES,
-} from "@/lib/javascript-search-sort";
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
+import { runCodingSolution } from "@/lib/coding-runner";
+import { JAVASCRIPT_SEARCH_SORT_EXERCISES } from "@/lib/javascript-search-sort";
 import {
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
@@ -28,16 +31,28 @@ const exerciseIds = JAVASCRIPT_SEARCH_SORT_EXERCISES.map(
 
 export function JavaScriptSearchSortLab({
   completedExerciseIds = [],
+  initialDrafts = {},
 }: {
   completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
   const exercise = JAVASCRIPT_SEARCH_SORT_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ?? JAVASCRIPT_SEARCH_SORT_EXERCISES[0].starterCode,
-  );
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "search-sort",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_SEARCH_SORT_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_SEARCH_SORT_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
@@ -70,11 +85,15 @@ export function JavaScriptSearchSortLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("search-sort", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "search-sort",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -95,10 +114,11 @@ export function JavaScriptSearchSortLab({
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -116,7 +136,6 @@ export function JavaScriptSearchSortLab({
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -232,7 +251,7 @@ export function JavaScriptSearchSortLab({
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
           <label htmlFor="search-sort-lab-code">
             JavaScript searching and sorting code
@@ -247,7 +266,12 @@ export function JavaScriptSearchSortLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="function-lab-actions">

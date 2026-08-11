@@ -69,6 +69,39 @@ export type SavedCodingProblem = {
   skill: string;
 };
 
+export type SavedCodingProblemJournal = {
+  problemSlug: string;
+  content: string;
+  updatedAt: string;
+};
+
+export async function getCodingProblemJournalsForStudent(
+  userId: string,
+): Promise<SavedCodingProblemJournal[]> {
+  const rows = await getDatabase()
+    .select({
+      problemSlug: codingProblemNote.problemSlug,
+      content: codingProblemNote.content,
+      updatedAt: codingProblemNote.updatedAt,
+    })
+    .from(codingProblemNote)
+    .where(
+      and(
+        eq(codingProblemNote.userId, userId),
+        inArray(
+          codingProblemNote.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(asc(codingProblemNote.createdAt));
+
+  return rows.map((row) => ({
+    ...row,
+    updatedAt: row.updatedAt.toISOString(),
+  }));
+}
+
 export async function getCodingMistakeReviewQueueForStudent(
   userId: string,
 ): Promise<CodingMistakeReviewItem[]> {
@@ -627,6 +660,7 @@ export async function getCodingProblemForStudent(
   if (!userId) {
     return {
       code: problem.starterCode,
+      hasSavedCode: false,
       latestAcceptedCode: null,
       bestVerdict: null,
       attempts: [] as CodingProblemAttempt[],
@@ -716,6 +750,7 @@ export async function getCodingProblemForStudent(
 
   return {
     code: progress[0]?.code ?? problem.starterCode,
+    hasSavedCode: progress.length > 0,
     latestAcceptedCode: latestAcceptedSubmissions[0]?.code ?? null,
     bestVerdict: progress[0]?.bestVerdict ?? null,
     attempts: attempts.map((attempt) => ({

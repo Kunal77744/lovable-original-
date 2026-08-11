@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptFunctionsScopeLab } from "@/components/javascript-functions-scope-lab";
 import { auth } from "@/lib/auth";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +29,19 @@ export default async function JavaScriptFunctionsPage() {
     redirect("/account?mode=signin&next=/practice/functions");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "functions");
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "functions"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "functions"),
+  ]);
 
   return (
     <main className="function-lab-page">
       <SiteNav currentPage="practice" studentSession />
       <div className="function-lab-shell" id="main-content" tabIndex={-1}>
-        <nav className="problem-breadcrumbs" aria-label="Functions lab navigation">
+        <nav
+          className="problem-breadcrumbs"
+          aria-label="Functions lab navigation"
+        >
           <Link href="/practice">Practice arena</Link>
           <span aria-hidden="true">/</span>
           <span>Functions and scope</span>
@@ -51,11 +60,14 @@ export default async function JavaScriptFunctionsPage() {
           <aside aria-label="Functions and scope lab format">
             <strong>4 function ideas</strong>
             <span>12 local checks</span>
-            <p>Code stays local. Completed exercises save privately.</p>
+            <p>Drafts and completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptFunctionsScopeLab completedExerciseIds={completedExerciseIds} />
+        <JavaScriptFunctionsScopeLab
+          completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
+        />
       </div>
       <SiteFooter />
     </main>

@@ -133,7 +133,7 @@ export function buildCodingSkillRecord({
       description:
         "Every problem has an Accepted result. Reopen the first skill and solve it again without relying on the saved answer.",
       label: "Review problem 01",
-      href: `/practice/${CODING_PROBLEMS[0].slug}`,
+      href: `/practice/${CODING_PROBLEMS[0].slug}?mode=clean`,
     };
   }
 

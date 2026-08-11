@@ -36,6 +36,9 @@ const TIMED_CODING_CHALLENGE_SET_DEFINITIONS = [
 export type TimedCodingChallengeSetId =
   (typeof TIMED_CODING_CHALLENGE_SET_DEFINITIONS)[number]["id"];
 
+export const TIMED_CODING_CHALLENGE_MAX_ELAPSED_SECONDS =
+  TIMED_CODING_CHALLENGE_MINUTES * 60;
+
 export type TimedCodingChallengeSet = {
   id: TimedCodingChallengeSetId;
   title: string;
@@ -67,6 +70,37 @@ export function getTimedCodingChallengeSet(setId: string | null | undefined) {
       (challengeSet) => challengeSet.id === setId,
     ) ?? null
   );
+}
+
+export function isTimedCodingChallengeSetId(
+  value: unknown,
+): value is TimedCodingChallengeSetId {
+  return (
+    typeof value === "string" &&
+    TIMED_CODING_CHALLENGE_SETS.some((challengeSet) => challengeSet.id === value)
+  );
+}
+
+export function isTimedCodingChallengeElapsedSeconds(
+  value: unknown,
+): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= TIMED_CODING_CHALLENGE_MAX_ELAPSED_SECONDS
+  );
+}
+
+export function formatTimedCodingChallengeElapsedTime(elapsedSeconds: number) {
+  const boundedSeconds = Math.max(
+    0,
+    Math.min(TIMED_CODING_CHALLENGE_MAX_ELAPSED_SECONDS, elapsedSeconds),
+  );
+  const minutes = Math.floor(boundedSeconds / 60);
+  const seconds = boundedSeconds % 60;
+
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
 }
 
 export function getNextTimedCodingChallengeProblem(

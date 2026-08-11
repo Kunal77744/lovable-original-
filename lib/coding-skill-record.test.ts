@@ -92,7 +92,7 @@ describe("buildCodingSkillRecord", () => {
     expect(record.acceptedCount).toBe(12);
     expect(record.nextAction).toMatchObject({
       label: "Review problem 01",
-      href: "/practice/sum-two-numbers",
+      href: "/practice/sum-two-numbers?mode=clean",
     });
   });
 

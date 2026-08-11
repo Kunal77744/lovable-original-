@@ -4,7 +4,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptRecursionLab } from "@/components/javascript-recursion-lab";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -26,16 +29,19 @@ export default async function JavaScriptRecursionPage() {
     redirect("/account?mode=signin&next=/practice/recursion");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(
-    session.user.id,
-    "recursion",
-  );
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "recursion"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "recursion"),
+  ]);
 
   return (
     <main className="function-lab-page">
       <SiteNav currentPage="practice" studentSession />
       <div className="function-lab-shell" id="main-content" tabIndex={-1}>
-        <nav className="problem-breadcrumbs" aria-label="Recursion lab navigation">
+        <nav
+          className="problem-breadcrumbs"
+          aria-label="Recursion lab navigation"
+        >
           <Link href="/practice">Practice arena</Link>
           <span aria-hidden="true">/</span>
           <span>Recursion fundamentals</span>
@@ -53,13 +59,14 @@ export default async function JavaScriptRecursionPage() {
           <aside aria-label="Recursion fundamentals lab format">
             <strong>4 recursion ideas</strong>
             <span>12 local checks</span>
-            <p>
-              Code stays local. Completed exercises save as private practice.
-            </p>
+            <p>Drafts and completed exercises save as private practice.</p>
           </aside>
         </header>
 
-        <JavaScriptRecursionLab completedExerciseIds={completedExerciseIds} />
+        <JavaScriptRecursionLab
+          completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
+        />
       </div>
       <SiteFooter />
     </main>

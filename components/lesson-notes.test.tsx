@@ -27,7 +27,9 @@ describe("LessonNotes", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<LessonNotes lessonSlug="semantic-html" initialNote={null} />);
+    render(
+      <LessonNotes lessonSlug="responsive-css-grid" initialNote={null} />,
+    );
 
     fireEvent.change(screen.getByLabelText("What do you want to remember?"), {
       target: { value: "  Landmarks explain each region.\n" },
@@ -40,7 +42,7 @@ describe("LessonNotes", () => {
       ).toBeInTheDocument(),
     );
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lessons/semantic-html/notes",
+      "/api/lessons/responsive-css-grid/notes",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({

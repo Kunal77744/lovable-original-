@@ -36,6 +36,7 @@ describe("CSS practice API", () => {
   it("restores only the signed-in learner's saved challenge", async () => {
     getChallenge.mockResolvedValue({
       css: ".learning-card { color: #17231e; }",
+      hasSavedDraft: true,
       bestVerdict: "Needs revision",
       attempts: [],
     });

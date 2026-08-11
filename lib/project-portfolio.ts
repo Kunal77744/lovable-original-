@@ -59,6 +59,11 @@ type PortfolioInput = {
   cssCompletedCount: number;
   cssTotalCount: number;
   cssNextHref: string;
+  javascriptLabCompletedCount: number;
+  javascriptLabTotalCount: number;
+  javascriptLabNextHref: string;
+  javascriptLabNextTitle: string;
+  javascriptLabNextExerciseNumber: number;
   semanticHtml: ProjectPortfolioSummary;
   javascript: ProjectPortfolioSummary;
   htmlCss: ProjectPortfolioSummary;
@@ -85,11 +90,20 @@ export function buildProjectPortfolio({
   cssCompletedCount,
   cssTotalCount,
   cssNextHref,
+  javascriptLabCompletedCount,
+  javascriptLabTotalCount,
+  javascriptLabNextHref,
+  javascriptLabNextTitle,
+  javascriptLabNextExerciseNumber,
   semanticHtml,
   javascript,
   htmlCss,
 }: PortfolioInput): ProjectPortfolioViewModel {
   const cssCompleted = cssCompletedCount === cssTotalCount;
+  const javascriptLabsCompleted =
+    javascriptLabCompletedCount >= javascriptLabTotalCount;
+  const javascriptProjectAvailable =
+    javascript.state !== "not-started" || javascriptLabsCompleted;
   const projects: ProjectPortfolioCard[] = [
     {
       number: "01",
@@ -137,18 +151,24 @@ export function buildProjectPortfolio({
         javascript,
         JAVASCRIPT_CAPSTONE_TOTAL_CHECKS,
       ),
-      href: `/projects/${JAVASCRIPT_CAPSTONE_SLUG}`,
+      href: javascriptProjectAvailable
+        ? `/projects/${JAVASCRIPT_CAPSTONE_SLUG}`
+        : javascriptLabNextHref,
       actionLabel:
         javascript.state === "completed"
           ? "Open completed project"
           : javascript.state === "in-progress"
             ? "Continue project"
-            : "Start project",
+            : javascriptProjectAvailable
+              ? "Start project"
+              : `Continue exercise ${javascriptLabNextExerciseNumber}`,
       debriefHref:
         javascript.state === "completed"
           ? `/projects/${JAVASCRIPT_CAPSTONE_SLUG}/debrief`
           : null,
-      lockedReason: null,
+      lockedReason: javascriptProjectAvailable
+        ? null
+        : `Available after ${javascriptLabTotalCount} guided JavaScript steps`,
     },
     {
       number: "03",
@@ -216,6 +236,18 @@ export function buildProjectPortfolio({
         "Apply the completed course in a private article reviewed against six concrete outcomes.",
       href: `/projects/${GUIDED_PROJECT_SLUG}`,
       label: "Start the field guide",
+    };
+  } else if (
+    javascript.state === "not-started" &&
+    !javascriptLabsCompleted
+  ) {
+    primaryAction = {
+      kicker: `${javascriptLabCompletedCount}/${javascriptLabTotalCount} guided steps saved`,
+      title: javascriptLabNextTitle,
+      description:
+        "Finish the guided JavaScript path before combining those skills in the expense report project.",
+      href: javascriptLabNextHref,
+      label: `Continue exercise ${javascriptLabNextExerciseNumber}`,
     };
   } else if (javascript.state === "not-started") {
     primaryAction = {

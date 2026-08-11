@@ -62,7 +62,10 @@ export function ProjectPortfolio({
             <p className="eyebrow">Saved project record</p>
             <h2 id="project-portfolio-ledger-title">Work across the stack</h2>
           </div>
-          <p>Three bounded builds, each reviewed against six outcomes.</p>
+          <div className="project-portfolio-ledger-note">
+            <p>Three bounded builds, each reviewed against six outcomes.</p>
+            <Link href="/projects/history">Review saved attempts</Link>
+          </div>
         </div>
 
         <ol>

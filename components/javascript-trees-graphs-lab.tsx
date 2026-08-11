@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getFirstIncompleteExerciseIndex,
@@ -26,16 +31,28 @@ const exerciseIds = JAVASCRIPT_TREES_GRAPHS_EXERCISES.map(
 
 export function JavaScriptTreesGraphsLab({
   completedExerciseIds = [],
+  initialDrafts = {},
 }: {
   completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
   const exercise = JAVASCRIPT_TREES_GRAPHS_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].starterCode,
-  );
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "trees-graphs",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
@@ -68,11 +85,15 @@ export function JavaScriptTreesGraphsLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("trees-graphs", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "trees-graphs",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -93,10 +114,11 @@ export function JavaScriptTreesGraphsLab({
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -114,7 +136,6 @@ export function JavaScriptTreesGraphsLab({
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -204,7 +225,10 @@ export function JavaScriptTreesGraphsLab({
             </div>
           </div>
 
-          <ol className="function-lab-path" aria-label="Trees and graphs concepts">
+          <ol
+            className="function-lab-path"
+            aria-label="Trees and graphs concepts"
+          >
             {JAVASCRIPT_TREES_GRAPHS_EXERCISES.map((item, index) => (
               <li
                 className={
@@ -227,7 +251,7 @@ export function JavaScriptTreesGraphsLab({
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
           <label htmlFor="trees-graphs-lab-code">
             JavaScript trees and graphs code
@@ -242,7 +266,12 @@ export function JavaScriptTreesGraphsLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="function-lab-actions">

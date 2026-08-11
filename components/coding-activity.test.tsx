@@ -18,6 +18,29 @@ describe("CodingActivity", () => {
     render(
       <CodingActivity
         activity={activity}
+        labActivity={{
+          completedCount: 2,
+          totalCount: 55,
+          recentCompletions: [
+            {
+              labSlug: "foundations",
+              labTitle: "JavaScript foundations",
+              exerciseId: "parse-and-sum",
+              exerciseTitle: "Turn input into numbers",
+              exerciseNumber: 2,
+              exerciseCount: 4,
+              completedAt: "2026-08-05T12:00:00.000Z",
+              href: "/practice/foundations",
+            },
+          ],
+          nextAction: {
+            title: "Continue JavaScript foundations, exercise 3.",
+            description:
+              "This is the first unfinished guided exercise in your private lab record.",
+            label: "Continue guided practice",
+            href: "/practice/foundations",
+          },
+        }}
         weeklyGoal={{
           targetActiveDays: 3,
           currentActiveDays: 1,
@@ -45,5 +68,12 @@ describe("CodingActivity", () => {
       screen.getAllByRole("link", { name: /Continue problem 02/ })[0],
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.queryByText(/rank|leaderboard|public profile/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "2 of 55 guided steps" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Turn input into numbers")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Continue guided practice/ }),
+    ).toHaveAttribute("href", "/practice/foundations");
   });
 });

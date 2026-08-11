@@ -2,12 +2,21 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
   JAVASCRIPT_DEBUGGING_DRILLS,
 } from "@/lib/debugging-lab";
-import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type LabState =
   | { kind: "idle"; message: string }
@@ -15,13 +24,36 @@ type LabState =
   | { kind: "failed"; message: string; passedChecks: number }
   | { kind: "passed"; message: string }
   | { kind: "error"; message: string };
-const exerciseIds = JAVASCRIPT_DEBUGGING_DRILLS.map((exercise) => exercise.slug);
+const exerciseIds = JAVASCRIPT_DEBUGGING_DRILLS.map(
+  (exercise) => exercise.slug,
+);
 
-export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
-  const [drillIndex, setDrillIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
+export function DebuggingLab({
+  completedExerciseIds = [],
+  initialDrafts = {},
+}: {
+  completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
+}) {
+  const [drillIndex, setDrillIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
+  );
   const drill = JAVASCRIPT_DEBUGGING_DRILLS[drillIndex] ?? null;
-  const [source, setSource] = useState(drill?.starterCode ?? "");
-  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const {
+    source,
+    state: draftState,
+    updateSource: setSource,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "debugging",
+    exerciseId: drill?.slug ?? JAVASCRIPT_DEBUGGING_DRILLS[0].slug,
+    starterCode:
+      drill?.starterCode ?? JAVASCRIPT_DEBUGGING_DRILLS[0].starterCode,
+    initialDrafts,
+  });
+  const [completedIds, setCompletedIds] = useState(
+    () => new Set(completedExerciseIds),
+  );
   const [labState, setLabState] = useState<LabState>({
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
@@ -33,7 +65,7 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
     setSource(nextSource);
     setLabState({
       kind: "idle",
-      message: "Your edit is local. Run the three checks when you’re ready.",
+      message: "Draft changed. Run the three checks when you’re ready.",
     });
   }
 
@@ -63,11 +95,15 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
       return;
     }
 
-    const saveResponse = await saveJavaScriptLabExercise("debugging", drill.slug);
+    const saveResponse = await saveJavaScriptLabExercise(
+      "debugging",
+      drill.slug,
+    );
     if (!saveResponse?.ok) {
       setLabState({
         kind: "error",
-        message: "The checks passed, but completion could not be saved. Run them again to retry.",
+        message:
+          "The checks passed, but completion could not be saved. Run them again to retry.",
       });
       return;
     }
@@ -80,36 +116,57 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
   }
 
   function openNextDrill() {
-    const nextIndex = getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], drillIndex);
-    const nextDrill = JAVASCRIPT_DEBUGGING_DRILLS[nextIndex];
+    const nextIndex = getNextIncompleteExerciseIndex(
+      exerciseIds,
+      [...completedIds],
+      drillIndex,
+    );
     setDrillIndex(nextIndex);
-    setSource(nextDrill.starterCode);
     setLabState({
       kind: "idle",
-      message: "Read the new brief, inspect the code, then run all three checks.",
+      message:
+        "Read the new brief, inspect the code, then run all three checks.",
     });
   }
 
   if (!drill) {
     return (
-      <section className="debugging-result is-passed" aria-labelledby="debugging-complete-title">
-        <div><span>Debugging lab complete</span><strong id="debugging-complete-title">All three saved repairs are complete.</strong></div>
+      <section
+        className="debugging-result is-passed"
+        aria-labelledby="debugging-complete-title"
+      >
+        <div>
+          <span>Debugging lab complete</span>
+          <strong id="debugging-complete-title">
+            All three saved repairs are complete.
+          </strong>
+        </div>
         <Link href="/practice/sum-two-numbers">Start judged practice</Link>
       </section>
     );
   }
 
   return (
-    <section className="debugging-workbench" aria-labelledby="debugging-workbench-title">
+    <section
+      className="debugging-workbench"
+      aria-labelledby="debugging-workbench-title"
+    >
       <header className="debugging-workbench-heading">
         <div>
-          <p className="eyebrow">Defect {drill.number} of {JAVASCRIPT_DEBUGGING_DRILLS.length}</p>
+          <p className="eyebrow">
+            Defect {drill.number} of {JAVASCRIPT_DEBUGGING_DRILLS.length}
+          </p>
           <h2 id="debugging-workbench-title">{drill.title}</h2>
           <p>{drill.brief}</p>
         </div>
-        <div className="debugging-progress" aria-label={`${completedCount} of ${JAVASCRIPT_DEBUGGING_DRILLS.length} defects repaired`}>
+        <div
+          className="debugging-progress"
+          aria-label={`${completedCount} of ${JAVASCRIPT_DEBUGGING_DRILLS.length} defects repaired`}
+        >
           <span>Repaired</span>
-          <strong>{completedCount}/{JAVASCRIPT_DEBUGGING_DRILLS.length}</strong>
+          <strong>
+            {completedCount}/{JAVASCRIPT_DEBUGGING_DRILLS.length}
+          </strong>
           <small>{drill.concept}</small>
         </div>
       </header>
@@ -117,14 +174,21 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
       <div className="debugging-editor">
         <div className="debugging-editor-bar">
           <span>broken-solution.js</span>
-          <span>Browser only</span>
+          <span>Draft saves privately</span>
         </div>
-        <label htmlFor="debugging-source">JavaScript source for {drill.title}</label>
+        <label htmlFor="debugging-source">
+          JavaScript source for {drill.title}
+        </label>
         <textarea
           id="debugging-source"
           value={source}
           onChange={(event) => updateSource(event.target.value)}
+          maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
           spellCheck={false}
+        />
+        <PrivateJavaScriptLabDraftStatus
+          state={draftState}
+          onRetry={retrySave}
         />
       </div>
 
