@@ -20,6 +20,7 @@ describe("public sitemap", () => {
 
   it.each([
     "/dashboard",
+    "/learning-history",
     "/profile",
     "/interview/javascript-fundamentals",
     "/playground",

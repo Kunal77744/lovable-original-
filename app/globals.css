@@ -24706,3 +24706,373 @@ footer {
     transition: none;
   }
 }
+
+.learning-history-shell {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+  min-height: calc(100vh - 88px - 73px);
+  padding: 72px 0 112px;
+}
+
+.learning-history-layout {
+  display: grid;
+  gap: 64px;
+}
+
+.learning-history-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: end;
+  gap: 72px;
+  padding-bottom: 52px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.learning-history-intro h1 {
+  max-width: 780px;
+  margin: 24px 0 0;
+  font-size: clamp(52px, 6.4vw, 78px);
+}
+
+.learning-history-intro > p:last-child {
+  max-width: 61ch;
+  margin: 25px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.62;
+}
+
+.learning-history-summary {
+  position: relative;
+  padding: 32px 30px;
+  color: white;
+  border-radius: 18px 18px 6px 18px;
+  background:
+    radial-gradient(circle at 86% 12%, rgba(102, 220, 157, 0.17) 0 58px, transparent 59px),
+    var(--ink);
+  box-shadow: 0 22px 48px rgba(23, 35, 30, 0.16);
+}
+
+.learning-history-private-mark {
+  position: absolute;
+  top: 31px;
+  right: 29px;
+  color: #66dc9d;
+  font-size: 11px;
+}
+
+.learning-history-summary-label {
+  margin: 0;
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.learning-history-summary > strong {
+  display: block;
+  margin-top: 28px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 39px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.learning-history-summary > p:nth-of-type(2) {
+  margin: 16px 0 0;
+  color: #b9c8c0;
+  font-size: 12px;
+  line-height: 1.62;
+}
+
+.learning-history-primary-action {
+  min-height: 50px;
+  margin-top: 28px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--ink);
+  border-radius: 8px;
+  background: white;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.learning-history-primary-action:hover {
+  background: #eff7f1;
+  transform: translateY(-1px);
+}
+
+.learning-history-primary-action:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.48);
+  outline-offset: 4px;
+}
+
+.learning-history-timeline {
+  display: grid;
+  gap: 54px;
+}
+
+.learning-history-day {
+  display: grid;
+  grid-template-columns: 165px minmax(0, 1fr);
+  gap: 38px;
+}
+
+.learning-history-day-label {
+  padding-top: 3px;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.learning-history-day-label time {
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.learning-history-day-label span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.learning-history-day ol {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  list-style: none;
+  border-top: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.learning-history-day li {
+  position: relative;
+  padding: 25px 0 25px 26px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.13);
+}
+
+.learning-history-node {
+  position: absolute;
+  top: 31px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(23, 35, 30, 0.18);
+}
+
+.learning-history-item-heading,
+.learning-history-item-result {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.learning-history-item-heading p {
+  margin: 0 0 7px;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.learning-history-item-heading h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 25px;
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.learning-history-item-heading time {
+  flex: none;
+  padding-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.learning-history-item-result {
+  align-items: center;
+  margin-top: 16px;
+}
+
+.learning-history-item-result strong {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.learning-history-item-result a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(40, 118, 82, 0.3);
+  text-underline-offset: 4px;
+}
+
+.learning-history-item-result a:hover {
+  text-decoration-color: currentColor;
+}
+
+.learning-history-item-result a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.learning-history-empty {
+  min-height: 280px;
+  padding: 48px;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: center;
+  gap: 32px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.learning-history-empty > span {
+  color: #91a198;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 52px;
+  font-style: italic;
+}
+
+.learning-history-empty h2 {
+  margin: 8px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 34px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.learning-history-empty div > p:last-child {
+  max-width: 60ch;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.learning-history-footer {
+  padding-top: 30px;
+  border-top: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.learning-history-footer > p {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 860px) {
+  .learning-history-hero {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .learning-history-summary {
+    max-width: 480px;
+  }
+
+  .learning-history-day {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .learning-history-day-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+}
+
+@media (max-width: 620px) {
+  .learning-history-shell {
+    width: min(100% - 32px, 1120px);
+    min-height: calc(100vh - 76px);
+    padding: 54px 0 80px;
+  }
+
+  .learning-history-layout {
+    gap: 48px;
+  }
+
+  .learning-history-hero {
+    padding-bottom: 38px;
+  }
+
+  .learning-history-intro h1 {
+    font-size: clamp(45px, 14vw, 62px);
+  }
+
+  .learning-history-intro > p:last-child {
+    font-size: 15px;
+  }
+
+  .learning-history-summary {
+    padding: 29px 24px;
+  }
+
+  .learning-history-summary > strong {
+    font-size: 35px;
+  }
+
+  .learning-history-primary-action {
+    width: 100%;
+  }
+
+  .learning-history-day li {
+    padding-left: 21px;
+  }
+
+  .learning-history-item-heading,
+  .learning-history-item-result {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .learning-history-item-heading time {
+    order: -1;
+  }
+
+  .learning-history-item-result {
+    gap: 13px;
+  }
+
+  .learning-history-empty {
+    padding: 34px 24px;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
