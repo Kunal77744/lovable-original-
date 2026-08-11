@@ -76,6 +76,26 @@ describe("database release contract", () => {
     );
   });
 
+  it("keeps every combined-release learning record in the private export", async () => {
+    const exportSource = await readFile(
+      path.join(root, "db/learning-data-export.ts"),
+      "utf8",
+    );
+
+    expect(exportSource).toMatch(
+      /quizAttempts:\s*withoutAccountScope\(courseQuizAttempts\)/,
+    );
+    expect(exportSource).toMatch(
+      /reviewAttempts:\s*withoutAccountScope\(projectReviewAttempts\)/,
+    );
+    expect(exportSource).toMatch(
+      /timedChallengeResults:\s*withoutAccountScope\(timedChallengeResults\)/,
+    );
+    expect(exportSource).toMatch(
+      /guidedExerciseDrafts:\s*withoutAccountScope\(guidedExerciseDrafts\)/,
+    );
+  });
+
   it("adds and verifies private daily coding challenge completion", async () => {
     const [migration, releaseScript] = await Promise.all([
       readFile(path.join(root, "drizzle/0028_daily-coding-challenge.sql"), "utf8"),

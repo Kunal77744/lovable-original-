@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { getDatabase } from "./index";
 import {
+  codingLabExerciseDraft,
   codingLabExerciseProgress,
   codingPracticeGoal,
   codingProblemBookmark,
@@ -24,8 +25,11 @@ import {
   lessonArtifact,
   lessonNote,
   lessonProgress,
+  lessonQuizAttempt,
   playgroundFile,
   practiceFeedback,
+  projectReviewAttempt,
+  timedCodingChallengeResult,
   user,
   webFoundationsReviewResult,
 } from "./schema";
@@ -45,23 +49,27 @@ export async function getLearningDataExportForStudent(userId: string) {
     settings,
     courseAssignments,
     courseFeedbackRows,
+    courseQuizAttempts,
     lessonProgressRows,
     lessonArtifacts,
     lessonNotes,
     certificates,
     webFoundationsReviews,
     projects,
+    projectReviewAttempts,
     projectFeedback,
     interviewProgress,
     problemProgress,
     submissions,
     practiceGoals,
     dailyChallenges,
+    timedChallengeResults,
     bookmarks,
     problemNotes,
     privateTestCases,
     practiceFeedbackRows,
     guidedExerciseProgress,
+    guidedExerciseDrafts,
     readinessResults,
     mixedReviewResults,
     cssProgress,
@@ -80,6 +88,11 @@ export async function getLearningDataExportForStudent(userId: string) {
     database.select().from(learnerSetting).where(eq(learnerSetting.userId, userId)),
     database.select().from(courseAssignment).where(eq(courseAssignment.userId, userId)),
     database.select().from(courseFeedback).where(eq(courseFeedback.userId, userId)),
+    database
+      .select()
+      .from(lessonQuizAttempt)
+      .where(eq(lessonQuizAttempt.userId, userId))
+      .orderBy(asc(lessonQuizAttempt.createdAt)),
     database.select().from(lessonProgress).where(eq(lessonProgress.userId, userId)),
     database.select().from(lessonArtifact).where(eq(lessonArtifact.userId, userId)),
     database.select().from(lessonNote).where(eq(lessonNote.userId, userId)),
@@ -89,6 +102,11 @@ export async function getLearningDataExportForStudent(userId: string) {
       .from(webFoundationsReviewResult)
       .where(eq(webFoundationsReviewResult.userId, userId)),
     database.select().from(guidedProject).where(eq(guidedProject.userId, userId)),
+    database
+      .select()
+      .from(projectReviewAttempt)
+      .where(eq(projectReviewAttempt.userId, userId))
+      .orderBy(asc(projectReviewAttempt.createdAt)),
     database
       .select()
       .from(guidedProjectFeedback)
@@ -117,6 +135,11 @@ export async function getLearningDataExportForStudent(userId: string) {
       .orderBy(asc(dailyCodingChallengeCompletion.completedAt)),
     database
       .select()
+      .from(timedCodingChallengeResult)
+      .where(eq(timedCodingChallengeResult.userId, userId))
+      .orderBy(asc(timedCodingChallengeResult.completedAt)),
+    database
+      .select()
       .from(codingProblemBookmark)
       .where(eq(codingProblemBookmark.userId, userId)),
     database
@@ -135,6 +158,10 @@ export async function getLearningDataExportForStudent(userId: string) {
       .select()
       .from(codingLabExerciseProgress)
       .where(eq(codingLabExerciseProgress.userId, userId)),
+    database
+      .select()
+      .from(codingLabExerciseDraft)
+      .where(eq(codingLabExerciseDraft.userId, userId)),
     database
       .select()
       .from(javascriptReadinessResult)
@@ -166,6 +193,7 @@ export async function getLearningDataExportForStudent(userId: string) {
     courses: {
       assignments: withoutAccountScope(courseAssignments),
       feedback: withoutAccountScope(courseFeedbackRows),
+      quizAttempts: withoutAccountScope(courseQuizAttempts),
       lessonProgress: withoutAccountScope(lessonProgressRows),
       lessonWorkspaces: withoutAccountScope(lessonArtifacts),
       lessonNotes: withoutAccountScope(lessonNotes),
@@ -174,6 +202,7 @@ export async function getLearningDataExportForStudent(userId: string) {
     },
     projects: {
       work: withoutAccountScope(projects),
+      reviewAttempts: withoutAccountScope(projectReviewAttempts),
       feedback: withoutAccountScope(projectFeedback),
     },
     interviewPractice: withoutAccountScope(interviewProgress),
@@ -182,11 +211,13 @@ export async function getLearningDataExportForStudent(userId: string) {
       submissions: withoutAccountScope(submissions),
       practiceGoals: withoutAccountScope(practiceGoals),
       dailyChallenges: withoutAccountScope(dailyChallenges),
+      timedChallengeResults: withoutAccountScope(timedChallengeResults),
       bookmarks: withoutAccountScope(bookmarks),
       problemJournals: withoutAccountScope(problemNotes),
       privateTestCases: withoutAccountScope(privateTestCases),
       feedback: withoutAccountScope(practiceFeedbackRows),
       guidedExerciseProgress: withoutAccountScope(guidedExerciseProgress),
+      guidedExerciseDrafts: withoutAccountScope(guidedExerciseDrafts),
       readinessResults: withoutAccountScope(readinessResults),
       mixedReviews: withoutAccountScope(mixedReviewResults),
     },
