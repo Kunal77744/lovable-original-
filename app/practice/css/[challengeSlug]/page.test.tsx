@@ -31,7 +31,10 @@ vi.mock("@/db/css-practice", () => ({
 }));
 
 vi.mock("@/components/css-challenge-workspace", () => ({
-  CssChallengeWorkspace: (props: { isReviewSession: boolean }) => {
+  CssChallengeWorkspace: (props: {
+    hasSavedDraft: boolean;
+    isReviewSession: boolean;
+  }) => {
     mocks.workspace(props);
     return (
       <div data-testid="workspace">
@@ -46,6 +49,7 @@ describe("CssChallengePage review context", () => {
     vi.clearAllMocks();
     mocks.getStudentState.mockResolvedValue({
       css: ".learning-card {}",
+      hasSavedDraft: false,
       bestVerdict: "Needs revision",
       attempts: [],
     });
@@ -77,7 +81,31 @@ describe("CssChallengePage review context", () => {
       "review context",
     );
     expect(mocks.workspace).toHaveBeenCalledWith(
-      expect.objectContaining({ isReviewSession: true, isSignedIn: true }),
+      expect.objectContaining({
+        hasSavedDraft: false,
+        isReviewSession: true,
+        isSignedIn: true,
+      }),
+    );
+  });
+
+  it("passes the account-backed draft fact into the workspace", async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: "learner-a" } });
+    mocks.getStudentState.mockResolvedValue({
+      css: ".learning-card { color: #287652; }",
+      hasSavedDraft: true,
+      bestVerdict: null,
+      attempts: [],
+    });
+
+    render(
+      await CssChallengePage({
+        params: Promise.resolve({ challengeSlug: "class-selector" }),
+      }),
+    );
+
+    expect(mocks.workspace).toHaveBeenCalledWith(
+      expect.objectContaining({ hasSavedDraft: true, isSignedIn: true }),
     );
   });
 
