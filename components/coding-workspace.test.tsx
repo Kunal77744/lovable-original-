@@ -710,6 +710,9 @@ describe("CodingWorkspace", () => {
     expect(screen.getByText("Keep testing")).toBeInTheDocument();
     expect(screen.getByText("Only you")).toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "Open private problem debrief" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers/debrief");
+    expect(
       screen.getByRole("heading", {
         name: "Compare your plan with what passed.",
       }),
@@ -895,6 +898,9 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveTextContent("Accepted");
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
     expect(screen.getByText("Private code review")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open private problem debrief" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers/debrief");
     expect(status).toHaveTextContent(
       "Your source explicitly turns input text into numbers before adding the two values.",
     );
@@ -918,6 +924,9 @@ describe("CodingWorkspace", () => {
     );
 
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open private problem debrief" }),
+    ).not.toBeInTheDocument();
     signedInView.unmount();
 
     render(
