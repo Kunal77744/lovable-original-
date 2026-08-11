@@ -36,6 +36,7 @@ export type CodingProblem = {
   statement: string;
   inputFormat: string;
   outputFormat: string;
+  constraints: [string, string];
   recoveryHint: string;
   recoveryHints: [string, string];
   acceptedExplanation: CodingProblemExplanation;
@@ -61,6 +62,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read two whole numbers from one line and return their sum. The numbers may be positive, negative, or zero.",
     inputFormat: "One line containing two space-separated integers: a b.",
     outputFormat: "One integer: a + b.",
+    constraints: [
+      "-1,000,000 ≤ a, b ≤ 1,000,000.",
+      "Both inputs are whole numbers.",
+    ],
     recoveryHint:
       "Trace both values from the input to the returned number. Check number conversion, zero, and negative signs instead of testing only the sample.",
     recoveryHints: [
@@ -117,6 +122,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read one whole number. Return "Even" when it is divisible by 2 and "Odd" otherwise.',
     inputFormat: "One integer n.",
     outputFormat: 'The exact word "Even" or "Odd".',
+    constraints: [
+      "-1,000,000 ≤ n ≤ 1,000,000.",
+      "The input is always a whole number.",
+    ],
     recoveryHint:
       "Trace the remainder for zero, an even positive number, and a negative odd number. Then check the exact capitalization of the word you return.",
     recoveryHints: [
@@ -173,6 +182,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one whole number and return its first ten multiples, from 1 × n through 10 × n.",
     inputFormat: "One integer n.",
     outputFormat: "Ten multiples separated by a single space.",
+    constraints: [
+      "-1,000 ≤ n ≤ 1,000.",
+      "The output always contains exactly 10 integers.",
+    ],
     recoveryHint:
       "Count your loop boundaries. The result needs exactly ten values, starting with the first multiple and ending with the tenth, separated by single spaces.",
     recoveryHints: [
@@ -225,6 +238,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n space-separated integers.",
     outputFormat: "The largest integer in the list.",
+    constraints: [
+      "1 ≤ n ≤ 100,000.",
+      "Each value is between -1,000,000 and 1,000,000.",
+    ],
     recoveryHint:
       "Separate the leading count from the values you compare. Test an all-negative list so a starting value of zero cannot hide the mistake.",
     recoveryHints: [
@@ -276,6 +293,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one lowercase word and return its characters in reverse order.",
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: "The same word reversed.",
+    constraints: [
+      "1 ≤ word length ≤ 100,000.",
+      "The word contains only lowercase English letters (a-z).",
+    ],
     recoveryHint:
       "Trace one character from each end of the word. Check that every character appears once and that the returned text has no extra spaces.",
     recoveryHints: [
@@ -332,6 +353,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Return the numbers from 1 to n. Replace multiples of 3 with "Fizz", multiples of 5 with "Buzz", and multiples of both with "FizzBuzz".',
     inputFormat: "One positive integer n.",
     outputFormat: "The sequence from 1 to n, separated by a single space.",
+    constraints: [
+      "1 ≤ n ≤ 10,000.",
+      "Return exactly n space-separated tokens.",
+    ],
     recoveryHint:
       "Check the overlap before either single divisibility case. A multiple of both 3 and 5 needs one token, and the sequence still needs to include n.",
     recoveryHints: [
@@ -393,6 +418,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       "Read one lowercase word and return how many characters are vowels. Treat a, e, i, o, and u as vowels.",
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: "One integer: the number of vowels in the word.",
+    constraints: [
+      "1 ≤ word length ≤ 100,000.",
+      "The word contains only lowercase English letters (a-z).",
+    ],
     recoveryHint:
       "Visit every character once and compare it with the complete five-vowel set. Test a word with repeated vowels and a word with none.",
     recoveryHints: [
@@ -450,6 +479,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n space-separated integers.",
     outputFormat: "The unique values in their original order, separated by one space.",
+    constraints: [
+      "1 ≤ n ≤ 100,000.",
+      "Each value is between -1,000,000 and 1,000,000.",
+    ],
     recoveryHint:
       "Separate the leading count from the values, then track what you have already emitted. Test repeated negatives and a list containing only one value.",
     recoveryHints: [
@@ -501,6 +534,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read a string containing only (), [], and {}. Return "Balanced" when every opening bracket closes in the correct order, otherwise return "Not balanced".',
     inputFormat: "One non-empty string containing only bracket characters.",
     outputFormat: 'The exact words "Balanced" or "Not balanced".',
+    constraints: [
+      "1 ≤ text length ≤ 100,000.",
+      "The text contains only (, ), [, ], {, and }.",
+    ],
     recoveryHint:
       "Track the most recent unmatched opening bracket. Test crossed pairs, an early closing bracket, and leftover openings after the input ends.",
     recoveryHints: [
@@ -558,6 +595,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       'Read one lowercase word and return its first character that appears exactly once. Return "None" when every character repeats.',
     inputFormat: "One lowercase word with no spaces.",
     outputFormat: 'The first non-repeating character, or the exact word "None".',
+    constraints: [
+      "1 ≤ word length ≤ 100,000.",
+      "The word contains only lowercase English letters (a-z).",
+    ],
     recoveryHint:
       "Count every character before choosing the answer, then scan in the original order. Test a unique character near the end and a word with no answer.",
     recoveryHints: [
@@ -615,6 +656,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n. The second line contains n sorted integers. The third line contains the target.",
     outputFormat: "The target's zero-based index, or -1 when the target is absent.",
+    constraints: [
+      "1 ≤ n ≤ 100,000.",
+      "Values are distinct, sorted in ascending order, and between -1,000,000 and 1,000,000; the target uses the same range.",
+    ],
     recoveryHint:
       "Keep an inclusive left and right boundary, recompute the midpoint after each change, and test the first, last, missing, and single-value cases.",
     recoveryHints: [
@@ -673,6 +718,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     inputFormat:
       "The first line contains n and k. The second line contains n space-separated integers, where 1 ≤ k ≤ n.",
     outputFormat: "One integer: the largest sum of any contiguous window of size k.",
+    constraints: [
+      "1 ≤ n ≤ 100,000 and 1 ≤ k ≤ n.",
+      "Each value is between -1,000,000 and 1,000,000.",
+    ],
     recoveryHint:
       "Build the first complete window, then move one position at a time by removing the outgoing value and adding the incoming value. Test all-negative data.",
     recoveryHints: [

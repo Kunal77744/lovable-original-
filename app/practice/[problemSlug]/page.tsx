@@ -201,6 +201,14 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               <p>{problem.outputFormat}</p>
             </section>
             <section>
+              <h2>Constraints</h2>
+              <ul className="problem-constraints">
+                {problem.constraints.map((constraint) => (
+                  <li key={constraint}>{constraint}</li>
+                ))}
+              </ul>
+            </section>
+            <section>
               <h2>Examples</h2>
               <div className="problem-examples">
                 {problem.examples.map((example, index) => (

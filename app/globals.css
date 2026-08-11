@@ -8051,6 +8051,20 @@ h1 {
   line-height: 1.7;
 }
 
+.problem-constraints {
+  margin: 0;
+  padding-left: 19px;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.problem-constraints li::marker {
+  color: var(--accent);
+}
+
 .problem-examples {
   display: grid;
   gap: 18px;

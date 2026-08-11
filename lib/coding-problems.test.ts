@@ -40,6 +40,12 @@ describe("coding problems", () => {
         expect(test.label).not.toBe(test.expectedOutput);
       }
       expect(problem.examples.length).toBeGreaterThan(0);
+      expect(problem.constraints).toHaveLength(2);
+      expect(new Set(problem.constraints).size).toBe(2);
+      for (const constraint of problem.constraints) {
+        expect(constraint).not.toHaveLength(0);
+        expect(constraint).not.toContain("function solve");
+      }
       expect(problem.starterCode).toContain("function solve(input)");
       expect(problem.recoveryHint.length).toBeGreaterThan(80);
       expect(problem.recoveryHints).toHaveLength(2);
