@@ -147,10 +147,24 @@ export const JAVASCRIPT_LABS = [
 
 export type JavaScriptLabSlug = (typeof JAVASCRIPT_LABS)[number]["slug"];
 
+export const JAVASCRIPT_CODE_LAB_SLUGS = [
+  "foundations",
+  "debugging",
+  "data-structures",
+  "functions",
+  "recursion",
+  "search-sort",
+  "stacks-queues",
+  "linked-lists",
+  "trees-graphs",
+  "dom",
+  "algorithm-patterns",
+] as const satisfies readonly JavaScriptLabSlug[];
+
+export type JavaScriptCodeLabSlug = (typeof JAVASCRIPT_CODE_LAB_SLUGS)[number];
+
 export type JavaScriptLabProgressState =
-  | "complete"
-  | "in-progress"
-  | "not-started";
+  "complete" | "in-progress" | "not-started";
 
 export type JavaScriptLabCatalogProgress = {
   completedCount: number;
@@ -257,12 +271,29 @@ export function isJavaScriptLabExercise(labSlug: string, exerciseId: string) {
   return lab ? lab.exerciseIds.some((id) => id === exerciseId) : false;
 }
 
+export function isJavaScriptCodeLabExercise(
+  labSlug: string,
+  exerciseId: string,
+) {
+  if (!JAVASCRIPT_CODE_LAB_SLUGS.some((slug) => slug === labSlug)) {
+    return false;
+  }
+
+  if (labSlug === "foundations" && exerciseId === "understand-the-judge") {
+    return false;
+  }
+
+  return isJavaScriptLabExercise(labSlug, exerciseId);
+}
+
 export function getFirstIncompleteExerciseIndex(
   exerciseIds: readonly string[],
   completedExerciseIds: readonly string[],
 ) {
   const completed = new Set(completedExerciseIds);
-  const index = exerciseIds.findIndex((exerciseId) => !completed.has(exerciseId));
+  const index = exerciseIds.findIndex(
+    (exerciseId) => !completed.has(exerciseId),
+  );
   return index === -1 ? exerciseIds.length : index;
 }
 

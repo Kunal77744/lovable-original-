@@ -4,7 +4,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptLinkedListLab } from "@/components/javascript-linked-list-lab";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +29,10 @@ export default async function JavaScriptLinkedListsPage() {
     redirect("/account?mode=signin&next=/practice/linked-lists");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(
-    session.user.id,
-    "linked-lists",
-  );
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "linked-lists"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "linked-lists"),
+  ]);
 
   return (
     <main className="function-lab-page">
@@ -56,14 +59,13 @@ export default async function JavaScriptLinkedListsPage() {
           <aside aria-label="Linked-list lab format">
             <strong>4 linked-list ideas</strong>
             <span>12 local checks</span>
-            <p>
-              Code stays local. Completed exercises save as private practice.
-            </p>
+            <p>Drafts and completed exercises save as private practice.</p>
           </aside>
         </header>
 
         <JavaScriptLinkedListLab
           completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
         />
       </div>
       <SiteFooter />

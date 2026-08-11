@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
-import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -16,19 +25,42 @@ type CheckState =
 const readyMessage =
   "Finish the missing logic, then run three private browser checks.";
 
-const exerciseIds = JAVASCRIPT_DATA_STRUCTURE_EXERCISES.map((exercise) => exercise.slug);
+const exerciseIds = JAVASCRIPT_DATA_STRUCTURE_EXERCISES.map(
+  (exercise) => exercise.slug,
+);
 
-export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
-  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
-  const exercise = JAVASCRIPT_DATA_STRUCTURE_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ?? JAVASCRIPT_DATA_STRUCTURE_EXERCISES[0].starterCode,
+export function JavaScriptDataStructuresLab({
+  completedExerciseIds = [],
+  initialDrafts = {},
+}: {
+  completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
+}) {
+  const [exerciseIndex, setExerciseIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
+  const exercise = JAVASCRIPT_DATA_STRUCTURE_EXERCISES[exerciseIndex] ?? null;
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "data-structures",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_DATA_STRUCTURE_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ??
+      JAVASCRIPT_DATA_STRUCTURE_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
-  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [completedIds, setCompletedIds] = useState(
+    () => new Set(completedExerciseIds),
+  );
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -54,11 +86,15 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("data-structures", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "data-structures",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -79,10 +115,11 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -100,7 +137,6 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -120,8 +156,8 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
           </h2>
           <p>
             You used arrays for ordered values, strings for characters, objects
-            for keyed counts, and sets for uniqueness. Choose the structure
-            that matches the question before you write the loop.
+            for keyed counts, and sets for uniqueness. Choose the structure that
+            matches the question before you write the loop.
           </p>
           <Link className="primary-action" href="/practice/sum-two-numbers">
             Start judged practice <span aria-hidden="true">→</span>
@@ -209,7 +245,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
         <div className="data-lab-editor">
           <div className="data-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
           <label htmlFor="data-lab-code">JavaScript data-structure code</label>
           <textarea
@@ -222,7 +258,12 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="data-lab-actions">
@@ -240,8 +281,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
                 onClick={continueLab}
                 type="button"
               >
-                {exercise.number ===
-                JAVASCRIPT_DATA_STRUCTURE_EXERCISES.length
+                {exercise.number === JAVASCRIPT_DATA_STRUCTURE_EXERCISES.length
                   ? "Finish the lab"
                   : `Continue to ${
                       JAVASCRIPT_DATA_STRUCTURE_EXERCISES[exerciseIndex + 1]
@@ -292,8 +332,8 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
           </div>
 
           <p className="data-lab-privacy">
-            Code, checks, answers, and progress stay in this browser tab. No
-            code stays in this browser; completed exercises save privately.
+            Your draft and completion save privately to your account. Check
+            output stays in this browser.
           </p>
         </div>
       </div>

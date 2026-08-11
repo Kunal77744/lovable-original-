@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_FOUNDATION_EXERCISES,
@@ -22,6 +27,7 @@ type CheckState =
 
 type JavaScriptFoundationsWarmupProps = {
   completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
 };
 
 const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
@@ -30,18 +36,30 @@ const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
 
 export function JavaScriptFoundationsWarmup({
   completedExerciseIds = [],
+  initialDrafts = {},
 }: JavaScriptFoundationsWarmupProps) {
   const [completedIds, setCompletedIds] = useState(completedExerciseIds);
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
   const exercise = JAVASCRIPT_FOUNDATION_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].starterCode,
-  );
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "foundations",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
-    message: "Complete the missing logic, then run three private browser checks.",
+    message:
+      "Complete the missing logic, then run three private browser checks.",
   });
 
   async function runChecks() {
@@ -97,10 +115,11 @@ export function JavaScriptFoundationsWarmup({
 
   function resetExercise() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restoreStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -121,10 +140,10 @@ export function JavaScriptFoundationsWarmup({
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({
       kind: "idle",
-      message: "Complete the missing logic, then run three private browser checks.",
+      message:
+        "Complete the missing logic, then run three private browser checks.",
     });
   }
 
@@ -207,7 +226,7 @@ export function JavaScriptFoundationsWarmup({
       <div className="foundations-editor">
         <div className="foundations-editor-bar">
           <span>foundations.js</span>
-            <span>Completion saves privately</span>
+          <span>Draft saves privately</span>
         </div>
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
         <textarea
@@ -221,7 +240,12 @@ export function JavaScriptFoundationsWarmup({
                 "Code changed. Run the three checks when the missing logic is ready.",
             });
           }}
+          maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
           spellCheck={false}
+        />
+        <PrivateJavaScriptLabDraftStatus
+          state={draftState}
+          onRetry={retrySave}
         />
 
         <div className="foundations-actions">
@@ -240,7 +264,9 @@ export function JavaScriptFoundationsWarmup({
               onClick={runChecks}
               disabled={checkState.kind === "running"}
             >
-              {checkState.kind === "running" ? "Running checks…" : "Run 3 checks"}
+              {checkState.kind === "running"
+                ? "Running checks…"
+                : "Run 3 checks"}
             </button>
           ) : isFinalExercise ? (
             <Link className="foundations-run" href="/practice/sum-two-numbers">
@@ -275,9 +301,7 @@ export function JavaScriptFoundationsWarmup({
             </span>
             <strong>{checkState.message}</strong>
           </div>
-          {checkState.kind === "failed" ? (
-            <p>{exercise.recoveryCue}</p>
-          ) : null}
+          {checkState.kind === "failed" ? <p>{exercise.recoveryCue}</p> : null}
           {checkState.kind === "passed" ? (
             <p>
               <span>Keep this:</span> {exercise.takeaway}
