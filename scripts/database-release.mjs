@@ -26,6 +26,7 @@ const requiredTables = [
   "early_access_signup",
   "guided_project",
   "guided_project_feedback",
+  "project_review_attempt",
   "interview_drill_progress",
   "javascript_mixed_review_result",
   "javascript_readiness_result",
@@ -43,6 +44,15 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  project_review_attempt: [
+    "id",
+    "user_id",
+    "project_slug",
+    "status",
+    "passed_checks",
+    "total_checks",
+    "created_at",
+  ],
   daily_coding_challenge_completion: [
     "id",
     "user_id",
