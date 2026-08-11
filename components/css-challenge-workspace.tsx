@@ -24,6 +24,7 @@ type CssChallengeWorkspaceProps = {
     };
   };
   initialCss: string;
+  hasSavedDraft?: boolean;
   initialPathFeedback?: SavedCssPathFeedback | null;
   isSignedIn: boolean;
   isReviewSession?: boolean;
@@ -51,6 +52,7 @@ export function CssChallengeWorkspace({
   bestVerdict: initialBestVerdict,
   challenge,
   initialCss,
+  hasSavedDraft = false,
   initialPathFeedback = null,
   isSignedIn,
   isReviewSession = false,
@@ -69,13 +71,15 @@ export function CssChallengeWorkspace({
   );
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
-  >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
+  >(isSignedIn && hasSavedDraft ? "saved" : "unsaved");
   const [status, setStatus] = useState(
     isSignedIn
       ? initialBestVerdict === "Completed"
         ? "Completed CSS restored from your account."
         : initialAttempts.length > 0
           ? "Your latest saved attempt is ready to revise."
+          : hasSavedDraft
+            ? "Your saved CSS draft is restored. Submit when you want deterministic feedback."
           : "Your draft saves as you type. Submit when you want deterministic feedback."
       : "Try the challenge now. Sign in to save drafts, attempts, and completion.",
   );

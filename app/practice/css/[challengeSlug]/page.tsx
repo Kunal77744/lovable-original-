@@ -115,6 +115,7 @@ export default async function CssChallengePage({
             successTakeaway: challenge.successTakeaway,
           }}
           initialCss={studentState.css}
+          hasSavedDraft={studentState.hasSavedDraft}
           initialPathFeedback={pathFeedbackState.feedback}
           isSignedIn={Boolean(session)}
           isReviewSession={isReviewSession}
