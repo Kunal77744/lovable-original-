@@ -17,6 +17,7 @@ const requiredTables = [
   "coding_practice_goal",
   "daily_coding_challenge_completion",
   "timed_coding_challenge_result",
+  "coding_lab_exercise_draft",
   "coding_lab_exercise_progress",
   "coding_problem_progress",
   "coding_problem_test_case_set",
@@ -46,6 +47,15 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  coding_lab_exercise_draft: [
+    "id",
+    "user_id",
+    "lab_slug",
+    "exercise_id",
+    "source",
+    "created_at",
+    "updated_at",
+  ],
   timed_coding_challenge_result: [
     "id",
     "user_id",
