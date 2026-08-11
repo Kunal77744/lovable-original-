@@ -17,6 +17,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/db/javascript-lab-progress", () => ({
   getCompletedJavaScriptLabExerciseIds: vi.fn(),
+  getJavaScriptLabExerciseDrafts: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("@/components/javascript-foundations-warmup", () => ({
@@ -26,9 +27,7 @@ vi.mock("@/components/javascript-foundations-warmup", () => ({
 }));
 
 const getSession = vi.mocked(auth.api.getSession);
-const getCompletedExerciseIds = vi.mocked(
-  getCompletedJavaScriptLabExerciseIds,
-);
+const getCompletedExerciseIds = vi.mocked(getCompletedJavaScriptLabExerciseIds);
 
 describe("JavaScriptFoundationsPage", () => {
   beforeEach(() => {
@@ -50,7 +49,7 @@ describe("JavaScriptFoundationsPage", () => {
     expect(
       screen.getByRole("region", { name: "JavaScript foundations workbench" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Private completion")).toBeInTheDocument();
+    expect(screen.getByText("Private recovery")).toBeInTheDocument();
     expect(
       screen.getByText("JavaScript foundations · steps 2–4 of 4"),
     ).toBeInTheDocument();

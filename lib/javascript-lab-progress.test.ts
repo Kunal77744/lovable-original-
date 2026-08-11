@@ -5,7 +5,9 @@ import {
   getFirstIncompleteExerciseIndex,
   getJavaScriptFoundationsEntry,
   getNextIncompleteExerciseIndex,
+  isJavaScriptCodeLabExercise,
   isJavaScriptLabExercise,
+  JAVASCRIPT_CODE_LAB_SLUGS,
   JAVASCRIPT_LABS,
 } from "./javascript-lab-progress";
 
@@ -49,6 +51,25 @@ describe("JavaScript lab progress catalog", () => {
     expect(JAVASCRIPT_LABS).toHaveLength(14);
     expect(keys).toHaveLength(55);
     expect(new Set(keys)).toHaveLength(55);
+  });
+
+  it("limits private source drafts to the 42 code-writing exercises", () => {
+    const codeExerciseKeys = JAVASCRIPT_LABS.flatMap((lab) =>
+      lab.exerciseIds
+        .filter((exerciseId) =>
+          isJavaScriptCodeLabExercise(lab.slug, exerciseId),
+        )
+        .map((exerciseId) => `${lab.slug}:${exerciseId}`),
+    );
+
+    expect(JAVASCRIPT_CODE_LAB_SLUGS).toHaveLength(11);
+    expect(codeExerciseKeys).toHaveLength(42);
+    expect(isJavaScriptCodeLabExercise("foundations", "parse-and-sum")).toBe(
+      true,
+    );
+    expect(isJavaScriptCodeLabExercise("tracing", "assignment-order")).toBe(
+      false,
+    );
   });
 
   it("rejects unknown lab and exercise combinations", () => {
