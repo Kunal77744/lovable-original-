@@ -20999,12 +20999,39 @@ footer {
   text-wrap: balance;
 }
 
-.skill-record-path-heading > p,
+.skill-record-path-note > p,
 .skill-record-labs-heading > p {
   margin: 0 0 6px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.6;
+}
+
+.skill-record-path-note {
+  display: grid;
+  gap: 12px;
+}
+
+.skill-record-path-note > p {
+  margin: 0;
+}
+
+.skill-record-path-note > a {
+  width: fit-content;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 780;
+  text-decoration: none;
+}
+
+.skill-record-path-note > a:hover {
+  color: var(--ink);
+}
+
+.skill-record-path-note > a:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 4px;
 }
 
 .skill-record-labs-summary {
@@ -21272,6 +21299,414 @@ footer {
 
 @media (prefers-reduced-motion: reduce) {
   .skill-record-primary-action {
+    transition: none;
+  }
+}
+
+/* Private JavaScript problem journals */
+.practice-journal-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(102, 220, 157, 0.12), transparent 25%),
+    var(--background);
+}
+
+.practice-journal-shell {
+  width: min(1160px, calc(100% - 48px));
+  margin: 0 auto;
+  min-height: calc(100vh - 88px - 73px);
+  padding: 72px 0 112px;
+}
+
+.practice-journal-layout {
+  display: grid;
+  gap: 92px;
+}
+
+.practice-journal-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(350px, 0.82fr);
+  align-items: stretch;
+  gap: 70px;
+}
+
+.practice-journal-intro {
+  min-height: 500px;
+  padding: 48px 0 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.18);
+}
+
+.practice-journal-intro h1 {
+  max-width: 780px;
+  margin: 22px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(58px, 7vw, 88px);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+.practice-journal-intro > p:last-child {
+  max-width: 58ch;
+  margin: 30px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.practice-journal-next {
+  min-height: 500px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 64px;
+  color: white;
+  border-radius: 24px 24px 7px 24px;
+  background: var(--ink);
+  box-shadow: 0 28px 64px rgba(23, 35, 30, 0.18);
+}
+
+.practice-journal-counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.practice-journal-counts > div {
+  padding-top: 14px;
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.practice-journal-counts strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.practice-journal-counts span {
+  color: #aebbb4;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.practice-journal-next > div:last-child > p:first-child {
+  margin: 0;
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.practice-journal-next h2 {
+  margin: 15px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(32px, 3.7vw, 47px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.practice-journal-next > div:last-child > p:nth-of-type(2) {
+  margin: 18px 0 0;
+  color: #bdc8c2;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.practice-journal-primary-action {
+  min-height: 52px;
+  margin-top: 28px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  color: var(--ink);
+  border: 1px solid white;
+  border-radius: 8px;
+  background: white;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 160ms ease-out, background-color 160ms ease-out;
+}
+
+.practice-journal-primary-action:hover {
+  background: #eff7f1;
+  transform: translateY(-1px);
+}
+
+.practice-journal-primary-action:focus-visible,
+.practice-journal-item-action:focus-visible {
+  outline: 3px solid rgba(102, 220, 157, 0.46);
+  outline-offset: 4px;
+}
+
+.practice-journal-ledger {
+  display: grid;
+  gap: 38px;
+}
+
+.practice-journal-ledger-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  align-items: end;
+  gap: 64px;
+}
+
+.practice-journal-ledger-heading h2 {
+  margin: 13px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(43px, 5vw, 62px);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.practice-journal-ledger-heading > p {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.practice-journal-list {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+  list-style: none;
+}
+
+.practice-journal-list > li {
+  padding: 30px;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 18px 18px 5px 18px;
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 18px 44px rgba(23, 35, 30, 0.06);
+}
+
+.practice-journal-item-heading {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+}
+
+.practice-journal-number {
+  color: #8c9891;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 30px;
+}
+
+.practice-journal-item-heading > div:nth-child(2) > p {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.practice-journal-item-heading h3 {
+  margin: 7px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 29px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.practice-journal-state {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.practice-journal-state strong {
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.practice-journal-state span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.practice-journal-fields {
+  margin: 26px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.practice-journal-fields > div {
+  min-height: 126px;
+  padding: 20px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.practice-journal-fields dt {
+  color: #718078;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.practice-journal-fields dd {
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.practice-journal-fields .is-empty dd {
+  color: #929d96;
+  font-family: inherit;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.practice-journal-item-action {
+  width: fit-content;
+  min-height: 44px;
+  margin: 18px 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.practice-journal-item-action:hover {
+  color: var(--ink);
+}
+
+.practice-journal-empty {
+  min-height: 280px;
+  padding: 46px;
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 18px 18px 5px 18px;
+  background: #edf3e9;
+}
+
+.practice-journal-empty > span {
+  color: var(--accent-deep);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 52px;
+}
+
+.practice-journal-empty h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(30px, 4vw, 45px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.practice-journal-empty p {
+  max-width: 60ch;
+  margin: 15px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .practice-journal-hero,
+  .practice-journal-ledger-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-journal-hero {
+    gap: 28px;
+  }
+
+  .practice-journal-intro {
+    min-height: 420px;
+  }
+
+  .practice-journal-next {
+    min-height: 430px;
+  }
+
+  .practice-journal-ledger-heading {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .practice-journal-shell {
+    width: min(100% - 28px, 1160px);
+    padding: 42px 0 80px;
+  }
+
+  .practice-journal-layout {
+    gap: 64px;
+  }
+
+  .practice-journal-intro {
+    min-height: 390px;
+  }
+
+  .practice-journal-intro h1 {
+    font-size: clamp(48px, 15vw, 66px);
+  }
+
+  .practice-journal-next,
+  .practice-journal-list > li,
+  .practice-journal-empty {
+    padding: 26px 22px;
+  }
+
+  .practice-journal-item-heading {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .practice-journal-state {
+    grid-column: 2;
+    justify-items: start;
+  }
+
+  .practice-journal-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-journal-fields > div {
+    min-height: auto;
+  }
+
+  .practice-journal-empty {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .practice-journal-primary-action {
     transition: none;
   }
 }
