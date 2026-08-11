@@ -1497,11 +1497,11 @@ export function CodingWorkspace({
               <div className="accepted-worked-trace-values">
                 <div>
                   <span>Input</span>
-                  <pre>{problem.example.input}</pre>
+                  <pre>{problem.examples[0].input}</pre>
                 </div>
                 <div>
                   <span>Expected output</span>
-                  <pre>{problem.example.expectedOutput}</pre>
+                  <pre>{problem.examples[0].expectedOutput}</pre>
                 </div>
               </div>
               <ol>
