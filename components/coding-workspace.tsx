@@ -271,6 +271,7 @@ export function CodingWorkspace({
   loadedSubmission = null,
   problem,
 }: CodingWorkspaceProps) {
+  const lineNumberGutterRef = useRef<HTMLDivElement>(null);
   const [code, setCode] = useState(initialCode);
   const [acceptedCode, setAcceptedCode] = useState(initialAcceptedCode);
   const [attempts, setAttempts] = useState(initialAttempts);
@@ -1021,17 +1022,37 @@ export function CodingWorkspace({
           </div>
         ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
-        <textarea
-          id="coding-solution"
-          aria-label="JavaScript solution"
-          aria-describedby="coding-editor-keyboard-hint"
-          value={editorCode}
-          onChange={(event) => updateCode(event.target.value)}
-          onKeyDown={handleEditorKeyDown}
-          onBlur={isCleanPractice ? undefined : saveDraftNow}
-          disabled={runState.kind === "running"}
-          spellCheck={false}
-        />
+        <div className="code-editor-input">
+          <div
+            aria-hidden="true"
+            className="code-editor-line-numbers"
+            ref={lineNumberGutterRef}
+          >
+            {Array.from(
+              { length: Math.max(1, editorCode.split("\n").length) },
+              (_, index) => (
+                <span key={index}>{index + 1}</span>
+              ),
+            )}
+          </div>
+          <textarea
+            id="coding-solution"
+            aria-label="JavaScript solution"
+            aria-describedby="coding-editor-keyboard-hint"
+            wrap="off"
+            value={editorCode}
+            onChange={(event) => updateCode(event.target.value)}
+            onKeyDown={handleEditorKeyDown}
+            onBlur={isCleanPractice ? undefined : saveDraftNow}
+            onScroll={(event) => {
+              if (lineNumberGutterRef.current) {
+                lineNumberGutterRef.current.style.transform = `translateY(-${event.currentTarget.scrollTop}px)`;
+              }
+            }}
+            disabled={runState.kind === "running"}
+            spellCheck={false}
+          />
+        </div>
         {isSignedIn && !isCleanPractice ? (
           <div className="starter-restore">
             {isRestoreConfirmationOpen ? (
