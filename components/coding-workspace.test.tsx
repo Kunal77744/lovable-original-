@@ -146,6 +146,31 @@ describe("CodingWorkspace", () => {
     ).toBeDisabled();
   });
 
+  it("keeps visible line numbers aligned with the learner editor", () => {
+    const { container } = renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    expect(editor).toHaveAttribute("wrap", "off");
+
+    fireEvent.change(editor, {
+      target: { value: "const first = 1;\nconst second = 2;\nreturn first + second;" },
+    });
+
+    const gutter = container.querySelector(".code-editor-line-numbers");
+    expect(gutter).not.toBeNull();
+    expect(
+      Array.from(gutter?.querySelectorAll("span") ?? []).map(
+        (line) => line.textContent,
+      ),
+    ).toEqual(["1", "2", "3"]);
+
+    Object.defineProperty(editor, "scrollTop", {
+      configurable: true,
+      value: 44,
+    });
+    fireEvent.scroll(editor);
+    expect(gutter).toHaveStyle({ transform: "translateY(-44px)" });
+  });
+
   it("opens the private source snapshot behind a saved verdict", () => {
     render(
       <CodingWorkspace
