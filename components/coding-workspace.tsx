@@ -84,7 +84,12 @@ type RunState =
       debugOutput: string[];
       passed: boolean;
     }
-  | { kind: "custom"; message: string; output: string }
+  | {
+      kind: "custom";
+      message: string;
+      output: string;
+      debugOutput: string[];
+    }
   | {
       kind: "test-suite";
       message: string;
@@ -114,6 +119,17 @@ type RunnerRecovery = {
   label: string;
   guidance: string;
 };
+
+const MAX_VISIBLE_DEBUG_LINES = 80;
+const MAX_VISIBLE_DEBUG_LINE_LENGTH = 500;
+
+function boundVisibleDebugOutput(debugOutput: string[]) {
+  return debugOutput.slice(0, MAX_VISIBLE_DEBUG_LINES).map((line) =>
+    line.length > MAX_VISIBLE_DEBUG_LINE_LENGTH
+      ? `${line.slice(0, MAX_VISIBLE_DEBUG_LINE_LENGTH)}…`
+      : line,
+  );
+}
 
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
@@ -365,13 +381,18 @@ export function CodingWorkspace({
     }
 
     if (result.status !== "finished") {
-      setRunState({ kind: "error", message: result.message });
+      setRunState({
+        kind: "error",
+        message: result.message,
+        debugOutput: boundVisibleDebugOutput(result.debugOutput),
+      });
       return;
     }
 
     setRunState({
       kind: "custom",
       output: result.outputs[0] ?? "",
+      debugOutput: boundVisibleDebugOutput(result.debugOutput),
       message: "Custom input finished. Review the output before you submit.",
     });
   }
@@ -634,6 +655,7 @@ export function CodingWorkspace({
 
   const visibleDebugOutput =
     runState.kind === "sample" ||
+    runState.kind === "custom" ||
     runState.kind === "test-suite" ||
     runState.kind === "error"
       ? (runState.debugOutput ?? [])
