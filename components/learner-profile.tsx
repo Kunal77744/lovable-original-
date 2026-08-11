@@ -46,6 +46,10 @@ export function LearnerProfile({
             View private projects
             <span aria-hidden="true">→</span>
           </Link>
+          <Link className="profile-project-link" href="/learning-history">
+            View full learning history
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </header>
 

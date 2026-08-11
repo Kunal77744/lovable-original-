@@ -33,6 +33,7 @@ import {
   FIRST_LESSON_PASS_PERCENT,
   SECOND_LESSON,
   THIRD_LESSON,
+  getFirstCourseLessonHref,
   getPublicLessonQuiz,
 } from "@/lib/first-course-content";
 import {
@@ -77,7 +78,7 @@ export async function generateMetadata({
       ? {
           openGraph: {
             type: "website" as const,
-            url: `/learn/${FIRST_COURSE.slug}/${lessonSlug}`,
+            url: getFirstCourseLessonHref(lessonSlug),
             title,
             description,
             images: ["/opengraph-image"],
