@@ -265,6 +265,33 @@ export const lessonProgress = pgTable(
   ],
 );
 
+export const lessonQuizAttempt = pgTable(
+  "lesson_quiz_attempt",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lesson.id, { onDelete: "cascade" }),
+    score: integer("score").notNull(),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    passed: boolean("passed").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("lesson_quiz_attempt_user_lesson_idx").on(
+      table.userId,
+      table.lessonId,
+    ),
+    index("lesson_quiz_attempt_user_id_idx").on(table.userId),
+  ],
+);
+
 export const lessonArtifact = pgTable(
   "lesson_artifact",
   {
