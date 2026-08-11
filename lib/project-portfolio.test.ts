@@ -87,4 +87,15 @@ describe("buildProjectPortfolio", () => {
     });
     expect(portfolio.completedCount).toBe(3);
   });
+
+  it("offers a private debrief for a completed semantic HTML project", () => {
+    const portfolio = build({
+      courseCompleted: true,
+      semanticHtml: completed,
+    });
+
+    expect(portfolio.projects[0].debriefHref).toBe(
+      "/projects/semantic-html-article/debrief",
+    );
+  });
 });
