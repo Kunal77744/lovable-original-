@@ -328,6 +328,7 @@ async function run() {
           'lesson_quiz_attempt',
           'javascript_mixed_review_result',
           'javascript_readiness_result',
+          'project_review_attempt',
           'web_foundations_review_result',
           'practice_feedback',
           'playground_file'
