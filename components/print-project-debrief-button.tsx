@@ -1,13 +1,19 @@
 "use client";
 
-export function PrintProjectDebriefButton() {
+type PrintProjectDebriefButtonProps = {
+  label?: string;
+};
+
+export function PrintProjectDebriefButton({
+  label = "Print project debrief",
+}: PrintProjectDebriefButtonProps = {}) {
   return (
     <button
       className="project-debrief-print-button"
       type="button"
       onClick={() => window.print()}
     >
-      Print project debrief
+      {label}
     </button>
   );
 }

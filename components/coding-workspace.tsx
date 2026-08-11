@@ -1661,6 +1661,12 @@ export function CodingWorkspace({
               Built from your most recent Accepted source. No new attempt or
               learner record was created.
             </p>
+            <Link
+              className="accepted-code-review-debrief-link"
+              href={`/practice/${problem.slug}/debrief`}
+            >
+              Open private problem debrief <span aria-hidden="true">→</span>
+            </Link>
           </section>
         ) : null}
         <div className="practice-recovery-cue">
