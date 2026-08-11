@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CodingActivity as CodingActivityViewModel } from "@/lib/coding-activity";
 import type { WeeklyCodingPracticeGoal } from "@/lib/coding-practice-goal";
+import type { JavaScriptLabActivity } from "@/lib/javascript-lab-progress";
 import { CodingPracticeGoal } from "./coding-practice-goal";
 
 function formatDate(date: string) {
@@ -20,11 +21,22 @@ function getDayLabel(day: CodingActivityViewModel["days"][number]) {
   return `${formatDate(day.date)}: ${attemptLabel}, ${resultLabel}`;
 }
 
+function formatCompletionDate(completedAt: string) {
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(completedAt));
+}
+
 export function CodingActivity({
   activity,
+  labActivity,
   weeklyGoal,
 }: {
   activity: CodingActivityViewModel;
+  labActivity: JavaScriptLabActivity;
   weeklyGoal: WeeklyCodingPracticeGoal;
 }) {
   return (
@@ -102,6 +114,63 @@ export function CodingActivity({
           <span>{formatDate(activity.days[0].date)}</span>
           <span>Today</span>
         </div>
+      </section>
+
+      <section
+        className="coding-lab-activity"
+        aria-labelledby="coding-lab-activity-title"
+      >
+        <div className="coding-lab-activity-heading">
+          <div>
+            <p className="eyebrow">Saved guided practice</p>
+            <h2 id="coding-lab-activity-title">
+              {labActivity.completedCount} of {labActivity.totalCount} guided
+              steps
+            </h2>
+          </div>
+          <div className="coding-lab-activity-continuation">
+            <p>{labActivity.nextAction.description}</p>
+            <Link href={labActivity.nextAction.href}>
+              {labActivity.nextAction.label} <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
+
+        {labActivity.recentCompletions.length > 0 ? (
+          <ol
+            className="coding-lab-activity-list"
+            aria-label="Recent guided JavaScript completions"
+          >
+            {labActivity.recentCompletions.map((completion) => (
+              <li
+                key={`${completion.labSlug}:${completion.exerciseId}`}
+                className="coding-lab-activity-item"
+              >
+                <div>
+                  <p>
+                    {completion.labTitle} · Exercise {completion.exerciseNumber}
+                    {" of "}
+                    {completion.exerciseCount}
+                  </p>
+                  <h3>{completion.exerciseTitle}</h3>
+                </div>
+                <div className="coding-lab-activity-meta">
+                  <time dateTime={completion.completedAt}>
+                    {formatCompletionDate(completion.completedAt)}
+                  </time>
+                  <Link href={completion.href}>Open lab</Link>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="coding-lab-activity-empty">
+            <p>No guided exercises are saved yet.</p>
+            <span>
+              Complete a checked exercise and it will return here after sign-in.
+            </span>
+          </div>
+        )}
       </section>
 
       <section
