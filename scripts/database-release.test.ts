@@ -5,26 +5,56 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 
 describe("database release contract", () => {
-  it("adds and verifies private timed coding challenge results", async () => {
-    const [migration, releaseScript] = await Promise.all([
+  it("orders and verifies the three combined private-result migrations", async () => {
+    const [
+      journalSource,
+      timedMigration,
+      projectMigration,
+      quizMigration,
+      releaseScript,
+    ] = await Promise.all([
+      readFile(path.join(root, "drizzle/meta/_journal.json"), "utf8"),
       readFile(
         path.join(root, "drizzle/0029_timed-coding-challenge-results.sql"),
         "utf8",
       ),
+      readFile(path.join(root, "drizzle/0030_wooden_scarecrow.sql"), "utf8"),
+      readFile(path.join(root, "drizzle/0031_lesson-quiz-attempt.sql"), "utf8"),
       readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
     ]);
+    const journal = JSON.parse(journalSource) as {
+      entries: Array<{ idx: number; tag: string }>;
+    };
 
-    expect(migration).toContain(
+    expect(journal.entries.slice(-3)).toEqual([
+      expect.objectContaining({
+        idx: 29,
+        tag: "0029_timed-coding-challenge-results",
+      }),
+      expect.objectContaining({ idx: 30, tag: "0030_wooden_scarecrow" }),
+      expect.objectContaining({ idx: 31, tag: "0031_lesson-quiz-attempt" }),
+    ]);
+    expect(timedMigration).toContain(
       'CREATE TABLE IF NOT EXISTS "timed_coding_challenge_result"',
     );
-    expect(migration).toContain(
+    expect(timedMigration).toContain(
       'CREATE INDEX IF NOT EXISTS "timed_coding_challenge_result_user_completed_idx"',
+    );
+    expect(projectMigration).toContain('CREATE TABLE "project_review_attempt"');
+    expect(quizMigration).toContain(
+      'CREATE TABLE IF NOT EXISTS "lesson_quiz_attempt"',
     );
     expect(releaseScript).toMatch(
       /timed_coding_challenge_result:\s*\[[\s\S]*?"challenge_set_id",[\s\S]*?"elapsed_seconds"/,
     );
     expect(releaseScript).toMatch(
       /table_name in \([\s\S]*?'timed_coding_challenge_result'[\s\S]*?\)/,
+    );
+    expect(releaseScript).toMatch(
+      /project_review_attempt:\s*\[[\s\S]*?"passed_checks",[\s\S]*?"total_checks"/,
+    );
+    expect(releaseScript).toMatch(
+      /lesson_quiz_attempt:\s*\[[\s\S]*?"correct_count",[\s\S]*?"total_count"/,
     );
   });
 

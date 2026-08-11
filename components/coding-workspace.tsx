@@ -322,6 +322,9 @@ export function CodingWorkspace({
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestCode = useRef(initialCode);
   const hasPendingDraft = useRef(false);
+  const draftRevision = useRef(0);
+  const lastQueuedDraftRevision = useRef(-1);
+  const draftSaveChain = useRef<Promise<void>>(Promise.resolve());
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
     (!isCleanPractice &&
@@ -390,32 +393,66 @@ export function CodingWorkspace({
     };
   }, [isCleanPractice, isSignedIn, problem.slug]);
 
-  async function saveDraft(nextCode: string) {
-    if (!isSignedIn || isCleanPractice) return;
+  function saveDraft(nextCode: string, revision: number) {
+    if (!isSignedIn || isCleanPractice) return Promise.resolve();
 
     setSaveState("saving");
-    try {
-      const response = await fetch(`/api/practice/${problem.slug}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "draft", code: nextCode }),
-      });
+    lastQueuedDraftRevision.current = revision;
+    const request = draftSaveChain.current.then(async () => {
+      try {
+        const response = await fetch(`/api/practice/${problem.slug}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "draft", code: nextCode }),
+        });
 
-      if (!response.ok) {
-        setSaveState("error");
-        return;
-      }
+        if (!response.ok) {
+          if (draftRevision.current === revision) {
+            lastQueuedDraftRevision.current = -1;
+            setSaveState("error");
+          }
+          return;
+        }
 
-      if (latestCode.current === nextCode) {
-        hasPendingDraft.current = false;
-        setCode(nextCode);
-        setAnonymousDraftDismissed(true);
-        clearAnonymousDraft(problem.slug);
-        setSaveState("saved");
+        if (
+          latestCode.current === nextCode &&
+          draftRevision.current === revision
+        ) {
+          hasPendingDraft.current = false;
+          setCode(nextCode);
+          setAnonymousDraftDismissed(true);
+          clearAnonymousDraft(problem.slug);
+          setSaveState("saved");
+        }
+      } catch {
+        if (draftRevision.current === revision) {
+          lastQueuedDraftRevision.current = -1;
+          setSaveState("error");
+        }
       }
-    } catch {
-      setSaveState("error");
+    });
+    draftSaveChain.current = request;
+    return request;
+  }
+
+  async function flushLatestDraft() {
+    if (!isSignedIn || !hasPendingDraft.current) {
+      await draftSaveChain.current;
+      return;
     }
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    const revision = draftRevision.current;
+    if (lastQueuedDraftRevision.current !== revision) {
+      await saveDraft(latestCode.current, revision);
+      return;
+    }
+
+    await draftSaveChain.current;
   }
 
   function updateCode(nextCode: string) {
@@ -426,6 +463,8 @@ export function CodingWorkspace({
     if (isCleanPractice) return;
 
     hasPendingDraft.current = true;
+    draftRevision.current += 1;
+    const revision = draftRevision.current;
 
     if (!isSignedIn) {
       writeAnonymousDraft(problem.slug, nextCode);
@@ -436,7 +475,7 @@ export function CodingWorkspace({
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
       draftTimer.current = null;
-      void saveDraft(nextCode);
+      void saveDraft(nextCode, revision);
     }, 700);
   }
 
@@ -447,6 +486,9 @@ export function CodingWorkspace({
     }
 
     setCode(problem.starterCode);
+    latestCode.current = problem.starterCode;
+    hasPendingDraft.current = false;
+    draftRevision.current += 1;
     setSaveState("unsaved");
     setIsRestoreConfirmationOpen(false);
     setAnonymousDraftDismissed(true);
@@ -460,13 +502,7 @@ export function CodingWorkspace({
 
   function saveDraftNow() {
     if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
-
-    if (draftTimer.current) {
-      clearTimeout(draftTimer.current);
-      draftTimer.current = null;
-    }
-
-    void saveDraft(latestCode.current);
+    void flushLatestDraft();
   }
 
   async function runExamples() {
@@ -730,13 +766,15 @@ export function CodingWorkspace({
   async function submitSolution() {
     if (!isSignedIn) return;
 
+    const submittedCode = editorCode;
     setRevealedRecoveryHintCount(0);
     setRunState({
       kind: "running",
       message: `Running ${problem.tests.length} deterministic checks in your browser…`,
     });
+    await flushLatestDraft();
     const result = await runCodingSolution(
-      editorCode,
+      submittedCode,
       problem.tests.map((test) => test.input),
     );
 
@@ -756,7 +794,7 @@ export function CodingWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "submit",
-          code: editorCode,
+          code: submittedCode,
           outputs: result.outputs,
           dailyChallengeDate,
         }),
@@ -772,9 +810,9 @@ export function CodingWorkspace({
       }
 
       setBestVerdict(payload.bestVerdict);
-      if (payload.verdict === "Accepted") setAcceptedCode(editorCode);
+      if (payload.verdict === "Accepted") setAcceptedCode(submittedCode);
       hasPendingDraft.current = false;
-      setCode(editorCode);
+      setCode(submittedCode);
       setAnonymousDraftDismissed(true);
       clearAnonymousDraft(problem.slug);
       setSaveState("saved");
@@ -973,7 +1011,9 @@ export function CodingWorkspace({
             </p>
             <button
               type="button"
-              onClick={() => void saveDraft(editorCode)}
+              onClick={() =>
+                void saveDraft(editorCode, draftRevision.current)
+              }
               disabled={saveState === "saving"}
             >
               {saveState === "saving" ? "Saving…" : "Save recovered draft"}
@@ -989,6 +1029,7 @@ export function CodingWorkspace({
           onChange={(event) => updateCode(event.target.value)}
           onKeyDown={handleEditorKeyDown}
           onBlur={isCleanPractice ? undefined : saveDraftNow}
+          disabled={runState.kind === "running"}
           spellCheck={false}
         />
         {isSignedIn && !isCleanPractice ? (
@@ -1011,6 +1052,7 @@ export function CodingWorkspace({
                     className="starter-restore-cancel"
                     type="button"
                     onClick={() => setIsRestoreConfirmationOpen(false)}
+                    disabled={runState.kind === "running"}
                   >
                     Keep my code
                   </button>
@@ -1018,6 +1060,7 @@ export function CodingWorkspace({
                     className="starter-restore-confirm"
                     type="button"
                     onClick={restoreStarter}
+                    disabled={runState.kind === "running"}
                   >
                     Restore starter
                   </button>
@@ -1030,7 +1073,10 @@ export function CodingWorkspace({
                 onClick={() => {
                   setIsRestoreConfirmationOpen(true);
                 }}
-                disabled={editorCode === problem.starterCode}
+                disabled={
+                  editorCode === problem.starterCode ||
+                  runState.kind === "running"
+                }
               >
                 {editorCode === problem.starterCode
                   ? "Clean starter loaded"
