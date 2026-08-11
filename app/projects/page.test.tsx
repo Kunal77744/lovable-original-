@@ -114,6 +114,9 @@ describe("ProjectsPage", () => {
     expect(
       document.querySelectorAll(".project-portfolio-primary-action"),
     ).toHaveLength(1);
+    expect(
+      screen.getByRole("link", { name: "Review saved attempts" }),
+    ).toHaveAttribute("href", "/projects/history");
   });
 
   it("resumes the saved project and exposes only bounded account summaries", async () => {

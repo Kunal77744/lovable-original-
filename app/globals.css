@@ -22706,6 +22706,32 @@ footer {
   line-height: 1.65;
 }
 
+.project-portfolio-ledger-note {
+  margin: 0 0 4px;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.project-portfolio-ledger-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.project-portfolio-ledger-note a {
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: underline rgba(40, 118, 82, 0.32);
+  text-underline-offset: 4px;
+}
+
+.project-portfolio-ledger-note a:hover {
+  text-decoration-color: currentColor;
+}
+
 .project-portfolio-ledger ol {
   margin: 38px 0 0;
   padding: 0;
@@ -22977,6 +23003,363 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .project-portfolio-primary-action {
     transition: none;
+  }
+}
+
+.project-review-history-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 88% 8%,
+      rgba(102, 220, 157, 0.12),
+      transparent 27%
+    ),
+    var(--background);
+}
+
+.project-review-history-shell {
+  width: min(1120px, calc(100% - 48px));
+  min-height: calc(100vh - 88px - 73px);
+  margin: 0 auto;
+  padding: 72px 0 112px;
+}
+
+.project-review-history-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.55fr);
+  align-items: end;
+  gap: 72px;
+  padding-bottom: 58px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.18);
+}
+
+.project-review-history-hero > div > h1 {
+  max-width: 760px;
+  margin: 22px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(54px, 6.5vw, 84px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.94;
+}
+
+.project-review-history-hero > div > p:last-child {
+  max-width: 58ch;
+  margin: 26px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.project-review-history-summary {
+  min-height: 330px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  border-radius: 22px 22px 6px 22px;
+  background: var(--ink);
+  box-shadow: 0 24px 58px rgba(23, 35, 30, 0.16);
+}
+
+.project-review-history-summary > p {
+  margin: 0;
+  color: #9fd9b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.project-review-history-summary > strong {
+  margin-top: 28px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 92px;
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.78;
+}
+
+.project-review-history-summary > span {
+  margin-top: 14px;
+  color: #bdc8c2;
+  font-size: 12px;
+}
+
+.project-review-history-summary dl {
+  margin: auto 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.project-review-history-summary dl div {
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.project-review-history-summary dt {
+  color: #8ea097;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.project-review-history-summary dd {
+  margin: 7px 0 0;
+  font-size: 13px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-review-history-ledger {
+  margin-top: 80px;
+}
+
+.project-review-history-ledger-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.project-review-history-ledger-heading h2 {
+  margin: 12px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(40px, 5vw, 58px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.project-review-history-ledger-heading > a,
+.project-review-history-empty a,
+.project-review-history-result a {
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: underline rgba(40, 118, 82, 0.32);
+  text-underline-offset: 4px;
+}
+
+.project-review-history-ledger-heading > a:hover,
+.project-review-history-empty a:hover,
+.project-review-history-result a:hover {
+  text-decoration-color: currentColor;
+}
+
+.project-review-history-ledger ol {
+  margin: 34px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(23, 35, 30, 0.2);
+}
+
+.project-review-history-ledger li {
+  min-height: 172px;
+  padding: 28px 0;
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr) minmax(230px, 0.42fr);
+  gap: 30px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.15);
+}
+
+.project-review-history-number {
+  color: #9aa69f;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 22px;
+}
+
+.project-review-history-copy > p {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.project-review-history-copy h3 {
+  margin: 10px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(27px, 3vw, 38px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.project-review-history-copy time {
+  margin-top: 15px;
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-review-history-result {
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-left: 1px solid rgba(23, 35, 30, 0.12);
+}
+
+.project-review-history-result > span {
+  padding: 6px 9px;
+  color: #6d4f19;
+  border: 1px solid #d8c68f;
+  border-radius: 999px;
+  background: #f8f0d9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.project-review-history-result > span.is-completed {
+  color: var(--accent-deep);
+  border-color: #afcbb8;
+  background: #eaf4ea;
+}
+
+.project-review-history-result strong {
+  margin-top: 15px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-review-history-result a {
+  margin-top: auto;
+}
+
+.project-review-history-empty {
+  margin-top: 34px;
+  padding: 48px;
+  border: 1px solid rgba(23, 35, 30, 0.16);
+  border-radius: 16px 16px 5px 16px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.project-review-history-empty > p:first-child {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.project-review-history-empty h3 {
+  margin: 14px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.project-review-history-empty > p:nth-of-type(2) {
+  max-width: 55ch;
+  margin: 15px 0 22px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.project-review-history-privacy {
+  max-width: 710px;
+  margin: 48px 0 0 auto;
+  padding: 18px 21px;
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 12px;
+  border: 1px solid rgba(23, 35, 30, 0.13);
+  border-radius: 8px 8px 3px 8px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.project-review-history-privacy > span {
+  margin-top: 4px;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.project-review-history-privacy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.project-review-history-privacy strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+@media (max-width: 820px) {
+  .project-review-history-hero {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .project-review-history-summary {
+    min-height: 300px;
+  }
+
+  .project-review-history-ledger li {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .project-review-history-result {
+    min-height: 110px;
+    padding: 0 0 0 78px;
+    grid-column: 1 / -1;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .project-review-history-shell {
+    width: min(100% - 24px, 1120px);
+    min-height: calc(100vh - 76px);
+    padding: 50px 0 76px;
+  }
+
+  .project-review-history-hero {
+    padding-bottom: 44px;
+  }
+
+  .project-review-history-hero > div > h1 {
+    font-size: clamp(48px, 15vw, 64px);
+  }
+
+  .project-review-history-summary {
+    min-height: 280px;
+    padding: 24px;
+  }
+
+  .project-review-history-ledger {
+    margin-top: 62px;
+  }
+
+  .project-review-history-ledger-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .project-review-history-ledger li {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .project-review-history-result {
+    padding-left: 54px;
+  }
+
+  .project-review-history-empty {
+    padding: 32px 24px;
   }
 }
 

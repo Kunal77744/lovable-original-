@@ -9,7 +9,12 @@ import {
 } from "@/lib/guided-project";
 import type { ProjectFeedbackConfidence } from "@/lib/project-feedback";
 import { getDatabase } from "./index";
-import { guidedProject, guidedProjectFeedback } from "./schema";
+import { projectReviewAttemptValues } from "./project-review-history";
+import {
+  guidedProject,
+  guidedProjectFeedback,
+  projectReviewAttempt,
+} from "./schema";
 
 type StoredProject = {
   html: string;
@@ -167,48 +172,63 @@ export async function submitGuidedProjectForReview(
   const now = new Date();
   const completionId = completed ? crypto.randomUUID() : null;
 
-  const [project] = await database
-    .insert(guidedProject)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-      projectSlug,
-      html,
-      reviewedHtml: html,
-      status: completed ? "completed" : "needs-revision",
-      reviewChecks: checks,
-      submittedAt: now,
-      completedAt: completed ? now : null,
-      completionId,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [guidedProject.userId, guidedProject.projectSlug],
-      set: {
+  const [project] = await database.transaction(async (transaction) => {
+    const [savedProject] = await transaction
+      .insert(guidedProject)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        projectSlug,
         html,
         reviewedHtml: html,
         status: completed ? "completed" : "needs-revision",
         reviewChecks: checks,
         submittedAt: now,
-        ...(completed
-          ? {
-              completedAt: sql`coalesce(${guidedProject.completedAt}, ${now.toISOString()}::timestamptz)`,
-              completionId: sql`coalesce(${guidedProject.completionId}, ${completionId})`,
-            }
-          : {}),
+        completedAt: completed ? now : null,
+        completionId,
         updatedAt: now,
-      },
-    })
-    .returning({
-      html: guidedProject.html,
-      reviewedHtml: guidedProject.reviewedHtml,
-      status: guidedProject.status,
-      reviewChecks: guidedProject.reviewChecks,
-      submittedAt: guidedProject.submittedAt,
-      completedAt: guidedProject.completedAt,
-      completionId: guidedProject.completionId,
-      updatedAt: guidedProject.updatedAt,
-    });
+      })
+      .onConflictDoUpdate({
+        target: [guidedProject.userId, guidedProject.projectSlug],
+        set: {
+          html,
+          reviewedHtml: html,
+          status: completed ? "completed" : "needs-revision",
+          reviewChecks: checks,
+          submittedAt: now,
+          ...(completed
+            ? {
+                completedAt: sql`coalesce(${guidedProject.completedAt}, ${now.toISOString()}::timestamptz)`,
+                completionId: sql`coalesce(${guidedProject.completionId}, ${completionId})`,
+              }
+            : {}),
+          updatedAt: now,
+        },
+      })
+      .returning({
+        html: guidedProject.html,
+        reviewedHtml: guidedProject.reviewedHtml,
+        status: guidedProject.status,
+        reviewChecks: guidedProject.reviewChecks,
+        submittedAt: guidedProject.submittedAt,
+        completedAt: guidedProject.completedAt,
+        completionId: guidedProject.completionId,
+        updatedAt: guidedProject.updatedAt,
+      });
+
+    await transaction.insert(projectReviewAttempt).values(
+      projectReviewAttemptValues({
+        userId,
+        projectSlug,
+        status: completed ? "completed" : "needs-revision",
+        passedChecks: checks.filter((check) => check.passed).length,
+        totalChecks: checks.length,
+        createdAt: now,
+      }),
+    );
+
+    return [savedProject];
+  });
 
   if (!project) {
     return null;
