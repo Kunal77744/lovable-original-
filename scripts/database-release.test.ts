@@ -71,6 +71,9 @@ describe("database release contract", () => {
     expect(releaseScript).toMatch(
       /coding_lab_exercise_draft:\s*\[[\s\S]*?"lab_slug",[\s\S]*?"exercise_id",[\s\S]*?"source"/,
     );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'coding_lab_exercise_draft'[\s\S]*?\)/,
+    );
   });
 
   it("adds and verifies private daily coding challenge completion", async () => {

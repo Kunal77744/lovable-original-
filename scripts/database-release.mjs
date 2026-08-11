@@ -333,6 +333,7 @@ async function run() {
       from information_schema.columns
       where table_schema = 'public'
         and table_name in (
+          'coding_lab_exercise_draft',
           'coding_lab_exercise_progress',
           'coding_practice_goal',
           'daily_coding_challenge_completion',
