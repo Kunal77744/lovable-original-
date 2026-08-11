@@ -27526,3 +27526,59 @@ footer {
     gap: 18px;
   }
 }
+
+.private-lab-draft-status {
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 18px;
+  color: #56655d;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.private-lab-draft-status > span {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: #9aa69f;
+}
+
+.private-lab-draft-status p {
+  margin: 0;
+}
+
+.private-lab-draft-status.is-saving > span {
+  background: #b38a36;
+}
+
+.private-lab-draft-status.is-saved > span {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgb(40 118 82 / 12%);
+}
+
+.private-lab-draft-status.is-error {
+  color: #8b342e;
+}
+
+.private-lab-draft-status.is-error > span {
+  background: #ad4b43;
+}
+
+.private-lab-draft-status button {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.private-lab-draft-status button:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

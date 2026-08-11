@@ -3,7 +3,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DebuggingLab } from "@/components/debugging-lab";
 import { auth } from "@/lib/auth";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +30,10 @@ export default async function JavaScriptDebuggingLabPage() {
     redirect("/account?mode=signin");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "debugging");
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "debugging"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "debugging"),
+  ]);
 
   return (
     <>
@@ -41,17 +47,21 @@ export default async function JavaScriptDebuggingLabPage() {
               <h1 id="debugging-title">Find the defect. Prove the repair.</h1>
               <p>
                 Repair three small programs that are almost correct. Each drill
-                isolates one beginner bug and checks the behavior in your browser.
+                isolates one beginner bug and checks the behavior in your
+                browser.
               </p>
             </div>
             <aside aria-label="Debugging lab boundaries">
               <span>3 defects · about 12 minutes</span>
               <p>
-                Code stays local. Completed repairs save privately to your account.
+                Drafts and completed repairs save privately to your account.
               </p>
             </aside>
           </header>
-          <DebuggingLab completedExerciseIds={completedExerciseIds} />
+          <DebuggingLab
+            completedExerciseIds={completedExerciseIds}
+            initialDrafts={initialDrafts}
+          />
         </section>
       </main>
       <SiteFooter />

@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "@/lib/javascript-algorithm-patterns";
 import {
@@ -26,17 +30,31 @@ const exerciseIds = JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES.map(
 
 export function JavaScriptAlgorithmPatternsLab({
   completedExerciseIds = [],
+  initialDrafts = {},
 }: {
   completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
-  const exercise = JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ??
+  const exercise =
+    JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[exerciseIndex] ?? null;
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restoreDraftStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "algorithm-patterns",
+    exerciseId:
+      exercise?.slug ?? JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ??
       JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[0].starterCode,
-  );
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
@@ -69,11 +87,15 @@ export function JavaScriptAlgorithmPatternsLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("algorithm-patterns", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "algorithm-patterns",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -94,10 +116,11 @@ export function JavaScriptAlgorithmPatternsLab({
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restoreDraftStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. It will save as this exercise's private draft.",
     });
   }
 
@@ -115,7 +138,6 @@ export function JavaScriptAlgorithmPatternsLab({
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -228,7 +250,7 @@ export function JavaScriptAlgorithmPatternsLab({
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
           <label htmlFor="algorithm-patterns-code">
             JavaScript algorithm pattern code
@@ -243,7 +265,12 @@ export function JavaScriptAlgorithmPatternsLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={20_000}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="function-lab-actions">
@@ -306,8 +333,8 @@ export function JavaScriptAlgorithmPatternsLab({
           </div>
 
           <p className="function-lab-privacy">
-            Your code and check output stay in this browser. Only completed
-            exercise IDs save to your account.
+            Your draft and completion save privately to your account. Check
+            output stays in this browser.
           </p>
         </div>
       </div>

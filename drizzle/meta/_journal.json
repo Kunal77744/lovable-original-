@@ -225,6 +225,13 @@
       "when": 1786417000000,
       "tag": "0031_lesson-quiz-attempt",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1786460400000,
+      "tag": "0032_private_guided_javascript_drafts",
+      "breakpoints": true
     }
   ]
 }

@@ -14,13 +14,12 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/db/javascript-lab-progress", () => ({
   getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]),
+  getJavaScriptLabExerciseDrafts: vi.fn().mockResolvedValue({}),
 }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const redirectMock = vi.mocked(redirect);
-const getCompletedExerciseIds = vi.mocked(
-  getCompletedJavaScriptLabExerciseIds,
-);
+const getCompletedExerciseIds = vi.mocked(getCompletedJavaScriptLabExerciseIds);
 
 describe("JavaScriptAlgorithmPatternsPage", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -55,7 +54,9 @@ describe("JavaScriptAlgorithmPatternsPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Pattern 2 of 4")).toBeInTheDocument();
-    expect(screen.getByText(/separate efficiency lab asks you to compare/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/separate efficiency lab asks you to compare/),
+    ).toBeInTheDocument();
     expect(getCompletedExerciseIds).toHaveBeenCalledWith(
       "algorithm-pattern-learner",
       "algorithm-patterns",
