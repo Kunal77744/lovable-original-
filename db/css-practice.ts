@@ -28,6 +28,13 @@ export type CssPracticeAttempt = {
   createdAt: string;
 };
 
+export type CssPracticeHistoryItem = CssPracticeAttempt & {
+  challengeSlug: string;
+  challengeNumber: number;
+  challengeTitle: string;
+  skill: string;
+};
+
 const challengeSlugs = CSS_PRACTICE_CHALLENGES.map(
   (challenge) => challenge.slug,
 );
@@ -58,6 +65,49 @@ export async function getCssReviewSessionForStudent(
     );
 
   return buildCssReviewSession(latestAttempts);
+}
+
+export async function getCssPracticeHistoryForStudent(
+  userId: string,
+): Promise<CssPracticeHistoryItem[]> {
+  const attempts = await getDatabase()
+    .select({
+      id: cssPracticeAttempt.id,
+      challengeSlug: cssPracticeAttempt.challengeSlug,
+      verdict: cssPracticeAttempt.verdict,
+      passedChecks: cssPracticeAttempt.passedChecks,
+      totalChecks: cssPracticeAttempt.totalChecks,
+      createdAt: cssPracticeAttempt.createdAt,
+    })
+    .from(cssPracticeAttempt)
+    .where(
+      and(
+        eq(cssPracticeAttempt.userId, userId),
+        inArray(cssPracticeAttempt.challengeSlug, challengeSlugs),
+      ),
+    )
+    .orderBy(desc(cssPracticeAttempt.createdAt), desc(cssPracticeAttempt.id))
+    .limit(50);
+
+  return attempts.flatMap((attempt) => {
+    const challenge = getCssPracticeChallenge(attempt.challengeSlug);
+
+    if (!challenge) return [];
+
+    return [
+      {
+        id: attempt.id,
+        challengeSlug: attempt.challengeSlug,
+        challengeNumber: challenge.number,
+        challengeTitle: challenge.title,
+        skill: challenge.skill,
+        verdict: attempt.verdict as CssPracticeAttempt["verdict"],
+        passedChecks: attempt.passedChecks,
+        totalChecks: attempt.totalChecks,
+        createdAt: attempt.createdAt.toISOString(),
+      },
+    ];
+  });
 }
 
 export async function getCssPracticeCatalogProgress(userId: string | null) {
@@ -105,6 +155,7 @@ export async function getCssPracticeChallengeForStudent(
   if (!userId) {
     return {
       css: challenge.starterCss,
+      hasSavedDraft: false,
       bestVerdict: null,
       attempts: [] as CssPracticeAttempt[],
     };
@@ -146,6 +197,7 @@ export async function getCssPracticeChallengeForStudent(
 
   return {
     css: progressRows[0]?.css ?? challenge.starterCss,
+    hasSavedDraft: progressRows.length > 0,
     bestVerdict: progressRows[0]?.bestVerdict ?? null,
     attempts: attemptRows.map((attempt) => ({
       ...attempt,

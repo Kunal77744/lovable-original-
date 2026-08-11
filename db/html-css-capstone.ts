@@ -12,7 +12,8 @@ import {
 } from "@/lib/html-css-capstone";
 import type { GuidedProjectCheck } from "@/lib/guided-project";
 import { getDatabase } from "./index";
-import { guidedProject } from "./schema";
+import { projectReviewAttemptValues } from "./project-review-history";
+import { guidedProject, projectReviewAttempt } from "./schema";
 
 type StoredCapstone = {
   source: string;
@@ -144,47 +145,62 @@ export async function submitHtmlCssCapstone(
   const now = new Date();
   const completionId = completed ? crypto.randomUUID() : null;
   const source = serializeHtmlCssCapstoneSource(html, css);
-  const [capstone] = await getDatabase()
-    .insert(guidedProject)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-      projectSlug: HTML_CSS_CAPSTONE_SLUG,
-      html: source,
-      reviewedHtml: source,
-      status: completed ? "completed" : "needs-revision",
-      reviewChecks: storedChecks,
-      submittedAt: now,
-      completedAt: completed ? now : null,
-      completionId,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [guidedProject.userId, guidedProject.projectSlug],
-      set: {
+  const [capstone] = await getDatabase().transaction(async (transaction) => {
+    const [savedCapstone] = await transaction
+      .insert(guidedProject)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        projectSlug: HTML_CSS_CAPSTONE_SLUG,
         html: source,
         reviewedHtml: source,
         status: completed ? "completed" : "needs-revision",
         reviewChecks: storedChecks,
         submittedAt: now,
-        ...(completed
-          ? {
-              completedAt: sql`coalesce(${guidedProject.completedAt}, ${now.toISOString()}::timestamptz)`,
-              completionId: sql`coalesce(${guidedProject.completionId}, ${completionId})`,
-            }
-          : {}),
+        completedAt: completed ? now : null,
+        completionId,
         updatedAt: now,
-      },
-    })
-    .returning({
-      source: guidedProject.html,
-      reviewedSource: guidedProject.reviewedHtml,
-      status: guidedProject.status,
-      reviewChecks: guidedProject.reviewChecks,
-      submittedAt: guidedProject.submittedAt,
-      completionId: guidedProject.completionId,
-      updatedAt: guidedProject.updatedAt,
-    });
+      })
+      .onConflictDoUpdate({
+        target: [guidedProject.userId, guidedProject.projectSlug],
+        set: {
+          html: source,
+          reviewedHtml: source,
+          status: completed ? "completed" : "needs-revision",
+          reviewChecks: storedChecks,
+          submittedAt: now,
+          ...(completed
+            ? {
+                completedAt: sql`coalesce(${guidedProject.completedAt}, ${now.toISOString()}::timestamptz)`,
+                completionId: sql`coalesce(${guidedProject.completionId}, ${completionId})`,
+              }
+            : {}),
+          updatedAt: now,
+        },
+      })
+      .returning({
+        source: guidedProject.html,
+        reviewedSource: guidedProject.reviewedHtml,
+        status: guidedProject.status,
+        reviewChecks: guidedProject.reviewChecks,
+        submittedAt: guidedProject.submittedAt,
+        completionId: guidedProject.completionId,
+        updatedAt: guidedProject.updatedAt,
+      });
+
+    await transaction.insert(projectReviewAttempt).values(
+      projectReviewAttemptValues({
+        userId,
+        projectSlug: HTML_CSS_CAPSTONE_SLUG,
+        status: completed ? "completed" : "needs-revision",
+        passedChecks: checks.filter((check) => check.passed).length,
+        totalChecks: checks.length,
+        createdAt: now,
+      }),
+    );
+
+    return [savedCapstone];
+  });
 
   if (!capstone) return null;
 

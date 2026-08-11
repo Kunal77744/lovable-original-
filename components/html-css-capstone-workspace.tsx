@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   buildHtmlCssCapstonePreview,
   getEmptyHtmlCssCapstoneChecks,
@@ -24,6 +24,9 @@ export function HtmlCssCapstoneWorkspace({
   const cssRef = useRef(initialProject.css);
   const [project, setProject] = useState(initialProject);
   const [requestState, setRequestState] = useState<RequestState>("idle");
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestInFlight = useRef(false);
+  const queuedDraft = useRef<{ html: string; css: string } | null>(null);
   const [message, setMessage] = useState(
     initialProject.hasUnreviewedChanges
       ? "Your draft is saved. Submit again to review the latest HTML and CSS."
@@ -33,7 +36,7 @@ export function HtmlCssCapstoneWorkspace({
           ? `Last review: ${initialProject.submission.passedChecks} of 6 outcomes pass.`
           : initialProject.saved
             ? "Your private draft is ready. Preview it, then submit when both files are complete."
-            : "Two starter files are ready. Build the library one outcome at a time.",
+            : "Two starter files are ready. Both private drafts save as you type.",
   );
   const checks = project.submission?.checks ?? getEmptyHtmlCssCapstoneChecks();
   const passedCount = project.submission?.passedChecks ?? 0;
@@ -45,23 +48,54 @@ export function HtmlCssCapstoneWorkspace({
   const isWorking = requestState === "saving" || requestState === "submitting";
   const firstFailedCheck = checks.find((check) => !check.passed);
 
+  useEffect(() => {
+    return () => {
+      if (draftTimer.current) clearTimeout(draftTimer.current);
+    };
+  }, []);
+
+  function scheduleDraftSave() {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      draftTimer.current = null;
+      void sendProject("save", htmlRef.current, cssRef.current);
+    }, 700);
+  }
+
   function updateHtml(value: string) {
     htmlRef.current = value;
     setHtml(value);
     if (requestState === "error") setRequestState("idle");
-    setMessage("You have unsaved changes.");
+    setMessage("Draft changed. Saving both files privately…");
+    scheduleDraftSave();
   }
 
   function updateCss(value: string) {
     cssRef.current = value;
     setCss(value);
     if (requestState === "error") setRequestState("idle");
-    setMessage("You have unsaved changes.");
+    setMessage("Draft changed. Saving both files privately…");
+    scheduleDraftSave();
   }
 
-  async function sendProject(action: "save" | "submit") {
-    const submittedHtml = htmlRef.current;
-    const submittedCss = cssRef.current;
+  async function sendProject(
+    action: "save" | "submit",
+    submittedHtml = htmlRef.current,
+    submittedCss = cssRef.current,
+  ) {
+    if (requestInFlight.current) {
+      if (action === "save") {
+        queuedDraft.current = { html: submittedHtml, css: submittedCss };
+      }
+      return;
+    }
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    requestInFlight.current = true;
     setRequestState(action === "save" ? "saving" : "submitting");
     setMessage(
       action === "save"
@@ -115,6 +149,17 @@ export function HtmlCssCapstoneWorkspace({
     } catch {
       setRequestState("error");
       setMessage("The project could not be saved. Check your connection and try again.");
+    } finally {
+      requestInFlight.current = false;
+      const nextDraft = queuedDraft.current;
+      queuedDraft.current = null;
+
+      if (
+        nextDraft &&
+        (nextDraft.html !== submittedHtml || nextDraft.css !== submittedCss)
+      ) {
+        void sendProject("save", nextDraft.html, nextDraft.css);
+      }
     }
   }
 
@@ -126,7 +171,8 @@ export function HtmlCssCapstoneWorkspace({
           <h2 id="html-css-workspace-title">Make structure and styling agree.</h2>
           <p>
             Write semantic HTML, style the shared class hooks, and watch the
-            sandboxed preview update without network access.
+            sandboxed preview update without network access. Both private files
+            save as you type.
           </p>
         </div>
         <div className={`html-css-capstone-score js-capstone-score ${isComplete ? "is-complete" : ""}`}>
@@ -141,7 +187,15 @@ export function HtmlCssCapstoneWorkspace({
           <div className="html-css-capstone-editor js-capstone-editor">
             <div className="workspace-panel-label">
               <span>index.html</span>
-              <span>{hasUnsavedChanges ? "Unsaved" : project.saved ? "Saved" : "Starter"}</span>
+              <span>
+                {requestState === "saving"
+                  ? "Saving"
+                  : hasUnsavedChanges
+                    ? "Unsaved"
+                    : project.saved
+                      ? "Saved"
+                      : "Starter"}
+              </span>
             </div>
             <label htmlFor="html-css-capstone-html">Semantic HTML</label>
             <textarea
@@ -154,7 +208,15 @@ export function HtmlCssCapstoneWorkspace({
           <div className="html-css-capstone-editor js-capstone-editor">
             <div className="workspace-panel-label">
               <span>styles.css</span>
-              <span>{hasUnsavedChanges ? "Unsaved" : project.saved ? "Saved" : "Starter"}</span>
+              <span>
+                {requestState === "saving"
+                  ? "Saving"
+                  : hasUnsavedChanges
+                    ? "Unsaved"
+                    : project.saved
+                      ? "Saved"
+                      : "Starter"}
+              </span>
             </div>
             <label htmlFor="html-css-capstone-css">Component CSS</label>
             <textarea
@@ -225,7 +287,7 @@ export function HtmlCssCapstoneWorkspace({
             onClick={() => sendProject("save")}
             disabled={isWorking || !hasUnsavedChanges}
           >
-            {requestState === "saving" ? "Saving…" : "Save draft"}
+            {requestState === "saving" ? "Saving…" : "Save now"}
           </button>
           <button
             className="lesson-primary-action"

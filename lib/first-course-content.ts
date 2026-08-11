@@ -46,6 +46,10 @@ export const FIRST_COURSE_LESSONS = [
   THIRD_LESSON,
 ] as const;
 
+export function getFirstCourseLessonHref(lessonSlug: string) {
+  return `/learn/${FIRST_COURSE.slug}/${lessonSlug}`;
+}
+
 export type QuizChoice = {
   id: string;
   label: string;

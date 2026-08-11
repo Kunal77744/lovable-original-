@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CertificatePage from "./certificate/page";
+import CourseQuizHistoryPage from "./courses/web-development-foundations/quiz-history/page";
 import JavaScriptInterviewDrillPage from "./interview/javascript-fundamentals/page";
+import LearningHistoryPage from "./learning-history/page";
 import PlaygroundPage from "./playground/page";
 import ProfilePage from "./profile/page";
 import SemanticHtmlProjectPage from "./projects/semantic-html-article/page";
@@ -38,6 +40,12 @@ describe("private route sign-in continuation", () => {
   it.each([
     ["settings", SettingsPage, "/settings"],
     ["profile", ProfilePage, "/profile"],
+    [
+      "course quiz history",
+      CourseQuizHistoryPage,
+      "/courses/web-development-foundations/quiz-history",
+    ],
+    ["learning history", LearningHistoryPage, "/learning-history"],
     ["project", SemanticHtmlProjectPage, "/projects/semantic-html-article"],
     ["certificate", CertificatePage, "/certificate"],
     [

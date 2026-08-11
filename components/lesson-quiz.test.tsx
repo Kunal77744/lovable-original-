@@ -128,6 +128,12 @@ describe("LessonQuiz analytics", () => {
       screen.getByRole("link", { name: "Start revision" }),
     ).toHaveAttribute("href", "#revision-pack");
     expect(
+      screen.getByRole("link", { name: "Review quiz attempts" }),
+    ).toHaveAttribute(
+      "href",
+      "/courses/web-development-foundations/quiz-history",
+    );
+    expect(
       screen.getByRole("heading", { name: "Semantic HTML, compressed" }),
     ).toBeInTheDocument();
     expect(
@@ -321,6 +327,12 @@ describe("LessonQuiz analytics", () => {
       screen.getByText("Revisit the second concept before retrying."),
     ).toBeInTheDocument();
     expect(screen.getByText(/50% is saved/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Review quiz attempts" }),
+    ).toHaveAttribute(
+      "href",
+      "/courses/web-development-foundations/quiz-history",
+    );
 
     fireEvent.click(screen.getByLabelText("Fourth answer"));
 

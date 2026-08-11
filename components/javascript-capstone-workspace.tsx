@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getEmptyJavaScriptCapstoneChecks,
@@ -28,6 +28,10 @@ export function JavaScriptCapstoneWorkspace({
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [sampleOutput, setSampleOutput] = useState<string | null>(null);
   const [samplePassed, setSamplePassed] = useState<boolean | null>(null);
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftSaveInFlight = useRef(false);
+  const queuedDraft = useRef<string | null>(null);
+  const submittingRef = useRef(false);
   const [message, setMessage] = useState(
     initialProject.hasUnreviewedChanges
       ? "Your draft is saved. Submit again to review the latest code."
@@ -37,7 +41,7 @@ export function JavaScriptCapstoneWorkspace({
           ? `Last review: ${initialProject.submission.passedChecks} of 6 checks pass.`
           : initialProject.saved
             ? "Your private draft is ready. Run the example, then submit when the report is complete."
-            : "Starter code is ready. Build the report one outcome at a time.",
+            : "Starter code is ready. Your private draft saves as you type.",
   );
   const checks =
     project.submission?.checks ?? getEmptyJavaScriptCapstoneChecks();
@@ -50,6 +54,25 @@ export function JavaScriptCapstoneWorkspace({
     project.submission?.status === "completed" && !hasUnreviewedChanges;
   const isWorking = requestState !== "idle" && requestState !== "error";
   const firstFailedCheck = checks.find((check) => !check.passed);
+
+  useEffect(() => {
+    return () => {
+      if (draftTimer.current) clearTimeout(draftTimer.current);
+    };
+  }, []);
+
+  function updateCode(nextCode: string) {
+    codeRef.current = nextCode;
+    setCode(nextCode);
+    setRequestState((current) => (current === "error" ? "idle" : current));
+    setMessage("Draft changed. Saving privately…");
+
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      draftTimer.current = null;
+      void saveDraft(nextCode);
+    }, 700);
+  }
 
   async function runSample() {
     setRequestState("running");
@@ -80,8 +103,13 @@ export function JavaScriptCapstoneWorkspace({
     );
   }
 
-  async function saveDraft() {
-    const submittedCode = codeRef.current;
+  async function saveDraft(submittedCode: string) {
+    if (draftSaveInFlight.current || submittingRef.current) {
+      queuedDraft.current = submittedCode;
+      return;
+    }
+
+    draftSaveInFlight.current = true;
     setRequestState("saving");
     setMessage("Saving your private JavaScript project…");
 
@@ -111,11 +139,45 @@ export function JavaScriptCapstoneWorkspace({
     } catch {
       setRequestState("error");
       setMessage("The draft could not be saved. Check your connection and try again.");
+    } finally {
+      draftSaveInFlight.current = false;
+      const nextDraft = queuedDraft.current;
+      queuedDraft.current = null;
+
+      if (nextDraft !== null && nextDraft !== submittedCode) {
+        void saveDraft(nextDraft);
+      }
+    }
+  }
+
+  function saveDraftNow() {
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+    void saveDraft(codeRef.current);
+  }
+
+  function finishSubmission(submittedCode: string) {
+    submittingRef.current = false;
+    const nextDraft = queuedDraft.current;
+    queuedDraft.current = null;
+
+    if (nextDraft !== null && nextDraft !== submittedCode) {
+      void saveDraft(nextDraft);
     }
   }
 
   async function submitForReview() {
+    if (draftSaveInFlight.current) return;
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
     const submittedCode = codeRef.current;
+    submittingRef.current = true;
     setRequestState("submitting");
     setMessage("Running six project outcomes in your browser…");
     const result = await runCodingSolution(
@@ -130,6 +192,7 @@ export function JavaScriptCapstoneWorkspace({
           ? "Review timed out. Check that every loop reaches a stopping condition."
           : result.message,
       );
+      finishSubmission(submittedCode);
       return;
     }
 
@@ -182,6 +245,8 @@ export function JavaScriptCapstoneWorkspace({
     } catch {
       setRequestState("error");
       setMessage("The review could not be saved. Check your connection and try again.");
+    } finally {
+      finishSubmission(submittedCode);
     }
   }
 
@@ -196,7 +261,8 @@ export function JavaScriptCapstoneWorkspace({
           <h2 id="js-capstone-workspace-title">Build one complete data report.</h2>
           <p>
             Write one solve(input) function. The browser worker blocks network
-            access and stops long-running code after one second.
+            access, stops long-running code after one second, and saves your
+            private draft as you type.
           </p>
         </div>
         <div
@@ -229,14 +295,7 @@ export function JavaScriptCapstoneWorkspace({
           <textarea
             id="js-capstone-editor"
             value={code}
-            onChange={(event) => {
-              codeRef.current = event.target.value;
-              setCode(event.target.value);
-              setRequestState((current) =>
-                current === "error" ? "idle" : current,
-              );
-              setMessage("You have unsaved changes.");
-            }}
+            onChange={(event) => updateCode(event.target.value)}
             spellCheck={false}
           />
         </div>
@@ -314,10 +373,10 @@ export function JavaScriptCapstoneWorkspace({
           <button
             className="js-capstone-save"
             type="button"
-            onClick={saveDraft}
+            onClick={saveDraftNow}
             disabled={isWorking || !hasUnsavedChanges}
           >
-            {requestState === "saving" ? "Saving…" : "Save draft"}
+            {requestState === "saving" ? "Saving…" : "Save now"}
           </button>
           <button
             className="lesson-primary-action"

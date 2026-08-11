@@ -8,6 +8,7 @@ import {
   SECOND_LESSON_QUIZ,
   THIRD_LESSON,
   THIRD_LESSON_QUIZ,
+  getFirstCourseLessonHref,
   getPublicLessonQuiz,
   getPublicFirstLessonQuiz,
   gradeLessonQuiz,
@@ -15,6 +16,12 @@ import {
 } from "./first-course-content";
 
 describe("gradeFirstLessonQuiz", () => {
+  it("builds the production lesson route from the authored course slug", () => {
+    expect(getFirstCourseLessonHref("semantic-html")).toBe(
+      "/learn/web-development-foundations/semantic-html",
+    );
+  });
+
   it("ships a complete authored semantic HTML revision pack", () => {
     expect(FIRST_LESSON_REVISION.summary).toHaveLength(4);
     expect(FIRST_LESSON_REVISION.flashcards).toHaveLength(5);

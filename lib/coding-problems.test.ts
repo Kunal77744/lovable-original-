@@ -31,7 +31,21 @@ describe("coding problems", () => {
 
     for (const problem of CODING_PROBLEMS) {
       expect(problem.tests.length).toBeGreaterThanOrEqual(4);
+      expect(new Set(problem.tests.map((test) => test.label)).size).toBe(
+        problem.tests.length,
+      );
+      for (const test of problem.tests) {
+        expect(test.label.length).toBeGreaterThan(2);
+        expect(test.label).not.toBe(test.input);
+        expect(test.label).not.toBe(test.expectedOutput);
+      }
       expect(problem.examples.length).toBeGreaterThan(0);
+      expect(problem.constraints).toHaveLength(2);
+      expect(new Set(problem.constraints).size).toBe(2);
+      for (const constraint of problem.constraints) {
+        expect(constraint).not.toHaveLength(0);
+        expect(constraint).not.toContain("function solve");
+      }
       expect(problem.starterCode).toContain("function solve(input)");
       expect(problem.recoveryHint.length).toBeGreaterThan(80);
       expect(problem.recoveryHints).toHaveLength(2);
@@ -43,9 +57,20 @@ describe("coding problems", () => {
       expect(problem.acceptedExplanation.concept).not.toHaveLength(0);
       expect(problem.acceptedExplanation.whyItWorks).not.toHaveLength(0);
       expect(problem.acceptedExplanation.commonMistake).not.toHaveLength(0);
+      expect(problem.acceptedExplanation.efficiency.time).toMatch(/^O\(/);
+      expect(problem.acceptedExplanation.efficiency.space).toMatch(/^O\(/);
+      expect(
+        problem.acceptedExplanation.efficiency.explanation.length,
+      ).toBeGreaterThan(80);
       expect(JSON.stringify(problem.acceptedExplanation)).not.toContain(
         "function solve",
       );
+      expect(problem.workedTrace.steps).toHaveLength(3);
+      expect(new Set(problem.workedTrace.steps).size).toBe(3);
+      for (const step of problem.workedTrace.steps) {
+        expect(step.length).toBeGreaterThan(25);
+        expect(step).not.toContain("function solve");
+      }
     }
     expect(
       new Set(CODING_PROBLEMS.map((problem) => problem.recoveryHint)).size,
@@ -55,6 +80,11 @@ describe("coding problems", () => {
         CODING_PROBLEMS.map(
           (problem) => problem.acceptedExplanation.concept,
         ),
+      ).size,
+    ).toBe(12);
+    expect(
+      new Set(
+        CODING_PROBLEMS.map((problem) => problem.workedTrace.steps.join("|")),
       ).size,
     ).toBe(12);
   });
@@ -70,6 +100,10 @@ describe("coding problems", () => {
         verdict: "Accepted",
         passedTests: problem.tests.length,
         totalTests: problem.tests.length,
+        checks: problem.tests.map((test) => ({
+          label: test.label,
+          passed: true,
+        })),
       });
     }
 
@@ -79,6 +113,12 @@ describe("coding problems", () => {
       verdict: "Accepted",
       passedTests: 4,
       totalTests: 4,
+      checks: [
+        { label: "Positive values", passed: true },
+        { label: "Negative result", passed: true },
+        { label: "Zero values", passed: true },
+        { label: "Larger total", passed: true },
+      ],
     });
     expect(
       gradeCodingOutputs("sum-two-numbers", ["12", "-5", "0", "1000"]),
@@ -86,6 +126,12 @@ describe("coding problems", () => {
       verdict: "Wrong Answer",
       passedTests: 3,
       totalTests: 4,
+      checks: [
+        { label: "Positive values", passed: false },
+        { label: "Negative result", passed: true },
+        { label: "Zero values", passed: true },
+        { label: "Larger total", passed: true },
+      ],
     });
     expect(gradeCodingOutputs("missing", [])).toBeNull();
   });

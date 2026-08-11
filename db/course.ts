@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { FIRST_COURSE, FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { getDefaultCertificateDisplayName } from "@/lib/learner-settings";
 import { buildCourseProgress } from "@/lib/course-progress";
@@ -13,6 +13,7 @@ import {
   lessonArtifact,
   lessonNote,
   lessonProgress,
+  lessonQuizAttempt,
 } from "./schema";
 import {
   gradeSemanticHtml,
@@ -261,9 +262,14 @@ export async function getFirstCourseLessonForStudent(
 export async function saveFirstLessonQuizResult(
   userId: string,
   lessonSlug: string,
-  score: number,
-  passed: boolean,
+  result: {
+    score: number;
+    correctCount: number;
+    totalCount: number;
+    passed: boolean;
+  },
 ) {
+  const { score, correctCount, totalCount, passed } = result;
   const database = getDatabase();
   await ensureFirstCourseAssignment(userId);
 
@@ -304,27 +310,40 @@ export async function saveFirstLessonQuizResult(
   const bestScore = Math.max(existingProgress?.quizScore ?? 0, score);
   const completed = existingProgress?.status === "completed" || passed;
 
-  await database
-    .insert(lessonProgress)
-    .values({
+  await database.transaction(async (transaction) => {
+    await transaction.insert(lessonQuizAttempt).values({
       id: crypto.randomUUID(),
       userId,
       lessonId: assignedLesson.id,
-      status: completed ? "completed" : "in-progress",
-      quizScore: bestScore,
-      startedAt: now,
-      completedAt: completed ? (existingProgress?.completedAt ?? now) : null,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [lessonProgress.userId, lessonProgress.lessonId],
-      set: {
+      score,
+      correctCount,
+      totalCount,
+      passed,
+      createdAt: now,
+    });
+
+    await transaction
+      .insert(lessonProgress)
+      .values({
+        id: crypto.randomUUID(),
+        userId,
+        lessonId: assignedLesson.id,
         status: completed ? "completed" : "in-progress",
         quizScore: bestScore,
+        startedAt: now,
         completedAt: completed ? (existingProgress?.completedAt ?? now) : null,
         updatedAt: now,
-      },
-    });
+      })
+      .onConflictDoUpdate({
+        target: [lessonProgress.userId, lessonProgress.lessonId],
+        set: {
+          status: completed ? "completed" : "in-progress",
+          quizScore: bestScore,
+          completedAt: completed ? (existingProgress?.completedAt ?? now) : null,
+          updatedAt: now,
+        },
+      });
+  });
 
   const courseProgress = await getOrCreateFirstCourseAssignment(userId);
 
@@ -344,6 +363,53 @@ export async function saveFirstLessonQuizResult(
     completed,
     quizScore: bestScore,
   };
+}
+
+export type CourseQuizAttempt = {
+  id: string;
+  lessonSlug: string;
+  lessonTitle: string;
+  lessonModuleTitle: string;
+  lessonPosition: number;
+  score: number;
+  correctCount: number;
+  totalCount: number;
+  passed: boolean;
+  createdAt: string;
+};
+
+export async function getFirstCourseQuizHistoryForStudent(
+  userId: string,
+): Promise<CourseQuizAttempt[]> {
+  const lessonIds = FIRST_COURSE_LESSONS.map((courseLesson) => courseLesson.id);
+  const attempts = await getDatabase()
+    .select({
+      id: lessonQuizAttempt.id,
+      lessonSlug: lesson.slug,
+      lessonTitle: lesson.title,
+      lessonModuleTitle: lesson.moduleTitle,
+      lessonPosition: lesson.position,
+      score: lessonQuizAttempt.score,
+      correctCount: lessonQuizAttempt.correctCount,
+      totalCount: lessonQuizAttempt.totalCount,
+      passed: lessonQuizAttempt.passed,
+      createdAt: lessonQuizAttempt.createdAt,
+    })
+    .from(lessonQuizAttempt)
+    .innerJoin(lesson, eq(lessonQuizAttempt.lessonId, lesson.id))
+    .where(
+      and(
+        eq(lessonQuizAttempt.userId, userId),
+        inArray(lessonQuizAttempt.lessonId, lessonIds),
+      ),
+    )
+    .orderBy(desc(lessonQuizAttempt.createdAt), desc(lessonQuizAttempt.id))
+    .limit(50);
+
+  return attempts.map((attempt) => ({
+    ...attempt,
+    createdAt: attempt.createdAt.toISOString(),
+  }));
 }
 
 export async function getLessonReadingProgressForStudent(

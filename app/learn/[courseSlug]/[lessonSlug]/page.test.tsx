@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCourseFeedbackForStudent,
   getFirstCourseLessonForStudent,
@@ -8,6 +8,12 @@ import {
   getLessonReadingProgressForStudent,
 } from "@/db/course";
 import { auth } from "@/lib/auth";
+import {
+  FIRST_COURSE,
+  FIRST_COURSE_LESSONS,
+  SECOND_LESSON,
+  THIRD_LESSON,
+} from "@/lib/first-course-content";
 import LessonPage, { generateMetadata } from "./page";
 
 const captureLearnerEventOnce = vi.hoisted(() => vi.fn());
@@ -44,6 +50,8 @@ const getFeedback = vi.mocked(getCourseFeedbackForStudent);
 const getReadingProgress = vi.mocked(getLessonReadingProgressForStudent);
 
 describe("public lesson access", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     vi.clearAllMocks();
     getSession.mockResolvedValue(null);
@@ -156,8 +164,75 @@ describe("public lesson access", () => {
     ).not.toHaveLength(0);
     expect(getStudentLesson).not.toHaveBeenCalled();
     expect(getArtifact).not.toHaveBeenCalled();
+    expect(getNote).not.toHaveBeenCalled();
     expect(getReadingProgress).not.toHaveBeenCalled();
   });
+
+  it.each([SECOND_LESSON, THIRD_LESSON])(
+    "restores the signed-in learner's private note in $title",
+    async (lesson) => {
+      getSession.mockResolvedValue({
+        user: { id: "learner-1" },
+      } as Awaited<ReturnType<typeof auth.api.getSession>>);
+      getStudentLesson.mockResolvedValue({
+        courseSlug: FIRST_COURSE.slug,
+        courseTitle: FIRST_COURSE.title,
+        lessonId: lesson.id,
+        lessonSlug: lesson.slug,
+        lessonTitle: lesson.title,
+        lessonDescription: lesson.description,
+        moduleTitle: lesson.moduleTitle,
+        position: lesson.position,
+        estimatedMinutes: lesson.estimatedMinutes,
+        completed: false,
+        quizScore: null,
+        completedLessons: 0,
+        totalLessons: FIRST_COURSE_LESSONS.length,
+        progressPercent: 0,
+        courseCompleted: false,
+        nextLesson: null,
+        lessons: FIRST_COURSE_LESSONS.map((courseLesson) => ({
+          ...courseLesson,
+          completed: false,
+          quizScore: null,
+        })),
+      });
+      getArtifact.mockResolvedValue({
+        html: "",
+        checks: [],
+        saved: true,
+        updatedAt: "2026-08-09T20:00:00.000Z",
+        submission: null,
+      });
+      getNote.mockResolvedValue({
+        note: {
+          content: `My note for ${lesson.title}.`,
+          updatedAt: "2026-08-09T20:00:00.000Z",
+        },
+      });
+      getFeedback.mockResolvedValue({ feedback: null });
+      getReadingProgress.mockResolvedValue({ furthestSection: 0 });
+
+      render(
+        await LessonPage({
+          params: Promise.resolve({
+            courseSlug: FIRST_COURSE.slug,
+            lessonSlug: lesson.slug,
+          }),
+        }),
+      );
+
+      expect(getNote).toHaveBeenCalledWith("learner-1", lesson.slug);
+      expect(
+        screen.getByDisplayValue(`My note for ${lesson.title}.`),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Your saved note is back. Revise it whenever your understanding changes.",
+        ),
+      ).toBeInTheDocument();
+    },
+  );
 
   it("records an anonymous lesson start from the stable founder-warm entry", async () => {
     render(
