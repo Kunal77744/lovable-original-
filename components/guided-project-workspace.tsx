@@ -288,10 +288,16 @@ export function GuidedProjectWorkspace({
             {message}
           </p>
           {isComplete ? (
-            <Link href={practiceContinuation.href}>
-              {practiceContinuation.label}
-              <span aria-hidden="true">→</span>
-            </Link>
+            <>
+              <Link href={practiceContinuation.href}>
+                {practiceContinuation.label}
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link href={`/projects/${projectSlug}/debrief`}>
+                Open private project debrief
+                <span aria-hidden="true">→</span>
+              </Link>
+            </>
           ) : null}
         </aside>
       </div>

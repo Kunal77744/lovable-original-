@@ -187,10 +187,20 @@ describe("ProjectsPage", () => {
     ).toHaveAttribute("href", "/projects/javascript-expense-report");
     expect(screen.getByText("4/6 checks passed")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Open private debrief" }),
-    ).toHaveAttribute(
-      "href",
-      "/projects/html-css-resource-library/debrief",
+      screen.getAllByRole("link", { name: "Open private debrief" }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          href: expect.stringContaining(
+            "/projects/semantic-html-article/debrief",
+          ),
+        }),
+        expect.objectContaining({
+          href: expect.stringContaining(
+            "/projects/html-css-resource-library/debrief",
+          ),
+        }),
+      ]),
     );
     expect(document.body).not.toHaveTextContent("PRIVATE SEMANTIC HTML");
     expect(document.body).not.toHaveTextContent("PRIVATE JAVASCRIPT");

@@ -132,7 +132,10 @@ export function buildProjectPortfolio({
             : courseCompleted
               ? "Start project"
               : null,
-      debriefHref: null,
+      debriefHref:
+        semanticHtml.state === "completed"
+          ? `/projects/${GUIDED_PROJECT_SLUG}/debrief`
+          : null,
       lockedReason:
         !courseCompleted && semanticHtml.state === "not-started"
           ? "Available after Web Development Foundations"
