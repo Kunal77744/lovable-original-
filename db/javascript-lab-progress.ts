@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import {
+  buildJavaScriptLabActivity,
   buildJavaScriptLabCatalogProgress,
   getJavaScriptLab,
   isJavaScriptLabExercise,
@@ -47,6 +48,27 @@ export async function getJavaScriptLabCatalogProgress(userId: string) {
     );
 
   return buildJavaScriptLabCatalogProgress(rows);
+}
+
+export async function getJavaScriptLabActivityForStudent(userId: string) {
+  const rows = await getDatabase()
+    .select({
+      labSlug: codingLabExerciseProgress.labSlug,
+      exerciseId: codingLabExerciseProgress.exerciseId,
+      completedAt: codingLabExerciseProgress.completedAt,
+    })
+    .from(codingLabExerciseProgress)
+    .where(
+      and(
+        eq(codingLabExerciseProgress.userId, userId),
+        inArray(
+          codingLabExerciseProgress.labSlug,
+          JAVASCRIPT_LABS.map((lab) => lab.slug),
+        ),
+      ),
+    );
+
+  return buildJavaScriptLabActivity(rows);
 }
 
 export async function saveJavaScriptLabExerciseCompletion(
