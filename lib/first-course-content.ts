@@ -265,10 +265,49 @@ export const THIRD_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
 
 export const FIRST_LESSON_PASS_PERCENT = 75;
 
+export type LessonRevision = {
+  title: string;
+  introduction: string;
+  outlineTitle: string;
+  workspaceLink: {
+    href: string;
+    label: string;
+  };
+  mindMap: {
+    title: string;
+    introduction: string;
+    center: {
+      label: string;
+      detail: string;
+    };
+    branches: readonly {
+      id: string;
+      label: string;
+      detail: string;
+      concepts: readonly string[];
+      selfCheck: string;
+    }[];
+  };
+  summary: readonly {
+    label: string;
+    detail: string;
+  }[];
+  flashcards: readonly {
+    id: string;
+    prompt: string;
+    answer: string;
+  }[];
+};
+
 export const FIRST_LESSON_REVISION = {
   title: "Semantic HTML, compressed",
   introduction:
     "A strong page has a readable outline before it has a visual design. Revisit the four decisions that make that outline useful.",
+  outlineTitle: "Trace the page from structure to self-check.",
+  workspaceLink: {
+    href: "#semantic-workspace",
+    label: "Return to your article",
+  },
   mindMap: {
     title: "How the structure connects",
     introduction:
@@ -376,7 +415,243 @@ export const FIRST_LESSON_REVISION = {
         "It tells assistive technology which pronunciation rules to use, making the page easier to understand.",
     },
   ],
-} as const;
+} as const satisfies LessonRevision;
+
+export const SECOND_LESSON_REVISION = {
+  title: "CSS selectors and boxes, compressed",
+  introduction:
+    "Predictable CSS starts with two questions: what does this rule target, and which part of the box does it change? Revisit both before styling by feel.",
+  outlineTitle: "Trace the card from selector to final width.",
+  workspaceLink: {
+    href: "#css-practice",
+    label: "Return to your card",
+  },
+  mindMap: {
+    title: "How the card stays predictable",
+    introduction:
+      "Start with the element you mean to change, then trace how each spacing layer contributes to the box you see.",
+    center: {
+      label: "Predictable CSS",
+      detail: "Target the right element and account for its box",
+    },
+    branches: [
+      {
+        id: "class-selector",
+        label: "Class selector",
+        detail:
+          "A leading dot matches every element carrying that class name.",
+        concepts: [".learning-card", "class=\"learning-card\"", "Reusable target"],
+        selfCheck: "Can you point to every element this class selector matches?",
+      },
+      {
+        id: "descendant-selector",
+        label: "Descendant scope",
+        detail:
+          "A space limits the right-hand selector to elements inside the left-hand match.",
+        concepts: [
+          ".learning-card strong",
+          "Read right to left",
+          "Keep rules local",
+        ],
+        selfCheck: "Will this rule leave strong elements outside the card alone?",
+      },
+      {
+        id: "inner-spacing",
+        label: "Inner spacing",
+        detail:
+          "Padding sits between content and border; the border marks the box edge.",
+        concepts: ["content", "padding", "border"],
+        selfCheck: "Which property creates space inside the card edge?",
+      },
+      {
+        id: "outer-size",
+        label: "Outer size",
+        detail:
+          "Margin separates boxes, while border-box keeps padding and border inside the declared width.",
+        concepts: ["margin", "box-sizing: border-box", "width: 280px"],
+        selfCheck: "Does the declared width include the padding and border?",
+      },
+    ],
+  },
+  summary: [
+    {
+      label: "Target",
+      detail:
+        "Use .learning-card to match the class instead of styling every article or relying on an id.",
+    },
+    {
+      label: "Scope",
+      detail:
+        "Use a descendant selector when a rule should apply only inside one component.",
+    },
+    {
+      label: "Space",
+      detail:
+        "Padding creates inner space; margin separates the complete box from its neighbours.",
+    },
+    {
+      label: "Size",
+      detail:
+        "Use border-box when padding and border must remain inside the declared width.",
+    },
+  ],
+  flashcards: [
+    {
+      id: "class-syntax",
+      prompt: "What does .learning-card select?",
+      answer:
+        "Every element whose class list includes learning-card. The leading dot identifies a class selector.",
+    },
+    {
+      id: "descendant-scope",
+      prompt: "How do you read .learning-card strong?",
+      answer:
+        "Find a strong element, then confirm it sits anywhere inside an element with the learning-card class.",
+    },
+    {
+      id: "padding-margin",
+      prompt: "When should you use padding instead of margin?",
+      answer:
+        "Use padding for space between content and its border. Use margin to separate the entire box from neighbouring boxes.",
+    },
+    {
+      id: "border-box",
+      prompt: "What changes when box-sizing is border-box?",
+      answer:
+        "The declared width includes content, padding, and border. Margin still remains outside that width.",
+    },
+    {
+      id: "selector-debug",
+      prompt: "What should you check first when a CSS rule affects the wrong element?",
+      answer:
+        "Trace the selector from right to left and identify every element it can match before changing any property values.",
+    },
+  ],
+} as const satisfies LessonRevision;
+
+export const THIRD_LESSON_REVISION = {
+  title: "Responsive CSS Grid, compressed",
+  introduction:
+    "A responsive layout describes how cards share available space. Revisit the four rules that let one grid adapt without a device list.",
+  outlineTitle: "Trace the grid from container to shrinking card.",
+  workspaceLink: {
+    href: "#responsive-css-practice",
+    label: "Return to your layout",
+  },
+  mindMap: {
+    title: "How the layout adapts",
+    introduction:
+      "Start with the grid container, then trace how track bounds, available space, and spacing work together.",
+    center: {
+      label: "Responsive grid",
+      detail: "Let the container decide how many useful tracks fit",
+    },
+    branches: [
+      {
+        id: "grid-container",
+        label: "Grid container",
+        detail:
+          "display: grid arranges the container’s direct children as grid items.",
+        concepts: ["display: grid", ".resource-grid", "Direct children"],
+        selfCheck: "Which element owns the layout relationship?",
+      },
+      {
+        id: "track-range",
+        label: "Track range",
+        detail:
+          "minmax() protects a readable minimum while 1fr shares extra inline space.",
+        concepts: ["minmax(14rem, 1fr)", "Readable minimum", "Flexible maximum"],
+        selfCheck: "Can each track shrink safely and still use spare space?",
+      },
+      {
+        id: "available-tracks",
+        label: "Available tracks",
+        detail:
+          "repeat() with auto-fit adds or collapses tracks as the container changes.",
+        concepts: ["repeat()", "auto-fit", "No fixed column count"],
+        selfCheck: "Will the browser choose the number of columns from available space?",
+      },
+      {
+        id: "grid-spacing",
+        label: "Grid spacing",
+        detail:
+          "gap spaces rows and columns consistently; min-width: 0 lets long content shrink.",
+        concepts: ["gap: 1rem", "min-width: 0", "No overflow pressure"],
+        selfCheck: "Can long card content shrink without widening the track?",
+      },
+    ],
+  },
+  summary: [
+    {
+      label: "Container",
+      detail:
+        "Apply display: grid to the parent whose direct children should become grid items.",
+    },
+    {
+      label: "Tracks",
+      detail:
+        "Use minmax(14rem, 1fr) to pair a readable minimum with a flexible maximum.",
+    },
+    {
+      label: "Fit",
+      detail:
+        "Combine repeat() and auto-fit so the container chooses how many useful tracks fit.",
+    },
+    {
+      label: "Spacing",
+      detail:
+        "Use gap for the relationship between cards and min-width: 0 when content must shrink.",
+    },
+  ],
+  flashcards: [
+    {
+      id: "grid-ownership",
+      prompt: "What becomes a grid item after display: grid?",
+      answer:
+        "Each direct child of the grid container. Descendants inside those children keep their own layout unless another rule changes it.",
+    },
+    {
+      id: "minmax-range",
+      prompt: "What promise does minmax(14rem, 1fr) make?",
+      answer:
+        "A track should stay at least 14rem wide and may grow to share the available row space.",
+    },
+    {
+      id: "auto-fit",
+      prompt: "Why use auto-fit instead of choosing three columns?",
+      answer:
+        "auto-fit lets the browser add or collapse tracks from the container’s actual space instead of assuming one screen size.",
+    },
+    {
+      id: "gap",
+      prompt: "Why is gap better than adding a margin to every card?",
+      answer:
+        "The container applies one consistent rule between rows and columns without creating outer-edge exceptions.",
+    },
+    {
+      id: "min-width-zero",
+      prompt: "When does a grid item need min-width: 0?",
+      answer:
+        "Use it when long content might preserve its intrinsic width and force the track wider instead of shrinking inside the grid.",
+    },
+  ],
+} as const satisfies LessonRevision;
+
+export function getLessonRevision(lessonSlug: string): LessonRevision | null {
+  if (lessonSlug === FIRST_LESSON.slug) {
+    return FIRST_LESSON_REVISION;
+  }
+
+  if (lessonSlug === SECOND_LESSON.slug) {
+    return SECOND_LESSON_REVISION;
+  }
+
+  if (lessonSlug === THIRD_LESSON.slug) {
+    return THIRD_LESSON_REVISION;
+  }
+
+  return null;
+}
 
 export type QuizAnswers = Record<string, string>;
 
