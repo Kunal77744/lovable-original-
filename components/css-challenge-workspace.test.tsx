@@ -34,6 +34,40 @@ afterEach(() => {
 const challenge = getCssPracticeChallenge("class-selector")!;
 
 describe("CssChallengeWorkspace", () => {
+  it("marks an account-backed draft as saved before the first attempt", () => {
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        hasSavedDraft
+        initialCss=".learning-card { color: #287652; }"
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your saved CSS draft is restored. Submit when you want deterministic feedback.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "No saved attempts yet. Your first submission will appear here.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("keeps a signed-out attempt local and offers account creation", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

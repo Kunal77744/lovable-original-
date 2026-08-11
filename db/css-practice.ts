@@ -155,6 +155,7 @@ export async function getCssPracticeChallengeForStudent(
   if (!userId) {
     return {
       css: challenge.starterCss,
+      hasSavedDraft: false,
       bestVerdict: null,
       attempts: [] as CssPracticeAttempt[],
     };
@@ -196,6 +197,7 @@ export async function getCssPracticeChallengeForStudent(
 
   return {
     css: progressRows[0]?.css ?? challenge.starterCss,
+    hasSavedDraft: progressRows.length > 0,
     bestVerdict: progressRows[0]?.bestVerdict ?? null,
     attempts: attemptRows.map((attempt) => ({
       ...attempt,
