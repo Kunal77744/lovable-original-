@@ -5,6 +5,16 @@ type RunnerResult =
   | { status: "error"; message: string; debugOutput: string[] }
   | { status: "timeout"; message: string; debugOutput: string[] };
 
+type WorkerRunnerResult =
+  | { status: "finished"; outputs: string[]; debugOutput: string[] }
+  | {
+      status: "error";
+      message: string;
+      stack?: string;
+      debugOutput: string[];
+    }
+  | { status: "timeout"; message: string; debugOutput: string[] };
+
 export type PlaygroundRunnerResult =
   | { status: "finished"; output: string[] }
   | { status: "error"; message: string; output: string[] }
@@ -20,6 +30,27 @@ export type PlaygroundCheckRunnerResult =
   | { status: "finished"; checks: PlaygroundCheckResult[] }
   | { status: "error"; message: string; checks: PlaygroundCheckResult[] }
   | { status: "timeout"; message: string; checks: PlaygroundCheckResult[] };
+
+const CODING_SOURCE_URL = "learner-solution.js";
+const NEW_FUNCTION_SOURCE_LINE_OFFSET = 3;
+
+export function formatCodingRunnerError(
+  message: string,
+  stack: string | undefined,
+) {
+  const location = stack?.match(/learner-solution\.js:(\d+):(\d+)/);
+
+  if (!location) return message;
+
+  const generatedLine = Number(location[1]);
+  const column = Number(location[2]);
+  const sourceLine = generatedLine - NEW_FUNCTION_SOURCE_LINE_OFFSET;
+
+  if (!Number.isInteger(sourceLine) || sourceLine < 1) return message;
+  if (!Number.isInteger(column) || column < 1) return message;
+
+  return `Line ${sourceLine}, column ${column}: ${message}`;
+}
 
 const WORKER_SOURCE = `
 const blocked = () => {
@@ -75,7 +106,9 @@ self.onmessage = ({ data }) => {
       "WebSocket",
       "EventSource",
       "importScripts",
-      "\\"use strict\\";\\n" + source + "\\nreturn typeof solve === \\"function\\" ? solve : null;",
+      "\\"use strict\\";\\n" +
+        source +
+        "\\nreturn typeof solve === \\"function\\" ? solve : null;\\n//# sourceURL=${CODING_SOURCE_URL}",
     );
     const solve = createSolve(
       undefined,
@@ -99,6 +132,7 @@ self.onmessage = ({ data }) => {
         error instanceof Error
           ? error.message
           : "The solution could not be evaluated.",
+      stack: error instanceof Error ? error.stack : undefined,
     });
   }
 };
@@ -252,8 +286,18 @@ export async function runCodingSolution(
       });
     }, timeoutMs);
 
-    worker.onmessage = (event: MessageEvent<RunnerResult>) => {
+    worker.onmessage = (event: MessageEvent<WorkerRunnerResult>) => {
       window.clearTimeout(timeout);
+
+      if (event.data.status === "error") {
+        finish({
+          status: "error",
+          message: formatCodingRunnerError(event.data.message, event.data.stack),
+          debugOutput: event.data.debugOutput,
+        });
+        return;
+      }
+
       finish(event.data);
     };
     worker.onerror = () => {

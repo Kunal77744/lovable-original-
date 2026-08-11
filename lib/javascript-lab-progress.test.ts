@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildJavaScriptLabActivity,
   buildJavaScriptLabCatalogProgress,
   getFirstIncompleteExerciseIndex,
   getJavaScriptFoundationsEntry,
@@ -133,6 +134,72 @@ describe("JavaScript lab progress catalog", () => {
       completedCount: 1,
       totalCount: 4,
       state: "in-progress",
+    });
+  });
+
+  it("builds a newest-first guided activity record from authored exercises", () => {
+    const activity = buildJavaScriptLabActivity([
+      {
+        labSlug: "foundations",
+        exerciseId: "understand-the-judge",
+        completedAt: "2026-08-04T12:00:00.000Z",
+      },
+      {
+        labSlug: "foundations",
+        exerciseId: "parse-and-sum",
+        completedAt: "2026-08-05T12:00:00.000Z",
+      },
+      {
+        labSlug: "unknown",
+        exerciseId: "borrowed-result",
+        completedAt: "2026-08-06T12:00:00.000Z",
+      },
+      {
+        labSlug: "foundations",
+        exerciseId: "parse-and-sum",
+        completedAt: "not-a-date",
+      },
+    ]);
+
+    expect(activity.completedCount).toBe(2);
+    expect(activity.totalCount).toBe(55);
+    expect(activity.recentCompletions).toHaveLength(2);
+    expect(activity.recentCompletions[0]).toMatchObject({
+      labTitle: "JavaScript foundations",
+      exerciseTitle: "Turn input into numbers",
+      exerciseNumber: 2,
+      exerciseCount: 4,
+      href: "/practice/foundations",
+    });
+    expect(activity.nextAction).toEqual({
+      title: "Continue JavaScript foundations, exercise 3.",
+      description:
+        "This is the first unfinished guided exercise in your private lab record.",
+      label: "Continue guided practice",
+      href: "/practice/foundations",
+    });
+  });
+
+  it("caps recent activity and gives a truthful review action after 55 steps", () => {
+    const completions = JAVASCRIPT_LABS.flatMap((lab, labIndex) =>
+      lab.exerciseIds.map((exerciseId, exerciseIndex) => ({
+        labSlug: lab.slug,
+        exerciseId,
+        completedAt: new Date(
+          Date.UTC(2026, 7, labIndex + 1, exerciseIndex),
+        ),
+      })),
+    );
+    const activity = buildJavaScriptLabActivity(completions);
+
+    expect(activity.completedCount).toBe(55);
+    expect(activity.recentCompletions).toHaveLength(8);
+    expect(activity.nextAction).toEqual({
+      title: "All 55 guided steps are saved.",
+      description:
+        "Reopen the foundations lab to revisit the guided path without changing your saved completion record.",
+      label: "Review foundations",
+      href: "/practice/foundations",
     });
   });
 });

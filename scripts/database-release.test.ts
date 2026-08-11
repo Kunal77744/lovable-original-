@@ -5,6 +5,40 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 
 describe("database release contract", () => {
+  it("orders and verifies both private learner-history migrations", async () => {
+    const [journalSource, projectMigration, quizMigration, releaseScript] =
+      await Promise.all([
+        readFile(path.join(root, "drizzle/meta/_journal.json"), "utf8"),
+        readFile(
+          path.join(root, "drizzle/0029_wooden_scarecrow.sql"),
+          "utf8",
+        ),
+        readFile(
+          path.join(root, "drizzle/0030_lesson-quiz-attempt.sql"),
+          "utf8",
+        ),
+        readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+      ]);
+    const journal = JSON.parse(journalSource) as {
+      entries: Array<{ idx: number; tag: string }>;
+    };
+
+    expect(journal.entries.slice(-2)).toEqual([
+      expect.objectContaining({ idx: 29, tag: "0029_wooden_scarecrow" }),
+      expect.objectContaining({ idx: 30, tag: "0030_lesson-quiz-attempt" }),
+    ]);
+    expect(projectMigration).toContain('CREATE TABLE "project_review_attempt"');
+    expect(quizMigration).toContain(
+      'CREATE TABLE IF NOT EXISTS "lesson_quiz_attempt"',
+    );
+    expect(releaseScript).toMatch(
+      /project_review_attempt:\s*\[[\s\S]*?"passed_checks",[\s\S]*?"total_checks"/,
+    );
+    expect(releaseScript).toMatch(
+      /lesson_quiz_attempt:\s*\[[\s\S]*?"correct_count",[\s\S]*?"total_count"/,
+    );
+  });
+
   it("adds and verifies private daily coding challenge completion", async () => {
     const [migration, releaseScript] = await Promise.all([
       readFile(path.join(root, "drizzle/0028_daily-coding-challenge.sql"), "utf8"),

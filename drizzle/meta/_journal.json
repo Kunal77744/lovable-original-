@@ -204,6 +204,20 @@
       "when": 1786208400000,
       "tag": "0028_daily-coding-challenge",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1786416949982,
+      "tag": "0029_wooden_scarecrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1786417000000,
+      "tag": "0030_lesson-quiz-attempt",
+      "breakpoints": true
     }
   ]
 }
