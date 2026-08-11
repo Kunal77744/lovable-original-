@@ -22,6 +22,7 @@ import {
   capturePracticeProblemAccepted,
   capturePracticeProblemStarted,
   capturePublicPageview,
+  rememberLearnerEntrySource,
   sanitizeAnalyticsEvent,
 } from "./product-analytics";
 
@@ -142,6 +143,48 @@ describe("product analytics", () => {
     );
     expect(JSON.stringify(properties)).not.toMatch(
       /learner@example\.com|private learner note|private learner answer/i,
+    );
+  });
+
+  it("keeps the first allowed source on the anonymous journey across learning paths", () => {
+    expect(rememberLearnerEntrySource("search_page")).toBe("search_page");
+    expect(rememberLearnerEntrySource("directory")).toBe("search_page");
+
+    captureLearnerEventOnce("lesson_started", {
+      course_slug: "web-development-foundations",
+      lesson_slug: "semantic-html",
+    });
+    capturePracticeProblemStarted({ problemSlug: "sum-two-numbers" });
+    captureCssPracticeCompleted({
+      pathSlug: "css-selectors-box-model",
+      completionState: "completed",
+    });
+
+    expect(posthogMocks.capture.mock.calls.map(([event]) => event)).toEqual([
+      "lesson_started",
+      "practice_problem_started",
+      "css_practice_completed",
+    ]);
+
+    for (const [, properties] of posthogMocks.capture.mock.calls) {
+      expect(properties).toEqual(
+        expect.objectContaining({ entry_source: "search_page" }),
+      );
+    }
+  });
+
+  it("drops unknown, repeated, and private source values from analytics", () => {
+    rememberLearnerEntrySource("learner@example.com");
+    rememberLearnerEntrySource("https://example.com/private");
+    rememberLearnerEntrySource(["directory", "community"]);
+
+    capturePracticeProblemStarted({ problemSlug: "sum-two-numbers" });
+
+    const [, properties] = posthogMocks.capture.mock.calls[0];
+
+    expect(properties).not.toHaveProperty("entry_source");
+    expect(JSON.stringify(properties)).not.toMatch(
+      /learner@example\.com|example\.com|directory|community/i,
     );
   });
 

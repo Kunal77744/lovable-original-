@@ -190,6 +190,67 @@ describe("InterviewDrill", () => {
     expect(screen.getByText("4 questions remaining")).toBeInTheDocument();
   });
 
+  it("locks the submitted answer and rating until the save finishes", async () => {
+    const answer = "const prevents reassignment.";
+    const nextProgress: InterviewDrillProgress = {
+      ...startedProgress,
+      currentQuestion: 1,
+      answers: [
+        {
+          questionSlug: "const-let-var",
+          answer,
+          rating: "ready",
+        },
+      ],
+      updatedAt: "2026-07-27T01:02:00.000Z",
+    };
+    let resolveFetch:
+      | ((value: {
+          ok: boolean;
+          json: () => Promise<{ progress: InterviewDrillProgress }>;
+        }) => void)
+      | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+      ),
+    );
+
+    render(<InterviewDrill initialProgress={startedProgress} />);
+
+    const answerField = screen.getByRole("textbox", { name: /Your answer/ });
+    const ratingField = screen.getByLabelText("Ready to explain");
+    fireEvent.change(answerField, { target: { value: answer } });
+    fireEvent.click(ratingField);
+    fireEvent.click(screen.getByRole("button", { name: "Save and continue" }));
+
+    expect(answerField).toBeDisabled();
+    screen.getAllByRole("radio").forEach((option) => {
+      expect(option).toBeDisabled();
+    });
+    expect(answerField).toHaveValue(answer);
+    expect(screen.getByRole("button", { name: "Saving…" })).toBeDisabled();
+
+    resolveFetch?.({
+      ok: true,
+      json: async () => ({ progress: nextProgress }),
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", {
+          name: JAVASCRIPT_INTERVIEW_DRILL.questions[1].prompt,
+        }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("textbox", { name: /Your answer/ }),
+    ).not.toBeDisabled();
+  });
+
   it("announces a failed save through the same status region", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
@@ -212,6 +273,12 @@ describe("InterviewDrill", () => {
     );
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.getByText("5 questions remaining")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /Your answer/ })).toHaveValue(
+      "const prevents reassignment.",
+    );
+    expect(screen.getByRole("textbox", { name: /Your answer/ })).toBeEnabled();
+    expect(screen.getByLabelText("Ready to explain")).toBeChecked();
+    expect(screen.getByLabelText("Ready to explain")).toBeEnabled();
   });
 
   it("restores the next unanswered question from saved account progress", () => {

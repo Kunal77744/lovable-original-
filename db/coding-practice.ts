@@ -627,6 +627,7 @@ export async function getCodingProblemForStudent(
   if (!userId) {
     return {
       code: problem.starterCode,
+      hasSavedCode: false,
       latestAcceptedCode: null,
       bestVerdict: null,
       attempts: [] as CodingProblemAttempt[],
@@ -716,6 +717,7 @@ export async function getCodingProblemForStudent(
 
   return {
     code: progress[0]?.code ?? problem.starterCode,
+    hasSavedCode: progress.length > 0,
     latestAcceptedCode: latestAcceptedSubmissions[0]?.code ?? null,
     bestVerdict: progress[0]?.bestVerdict ?? null,
     attempts: attempts.map((attempt) => ({

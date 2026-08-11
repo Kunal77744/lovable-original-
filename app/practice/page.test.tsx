@@ -130,7 +130,12 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", {
         name: /Build an expense report from raw data/,
       }),
-    ).toHaveAttribute("href", "/projects/javascript-expense-report");
+    ).toHaveAttribute("href", "/practice/judge-basics");
+    expect(screen.getByText("Guided path first")).toBeInTheDocument();
+    expect(screen.getByText("0/55 steps saved")).toBeInTheDocument();
+    expect(document.querySelector(".practice-capstone-entry")).toHaveClass(
+      "is-locked",
+    );
     expect(
       screen.getByRole("link", { name: "Check review status" }),
     ).toHaveAttribute("href", "/practice/review");
@@ -292,6 +297,40 @@ describe("PracticePage progress", () => {
     expect(getLabProgress).toHaveBeenCalledWith("returning-learner");
     expect(screen.getByText("4/6 outcomes")).toBeInTheDocument();
     expect(screen.getByText("Continue project")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /Build an expense report from raw data/,
+      }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report");
+  });
+
+  it("unlocks a new capstone after all guided JavaScript steps", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "guided-path-complete" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 12,
+      completedSlugs: [],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 55,
+      totalCount: 55,
+      nextLabSlug: null,
+      nextLabTitle: null,
+      nextHref: "/practice",
+      nextExerciseNumber: null,
+      labs: [],
+    });
+
+    render(await PracticePage());
+
+    expect(
+      screen.getByRole("link", {
+        name: /Build an expense report from raw data/,
+      }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report");
+    expect(screen.getByText("Start project")).toBeInTheDocument();
   });
 
   it("resumes the saved foundations unit before problem 01", async () => {

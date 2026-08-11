@@ -12,9 +12,12 @@ describe("public sitemap", () => {
       `${productionUrl}/learn/web-development-foundations/css-selectors-box-model`,
       `${productionUrl}/practice`,
       `${productionUrl}/learn/semantic-html`,
+      `${productionUrl}/learn/why-use-semantic-html`,
       `${productionUrl}/learn/semantic-html-project`,
       `${productionUrl}/learn/semantic-html-cheat-sheet`,
       `${productionUrl}/learn/beginner-javascript-practice`,
+      `${productionUrl}/learn/what-is-the-css-box-model`,
+      `${productionUrl}/learn/how-to-practice-javascript`,
     ]);
   });
 

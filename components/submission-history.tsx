@@ -22,9 +22,49 @@ export function formatSubmissionTime(createdAt: string) {
 
 export function SubmissionHistory({
   submissions,
+  problemFilter,
+  verdictFilter,
 }: {
   submissions: CodingSubmissionHistoryItem[];
+  problemFilter?: string;
+  verdictFilter?: string;
 }) {
+  const problemOptions = Array.from(
+    new Map(
+      submissions.map((submission) => [
+        submission.problemSlug,
+        {
+          slug: submission.problemSlug,
+          number: submission.problemNumber,
+          title: submission.problemTitle,
+        },
+      ]),
+    ).values(),
+  ).sort((first, second) => first.number - second.number);
+  const activeProblemFilter = problemOptions.some(
+    (problem) => problem.slug === problemFilter,
+  )
+    ? problemFilter
+    : "";
+  const activeVerdictFilter =
+    verdictFilter === "accepted" || verdictFilter === "wrong-answer"
+      ? verdictFilter
+      : "";
+  const filteredSubmissions = submissions.filter((submission) => {
+    const matchesProblem =
+      !activeProblemFilter || submission.problemSlug === activeProblemFilter;
+    const matchesVerdict =
+      !activeVerdictFilter ||
+      (activeVerdictFilter === "accepted"
+        ? submission.verdict === "Accepted"
+        : submission.verdict === "Wrong Answer");
+
+    return matchesProblem && matchesVerdict;
+  });
+  const hasActiveFilters = Boolean(
+    activeProblemFilter || activeVerdictFilter,
+  );
+
   return (
     <div className="submission-history-layout">
       <header className="submission-history-heading">
@@ -48,8 +88,14 @@ export function SubmissionHistory({
 
       <section className="submission-history-summary" aria-label="History summary">
         <div>
-          <strong>{submissions.length}</strong>
-          <span>{submissions.length === 1 ? "attempt shown" : "attempts shown"}</span>
+          <strong>{filteredSubmissions.length}</strong>
+          <span>
+            {hasActiveFilters
+              ? `of ${submissions.length} saved ${submissions.length === 1 ? "attempt" : "attempts"}`
+              : filteredSubmissions.length === 1
+                ? "attempt shown"
+                : "attempts shown"}
+          </span>
         </div>
         <p>
           The newest 50 judged submissions stay in this view. Draft saves, local
@@ -69,6 +115,37 @@ export function SubmissionHistory({
           <span>Newest first</span>
         </div>
 
+        {submissions.length > 0 ? (
+          <form
+            className="submission-history-filters"
+            action="/submissions"
+            method="get"
+            aria-label="Filter submission history"
+          >
+            <label>
+              <span>Problem</span>
+              <select name="problem" defaultValue={activeProblemFilter}>
+                <option value="">All problems</option>
+                {problemOptions.map((problem) => (
+                  <option key={problem.slug} value={problem.slug}>
+                    {String(problem.number).padStart(2, "0")} · {problem.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Verdict</span>
+              <select name="verdict" defaultValue={activeVerdictFilter}>
+                <option value="">All verdicts</option>
+                <option value="accepted">Accepted</option>
+                <option value="wrong-answer">Wrong Answer</option>
+              </select>
+            </label>
+            <button type="submit">Show submissions</button>
+            {hasActiveFilters ? <Link href="/submissions">Clear filters</Link> : null}
+          </form>
+        ) : null}
+
         {submissions.length === 0 ? (
           <div className="submission-history-empty">
             <span aria-hidden="true">01</span>
@@ -80,9 +157,20 @@ export function SubmissionHistory({
               </p>
             </div>
           </div>
+        ) : filteredSubmissions.length === 0 ? (
+          <div className="submission-history-empty is-filtered">
+            <span aria-hidden="true">00</span>
+            <div>
+              <h3>No saved submissions match these filters.</h3>
+              <p>
+                Choose another problem or verdict, or clear the filters to see
+                all of your newest judged attempts.
+              </p>
+            </div>
+          </div>
         ) : (
           <ol>
-            {submissions.map((submission) => (
+            {filteredSubmissions.map((submission) => (
               <li key={submission.id}>
                 <span className="submission-history-number">
                   {String(submission.problemNumber).padStart(2, "0")}

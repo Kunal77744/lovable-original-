@@ -77,6 +77,57 @@ describe("SubmissionHistory", () => {
     expect(summary).toHaveTextContent("attempts shown");
     expect(screen.getAllByRole("link")).toHaveLength(1);
   });
+
+  it("narrows saved attempts by problem and verdict without changing the source records", () => {
+    render(
+      <SubmissionHistory
+        submissions={submissions}
+        problemFilter="sum-two-numbers"
+        verdictFilter="accepted"
+      />,
+    );
+
+    const filters = screen.getByRole("form", {
+      name: "Filter submission history",
+    });
+    expect(within(filters).getByLabelText("Problem")).toHaveValue(
+      "sum-two-numbers",
+    );
+    expect(within(filters).getByLabelText("Verdict")).toHaveValue("accepted");
+    const summary = screen.getByRole("region", { name: "History summary" });
+    expect(within(summary).getByText("of 2 saved attempts")).toBeInTheDocument();
+    expect(within(summary).getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("Sum two numbers")).toBeInTheDocument();
+    expect(screen.queryByText("Even or odd")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/submissions",
+    );
+  });
+
+  it("keeps an unmatched filter truthful and easy to clear", () => {
+    render(
+      <SubmissionHistory
+        submissions={submissions}
+        problemFilter="sum-two-numbers"
+        verdictFilter="wrong-answer"
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "No saved submissions match these filters.",
+      }),
+    ).toBeInTheDocument();
+    const summary = screen.getByRole("region", { name: "History summary" });
+    expect(within(summary).getByText("of 2 saved attempts")).toBeInTheDocument();
+    expect(within(summary).getByText("0")).toBeInTheDocument();
+    expect(screen.queryByText("Source saved")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/submissions",
+    );
+  });
 });
 
 describe("SubmissionSnapshot", () => {

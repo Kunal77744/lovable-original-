@@ -16,6 +16,7 @@ const requiredTables = [
   "coding_problem_bookmark",
   "coding_practice_goal",
   "daily_coding_challenge_completion",
+  "timed_coding_challenge_result",
   "coding_lab_exercise_progress",
   "coding_problem_progress",
   "coding_problem_test_case_set",
@@ -43,6 +44,14 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  timed_coding_challenge_result: [
+    "id",
+    "user_id",
+    "challenge_set_id",
+    "solved_count",
+    "elapsed_seconds",
+    "completed_at",
+  ],
   daily_coding_challenge_completion: [
     "id",
     "user_id",
@@ -296,6 +305,7 @@ async function run() {
           'coding_lab_exercise_progress',
           'coding_practice_goal',
           'daily_coding_challenge_completion',
+          'timed_coding_challenge_result',
           'css_practice_attempt',
           'css_practice_feedback',
           'css_practice_progress',

@@ -35,6 +35,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${productionUrl}/learn/why-use-semantic-html`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${productionUrl}/learn/semantic-html-project`,
       changeFrequency: "monthly",
       priority: 0.8,
@@ -46,6 +51,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${productionUrl}/learn/beginner-javascript-practice`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${productionUrl}/learn/what-is-the-css-box-model`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${productionUrl}/learn/how-to-practice-javascript`,
       changeFrequency: "monthly",
       priority: 0.8,
     },
