@@ -24129,6 +24129,7 @@ footer {
 .coding-activity-primary-action:focus-visible,
 .coding-practice-goal input:focus-visible,
 .coding-practice-goal button:focus-visible,
+.coding-lab-activity a:focus-visible,
 .coding-activity-next a:focus-visible {
   outline: 3px solid rgba(40, 118, 82, 0.3);
   outline-offset: 4px;
@@ -24499,6 +24500,128 @@ footer {
   font-weight: 750;
 }
 
+.coding-lab-activity {
+  margin-top: 24px;
+  padding: 42px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 21px 21px 7px 21px;
+  background: #f0f2ec;
+}
+
+.coding-lab-activity-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.48fr);
+  align-items: end;
+  gap: 48px;
+}
+
+.coding-lab-activity-heading h2 {
+  margin: 11px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(34px, 4vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.coding-lab-activity-continuation {
+  padding-left: 24px;
+  border-left: 1px solid rgba(23, 35, 30, 0.14);
+}
+
+.coding-lab-activity-continuation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.coding-lab-activity-continuation a {
+  margin-top: 13px;
+  display: inline-flex;
+  gap: 13px;
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.coding-lab-activity-list {
+  margin: 34px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(23, 35, 30, 0.14);
+}
+
+.coding-lab-activity-item {
+  padding: 21px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+  border-bottom: 1px solid rgba(23, 35, 30, 0.14);
+}
+
+.coding-lab-activity-item p {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.coding-lab-activity-item h3 {
+  margin: 7px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.coding-lab-activity-meta {
+  min-width: 118px;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.coding-lab-activity-meta time {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.coding-lab-activity-meta a {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.coding-lab-activity-empty {
+  margin-top: 34px;
+  padding: 25px 0 0;
+  border-top: 1px solid rgba(23, 35, 30, 0.14);
+}
+
+.coding-lab-activity-empty p {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.coding-lab-activity-empty span {
+  margin-top: 7px;
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .coding-activity-detail {
   margin-top: 24px;
   overflow: hidden;
@@ -24611,6 +24734,7 @@ footer {
   .coding-activity-hero,
   .coding-practice-goal,
   .coding-activity-calendar-heading,
+  .coding-lab-activity-heading,
   .coding-activity-next {
     grid-template-columns: 1fr;
   }
@@ -24631,6 +24755,7 @@ footer {
   }
 
   .coding-activity-calendar-heading,
+  .coding-lab-activity-heading,
   .coding-activity-next {
     align-items: start;
     gap: 24px;
@@ -24638,6 +24763,12 @@ footer {
 
   .coding-activity-detail dl {
     grid-template-columns: 1fr;
+  }
+
+  .coding-lab-activity-continuation {
+    padding: 22px 0 0;
+    border-top: 1px solid rgba(23, 35, 30, 0.14);
+    border-left: 0;
   }
 
   .coding-activity-detail dl > div {
@@ -24670,7 +24801,8 @@ footer {
   }
 
   .coding-practice-goal,
-  .coding-activity-calendar {
+  .coding-activity-calendar,
+  .coding-lab-activity {
     padding: 28px 20px;
   }
 
@@ -24698,6 +24830,15 @@ footer {
 
   .coding-activity-next {
     padding: 34px 26px;
+  }
+
+  .coding-lab-activity-item {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .coding-lab-activity-meta {
+    justify-items: start;
   }
 }
 
