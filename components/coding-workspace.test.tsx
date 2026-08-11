@@ -375,8 +375,8 @@ describe("CodingWorkspace", () => {
         debugOutput: [],
       });
       fetchSpy.mockResolvedValue(submissionResponse("Accepted", 4));
-      fireEvent.click(screen.getByRole("button", { name: "Run example" }));
-      await screen.findByText("Example passed");
+      fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+      await screen.findByText("Examples passed");
       expect(fetchSpy).not.toHaveBeenCalled();
 
       fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
