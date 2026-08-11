@@ -69,6 +69,39 @@ export type SavedCodingProblem = {
   skill: string;
 };
 
+export type SavedCodingProblemJournal = {
+  problemSlug: string;
+  content: string;
+  updatedAt: string;
+};
+
+export async function getCodingProblemJournalsForStudent(
+  userId: string,
+): Promise<SavedCodingProblemJournal[]> {
+  const rows = await getDatabase()
+    .select({
+      problemSlug: codingProblemNote.problemSlug,
+      content: codingProblemNote.content,
+      updatedAt: codingProblemNote.updatedAt,
+    })
+    .from(codingProblemNote)
+    .where(
+      and(
+        eq(codingProblemNote.userId, userId),
+        inArray(
+          codingProblemNote.problemSlug,
+          CODING_PROBLEMS.map((problem) => problem.slug),
+        ),
+      ),
+    )
+    .orderBy(asc(codingProblemNote.createdAt));
+
+  return rows.map((row) => ({
+    ...row,
+    updatedAt: row.updatedAt.toISOString(),
+  }));
+}
+
 export async function getCodingMistakeReviewQueueForStudent(
   userId: string,
 ): Promise<CodingMistakeReviewItem[]> {

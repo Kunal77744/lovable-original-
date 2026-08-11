@@ -123,10 +123,15 @@ export function CodingSkillRecord({
             <p className="eyebrow">12-problem evidence</p>
             <h2 id="skill-record-path-title">Your JavaScript skill path</h2>
           </div>
-          <p>
-            Accepted means every authored check passed. It is a saved result,
-            not a public score or ranking.
-          </p>
+          <div className="skill-record-path-note">
+            <p>
+              Accepted means every authored check passed. It is a saved result,
+              not a public score or ranking.
+            </p>
+            <Link href="/practice/journal">
+              Review private problem journals <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         </div>
 
         <ol className="skill-record-list">

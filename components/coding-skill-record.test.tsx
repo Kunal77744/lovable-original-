@@ -90,6 +90,9 @@ describe("CodingSkillRecord", () => {
     expect(
       screen.getByRole("heading", { name: "Your saved practice record" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Review private problem journals" }),
+    ).toHaveAttribute("href", "/practice/journal");
     expect(screen.getByText("5/7")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Review JavaScript foundations" }),
