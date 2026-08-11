@@ -314,7 +314,7 @@ export default async function LessonPage({
                   }
                 : null
             }
-            showRevisionPack={isSemanticLesson}
+            showRevisionPack
           />
         </article>
       </div>
