@@ -874,6 +874,7 @@ describe("CodingWorkspace", () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
       outputs: ["42"],
+      debugOutput: ["tokens 19 23", "sum 42"],
     });
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
@@ -887,6 +888,8 @@ describe("CodingWorkspace", () => {
 
     expect(await screen.findByText("Custom run")).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
+    expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
+    expect(screen.getByText(/tokens 19 23\s+sum 42/)).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Custom input finished. Review the output before you submit.",
     );
@@ -895,9 +898,70 @@ describe("CodingWorkspace", () => {
       ["19 23"],
     );
     expect(fetchSpy).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+    expect(capturePracticeFeedbackSubmitted).not.toHaveBeenCalled();
     expect(
       screen.getByText("No saved submissions yet. Your first verdict will appear here."),
     ).toBeInTheDocument();
+  });
+
+  it("keeps custom-input debug output visible after a runtime error", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "missingValue is not defined",
+      debugOutput: ["tokens 19 23", "before missing value"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Custom input"), {
+      target: { value: "19 23" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Run custom input" }));
+
+    expect(await screen.findByText("Runner stopped")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "missingValue is not defined",
+    );
+    expect(
+      screen.getByText(/tokens 19 23\s+before missing value/),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+    expect(capturePracticeFeedbackSubmitted).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("No saved submissions yet. Your first verdict will appear here."),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps custom-input debug output within the visible runner bounds", async () => {
+    const oversizedLine = "x".repeat(520);
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["42"],
+      debugOutput: [
+        oversizedLine,
+        ...Array.from({ length: 80 }, (_, index) => `line ${index + 2}`),
+      ],
+    });
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.click(screen.getByRole("button", { name: "Run custom input" }));
+
+    const debugConsole = await screen.findByText("Debug console · local only");
+    const debugOutput = debugConsole.nextElementSibling;
+    const visibleLines = debugOutput?.textContent?.split("\n") ?? [];
+
+    expect(visibleLines).toHaveLength(80);
+    expect(visibleLines[0]).toBe(`${"x".repeat(500)}…`);
+    expect(visibleLines.at(-1)).toBe("line 80");
+    expect(screen.queryByText("line 81")).not.toBeInTheDocument();
   });
 
   it("restores private test cases without changing attempts or analytics", () => {
