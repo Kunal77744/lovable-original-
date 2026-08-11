@@ -9,6 +9,7 @@ import {
 import { auth } from "@/lib/auth";
 import { getSignInHref } from "@/lib/account-destination";
 import { LearnerSettingsForm } from "@/components/learner-settings-form";
+import { LearnerDataExport } from "@/components/learner-data-export";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +64,22 @@ export default async function SettingsPage() {
             <span>Account only</span>
           </div>
           <LearnerSettingsForm initialSettings={settings} />
+        </article>
+
+        <article className="settings-panel settings-export-panel">
+          <div className="settings-panel-heading">
+            <div>
+              <p className="course-kicker">Your learning data</p>
+              <h2>Take your work with you.</h2>
+            </div>
+            <span>Private JSON</span>
+          </div>
+          <p className="settings-export-copy">
+            Download the course work, projects, code, attempts, notes, feedback,
+            and practice records saved to this account. Passwords, sessions, and
+            sign-in details are never included.
+          </p>
+          <LearnerDataExport />
         </article>
 
         <div className="settings-footer-actions">

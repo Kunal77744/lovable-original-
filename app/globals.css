@@ -10373,6 +10373,75 @@ h1 {
   color: #9c2f29;
 }
 
+.settings-export-panel {
+  margin-top: 18px;
+  background:
+    linear-gradient(125deg, rgba(40, 118, 82, 0.075), transparent 55%),
+    var(--surface);
+  box-shadow: none;
+}
+
+.settings-export-copy {
+  max-width: 64ch;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.settings-export-action {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.settings-export-action button {
+  min-height: 48px;
+  padding: 0 18px;
+  color: var(--accent-deep);
+  border: 1px solid var(--accent-deep);
+  border-radius: 9px;
+  background: #f7fbf6;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.settings-export-action button:hover:not(:disabled) {
+  background: #eaf4ec;
+  transform: translateY(-1px);
+}
+
+.settings-export-action button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.settings-export-action button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.settings-export-action button:disabled {
+  opacity: 0.54;
+  cursor: not-allowed;
+}
+
+.settings-export-action p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.settings-export-action p.is-error {
+  color: #9c2f29;
+}
+
 .settings-footer-actions {
   margin-top: 22px;
   display: flex;
@@ -13122,16 +13191,22 @@ footer {
   .certificate-heading,
   .settings-footer-actions,
   .settings-save-row,
+  .settings-export-action,
   .certificate-actions {
     align-items: flex-start;
     flex-direction: column;
   }
 
   .settings-save-row button,
+  .settings-export-action button,
   .settings-certificate-link,
   .certificate-print-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .settings-export-panel {
+    margin-top: 18px;
   }
 
   .certificate-card {

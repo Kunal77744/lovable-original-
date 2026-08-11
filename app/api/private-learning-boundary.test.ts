@@ -6,6 +6,7 @@ import * as labProgressDb from "@/db/javascript-lab-progress";
 import * as readinessDb from "@/db/javascript-readiness";
 import * as mixedReviewDb from "@/db/javascript-mixed-review";
 import * as foundationsReviewDb from "@/db/web-foundations-review";
+import * as learningDataExportDb from "@/db/learning-data-export";
 import { auth } from "@/lib/auth";
 import { GET as getCertificate } from "./certificate/route";
 import {
@@ -25,6 +26,7 @@ import {
   GET as getSettings,
   POST as saveSettings,
 } from "./settings/route";
+import { GET as exportLearningData } from "./settings/export/route";
 import {
   GET as getProjectFeedback,
   POST as saveProjectFeedback,
@@ -76,6 +78,10 @@ vi.mock("@/db/javascript-mixed-review", () => ({
 vi.mock("@/db/web-foundations-review", () => ({
   getWebFoundationsReviewResultForStudent: vi.fn(),
   saveWebFoundationsReviewResultForStudent: vi.fn(),
+}));
+
+vi.mock("@/db/learning-data-export", () => ({
+  getLearningDataExportForStudent: vi.fn(),
 }));
 
 vi.mock("@/db/coding-practice", () => ({
@@ -134,10 +140,11 @@ describe("signed-out private learning boundary", () => {
       saveReadiness(request.clone()),
       saveMixedReview(request.clone()),
       saveFoundationsReview(request.clone()),
+      exportLearningData(),
     ]);
 
     expect(responses.map((response) => response.status)).toEqual(
-      Array(18).fill(401),
+      Array(19).fill(401),
     );
     expect(courseDb.getFirstLessonNote).not.toHaveBeenCalled();
     expect(courseDb.saveFirstLessonNote).not.toHaveBeenCalled();
@@ -163,5 +170,8 @@ describe("signed-out private learning boundary", () => {
     expect(mixedReviewDb.saveJavaScriptMixedReviewResultForStudent).not.toHaveBeenCalled();
     expect(foundationsReviewDb.getWebFoundationsReviewResultForStudent).not.toHaveBeenCalled();
     expect(foundationsReviewDb.saveWebFoundationsReviewResultForStudent).not.toHaveBeenCalled();
+    expect(
+      learningDataExportDb.getLearningDataExportForStudent,
+    ).not.toHaveBeenCalled();
   });
 });
