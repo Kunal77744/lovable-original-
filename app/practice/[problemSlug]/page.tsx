@@ -12,6 +12,7 @@ import {
   getPracticeFeedbackForStudent,
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { parseLearnerEntrySource } from "@/lib/learner-entry-source";
 import {
   formatDailyCodingChallengeDate,
   isCurrentDailyCodingChallenge,
@@ -32,6 +33,8 @@ type ProblemPageProps = {
     review?: string | string[];
     submission?: string | string[];
     daily?: string | string[];
+    mode?: string | string[];
+    entry_source?: string | string[];
   }>;
 };
 
@@ -62,6 +65,10 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
     typeof submissionParam === "string" ? submissionParam : null;
   const reviewParam = resolvedSearchParams?.review;
   const dailyParam = resolvedSearchParams?.daily;
+  const modeParam = resolvedSearchParams?.mode;
+  const entrySource = parseLearnerEntrySource(
+    resolvedSearchParams?.entry_source,
+  );
   const problem = getCodingProblem(problemSlug);
 
   if (!problem) notFound();
@@ -113,11 +120,19 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
           totalTests: requestedSubmission.totalTests,
         }
       : null;
+  const isCleanPractice =
+    Boolean(session) &&
+    modeParam === "clean" &&
+    studentState.bestVerdict === "Accepted" &&
+    loadedSubmission === null;
 
   return (
     <main>
       {problem.number === 1 ? (
-        <PracticeProblemStartTracker problemSlug={problem.slug} />
+        <PracticeProblemStartTracker
+          problemSlug={problem.slug}
+          entrySource={entrySource}
+        />
       ) : null}
       <SiteNav currentPage="practice" studentSession={Boolean(session)} />
       <div
@@ -206,23 +221,34 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
           </article>
 
           <CodingWorkspace
-            key={loadedSubmission?.id ?? "current-editor"}
+            key={
+              loadedSubmission?.id ??
+              (isCleanPractice ? "clean-practice" : "current-editor")
+            }
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
-            initialCode={loadedSubmission?.code ?? studentState.code}
+            initialCode={
+              isCleanPractice
+                ? problem.starterCode
+                : loadedSubmission?.code ?? studentState.code
+            }
             initialAcceptedCode={
-              loadedSubmission
-                ? loadedSubmission.verdict === "Accepted"
-                  ? loadedSubmission.code
-                  : null
-                : studentState.latestAcceptedCode
+              isCleanPractice
+                ? null
+                : loadedSubmission
+                  ? loadedSubmission.verdict === "Accepted"
+                    ? loadedSubmission.code
+                    : null
+                  : studentState.latestAcceptedCode
             }
             initialCustomTestCases={studentState.customTestCases}
             initialPracticeFeedback={practiceFeedbackState.feedback}
             initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}
+            hasSavedCode={studentState.hasSavedCode}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             isReviewSession={isReviewSession}
+            isCleanPractice={isCleanPractice}
             dailyChallengeDate={dailyChallengeDate}
             loadedSubmission={loadedSubmission}
             problem={{
@@ -231,12 +257,16 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               recoveryHint: problem.recoveryHint,
               recoveryHints: problem.recoveryHints,
               acceptedExplanation: problem.acceptedExplanation,
+              workedTrace: problem.workedTrace,
               starterCode: problem.starterCode,
-              tests: problem.tests.map((test) => ({ input: test.input })),
-              example: {
-                input: problem.examples[0].input,
-                expectedOutput: problem.examples[0].output,
-              },
+              tests: problem.tests.map((test) => ({
+                label: test.label,
+                input: test.input,
+              })),
+              examples: problem.examples.map((example) => ({
+                input: example.input,
+                expectedOutput: example.output,
+              })),
             }}
           />
         </div>
