@@ -6,6 +6,12 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AcceptedSolutionDownload } from "@/components/accepted-solution-download";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
+import {
+  getCodingDraftRecoveryKey,
+  parseCodingDraftRecovery,
+  serializeCodingDraftRecovery,
+  type CodingDraftRecovery,
+} from "@/lib/coding-draft-recovery";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   MAX_CODING_TEST_CASES,
@@ -27,6 +33,7 @@ import type { SavedPracticeSolutionNote } from "@/lib/practice-solution-note";
 type CodingWorkspaceProps = {
   attempts: CodingProblemAttempt[];
   bestVerdict: string | null;
+  browserRecoveryScope?: string | null;
   initialCode: string;
   initialAcceptedCode?: string | null;
   initialCustomTestCases?: CodingTestCase[];
@@ -320,6 +327,7 @@ function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
 export function CodingWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
+  browserRecoveryScope = null,
   initialCode,
   initialAcceptedCode = null,
   initialCustomTestCases = [],
@@ -337,6 +345,8 @@ export function CodingWorkspace({
   const lineNumberGutterRef = useRef<HTMLDivElement>(null);
   const [code, setCode] = useState(initialCode);
   const [acceptedCode, setAcceptedCode] = useState(initialAcceptedCode);
+  const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
+    useState<CodingDraftRecovery | null>(null);
   const [attempts, setAttempts] = useState(initialAttempts);
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
   const [showPracticeFeedback, setShowPracticeFeedback] = useState(
@@ -448,6 +458,28 @@ export function CodingWorkspace({
 
     return () => window.clearTimeout(preferenceTimer);
   }, []);
+  const browserRecoveryKey =
+    isSignedIn && browserRecoveryScope && !loadedSubmission && !isCleanPractice
+      ? getCodingDraftRecoveryKey(browserRecoveryScope, problem.slug)
+      : null;
+
+  useEffect(() => {
+    if (!browserRecoveryKey) return;
+
+    try {
+      const storedValue = window.localStorage.getItem(browserRecoveryKey);
+      const browserDraft = parseCodingDraftRecovery(storedValue);
+
+      if (!browserDraft || browserDraft.code === initialCode) {
+        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      setRecoverableBrowserDraft(browserDraft);
+    } catch {
+      // Private server saving remains available when browser storage is blocked.
+    }
+  }, [browserRecoveryKey, initialCode]);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
@@ -511,6 +543,7 @@ export function CodingWorkspace({
           clearAnonymousDraft(problem.slug);
           setSaveState("saved");
         }
+        clearBrowserRecoveryIfMatches(nextCode);
       } catch {
         if (draftRevision.current === revision) {
           lastQueuedDraftRevision.current = -1;
@@ -542,6 +575,36 @@ export function CodingWorkspace({
     await draftSaveChain.current;
   }
 
+  function persistBrowserRecovery(nextCode: string) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.setItem(
+        browserRecoveryKey,
+        serializeCodingDraftRecovery(nextCode),
+      );
+      setRecoverableBrowserDraft(null);
+    } catch {
+      // The existing private autosave remains the fallback when storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(savedCode: string) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      const browserDraft = parseCodingDraftRecovery(
+        window.localStorage.getItem(browserRecoveryKey),
+      );
+
+      if (browserDraft?.code === savedCode) {
+        window.localStorage.removeItem(browserRecoveryKey);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
+
   function updateCode(nextCode: string) {
     setCode(nextCode);
     setSaveState("unsaved");
@@ -556,8 +619,9 @@ export function CodingWorkspace({
 
     if (!isSignedIn) {
       writeAnonymousDraft(problem.slug, nextCode);
-    } else if (recoveredAnonymousDraft) {
-      setAnonymousDraftDismissed(true);
+    } else {
+      if (recoveredAnonymousDraft) setAnonymousDraftDismissed(true);
+      persistBrowserRecovery(nextCode);
     }
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
@@ -588,6 +652,7 @@ export function CodingWorkspace({
     setHasEditableDraft(false);
     draftRevision.current += 1;
     setSaveState("unsaved");
+    persistBrowserRecovery(problem.starterCode);
     setIsRestoreConfirmationOpen(false);
     setAnonymousDraftDismissed(true);
     clearAnonymousDraft(problem.slug);
@@ -596,6 +661,29 @@ export function CodingWorkspace({
       message:
         "Clean starter restored in the editor. Your saved code and attempts have not changed.",
     });
+  }
+
+  function restoreBrowserDraft() {
+    if (!recoverableBrowserDraft) return;
+
+    const recoveredCode = recoverableBrowserDraft.code;
+    updateCode(recoveredCode);
+    setRunState({
+      kind: "idle",
+      message:
+        "Browser draft restored as unsaved work. Your private saved solution stays unchanged until this exact code saves.",
+    });
+  }
+
+  function keepPrivateSavedDraft() {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.removeItem(browserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDraft(null);
   }
 
   function saveDraftNow() {
@@ -930,6 +1018,7 @@ export function CodingWorkspace({
       setAnonymousDraftDismissed(true);
       clearAnonymousDraft(problem.slug);
       setSaveState("saved");
+      clearBrowserRecoveryIfMatches(submittedCode);
       setAttempts((current) => [
         {
           id: payload.id,
@@ -1242,6 +1331,31 @@ export function CodingWorkspace({
               {saveState === "saving" ? "Saving…" : "Save recovered draft"}
             </button>
           </div>
+        ) : null}
+        {recoverableBrowserDraft && !recoveredAnonymousDraft ? (
+          <aside
+            className="browser-draft-recovery"
+            aria-labelledby="browser-draft-recovery-title"
+          >
+            <div>
+              <span>Browser recovery</span>
+              <strong id="browser-draft-recovery-title">
+                Newer work is available on this browser.
+              </strong>
+            </div>
+            <p>
+              Your private saved solution is still loaded. Restore this copy as
+              unsaved work, or keep the account-backed version.
+            </p>
+            <div className="browser-draft-recovery-actions">
+              <button type="button" onClick={keepPrivateSavedDraft}>
+                Keep saved editor
+              </button>
+              <button type="button" onClick={restoreBrowserDraft}>
+                Restore browser draft
+              </button>
+            </div>
+          </aside>
         ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <div className="code-editor-input">
