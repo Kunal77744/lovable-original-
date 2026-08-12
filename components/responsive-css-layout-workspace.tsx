@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
+import { getAccountHref } from "@/lib/account-destination";
 import {
   buildResponsiveCssPreview,
+  MAX_RESPONSIVE_CSS_LENGTH,
   type ResponsiveCssCheck,
 } from "@/lib/responsive-css-practice";
 
@@ -51,8 +54,33 @@ export function ResponsiveCssLayoutWorkspace({
         : "Saved practice restored. Revise the open checks and save again."
       : "Starter CSS is ready. Save when the cards adapt cleanly.",
   );
-  const previewDocument = useMemo(() => buildResponsiveCssPreview(css), [css]);
+  const {
+    recoveredSource,
+    dismissRecoveredDraft,
+    preserveDraft,
+    clearDraft,
+  } = useLessonWorkspaceBrowserDraft({
+    lessonSlug,
+    initialSource: initialCss,
+    initiallySaved,
+    maxLength: MAX_RESPONSIVE_CSS_LENGTH,
+  });
+  const editorCss = recoveredSource ?? css;
+  const recoveredBrowserDraft = recoveredSource !== null;
+  const visibleMessage = recoveredBrowserDraft
+    ? isSignedIn
+      ? "Browser draft restored after sign-in. It is still unsaved. Check and save when you’re ready."
+      : "Browser draft restored. Create an account to save it privately."
+    : message;
+  const previewDocument = useMemo(
+    () => buildResponsiveCssPreview(editorCss),
+    [editorCss],
+  );
   const passedCount = checks.filter((check) => check.passed).length;
+
+  useEffect(() => {
+    latestCss.current = editorCss;
+  }, [editorCss]);
 
   async function savePractice() {
     if (!isSignedIn) {
@@ -94,6 +122,9 @@ export function ResponsiveCssLayoutWorkspace({
       }
 
       setSaveState("saved");
+      setCss(submittedCss);
+      dismissRecoveredDraft();
+      clearDraft();
       setMessage(
         payload.submission?.status === "completed"
           ? "Practice complete. Your CSS and 4/4 result are saved."
@@ -173,13 +204,16 @@ export function ResponsiveCssLayoutWorkspace({
           <label htmlFor="responsive-css-editor">Responsive layout CSS</label>
           <textarea
             id="responsive-css-editor"
-            value={css}
+            value={editorCss}
             onChange={(event) => {
               latestCss.current = event.target.value;
               setCss(latestCss.current);
+              dismissRecoveredDraft();
+              preserveDraft(latestCss.current);
               setSaveState("unsaved");
               setMessage("You have unsaved changes.");
             }}
+            maxLength={MAX_RESPONSIVE_CSS_LENGTH}
             spellCheck={false}
           />
         </div>
@@ -241,11 +275,18 @@ export function ResponsiveCssLayoutWorkspace({
             className={saveState === "error" ? "is-error" : ""}
             aria-live="polite"
           >
-            {message}
-            {!isSignedIn && message.startsWith("Create a free account") ? (
+            {visibleMessage}
+            {!isSignedIn &&
+            (recoveredBrowserDraft || message.startsWith("Create a free account")) ? (
               <>
                 {" "}
-                <Link href="/account">Create account</Link>
+                <Link
+                  href={getAccountHref(
+                    `/learn/web-development-foundations/${lessonSlug}`,
+                  )}
+                >
+                  Create account
+                </Link>
               </>
             ) : null}
           </p>
