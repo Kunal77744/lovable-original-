@@ -8595,12 +8595,15 @@ h1 {
 }
 
 .code-editor-bar {
-  min-height: 43px;
-  padding: 0 18px;
+  min-height: 0;
+  padding: 10px 18px 9px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "file controls status"
+    "shortcuts shortcuts shortcuts";
+  grid-template-columns: minmax(5rem, 1fr) auto minmax(5rem, 1fr);
   align-items: center;
-  gap: 16px;
+  gap: 8px 16px;
   color: #aebbb4;
   border-bottom: 1px solid #31423a;
   background: #1d2b25;
@@ -8609,15 +8612,17 @@ h1 {
 }
 
 .code-editor-file {
+  grid-area: file;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
   white-space: nowrap;
 }
 
-.code-editor-file span:last-child {
+.code-editor-shortcuts {
+  grid-area: shortcuts;
   color: #7f9188;
+  line-height: 1.4;
   white-space: nowrap;
 }
 
@@ -8626,6 +8631,7 @@ h1 {
 }
 
 .code-editor-save-status {
+  grid-area: status;
   justify-self: end;
   display: flex;
   align-items: center;
@@ -8661,6 +8667,7 @@ h1 {
 }
 
 .editor-view-controls {
+  grid-area: controls;
   justify-self: center;
   display: flex;
   align-items: center;
@@ -14343,16 +14350,19 @@ footer {
     padding: 10px 14px;
     grid-template-areas:
       "file status"
+      "shortcuts shortcuts"
       "controls controls";
     grid-template-columns: 1fr auto;
     gap: 10px 14px;
   }
 
   .code-editor-file {
-    grid-area: file;
     max-width: 100%;
-    gap: 10px;
     flex-wrap: wrap;
+  }
+
+  .code-editor-shortcuts {
+    white-space: normal;
   }
 
   .code-editor-save-status {

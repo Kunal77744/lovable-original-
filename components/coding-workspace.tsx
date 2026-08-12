@@ -19,6 +19,7 @@ import {
   validateCodingTestCases,
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
+import { toggleEditorLineComments } from "@/lib/code-editor-comments";
 import { applyEditorIndentation } from "@/lib/code-editor-indentation";
 import { applyEditorSmartEditing } from "@/lib/code-editor-smart-editing";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
@@ -1199,6 +1200,31 @@ export function CodingWorkspace({
       return;
     }
 
+    if (
+      event.key === "/" &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      const result = toggleEditorLineComments(
+        editorCode,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+      );
+
+      if (result.value === editorCode) return;
+
+      pendingEditorSelection.current = {
+        start: result.selectionStart,
+        end: result.selectionEnd,
+      };
+      updateCode(result.value);
+      return;
+    }
+
     if (event.key === "Escape") {
       allowNextEditorTabToExit.current = true;
       return;
@@ -1327,9 +1353,6 @@ export function CodingWorkspace({
         <div className="code-editor-bar">
           <div className="code-editor-file">
             <span>solution.js</span>
-            <span id="coding-editor-indentation-hint">
-              Tab indents · Shift+Tab outdents · Ctrl/⌘ F finds · Esc then Tab exits
-            </span>
           </div>
           <div
             className="editor-view-controls"
@@ -1420,6 +1443,12 @@ export function CodingWorkspace({
               </button>
             ) : null}
           </div>
+          <span
+            className="code-editor-shortcuts"
+            id="coding-editor-indentation-hint"
+          >
+            Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits
+          </span>
         </div>
         {loadedSubmission ? (
           <div className="loaded-submission-cue" role="status">

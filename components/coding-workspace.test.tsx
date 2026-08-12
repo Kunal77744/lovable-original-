@@ -380,7 +380,7 @@ describe("CodingWorkspace", () => {
     );
     expect(
       screen.getByText(
-        "Tab indents · Shift+Tab outdents · Ctrl/⌘ F finds · Esc then Tab exits",
+        "Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits",
       ),
     ).toBeInTheDocument();
 
@@ -388,6 +388,29 @@ describe("CodingWorkspace", () => {
     fireEvent.keyDown(editor, { key: "Tab", shiftKey: true });
 
     expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("comments and uncomments selected JavaScript without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({ initialCode: "const input = 1;\nreturn input;" });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+
+    expect(editor).toHaveValue("// const input = 1;\n// return input;");
+    expect(editor.selectionStart).toBe(3);
+    expect(editor.selectionEnd).toBe(36);
+
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", metaKey: true });
+
+    expect(editor).toHaveValue("const input = 1;\nreturn input;");
     expect(runCodingSolution).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
