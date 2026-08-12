@@ -92,6 +92,9 @@ describe("PracticeProgressPage", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "Open saved workspaces" }),
+    ).toHaveAttribute("href", "/practice/workspaces");
+    expect(
       screen.getByRole("heading", { name: "Your saved practice record" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start problem 01" })).toHaveAttribute(
