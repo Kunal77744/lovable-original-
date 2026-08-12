@@ -30,6 +30,9 @@ describe("CssBoxModelWorkspace", () => {
       "href",
       "/account",
     );
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 
   it("saves the exact CSS and restores the server checks", async () => {
@@ -80,6 +83,9 @@ describe("CssBoxModelWorkspace", () => {
       }),
     );
     expect(screen.getByLabelText("4 of 4 checks pass")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .css" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps newer CSS visibly unsaved when an older save finishes", async () => {
@@ -162,5 +168,8 @@ describe("CssBoxModelWorkspace", () => {
       "/api/lessons/css-selectors-box-model/workspace",
       expect.objectContaining({ body: JSON.stringify({ html: submittedCss }) }),
     );
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 });
