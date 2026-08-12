@@ -380,7 +380,7 @@ describe("CodingWorkspace", () => {
     );
     expect(
       screen.getByText(
-        "Tab indents · Shift+Tab outdents · Esc then Tab exits",
+        "Tab indents · Shift+Tab outdents · Ctrl/⌘ F finds · Esc then Tab exits",
       ),
     ).toBeInTheDocument();
 
@@ -388,6 +388,73 @@ describe("CodingWorkspace", () => {
     fireEvent.keyDown(editor, { key: "Tab", shiftKey: true });
 
     expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("finds repeated source text from the editor without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({
+      initialCode:
+        "function solve(input) {\n  const value = input.trim();\n  return value;\n}",
+    });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    expect(
+      fireEvent.keyDown(editor, { key: "f", ctrlKey: true }),
+    ).toBe(false);
+
+    const findInput = screen.getByLabelText("Find");
+    expect(findInput).toHaveFocus();
+    fireEvent.change(findInput, { target: { value: "value" } });
+
+    expect(screen.getByText("1 of 2 matches")).toBeInTheDocument();
+    expect(editor.selectionStart).toBe(32);
+    expect(editor.selectionEnd).toBe(37);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(63);
+    expect(editor.selectionEnd).toBe(68);
+    expect(screen.getByText("2 of 2 matches")).toBeInTheDocument();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("replaces one selected match as normal unsaved editor work", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({
+      initialCode:
+        "function solve(input) {\n  const value = input.trim();\n  return value;\n}",
+    });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Find" }),
+    );
+    fireEvent.change(screen.getByLabelText("Find"), {
+      target: { value: "value" },
+    });
+    fireEvent.change(screen.getByLabelText("Replace with"), {
+      target: { value: "answer" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replace match" }),
+    );
+
+    expect(editor).toHaveValue(
+      "function solve(input) {\n  const answer = input.trim();\n  return value;\n}",
+    );
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(32);
+    expect(editor.selectionEnd).toBe(38);
+    expect(screen.getByText("1 of 1 match")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
     expect(runCodingSolution).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
   });

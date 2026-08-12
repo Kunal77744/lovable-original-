@@ -253,6 +253,30 @@ function saveEditorViewPreference(
   }
 }
 
+type CodeSearchMatch = {
+  start: number;
+  end: number;
+};
+
+function findCodeMatches(code: string, query: string): CodeSearchMatch[] {
+  if (!query) return [];
+
+  const matches: CodeSearchMatch[] = [];
+  const searchableCode = code.toLowerCase();
+  const searchableQuery = query.toLowerCase();
+  let searchFrom = 0;
+
+  while (searchFrom <= searchableCode.length - searchableQuery.length) {
+    const start = searchableCode.indexOf(searchableQuery, searchFrom);
+    if (start === -1) break;
+
+    matches.push({ start, end: start + query.length });
+    searchFrom = start + query.length;
+  }
+
+  return matches;
+}
+
 function getJudgeChecks(
   checks: SubmissionResponse["checks"],
   tests: CodingWorkspaceProps["problem"]["tests"],
@@ -397,8 +421,13 @@ export function CodingWorkspace({
   const [editorFontSize, setEditorFontSize] =
     useState<EditorFontSize>(13);
   const [wrapEditorLines, setWrapEditorLines] = useState(true);
+  const [isEditorSearchOpen, setIsEditorSearchOpen] = useState(false);
+  const [editorSearchQuery, setEditorSearchQuery] = useState("");
+  const [editorReplacement, setEditorReplacement] = useState("");
+  const [editorSearchIndex, setEditorSearchIndex] = useState(0);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorTextarea = useRef<HTMLTextAreaElement | null>(null);
+  const editorSearchInput = useRef<HTMLInputElement | null>(null);
   const pendingEditorSelection = useRef<{
     start: number;
     end: number;
@@ -442,10 +471,22 @@ export function CodingWorkspace({
     anonymousDraft !== initialCode;
   const recoveredAnonymousDraft = isSignedIn && canUseAnonymousDraft;
   const editorCode = canUseAnonymousDraft ? anonymousDraft : code;
+  const editorSearchMatches = findCodeMatches(
+    editorCode,
+    editorSearchQuery,
+  );
+  const currentEditorSearchIndex = Math.min(
+    editorSearchIndex,
+    Math.max(0, editorSearchMatches.length - 1),
+  );
 
   useEffect(() => {
     latestCode.current = editorCode;
   }, [editorCode]);
+
+  useEffect(() => {
+    if (isEditorSearchOpen) editorSearchInput.current?.focus();
+  }, [isEditorSearchOpen]);
 
   useEffect(() => {
     const preferenceTimer = window.setTimeout(() => {
@@ -708,6 +749,59 @@ export function CodingWorkspace({
     }
 
     saveDraftNow();
+  }
+
+  function openEditorSearch() {
+    if (isEditorSearchOpen) {
+      editorSearchInput.current?.focus();
+      return;
+    }
+
+    setIsEditorSearchOpen(true);
+  }
+
+  function closeEditorSearch() {
+    setIsEditorSearchOpen(false);
+    editorTextarea.current?.focus();
+  }
+
+  function selectEditorSearchMatch(index: number) {
+    if (editorSearchMatches.length === 0 || !editorTextarea.current) return;
+
+    const nextIndex =
+      (index + editorSearchMatches.length) % editorSearchMatches.length;
+    const match = editorSearchMatches[nextIndex];
+    setEditorSearchIndex(nextIndex);
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(match.start, match.end);
+  }
+
+  function previewFirstEditorSearchMatch(query: string) {
+    const firstMatch = findCodeMatches(editorCode, query)[0];
+    if (!firstMatch || !editorTextarea.current) return;
+
+    editorTextarea.current.setSelectionRange(firstMatch.start, firstMatch.end);
+  }
+
+  function replaceCurrentEditorSearchMatch() {
+    const match = editorSearchMatches[currentEditorSearchIndex];
+    if (!match) return;
+
+    const nextCode =
+      editorCode.slice(0, match.start) +
+      editorReplacement +
+      editorCode.slice(match.end);
+    pendingEditorSelection.current = {
+      start: match.start,
+      end: match.start + editorReplacement.length,
+    };
+    setEditorSearchIndex(
+      Math.min(
+        currentEditorSearchIndex,
+        Math.max(0, findCodeMatches(nextCode, editorSearchQuery).length - 1),
+      ),
+    );
+    updateCode(nextCode);
   }
 
   async function runExamples() {
@@ -1093,6 +1187,17 @@ export function CodingWorkspace({
   }
 
   function handleEditorKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      event.key.toLowerCase() === "f" &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      openEditorSearch();
+      return;
+    }
+
     if (event.key === "Escape") {
       allowNextEditorTabToExit.current = true;
       return;
@@ -1187,12 +1292,12 @@ export function CodingWorkspace({
           <div className="code-editor-file">
             <span>solution.js</span>
             <span id="coding-editor-indentation-hint">
-              Tab indents · Shift+Tab outdents · Esc then Tab exits
+              Tab indents · Shift+Tab outdents · Ctrl/⌘ F finds · Esc then Tab exits
             </span>
           </div>
           <div
             className="editor-view-controls"
-            aria-label="Editor view preferences"
+            aria-label="Editor tools and view preferences"
           >
             <label>
               <span>Text size</span>
@@ -1227,6 +1332,16 @@ export function CodingWorkspace({
               />
               <span>Wrap lines</span>
             </label>
+            <button
+              type="button"
+              className="editor-search-trigger"
+              aria-expanded={isEditorSearchOpen}
+              aria-controls="coding-editor-search"
+              data-draft-save-action="true"
+              onClick={openEditorSearch}
+            >
+              Find
+            </button>
             <span className="sr-only">
               These view preferences stay in this browser.
             </span>
@@ -1364,6 +1479,101 @@ export function CodingWorkspace({
               </button>
             </div>
           </aside>
+        ) : null}
+        {isEditorSearchOpen ? (
+          <section
+            className="code-editor-search"
+            id="coding-editor-search"
+            aria-label="Find and replace in code"
+          >
+            <div className="code-editor-search-fields">
+              <label>
+                <span>Find</span>
+                <input
+                  ref={editorSearchInput}
+                  type="search"
+                  value={editorSearchQuery}
+                  data-draft-save-action="true"
+                  onChange={(event) => {
+                    setEditorSearchQuery(event.target.value);
+                    setEditorSearchIndex(0);
+                    previewFirstEditorSearchMatch(event.target.value);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      closeEditorSearch();
+                    } else if (event.key === "Enter") {
+                      event.preventDefault();
+                      selectEditorSearchMatch(
+                        currentEditorSearchIndex + (event.shiftKey ? -1 : 1),
+                      );
+                    }
+                  }}
+                />
+              </label>
+              <label>
+                <span>Replace with</span>
+                <input
+                  type="text"
+                  value={editorReplacement}
+                  data-draft-save-action="true"
+                  onChange={(event) => setEditorReplacement(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      closeEditorSearch();
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            <p className="code-editor-search-status" aria-live="polite">
+              {!editorSearchQuery
+                ? "Enter text to search this file."
+                : editorSearchMatches.length === 0
+                  ? "No matches"
+                  : `${currentEditorSearchIndex + 1} of ${editorSearchMatches.length} ${editorSearchMatches.length === 1 ? "match" : "matches"}`}
+            </p>
+            <div className="code-editor-search-actions">
+              <button
+                type="button"
+                data-draft-save-action="true"
+                onClick={() =>
+                  selectEditorSearchMatch(currentEditorSearchIndex - 1)
+                }
+                disabled={editorSearchMatches.length === 0}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                data-draft-save-action="true"
+                onClick={() =>
+                  selectEditorSearchMatch(currentEditorSearchIndex + 1)
+                }
+                disabled={editorSearchMatches.length === 0}
+              >
+                Next
+              </button>
+              <button
+                type="button"
+                data-draft-save-action="true"
+                onClick={replaceCurrentEditorSearchMatch}
+                disabled={editorSearchMatches.length === 0}
+              >
+                Replace match
+              </button>
+              <button
+                type="button"
+                className="code-editor-search-close"
+                data-draft-save-action="true"
+                onClick={closeEditorSearch}
+              >
+                Close
+              </button>
+            </div>
+          </section>
         ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <div className="code-editor-input">
