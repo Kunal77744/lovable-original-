@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { PrintProjectDebriefButton } from "@/components/print-project-debrief-button";
 import { getGuidedProjectForStudent } from "@/db/guided-project";
+import { getSignInHref } from "@/lib/account-destination";
 import { auth } from "@/lib/auth";
 import {
   GUIDED_PROJECT_SLUG,
@@ -79,7 +80,7 @@ export default async function SemanticHtmlArticleDebriefPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects/semantic-html-article/debrief"));
   }
 
   const project = await getGuidedProjectForStudent(

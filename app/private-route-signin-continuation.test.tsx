@@ -5,6 +5,7 @@ import JavaScriptInterviewDrillPage from "./interview/javascript-fundamentals/pa
 import LearningHistoryPage from "./learning-history/page";
 import PlaygroundPage from "./playground/page";
 import ProfilePage from "./profile/page";
+import SemanticHtmlProjectDebriefPage from "./projects/semantic-html-article/debrief/page";
 import SemanticHtmlProjectPage from "./projects/semantic-html-article/page";
 import SettingsPage from "./settings/page";
 
@@ -47,6 +48,11 @@ describe("private route sign-in continuation", () => {
     ],
     ["learning history", LearningHistoryPage, "/learning-history"],
     ["project", SemanticHtmlProjectPage, "/projects/semantic-html-article"],
+    [
+      "project debrief",
+      SemanticHtmlProjectDebriefPage,
+      "/projects/semantic-html-article/debrief",
+    ],
     ["certificate", CertificatePage, "/certificate"],
     [
       "interview drill",

@@ -64,7 +64,7 @@ describe("SemanticHtmlArticleDebriefPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(SemanticHtmlArticleDebriefPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fprojects%2Fsemantic-html-article%2Fdebrief",
     );
     expect(mocks.getProject).not.toHaveBeenCalled();
   });
