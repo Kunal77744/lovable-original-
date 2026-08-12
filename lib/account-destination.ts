@@ -25,3 +25,8 @@ export function getSignInHref(destination: string): string {
   const safeDestination = getSafeAccountDestination(destination);
   return `/account?mode=signin&next=${encodeURIComponent(safeDestination)}`;
 }
+
+export function getAccountHref(destination: string): string {
+  const safeDestination = getSafeAccountDestination(destination);
+  return `/account?next=${encodeURIComponent(safeDestination)}`;
+}

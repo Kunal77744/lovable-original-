@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
+import { getAccountHref } from "@/lib/account-destination";
 import {
   buildSandboxedPreviewDocument,
+  MAX_SEMANTIC_HTML_LENGTH,
   type SemanticHtmlCheck,
 } from "@/lib/semantic-html-workspace";
 
@@ -51,11 +54,33 @@ export function SemanticHtmlWorkspace({
         : "Saved submission restored. Revise the open rubric checks and resubmit."
       : "Starter code is ready. Submit when your article structure is complete.",
   );
+  const {
+    recoveredSource,
+    dismissRecoveredDraft,
+    preserveDraft,
+    clearDraft,
+  } = useLessonWorkspaceBrowserDraft({
+    lessonSlug,
+    initialSource: initialHtml,
+    initiallySaved,
+    maxLength: MAX_SEMANTIC_HTML_LENGTH,
+  });
+  const editorHtml = recoveredSource ?? html;
+  const recoveredBrowserDraft = recoveredSource !== null;
+  const visibleMessage = recoveredBrowserDraft
+    ? isSignedIn
+      ? "Browser draft restored after sign-in. It is still unsaved. Submit when you’re ready."
+      : "Browser draft restored. Create an account to save it privately."
+    : message;
   const previewDocument = useMemo(
-    () => buildSandboxedPreviewDocument(html),
-    [html],
+    () => buildSandboxedPreviewDocument(editorHtml),
+    [editorHtml],
   );
   const passedCount = checks.filter((check) => check.passed).length;
+
+  useEffect(() => {
+    htmlRef.current = editorHtml;
+  }, [editorHtml]);
 
   async function submitAssignment() {
     if (!isSignedIn) {
@@ -97,6 +122,9 @@ export function SemanticHtmlWorkspace({
       }
 
       setSaveState("saved");
+      setHtml(submittedHtml);
+      dismissRecoveredDraft();
+      clearDraft();
       setMessage(
         payload.submission?.status === "completed"
           ? "Assignment complete. Your HTML and 5/5 result are saved."
@@ -170,13 +198,16 @@ export function SemanticHtmlWorkspace({
           <label htmlFor="semantic-html-editor">Semantic HTML</label>
           <textarea
             id="semantic-html-editor"
-            value={html}
+            value={editorHtml}
             onChange={(event) => {
               htmlRef.current = event.target.value;
               setHtml(htmlRef.current);
+              dismissRecoveredDraft();
+              preserveDraft(htmlRef.current);
               setSaveState("unsaved");
               setMessage("You have unsaved changes.");
             }}
+            maxLength={MAX_SEMANTIC_HTML_LENGTH}
             spellCheck={false}
           />
         </div>
@@ -247,11 +278,18 @@ export function SemanticHtmlWorkspace({
             ) : null}
           </div>
           <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
-            {message}
-            {!isSignedIn && message.startsWith("Create a free account") ? (
+            {visibleMessage}
+            {!isSignedIn &&
+            (recoveredBrowserDraft || message.startsWith("Create a free account")) ? (
               <>
                 {" "}
-                <Link href="/account">Create account</Link>
+                <Link
+                  href={getAccountHref(
+                    `/learn/web-development-foundations/${lessonSlug}`,
+                  )}
+                >
+                  Create account
+                </Link>
               </>
             ) : null}
           </p>
