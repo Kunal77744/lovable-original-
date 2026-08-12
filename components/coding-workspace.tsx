@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { KeyboardEvent } from "react";
+import type { FocusEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AcceptedSolutionDownload } from "@/components/accepted-solution-download";
 import { PracticeFeedback } from "@/components/practice-feedback";
@@ -368,6 +368,7 @@ export function CodingWorkspace({
         ? "saved"
         : "unsaved",
   );
+  const [hasEditableDraft, setHasEditableDraft] = useState(false);
   const [runState, setRunState] = useState<RunState>({
     kind: "idle",
     message: isCleanPractice
@@ -497,6 +498,7 @@ export function CodingWorkspace({
           draftRevision.current === revision
         ) {
           hasPendingDraft.current = false;
+          setHasEditableDraft(false);
           setCode(nextCode);
           setAnonymousDraftDismissed(true);
           clearAnonymousDraft(problem.slug);
@@ -541,6 +543,7 @@ export function CodingWorkspace({
     if (isCleanPractice) return;
 
     hasPendingDraft.current = true;
+    setHasEditableDraft(true);
     draftRevision.current += 1;
     const revision = draftRevision.current;
 
@@ -566,6 +569,7 @@ export function CodingWorkspace({
     setCode(problem.starterCode);
     latestCode.current = problem.starterCode;
     hasPendingDraft.current = false;
+    setHasEditableDraft(false);
     draftRevision.current += 1;
     setSaveState("unsaved");
     setIsRestoreConfirmationOpen(false);
@@ -581,6 +585,17 @@ export function CodingWorkspace({
   function saveDraftNow() {
     if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
     void flushLatestDraft();
+  }
+
+  function saveDraftOnBlur(event: FocusEvent<HTMLTextAreaElement>) {
+    if (
+      event.relatedTarget instanceof HTMLElement &&
+      event.relatedTarget.dataset.draftSaveAction === "true"
+    ) {
+      return;
+    }
+
+    saveDraftNow();
   }
 
   async function runExamples() {
@@ -1059,21 +1074,44 @@ export function CodingWorkspace({
               These view preferences stay in this browser.
             </span>
           </div>
-          <span className="code-editor-status">
-            {isCleanPractice
-              ? cleanPracticeSubmitted
-                ? "Submitted"
-                : "Practice copy"
-              : isSignedIn
-                ? saveState === "saving"
-                  ? "Saving…"
-                  : saveState === "saved"
-                    ? "Saved"
-                    : saveState === "error"
-                      ? "Save failed"
-                      : "Unsaved"
-                : "Local only"}
-          </span>
+          <div className="code-editor-save-status">
+            <span
+              className="code-editor-status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {isCleanPractice
+                ? cleanPracticeSubmitted
+                  ? "Submitted"
+                  : "Practice copy"
+                : isSignedIn
+                  ? saveState === "saving"
+                    ? "Saving…"
+                    : saveState === "saved"
+                      ? "Saved"
+                      : saveState === "error"
+                        ? "Save failed"
+                        : "Unsaved"
+                  : "Local only"}
+            </span>
+            {isSignedIn &&
+            !isCleanPractice &&
+            hasEditableDraft &&
+            saveState !== "saving" ? (
+              <button
+                type="button"
+                className={
+                  saveState === "error"
+                    ? "code-editor-save-action is-error"
+                    : "code-editor-save-action"
+                }
+                data-draft-save-action="true"
+                onClick={saveDraftNow}
+              >
+                {saveState === "error" ? "Retry save" : "Save now"}
+              </button>
+            ) : null}
+          </div>
         </div>
         {loadedSubmission ? (
           <div className="loaded-submission-cue" role="status">
@@ -1166,7 +1204,7 @@ export function CodingWorkspace({
             value={editorCode}
             onChange={(event) => updateCode(event.target.value)}
             onKeyDown={handleEditorKeyDown}
-            onBlur={isCleanPractice ? undefined : saveDraftNow}
+            onBlur={isCleanPractice ? undefined : saveDraftOnBlur}
             wrap={wrapEditorLines ? "soft" : "off"}
             style={{
               fontSize: `${editorFontSize}px`,
