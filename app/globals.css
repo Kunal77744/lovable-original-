@@ -8608,8 +8608,16 @@ h1 {
   font-size: 11px;
 }
 
-.code-editor-file,
-.code-editor-status {
+.code-editor-file {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.code-editor-file span:last-child {
+  color: #7f9188;
   white-space: nowrap;
 }
 
@@ -8698,7 +8706,6 @@ h1 {
   margin: 0;
   accent-color: #66dc9d;
 }
-
 .code-editor label {
   position: absolute;
   width: 1px;
@@ -14148,6 +14155,9 @@ footer {
 
   .code-editor-file {
     grid-area: file;
+    max-width: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .code-editor-save-status {

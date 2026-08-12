@@ -13,6 +13,7 @@ import {
   validateCodingTestCases,
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
+import { applyEditorIndentation } from "@/lib/code-editor-indentation";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
 import { getSignInHref } from "@/lib/account-destination";
 import {
@@ -387,6 +388,12 @@ export function CodingWorkspace({
     useState<EditorFontSize>(13);
   const [wrapEditorLines, setWrapEditorLines] = useState(true);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editorTextarea = useRef<HTMLTextAreaElement | null>(null);
+  const pendingEditorSelection = useRef<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const allowNextEditorTabToExit = useRef(false);
   const latestCode = useRef(initialCode);
   const hasPendingDraft = useRef(false);
   const draftRevision = useRef(0);
@@ -559,6 +566,15 @@ export function CodingWorkspace({
       void saveDraft(nextCode, revision);
     }, 700);
   }
+
+  useEffect(() => {
+    const selection = pendingEditorSelection.current;
+    if (!selection || !editorTextarea.current) return;
+
+    pendingEditorSelection.current = null;
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(selection.start, selection.end);
+  }, [editorCode]);
 
   function restoreStarter() {
     if (draftTimer.current) {
@@ -980,6 +996,45 @@ export function CodingWorkspace({
   }
 
   function handleEditorKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Escape") {
+      allowNextEditorTabToExit.current = true;
+      return;
+    }
+
+    if (event.key === "Tab") {
+      if (allowNextEditorTabToExit.current) {
+        allowNextEditorTabToExit.current = false;
+        return;
+      }
+
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.nativeEvent.isComposing
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const result = applyEditorIndentation(
+        editorCode,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        event.shiftKey,
+      );
+
+      if (result.value === editorCode) return;
+
+      pendingEditorSelection.current = {
+        start: result.selectionStart,
+        end: result.selectionEnd,
+      };
+      updateCode(result.value);
+      return;
+    }
+
+    allowNextEditorTabToExit.current = false;
     const usesPrimaryModifier = event.ctrlKey || event.metaKey;
 
     if (
@@ -1032,7 +1087,12 @@ export function CodingWorkspace({
 
       <div className="code-editor">
         <div className="code-editor-bar">
-          <span className="code-editor-file">solution.js</span>
+          <div className="code-editor-file">
+            <span>solution.js</span>
+            <span id="coding-editor-indentation-hint">
+              Tab indents · Shift+Tab outdents · Esc then Tab exits
+            </span>
+          </div>
           <div
             className="editor-view-controls"
             aria-label="Editor view preferences"
@@ -1198,9 +1258,10 @@ export function CodingWorkspace({
             )}
           </div>
           <textarea
+            ref={editorTextarea}
             id="coding-solution"
             aria-label="JavaScript solution"
-            aria-describedby="coding-editor-keyboard-hint"
+            aria-describedby="coding-editor-keyboard-hint coding-editor-indentation-hint"
             value={editorCode}
             onChange={(event) => updateCode(event.target.value)}
             onKeyDown={handleEditorKeyDown}
