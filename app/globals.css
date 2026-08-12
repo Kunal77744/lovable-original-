@@ -8597,15 +8597,71 @@ h1 {
 .code-editor-bar {
   min-height: 43px;
   padding: 0 18px;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   color: #aebbb4;
   border-bottom: 1px solid #31423a;
   background: #1d2b25;
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 11px;
+}
+
+.code-editor-file,
+.code-editor-status {
+  white-space: nowrap;
+}
+
+.code-editor-status {
+  justify-self: end;
+}
+
+.editor-view-controls {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #91a099;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+}
+
+.code-editor .editor-view-controls label {
+  position: static;
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: visible;
+  clip: auto;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.editor-view-controls select {
+  min-height: 29px;
+  padding: 4px 25px 4px 9px;
+  color: #dce7df;
+  border: 1px solid #40534a;
+  border-radius: 7px;
+  background: #17231e;
+  font: inherit;
+  cursor: pointer;
+}
+
+.editor-view-controls select:focus-visible,
+.editor-view-controls input:focus-visible {
+  outline: 2px solid #66dc9d;
+  outline-offset: 2px;
+}
+
+.editor-wrap-control input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #66dc9d;
 }
 
 .code-editor label {
@@ -14043,6 +14099,33 @@ footer {
     min-height: 420px;
     padding: 20px 16px 20px 53px;
     font-size: 12px;
+  }
+
+  .code-editor-bar {
+    min-height: 0;
+    padding: 10px 14px;
+    grid-template-areas:
+      "file status"
+      "controls controls";
+    grid-template-columns: 1fr auto;
+    gap: 10px 14px;
+  }
+
+  .code-editor-file {
+    grid-area: file;
+  }
+
+  .code-editor-status {
+    grid-area: status;
+  }
+
+  .editor-view-controls {
+    width: 100%;
+    padding-top: 9px;
+    grid-area: controls;
+    justify-self: stretch;
+    justify-content: space-between;
+    border-top: 1px solid #31423a;
   }
 
   .code-editor-line-numbers {

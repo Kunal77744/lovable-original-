@@ -186,6 +186,53 @@ describe("CodingWorkspace", () => {
     expect(screen.queryByText("Unsaved")).not.toBeInTheDocument();
   });
 
+  it("keeps readable editor view preferences in this browser", async () => {
+    window.localStorage.setItem(
+      "lovable-original:judged-editor-view",
+      JSON.stringify({ fontSize: 17, wrapLines: false }),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByLabelText("JavaScript solution");
+    await waitFor(() => {
+      expect(editor).toHaveStyle({ fontSize: "17px", whiteSpace: "pre" });
+    });
+    expect(editor).toHaveAttribute("wrap", "off");
+    expect(screen.getByLabelText("Editor text size")).toHaveValue("17");
+    expect(screen.getByLabelText("Wrap lines")).not.toBeChecked();
+
+    fireEvent.change(screen.getByLabelText("Editor text size"), {
+      target: { value: "15" },
+    });
+    fireEvent.click(screen.getByLabelText("Wrap lines"));
+
+    expect(editor).toHaveStyle({ fontSize: "15px", whiteSpace: "pre-wrap" });
+    expect(editor).toHaveAttribute("wrap", "soft");
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          "lovable-original:judged-editor-view",
+        ) ?? "{}",
+      ),
+    ).toEqual({ fontSize: 15, wrapLines: true });
+  });
+
+  it("ignores malformed browser editor preferences", async () => {
+    window.localStorage.setItem(
+      "lovable-original:judged-editor-view",
+      JSON.stringify({ fontSize: 99, wrapLines: "sometimes" }),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByLabelText("JavaScript solution");
+    await waitFor(() => {
+      expect(editor).toHaveStyle({ fontSize: "13px", whiteSpace: "pre-wrap" });
+    });
+    expect(editor).toHaveAttribute("wrap", "soft");
+  });
+
   it("shows the fresh scaffold without offering a destructive restore", () => {
     render(
       <CodingWorkspace
@@ -210,7 +257,7 @@ describe("CodingWorkspace", () => {
   it("keeps visible line numbers aligned with the learner editor", () => {
     const { container } = renderWorkspace();
     const editor = screen.getByLabelText("JavaScript solution");
-    expect(editor).toHaveAttribute("wrap", "off");
+    expect(editor).toHaveAttribute("wrap", "soft");
 
     fireEvent.change(editor, {
       target: { value: "const first = 1;\nconst second = 2;\nreturn first + second;" },
