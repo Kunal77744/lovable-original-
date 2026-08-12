@@ -988,6 +988,48 @@ h1 {
   line-height: 1.7;
 }
 
+.course-answer-guides {
+  max-width: 42ch;
+  margin-top: 32px;
+  padding-top: 22px;
+  display: grid;
+  gap: 11px;
+  border-top: 1px solid rgba(23, 35, 30, 0.16);
+}
+
+.course-answer-guides > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.course-answer-guides a {
+  width: fit-content;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration-color: rgba(40, 118, 82, 0.32);
+  text-underline-offset: 4px;
+  transition: color 160ms ease-out, text-decoration-color 160ms ease-out;
+}
+
+.course-answer-guides a:hover {
+  color: var(--ink);
+  text-decoration-color: var(--accent);
+}
+
+.course-answer-guides a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .course-journey-steps {
   margin: 0;
   padding: 0;
