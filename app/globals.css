@@ -7956,6 +7956,79 @@ h1 {
   background: #20342a;
 }
 
+.browser-draft-recovery {
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.75fr) minmax(15rem, 1.4fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.125rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(233, 244, 221, 0.08);
+}
+
+.browser-draft-recovery > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.browser-draft-recovery span {
+  color: #b8d2c4;
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.browser-draft-recovery strong {
+  color: #f6f7f2;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.browser-draft-recovery p {
+  margin: 0;
+  color: #c8d8cf;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.browser-draft-recovery-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.browser-draft-recovery-actions button {
+  min-height: 2.45rem;
+  padding: 0.58rem 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: #dfe9e3;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.browser-draft-recovery-actions button:last-child {
+  border-color: #9ccfb4;
+  background: #e9f4ed;
+  color: #173f2d;
+}
+
+.browser-draft-recovery-actions button:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.browser-draft-recovery-actions button:last-child:hover {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #173f2d;
+}
+
 .loaded-submission-cue > div {
   display: grid;
   gap: 4px;
@@ -12682,6 +12755,22 @@ footer {
     grid-template-columns: 1fr;
     align-items: start;
     gap: 10px;
+  }
+
+  .browser-draft-recovery {
+    padding: 18px 16px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .browser-draft-recovery-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .browser-draft-recovery-actions button {
+    flex: 1;
   }
 
   .loaded-submission-cue a {

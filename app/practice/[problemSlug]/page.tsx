@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { createHash } from "node:crypto";
 import { CodingWorkspace } from "@/components/coding-workspace";
 import { ProblemBookmarkButton } from "@/components/problem-bookmark-button";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
@@ -98,6 +99,9 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
       ? dailyParam
       : null;
   const isDailyChallenge = Boolean(dailyChallengeDate);
+  const browserRecoveryScope = session
+    ? createHash("sha256").update(session.user.id).digest("hex").slice(0, 24)
+    : null;
 
   const previousProblem = CODING_PROBLEMS[problem.number - 2] ?? null;
   const nextProblem = CODING_PROBLEMS[problem.number] ?? null;
@@ -209,6 +213,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
             key={loadedSubmission?.id ?? "current-editor"}
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
+            browserRecoveryScope={browserRecoveryScope}
             initialCode={loadedSubmission?.code ?? studentState.code}
             initialAcceptedCode={
               loadedSubmission
