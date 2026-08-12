@@ -41,6 +41,9 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     expect(
       screen.getByText(/draft has not left this browser/i),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 
   it("saves the exact responsive CSS and restores 4/4", async () => {
@@ -81,5 +84,8 @@ describe("ResponsiveCssLayoutWorkspace", () => {
       "/api/lessons/responsive-css-grid/workspace",
       expect.objectContaining({ body: JSON.stringify({ html: completedCss }) }),
     );
+    expect(
+      screen.getByRole("button", { name: "Download saved .css" }),
+    ).toBeInTheDocument();
   });
 });
