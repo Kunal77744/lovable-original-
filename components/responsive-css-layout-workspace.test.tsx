@@ -5,14 +5,18 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   gradeResponsiveCss,
   RESPONSIVE_CSS_STARTER,
 } from "@/lib/responsive-css-practice";
 import { ResponsiveCssLayoutWorkspace } from "./responsive-css-layout-workspace";
 
-afterEach(cleanup);
+beforeEach(() => window.localStorage.clear());
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 const completedCss = `.resource-grid {
   display: grid;
@@ -87,5 +91,40 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Download saved .css" }),
     ).toBeInTheDocument();
+  });
+
+  it("recovers the exact local responsive CSS after sign-in", async () => {
+    const { unmount } = render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={RESPONSIVE_CSS_STARTER}
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Responsive layout CSS"), {
+      target: { value: completedCss },
+    });
+    unmount();
+
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={RESPONSIVE_CSS_STARTER}
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved={false}
+        isSignedIn
+      />,
+    );
+
+    expect(await screen.findByLabelText("Responsive layout CSS")).toHaveValue(
+      completedCss,
+    );
+    expect(screen.getByText(/browser draft restored after sign-in/i)).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 });

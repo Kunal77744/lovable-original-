@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
+import { getAccountHref } from "@/lib/account-destination";
 import {
   buildCssBoxModelPreview,
+  MAX_CSS_PRACTICE_LENGTH,
   type CssPracticeCheck,
 } from "@/lib/css-box-model-practice";
 
@@ -52,8 +55,33 @@ export function CssBoxModelWorkspace({
         : "Saved practice restored. Revise the open checks and save again."
       : "Starter CSS is ready. Save when the card feels predictable.",
   );
-  const previewDocument = useMemo(() => buildCssBoxModelPreview(css), [css]);
+  const {
+    recoveredSource,
+    dismissRecoveredDraft,
+    preserveDraft,
+    clearDraft,
+  } = useLessonWorkspaceBrowserDraft({
+    lessonSlug,
+    initialSource: initialCss,
+    initiallySaved,
+    maxLength: MAX_CSS_PRACTICE_LENGTH,
+  });
+  const editorCss = recoveredSource ?? css;
+  const recoveredBrowserDraft = recoveredSource !== null;
+  const visibleMessage = recoveredBrowserDraft
+    ? isSignedIn
+      ? "Browser draft restored after sign-in. It is still unsaved. Check and save when you’re ready."
+      : "Browser draft restored. Create an account to save it privately."
+    : message;
+  const previewDocument = useMemo(
+    () => buildCssBoxModelPreview(editorCss),
+    [editorCss],
+  );
   const passedCount = checks.filter((check) => check.passed).length;
+
+  useEffect(() => {
+    latestCss.current = editorCss;
+  }, [editorCss]);
 
   async function savePractice() {
     if (!isSignedIn) {
@@ -96,6 +124,9 @@ export function CssBoxModelWorkspace({
       }
 
       setSaveState("saved");
+      setCss(submittedCss);
+      dismissRecoveredDraft();
+      clearDraft();
       setMessage(
         payload.submission?.status === "completed"
           ? "Practice complete. Your CSS and 4/4 result are saved."
@@ -170,13 +201,16 @@ export function CssBoxModelWorkspace({
           <label htmlFor="css-box-model-editor">Card CSS</label>
           <textarea
             id="css-box-model-editor"
-            value={css}
+            value={editorCss}
             onChange={(event) => {
               latestCss.current = event.target.value;
               setCss(latestCss.current);
+              dismissRecoveredDraft();
+              preserveDraft(latestCss.current);
               setSaveState("unsaved");
               setMessage("You have unsaved changes.");
             }}
+            maxLength={MAX_CSS_PRACTICE_LENGTH}
             spellCheck={false}
           />
         </div>
@@ -245,11 +279,18 @@ export function CssBoxModelWorkspace({
             ) : null}
           </div>
           <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
-            {message}
-            {!isSignedIn && message.startsWith("Create a free account") ? (
+            {visibleMessage}
+            {!isSignedIn &&
+            (recoveredBrowserDraft || message.startsWith("Create a free account")) ? (
               <>
                 {" "}
-                <Link href="/account">Create account</Link>
+                <Link
+                  href={getAccountHref(
+                    `/learn/web-development-foundations/${lessonSlug}`,
+                  )}
+                >
+                  Create account
+                </Link>
               </>
             ) : null}
           </p>
