@@ -466,6 +466,8 @@ export function CodingWorkspace({
   useEffect(() => {
     if (!browserRecoveryKey) return;
 
+    let recoveryTimer: number | null = null;
+
     try {
       const storedValue = window.localStorage.getItem(browserRecoveryKey);
       const browserDraft = parseCodingDraftRecovery(storedValue);
@@ -475,10 +477,16 @@ export function CodingWorkspace({
         return;
       }
 
-      setRecoverableBrowserDraft(browserDraft);
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDraft(browserDraft);
+      }, 0);
     } catch {
       // Private server saving remains available when browser storage is blocked.
     }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
   }, [browserRecoveryKey, initialCode]);
 
   useEffect(() => {
