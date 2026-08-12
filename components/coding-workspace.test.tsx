@@ -344,6 +344,86 @@ describe("CodingWorkspace", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("lets a signed-in learner save an edited draft immediately", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ savedAt: "now" })));
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const latestCode = "function solve(input) { return input.trim(); }";
+
+    expect(
+      screen.queryByRole("button", { name: "Save now" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(editor, { target: { value: latestCode } });
+    const saveButton = screen.getByRole("button", { name: "Save now" });
+    fireEvent.blur(editor, { relatedTarget: saveButton });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fireEvent.click(saveButton);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/practice/sum-two-numbers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: latestCode }),
+      }),
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(
+      screen.queryByRole("button", { name: "Save now" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("retries a failed draft save with the exact edited source", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ savedAt: "later" }), { status: 200 }),
+      );
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const latestCode = "function solve(input) { return Number(input); }";
+
+    fireEvent.change(editor, { target: { value: latestCode } });
+    fireEvent.blur(editor);
+
+    expect(
+      await screen.findByRole("button", { name: "Retry save" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
+
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      "/api/practice/sum-two-numbers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: latestCode }),
+      }),
+    );
+  });
+
+  it("keeps manual draft saving private to signed-in learners", () => {
+    renderWorkspace({ isSignedIn: false });
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "JavaScript solution" }),
+      { target: { value: "function solve(input) { return input.trim(); }" } },
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /save/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Local only")).toBeInTheDocument();
+  });
+
   it("queues the exact pending draft when the learner leaves immediately", async () => {
     const originalSendBeacon = navigator.sendBeacon;
     const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {

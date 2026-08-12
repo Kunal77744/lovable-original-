@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
@@ -202,6 +202,7 @@ export function CodingWorkspace({
         ? "saved"
         : "unsaved",
   );
+  const [hasEditableDraft, setHasEditableDraft] = useState(false);
   const [runState, setRunState] = useState<RunState>({
     kind: "idle",
     message: loadedSubmission
@@ -274,6 +275,7 @@ export function CodingWorkspace({
 
       if (latestCode.current === nextCode) {
         hasPendingDraft.current = false;
+        setHasEditableDraft(false);
         setSaveState("saved");
       }
     } catch {
@@ -286,6 +288,7 @@ export function CodingWorkspace({
     setSaveState("unsaved");
     latestCode.current = nextCode;
     hasPendingDraft.current = true;
+    setHasEditableDraft(true);
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
@@ -301,6 +304,9 @@ export function CodingWorkspace({
     }
 
     setCode(problem.starterCode);
+    latestCode.current = problem.starterCode;
+    hasPendingDraft.current = false;
+    setHasEditableDraft(false);
     setSaveState("unsaved");
     setIsRestoreConfirmationOpen(false);
     setRunState({
@@ -319,6 +325,17 @@ export function CodingWorkspace({
     }
 
     void saveDraft(latestCode.current);
+  }
+
+  function saveDraftOnBlur(event: FocusEvent<HTMLTextAreaElement>) {
+    if (
+      event.relatedTarget instanceof HTMLElement &&
+      event.relatedTarget.dataset.draftSaveAction === "true"
+    ) {
+      return;
+    }
+
+    saveDraftNow();
   }
 
   async function runExample() {
@@ -567,6 +584,12 @@ export function CodingWorkspace({
 
       setBestVerdict(payload.bestVerdict);
       if (payload.verdict === "Accepted") setAcceptedCode(code);
+      if (draftTimer.current) {
+        clearTimeout(draftTimer.current);
+        draftTimer.current = null;
+      }
+      hasPendingDraft.current = false;
+      setHasEditableDraft(false);
       setSaveState("saved");
       setAttempts((current) => [
         {
@@ -660,17 +683,35 @@ export function CodingWorkspace({
       <div className="code-editor">
         <div className="code-editor-bar">
           <span>solution.js</span>
-          <span>
-            {isSignedIn
-              ? saveState === "saving"
-                ? "Saving…"
-                : saveState === "saved"
-                  ? "Saved"
-                  : saveState === "error"
-                    ? "Save failed"
-                    : "Unsaved"
-              : "Local only"}
-          </span>
+          <div className="code-editor-save-status">
+            <span aria-live="polite" aria-atomic="true">
+              {isSignedIn
+                ? saveState === "saving"
+                  ? "Saving…"
+                  : saveState === "saved"
+                    ? "Saved"
+                    : saveState === "error"
+                      ? "Save failed"
+                      : "Unsaved"
+                : "Local only"}
+            </span>
+            {isSignedIn &&
+            hasEditableDraft &&
+            saveState !== "saving" ? (
+              <button
+                type="button"
+                className={
+                  saveState === "error"
+                    ? "code-editor-save-action is-error"
+                    : "code-editor-save-action"
+                }
+                data-draft-save-action="true"
+                onClick={saveDraftNow}
+              >
+                {saveState === "error" ? "Retry save" : "Save now"}
+              </button>
+            ) : null}
+          </div>
         </div>
         {loadedSubmission ? (
           <div className="loaded-submission-cue" role="status">
@@ -704,7 +745,7 @@ export function CodingWorkspace({
           aria-label="JavaScript solution"
           value={code}
           onChange={(event) => updateCode(event.target.value)}
-          onBlur={saveDraftNow}
+          onBlur={saveDraftOnBlur}
           spellCheck={false}
         />
         {isSignedIn ? (

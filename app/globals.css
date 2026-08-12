@@ -7912,6 +7912,40 @@ h1 {
   font-size: 11px;
 }
 
+.code-editor-save-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.code-editor-save-action {
+  min-height: 44px;
+  padding: 0;
+  color: #b8d7c5;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.code-editor-save-action:hover {
+  color: #eef4ef;
+}
+
+.code-editor-save-action.is-error {
+  color: #f6c899;
+}
+
+.code-editor-save-action:focus-visible {
+  outline: 2px solid #83dda8;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 .code-editor label {
   position: absolute;
   width: 1px;
