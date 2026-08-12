@@ -44,10 +44,12 @@ const initialChecks = [
 describe("SemanticHtmlWorkspace", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
   });
 
   it("updates an empty-sandbox preview without exposing network-bearing markup", async () => {
@@ -129,6 +131,7 @@ describe("SemanticHtmlWorkspace", () => {
       screen.getByRole("button", { name: "Resubmit assignment" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Assignment complete")).toBeInTheDocument();
+    expect(window.localStorage).toHaveLength(0);
   });
 
   it("keeps newer edits visibly unsaved when an older submission finishes", async () => {
@@ -270,7 +273,74 @@ describe("SemanticHtmlWorkspace", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
       "href",
-      "/account",
+      "/account?next=%2Flearn%2Fweb-development-foundations%2Fsemantic-html",
     );
+  });
+
+  it("recovers a local draft after sign-in and keeps it visibly unsaved", async () => {
+    const localHtml = "<main><article>Keep this first draft</article></main>";
+    const { unmount } = render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: localHtml },
+    });
+    unmount();
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+        isSignedIn
+      />,
+    );
+
+    expect(await screen.findByLabelText("Semantic HTML")).toHaveValue(localHtml);
+    expect(
+      screen.getByText(
+        "Browser draft restored after sign-in. It is still unsaved. Submit when you’re ready.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+  });
+
+  it("keeps account-owned source authoritative over a browser draft", async () => {
+    const { unmount } = render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: "<main>Anonymous draft</main>" },
+    });
+    unmount();
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main>Account-owned source</main>"
+        initialChecks={initialChecks}
+        initiallySaved
+        isSignedIn
+      />,
+    );
+
+    expect(await screen.findByLabelText("Semantic HTML")).toHaveValue(
+      "<main>Account-owned source</main>",
+    );
+    expect(screen.queryByText(/browser draft restored/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Saved result")).toBeInTheDocument();
   });
 });
