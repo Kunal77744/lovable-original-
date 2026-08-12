@@ -9517,6 +9517,101 @@ h1 {
   outline-offset: 4px;
 }
 
+.accepted-source-download {
+  margin-top: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid rgba(131, 221, 168, 0.22);
+  border-radius: 8px;
+  background: rgba(13, 31, 22, 0.42);
+}
+
+.accepted-source-download > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.accepted-source-download > div:first-child > span {
+  color: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.accepted-source-download h3 {
+  margin: 0;
+  color: #f1f7f3;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.2;
+}
+
+.coding-result .accepted-source-download > div:first-child p {
+  max-width: 52ch;
+  margin: 2px 0 0;
+  color: #b8c7be;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.accepted-source-download-action {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.accepted-source-download-action button {
+  min-height: 42px;
+  padding: 0 14px;
+  color: #dce9e1;
+  border: 1px solid #5f7569;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.accepted-source-download-action button:hover {
+  color: #10231a;
+  border-color: #a0e9bd;
+  background: #a0e9bd;
+}
+
+.accepted-source-download-action button:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+}
+
+.coding-result .accepted-source-download-action p {
+  min-height: 15px;
+  margin: 0;
+  color: #a0e9bd;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (max-width: 620px) {
+  .accepted-source-download {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .accepted-source-download-action {
+    justify-items: stretch;
+  }
+}
+
 .coding-result.is-wrong,
 .coding-result.is-error,
 .coding-result.is-timeout {

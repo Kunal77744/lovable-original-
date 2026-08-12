@@ -1334,6 +1334,14 @@ describe("CodingWorkspace", () => {
     ).toHaveAttribute("href", "/practice/sum-two-numbers/debrief");
     expect(
       screen.getByRole("heading", {
+        name: "Take your Accepted source with you",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download Accepted .js" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
         name: "Compare your plan with what passed.",
       }),
     ).toBeInTheDocument();
@@ -1558,6 +1566,9 @@ describe("CodingWorkspace", () => {
     expect(
       screen.queryByRole("link", { name: "Open private problem debrief" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download Accepted .js" }),
+    ).not.toBeInTheDocument();
     signedInView.unmount();
 
     render(
@@ -1574,6 +1585,9 @@ describe("CodingWorkspace", () => {
     );
 
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download Accepted .js" }),
+    ).not.toBeInTheDocument();
   });
 
   it("returns a learner who completes all 12 problems to the catalog", async () => {
