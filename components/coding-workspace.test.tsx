@@ -220,6 +220,47 @@ describe("CodingWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("indents and outdents selected JavaScript without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    editor.setSelectionRange(0, 42);
+    fireEvent.keyDown(editor, { key: "Tab" });
+
+    expect(editor).toHaveValue("  function solve(input) { return input; }");
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-indentation-hint",
+    );
+    expect(
+      screen.getByText(
+        "Tab indents · Shift+Tab outdents · Esc then Tab exits",
+      ),
+    ).toBeInTheDocument();
+
+    editor.setSelectionRange(2, 44);
+    fireEvent.keyDown(editor, { key: "Tab", shiftKey: true });
+
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("lets keyboard learners leave the editor after Escape", () => {
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+
+    editor.focus();
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
+    fireEvent.keyDown(editor, { key: "Escape" });
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
+  });
+
   it("restores only the editor without saving a draft or adding an attempt", async () => {
     vi.useFakeTimers();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
