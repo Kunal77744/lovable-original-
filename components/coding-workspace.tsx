@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AcceptedSolutionDownload } from "@/components/accepted-solution-download";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
@@ -1179,6 +1180,13 @@ export function CodingWorkspace({
               learner record was created.
             </p>
           </section>
+        ) : null}
+        {acceptedReview && acceptedCode ? (
+          <AcceptedSolutionDownload
+            problemSlug={problem.slug}
+            problemTitle={problem.title}
+            source={acceptedCode}
+          />
         ) : null}
         <div className="practice-recovery-cue">
           <span aria-hidden="true" />
