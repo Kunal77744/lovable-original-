@@ -115,6 +115,51 @@ type RunnerRecovery = {
   guidance: string;
 };
 
+const EDITOR_VIEW_STORAGE_KEY = "lovable-original:judged-editor-view";
+const EDITOR_FONT_SIZES = [13, 15, 17] as const;
+type EditorFontSize = (typeof EDITOR_FONT_SIZES)[number];
+
+function readEditorViewPreference() {
+  try {
+    const storedPreference = window.localStorage.getItem(
+      EDITOR_VIEW_STORAGE_KEY,
+    );
+    if (!storedPreference) return null;
+
+    const parsedPreference = JSON.parse(storedPreference) as {
+      fontSize?: unknown;
+      wrapLines?: unknown;
+    };
+    if (
+      !EDITOR_FONT_SIZES.includes(parsedPreference.fontSize as EditorFontSize) ||
+      typeof parsedPreference.wrapLines !== "boolean"
+    ) {
+      return null;
+    }
+
+    return {
+      fontSize: parsedPreference.fontSize as EditorFontSize,
+      wrapLines: parsedPreference.wrapLines,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveEditorViewPreference(
+  fontSize: EditorFontSize,
+  wrapLines: boolean,
+) {
+  try {
+    window.localStorage.setItem(
+      EDITOR_VIEW_STORAGE_KEY,
+      JSON.stringify({ fontSize, wrapLines }),
+    );
+  } catch {
+    // Editor view preferences are optional when browser storage is unavailable.
+  }
+}
+
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
     return {
@@ -214,6 +259,9 @@ export function CodingWorkspace({
   });
   const [revealedRecoveryHintCount, setRevealedRecoveryHintCount] =
     useState(0);
+  const [editorFontSize, setEditorFontSize] =
+    useState<EditorFontSize>(13);
+  const [wrapEditorLines, setWrapEditorLines] = useState(true);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestCode = useRef(initialCode);
   const hasPendingDraft = useRef(false);
@@ -225,6 +273,18 @@ export function CodingWorkspace({
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
   const runnerRecovery = getRunnerRecovery(runState);
+
+  useEffect(() => {
+    const preferenceTimer = window.setTimeout(() => {
+      const storedPreference = readEditorViewPreference();
+      if (!storedPreference) return;
+
+      setEditorFontSize(storedPreference.fontSize);
+      setWrapEditorLines(storedPreference.wrapLines);
+    }, 0);
+
+    return () => window.clearTimeout(preferenceTimer);
+  }, []);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
@@ -659,8 +719,47 @@ export function CodingWorkspace({
 
       <div className="code-editor">
         <div className="code-editor-bar">
-          <span>solution.js</span>
-          <span>
+          <span className="code-editor-file">solution.js</span>
+          <div
+            className="editor-view-controls"
+            aria-label="Editor view preferences"
+          >
+            <label>
+              <span>Text size</span>
+              <select
+                aria-label="Editor text size"
+                value={editorFontSize}
+                onChange={(event) => {
+                  const nextFontSize = Number(event.target.value) as EditorFontSize;
+                  setEditorFontSize(nextFontSize);
+                  saveEditorViewPreference(nextFontSize, wrapEditorLines);
+                }}
+              >
+                <option value={13}>Small</option>
+                <option value={15}>Comfortable</option>
+                <option value={17}>Large</option>
+              </select>
+            </label>
+            <label className="editor-wrap-control">
+              <input
+                type="checkbox"
+                checked={wrapEditorLines}
+                onChange={(event) => {
+                  const nextWrapEditorLines = event.target.checked;
+                  setWrapEditorLines(nextWrapEditorLines);
+                  saveEditorViewPreference(
+                    editorFontSize,
+                    nextWrapEditorLines,
+                  );
+                }}
+              />
+              <span>Wrap lines</span>
+            </label>
+            <span className="sr-only">
+              These view preferences stay in this browser.
+            </span>
+          </div>
+          <span className="code-editor-status">
             {isSignedIn
               ? saveState === "saving"
                 ? "Saving…"
@@ -706,6 +805,12 @@ export function CodingWorkspace({
           onChange={(event) => updateCode(event.target.value)}
           onBlur={saveDraftNow}
           spellCheck={false}
+          wrap={wrapEditorLines ? "soft" : "off"}
+          style={{
+            fontSize: `${editorFontSize}px`,
+            overflowWrap: wrapEditorLines ? "anywhere" : "normal",
+            whiteSpace: wrapEditorLines ? "pre-wrap" : "pre",
+          }}
         />
         {isSignedIn ? (
           <div className="starter-restore">
