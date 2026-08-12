@@ -516,7 +516,12 @@ export default async function PracticePage({
                   <h3 id="saved-problems-title">Saved for later</h3>
                   <p>Private to your account.</p>
                 </div>
-                <span>{savedProblems.length} saved</span>
+                <div className="saved-problems-collection-entry">
+                  <span>{savedProblems.length} saved</span>
+                  <Link href="/practice/bookmarks">
+                    View saved collection <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
               </div>
               {savedProblems.length > 0 ? (
                 <ul className="saved-problems-list">
