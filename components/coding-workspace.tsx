@@ -423,12 +423,14 @@ export function CodingWorkspace({
   const [editorFontSize, setEditorFontSize] =
     useState<EditorFontSize>(13);
   const [wrapEditorLines, setWrapEditorLines] = useState(true);
+  const [isEditorFocused, setIsEditorFocused] = useState(false);
   const [isEditorSearchOpen, setIsEditorSearchOpen] = useState(false);
   const [editorSearchQuery, setEditorSearchQuery] = useState("");
   const [editorReplacement, setEditorReplacement] = useState("");
   const [editorSearchIndex, setEditorSearchIndex] = useState(0);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorTextarea = useRef<HTMLTextAreaElement | null>(null);
+  const editorFocusButton = useRef<HTMLButtonElement | null>(null);
   const editorSearchInput = useRef<HTMLInputElement | null>(null);
   const pendingEditorSelection = useRef<{
     start: number;
@@ -489,6 +491,26 @@ export function CodingWorkspace({
   useEffect(() => {
     if (isEditorSearchOpen) editorSearchInput.current?.focus();
   }, [isEditorSearchOpen]);
+
+  useEffect(() => {
+    if (!isEditorFocused) return;
+
+    document.body.classList.add("editor-focus-active");
+
+    function exitEditorFocus(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+
+      setIsEditorFocused(false);
+      editorFocusButton.current?.focus();
+    }
+
+    window.addEventListener("keydown", exitEditorFocus);
+
+    return () => {
+      document.body.classList.remove("editor-focus-active");
+      window.removeEventListener("keydown", exitEditorFocus);
+    };
+  }, [isEditorFocused]);
 
   useEffect(() => {
     const preferenceTimer = window.setTimeout(() => {
@@ -1349,7 +1371,7 @@ export function CodingWorkspace({
         </div>
       </header>
 
-      <div className="code-editor">
+      <div className={isEditorFocused ? "code-editor is-focused" : "code-editor"}>
         <div className="code-editor-bar">
           <div className="code-editor-file">
             <span>solution.js</span>
@@ -1401,8 +1423,20 @@ export function CodingWorkspace({
             >
               Find
             </button>
+            <button
+              ref={editorFocusButton}
+              type="button"
+              className="editor-focus-trigger"
+              aria-pressed={isEditorFocused}
+              aria-keyshortcuts={isEditorFocused ? "Escape" : undefined}
+              data-draft-save-action="true"
+              onClick={() => setIsEditorFocused((current) => !current)}
+            >
+              {isEditorFocused ? "Exit focus" : "Focus"}
+            </button>
             <span className="sr-only">
-              These view preferences stay in this browser.
+              These view preferences stay in this browser. Focus view is
+              temporary and does not change your saved work.
             </span>
           </div>
           <div className="code-editor-save-status">
@@ -1447,7 +1481,9 @@ export function CodingWorkspace({
             className="code-editor-shortcuts"
             id="coding-editor-indentation-hint"
           >
-            Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits
+            {isEditorFocused
+              ? "Focus view · Escape exits · Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds"
+              : "Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits"}
           </span>
         </div>
         {loadedSubmission ? (

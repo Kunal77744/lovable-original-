@@ -553,6 +553,36 @@ describe("CodingWorkspace", () => {
     expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
   });
 
+  it("opens a temporary focus view and exits it with Escape without changing learner work", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    const focusButton = screen.getByRole("button", { name: "Focus" });
+    const editorShell = editor.closest(".code-editor");
+
+    fireEvent.click(focusButton);
+
+    expect(editorShell).toHaveClass("is-focused");
+    expect(document.body).toHaveClass("editor-focus-active");
+    expect(
+      screen.getByRole("button", { name: "Exit focus" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByText(
+        "Focus view · Escape exits · Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds",
+      ),
+    ).toBeInTheDocument();
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(editorShell).not.toHaveClass("is-focused");
+    expect(document.body).not.toHaveClass("editor-focus-active");
+    expect(screen.getByRole("button", { name: "Focus" })).toHaveFocus();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("restores only the editor without saving a draft or adding an attempt", async () => {
     vi.useFakeTimers();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
