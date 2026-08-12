@@ -7,6 +7,11 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CodingTestCase } from "@/lib/coding-test-cases";
+import {
+  getCodingDraftRecoveryKey,
+  parseCodingDraftRecovery,
+  serializeCodingDraftRecovery,
+} from "@/lib/coding-draft-recovery";
 import { CodingWorkspace } from "./coding-workspace";
 
 const runCodingSolution = vi.fn();
@@ -61,6 +66,7 @@ function renderWorkspace({
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
   dailyChallengeDate = null,
+  browserRecoveryScope = "learner-a",
 }: {
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
@@ -73,11 +79,13 @@ function renderWorkspace({
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
   dailyChallengeDate?: string | null;
+  browserRecoveryScope?: string | null;
 } = {}) {
   return render(
     <CodingWorkspace
       attempts={[]}
       bestVerdict={null}
+      browserRecoveryScope={browserRecoveryScope}
       initialCode="function solve(input) { return input; }"
       initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
@@ -123,6 +131,7 @@ describe("CodingWorkspace", () => {
     captureJavaScriptPracticeCompleted.mockReset();
     capturePracticeProblemAccepted.mockReset();
     capturePracticeFeedbackSubmitted.mockReset();
+    window.localStorage.clear();
   });
 
   it("shows the fresh scaffold without offering a destructive restore", () => {
@@ -342,6 +351,126 @@ describe("CodingWorkspace", () => {
       }),
     );
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers a newer account-scoped browser copy without replacing the private draft", async () => {
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    const recoveredCode =
+      "function solve(input) { return input.trim().toUpperCase(); }";
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCodingDraftRecovery(
+        recoveredCode,
+        "2026-08-12T18:00:00.000Z",
+      ),
+    );
+
+    renderWorkspace();
+
+    expect(
+      await screen.findByText("Newer work is available on this browser."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+    expect(
+      screen.getByText(/private saved solution is still loaded/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser draft" }),
+    );
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      recoveredCode,
+    );
+    expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Browser draft restored as unsaved work.",
+    );
+    expect(
+      parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+    ).toEqual(expect.objectContaining({ code: recoveredCode }));
+  });
+
+  it("keeps the private draft and removes an ignored browser copy", async () => {
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCodingDraftRecovery("function solve() { return 'old'; }"),
+    );
+
+    renderWorkspace();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep saved editor" }),
+    );
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+    expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+  });
+
+  it("never reveals another account's browser recovery copy", async () => {
+    window.localStorage.setItem(
+      getCodingDraftRecoveryKey("learner-b", problem.slug),
+      serializeCodingDraftRecovery(
+        "function solve(input) { return 'other account'; }",
+      ),
+    );
+
+    renderWorkspace({ browserRecoveryScope: "learner-a" });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+  });
+
+  it("keeps a newer browser copy when an older private save returns late", async () => {
+    let resolveOlderSave: (response: Response) => void = () => undefined;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveOlderSave = resolve;
+        }),
+    );
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    const olderCode = "function solve(input) { return input.trim(); }";
+    const newerCode =
+      "function solve(input) { return input.trim().toUpperCase(); }";
+
+    fireEvent.change(editor, { target: { value: olderCode } });
+    fireEvent.blur(editor);
+    fireEvent.change(editor, { target: { value: newerCode } });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(
+      parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+    ).toEqual(expect.objectContaining({ code: newerCode }));
+
+    resolveOlderSave(new Response(JSON.stringify({ savedAt: "now" })));
+
+    await waitFor(() => {
+      expect(
+        parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+      ).toEqual(expect.objectContaining({ code: newerCode }));
+    });
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
   });
 
   it("queues the exact pending draft when the learner leaves immediately", async () => {
