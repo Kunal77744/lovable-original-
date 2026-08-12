@@ -20,6 +20,7 @@ import {
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
 import { applyEditorIndentation } from "@/lib/code-editor-indentation";
+import { applyEditorSmartEditing } from "@/lib/code-editor-smart-editing";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
 import { getSignInHref } from "@/lib/account-destination";
 import {
@@ -1237,6 +1238,41 @@ export function CodingWorkspace({
     }
 
     allowNextEditorTabToExit.current = false;
+
+    if (
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      const result = applyEditorSmartEditing(
+        editorCode,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        event.key,
+      );
+
+      if (result) {
+        event.preventDefault();
+
+        if (result.value === editorCode) {
+          event.currentTarget.setSelectionRange(
+            result.selectionStart,
+            result.selectionEnd,
+          );
+          return;
+        }
+
+        pendingEditorSelection.current = {
+          start: result.selectionStart,
+          end: result.selectionEnd,
+        };
+        updateCode(result.value);
+        return;
+      }
+    }
+
     const usesPrimaryModifier = event.ctrlKey || event.metaKey;
 
     if (

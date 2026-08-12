@@ -392,6 +392,66 @@ describe("CodingWorkspace", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("applies smart pairs and indentation without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({ initialCode: "  return input;" });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    editor.setSelectionRange(9, 14);
+    fireEvent.keyDown(editor, { key: "(" });
+
+    expect(editor).toHaveValue("  return (input);");
+    expect(editor.selectionStart).toBe(10);
+    expect(editor.selectionEnd).toBe(15);
+
+    editor.setSelectionRange(17, 17);
+    fireEvent.keyDown(editor, { key: "{" });
+    expect(editor).toHaveValue("  return (input);{}");
+    expect(editor.selectionStart).toBe(18);
+
+    fireEvent.keyDown(editor, { key: "Backspace" });
+    expect(editor).toHaveValue("  return (input);");
+    expect(editor.selectionStart).toBe(17);
+
+    editor.setSelectionRange(15, 15);
+    fireEvent.keyDown(editor, { key: ")" });
+    expect(editor).toHaveValue("  return (input);");
+    expect(editor.selectionStart).toBe(16);
+
+    editor.setSelectionRange(10, 10);
+    fireEvent.keyDown(editor, { key: "Enter" });
+    expect(editor).toHaveValue("  return (\n  input);");
+    expect(editor.selectionStart).toBe(13);
+    expect(editor.selectionEnd).toBe(13);
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("leaves smart editing to the native textarea during composition or modifiers", () => {
+    renderWorkspace({ initialCode: "return input;" });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.setSelectionRange(7, 7);
+    expect(
+      fireEvent.keyDown(editor, {
+        key: "(",
+        ctrlKey: true,
+      }),
+    ).toBe(true);
+    expect(
+      fireEvent.keyDown(editor, {
+        key: "(",
+        isComposing: true,
+      }),
+    ).toBe(true);
+    expect(editor).toHaveValue("return input;");
+  });
+
   it("finds repeated source text from the editor without running or submitting", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     renderWorkspace({
