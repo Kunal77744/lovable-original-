@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import {
   buildSandboxedPreviewDocument,
   type SemanticHtmlCheck,
@@ -223,18 +224,28 @@ export function SemanticHtmlWorkspace({
           </div>
         </div>
         <div className="workspace-save">
-          <button
-            className="lesson-primary-action"
-            type="button"
-            onClick={submitAssignment}
-            disabled={saveState === "saving"}
-          >
-            {saveState === "saving"
-              ? "Submitting…"
-              : hasSubmitted
-                ? "Resubmit assignment"
-                : "Submit assignment"}
-          </button>
+          <div className="workspace-save-actions">
+            <button
+              className="lesson-primary-action"
+              type="button"
+              onClick={submitAssignment}
+              disabled={saveState === "saving"}
+            >
+              {saveState === "saving"
+                ? "Submitting…"
+                : hasSubmitted
+                  ? "Resubmit assignment"
+                  : "Submit assignment"}
+            </button>
+            {isSignedIn && saveState === "saved" ? (
+              <SavedWorkspaceDownload
+                fileName="semantic-html-article.html"
+                label="Download saved .html"
+                mimeType="text/html"
+                source={html}
+              />
+            ) : null}
+          </div>
           <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
             {message}
             {!isSignedIn && message.startsWith("Create a free account") ? (

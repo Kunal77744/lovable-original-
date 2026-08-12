@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import {
   buildCssBoxModelPreview,
   type CssPracticeCheck,
@@ -221,18 +222,28 @@ export function CssBoxModelWorkspace({
           </div>
         </div>
         <div className="workspace-save">
-          <button
-            className="lesson-primary-action"
-            type="button"
-            onClick={savePractice}
-            disabled={isSaving}
-          >
-            {isSaving
-              ? "Saving…"
-              : hasSubmitted
-                ? "Check and save again"
-                : "Check and save CSS"}
-          </button>
+          <div className="workspace-save-actions">
+            <button
+              className="lesson-primary-action"
+              type="button"
+              onClick={savePractice}
+              disabled={isSaving}
+            >
+              {isSaving
+                ? "Saving…"
+                : hasSubmitted
+                  ? "Check and save again"
+                  : "Check and save CSS"}
+            </button>
+            {isSignedIn && saveState === "saved" ? (
+              <SavedWorkspaceDownload
+                fileName="css-box-model-card.css"
+                label="Download saved .css"
+                mimeType="text/css"
+                source={css}
+              />
+            ) : null}
+          </div>
           <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
             {message}
             {!isSignedIn && message.startsWith("Create a free account") ? (

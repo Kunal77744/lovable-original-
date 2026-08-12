@@ -129,6 +129,9 @@ describe("SemanticHtmlWorkspace", () => {
       screen.getByRole("button", { name: "Resubmit assignment" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Assignment complete")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .html" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps newer edits visibly unsaved when an older submission finishes", async () => {
@@ -216,6 +219,9 @@ describe("SemanticHtmlWorkspace", () => {
     expect(
       screen.queryByText("Assignment complete. Your HTML and 5/5 result are saved."),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .html" }),
+    ).not.toBeInTheDocument();
   });
 
   it("restores a saved submission and presents its revision state", () => {
@@ -237,6 +243,9 @@ describe("SemanticHtmlWorkspace", () => {
       screen.getByText(
         "Saved submission restored. Revise the open rubric checks and resubmit.",
       ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .html" }),
     ).toBeInTheDocument();
   });
 
@@ -272,5 +281,8 @@ describe("SemanticHtmlWorkspace", () => {
       "href",
       "/account",
     );
+    expect(
+      screen.queryByRole("button", { name: "Download saved .html" }),
+    ).not.toBeInTheDocument();
   });
 });
