@@ -134,6 +134,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Check review status" }),
     ).toHaveAttribute("href", "/practice/review");
+    expect(
+      screen.getByRole("link", { name: "View saved collection" }),
+    ).toHaveAttribute("href", "/practice/bookmarks");
     expect(screen.getByText("Nothing saved yet. Use Save for later on any problem.")).toBeInTheDocument();
     expect(screen.getByText("No concepts waiting. A saved Wrong Answer adds one here; an Accepted retry clears it.")).toBeInTheDocument();
   });
@@ -283,6 +286,9 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Open review session" }),
     ).toHaveAttribute("href", "/practice/review");
+    expect(
+      screen.getByRole("link", { name: "View saved collection" }),
+    ).toHaveAttribute("href", "/practice/bookmarks");
     expect(
       document.querySelector(".practice-review-entry"),
     ).toHaveTextContent("2 problems");
@@ -472,6 +478,9 @@ describe("PracticePage progress", () => {
     expect(screen.queryByText("Saved for later")).not.toBeInTheDocument();
     expect(screen.queryByText("Mistakes to revisit")).not.toBeInTheDocument();
     expect(screen.queryByText("Private review session")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "View saved collection" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows one completed 12-step outcome without inventing another step", async () => {

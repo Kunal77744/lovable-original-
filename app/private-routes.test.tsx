@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
 import { metadata as activityMetadata } from "./practice/activity/page";
+import { metadata as bookmarksMetadata } from "./practice/bookmarks/page";
 import { metadata as challengeMetadata } from "./practice/challenge/page";
 import { metadata as dataStructuresMetadata } from "./practice/data-structures/page";
 import { metadata as debuggingMetadata } from "./practice/debugging/page";
@@ -86,6 +87,7 @@ describe("private learner routes", () => {
     });
     const privatePracticeMetadata = [
       activityMetadata,
+      bookmarksMetadata,
       challengeMetadata,
       debuggingMetadata,
       foundationsMetadata,
@@ -142,6 +144,7 @@ describe("private learner routes", () => {
     );
     const privatePracticePaths = [
       "activity",
+      "bookmarks",
       "challenge",
       "debugging",
       "foundations",
