@@ -28,6 +28,7 @@ type CheckState =
 type JavaScriptFoundationsWarmupProps = {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 };
 
 const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
@@ -37,6 +38,7 @@ const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
 export function JavaScriptFoundationsWarmup({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: JavaScriptFoundationsWarmupProps) {
   const [completedIds, setCompletedIds] = useState(completedExerciseIds);
   const [exerciseIndex, setExerciseIndex] = useState(() =>
@@ -49,12 +51,14 @@ export function JavaScriptFoundationsWarmup({
     updateSource: setCode,
     restoreStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "foundations",
     exerciseId: exercise?.slug ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -246,6 +250,7 @@ export function JavaScriptFoundationsWarmup({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          browserRecovery={browserRecovery}
         />
 
         <div className="foundations-actions">

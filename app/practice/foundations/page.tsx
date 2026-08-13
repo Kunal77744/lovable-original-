@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { JavaScriptFoundationsWarmup } from "@/components/javascript-foundations-warmup";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 import {
   getCompletedJavaScriptLabExerciseIds,
   getJavaScriptLabExerciseDrafts,
@@ -65,6 +66,7 @@ export default async function JavaScriptFoundationsPage() {
         </header>
 
         <JavaScriptFoundationsWarmup
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
           initialDrafts={initialDrafts}
         />

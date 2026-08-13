@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptFunctionsScopeLab } from "@/components/javascript-functions-scope-lab";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 import {
   getCompletedJavaScriptLabExerciseIds,
   getJavaScriptLabExerciseDrafts,
@@ -65,6 +66,7 @@ export default async function JavaScriptFunctionsPage() {
         </header>
 
         <JavaScriptFunctionsScopeLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
           initialDrafts={initialDrafts}
         />
