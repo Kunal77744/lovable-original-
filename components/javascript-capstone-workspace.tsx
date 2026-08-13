@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getEmptyJavaScriptCapstoneChecks,
@@ -74,6 +75,14 @@ export function JavaScriptCapstoneWorkspace({
         "expense-report.js",
       )
     : null;
+  const {
+    textareaRef: codeTextareaRef,
+    handleKeyDown: handleCodeKeyDown,
+  } = useCodeEditorKeyboard({
+    value: code,
+    onChange: updateCode,
+    commentSyntax: "javascript",
+  });
 
   useEffect(() => {
     if (!browserRecoveryKey) return;
@@ -402,10 +411,19 @@ export function JavaScriptCapstoneWorkspace({
           <label htmlFor="js-capstone-editor">JavaScript project</label>
           <textarea
             id="js-capstone-editor"
+            ref={codeTextareaRef}
+            aria-describedby="js-capstone-editor-keyboard-hint"
             value={code}
             onChange={(event) => updateCode(event.target.value)}
+            onKeyDown={handleCodeKeyDown}
             spellCheck={false}
           />
+          <p
+            className="project-editor-keyboard-hint"
+            id="js-capstone-editor-keyboard-hint"
+          >
+            Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+          </p>
         </div>
 
         <aside className="js-capstone-contract" aria-label="Project input and output contract">

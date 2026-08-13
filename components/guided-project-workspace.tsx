@@ -6,6 +6,7 @@ import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-
 import { ProjectFeedback } from "@/components/project-feedback";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { SemanticHtmlRepairDrill } from "@/components/semantic-html-repair-drill";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import {
   getEmptyGuidedProjectChecks,
   type GuidedProjectRecord,
@@ -82,6 +83,14 @@ export function GuidedProjectWorkspace({
         "field-guide.html",
       )
     : null;
+  const {
+    textareaRef: htmlTextareaRef,
+    handleKeyDown: handleHtmlKeyDown,
+  } = useCodeEditorKeyboard({
+    value: html,
+    onChange: updateHtml,
+    commentSyntax: "html",
+  });
 
   useEffect(() => {
     if (!browserRecoveryKey) return;
@@ -160,6 +169,14 @@ export function GuidedProjectWorkspace({
     setMessage(
       "Browser draft restored as unsaved work. Your private saved HTML stays unchanged until this exact draft saves.",
     );
+  }
+
+  function updateHtml(nextHtml: string) {
+    htmlRef.current = nextHtml;
+    setHtml(nextHtml);
+    persistBrowserRecovery(nextHtml);
+    setRequestState((current) => (current === "error" ? "idle" : current));
+    setMessage("You have unsaved changes.");
   }
 
   async function persist(action: "save" | "submit") {
@@ -298,18 +315,19 @@ export function GuidedProjectWorkspace({
           <label htmlFor="guided-project-editor">Semantic HTML project</label>
           <textarea
             id="guided-project-editor"
+            ref={htmlTextareaRef}
+            aria-describedby="guided-project-editor-keyboard-hint"
             value={html}
-            onChange={(event) => {
-              htmlRef.current = event.target.value;
-              setHtml(htmlRef.current);
-              persistBrowserRecovery(htmlRef.current);
-              setRequestState((current) =>
-                current === "error" ? "idle" : current,
-              );
-              setMessage("You have unsaved changes.");
-            }}
+            onChange={(event) => updateHtml(event.target.value)}
+            onKeyDown={handleHtmlKeyDown}
             spellCheck={false}
           />
+          <p
+            className="project-editor-keyboard-hint"
+            id="guided-project-editor-keyboard-hint"
+          >
+            Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+          </p>
         </div>
 
         <div className="project-preview">

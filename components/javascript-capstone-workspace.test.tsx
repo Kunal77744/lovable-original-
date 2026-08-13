@@ -53,6 +53,54 @@ describe("JavaScriptCapstoneWorkspace", () => {
     window.localStorage.clear();
   });
 
+  it("edits the JavaScript project with keyboard-native indentation and comments", () => {
+    render(
+      <JavaScriptCapstoneWorkspace
+        projectSlug="javascript-expense-report"
+        initialProject={{ ...starterProject, code: "return input;" }}
+      />,
+    );
+
+    const editor = screen.getByLabelText(
+      "JavaScript project",
+    ) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "Tab" });
+    expect(editor).toHaveValue("  return input;");
+
+    editor.setSelectionRange(2, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", metaKey: true });
+    expect(editor).toHaveValue("  // return input;");
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "js-capstone-editor-keyboard-hint",
+    );
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+  });
+
+  it("adds and removes smart pairs while keeping a keyboard exit", () => {
+    render(
+      <JavaScriptCapstoneWorkspace
+        projectSlug="javascript-expense-report"
+        initialProject={{ ...starterProject, code: "" }}
+      />,
+    );
+
+    const editor = screen.getByLabelText(
+      "JavaScript project",
+    ) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, 0);
+    fireEvent.keyDown(editor, { key: "{" });
+    expect(editor).toHaveValue("{}");
+    expect(editor.selectionStart).toBe(1);
+    fireEvent.keyDown(editor, { key: "Backspace" });
+    expect(editor).toHaveValue("");
+
+    fireEvent.keyDown(editor, { key: "Escape" });
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(true);
+    expect(editor).toHaveValue("");
+  });
+
   it("restores a browser copy as unsaved JavaScript and clears it after exact save", async () => {
     const savedCode = `${JAVASCRIPT_CAPSTONE_STARTER}\n// saved account code`;
     const recoveredCode = `${JAVASCRIPT_CAPSTONE_STARTER}\n// recovered browser code`;

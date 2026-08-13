@@ -4,6 +4,11 @@ export type EditorCommentResult = {
   selectionEnd: number;
 };
 
+export type EditorBlockCommentSyntax = {
+  open: string;
+  close: string;
+};
+
 type LineChange = {
   index: number;
   removed: number;
@@ -98,5 +103,78 @@ export function toggleEditorLineComments(
     value: `${value.slice(0, lineStart)}${nextLines.join("\n")}${value.slice(replacementEnd)}`,
     selectionStart: mapPosition(start, changes),
     selectionEnd: mapPosition(end, changes),
+  };
+}
+
+export function toggleEditorBlockComments(
+  value: string,
+  selectionStart: number,
+  selectionEnd: number,
+  syntax: EditorBlockCommentSyntax,
+): EditorCommentResult {
+  const start = clampSelection(value, Math.min(selectionStart, selectionEnd));
+  const end = clampSelection(value, Math.max(selectionStart, selectionEnd));
+  const hasSelection = start !== end;
+  const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+  const nextLineBreak = value.indexOf("\n", end);
+  const lineEnd = nextLineBreak === -1 ? value.length : nextLineBreak;
+  const line = value.slice(lineStart, lineEnd);
+  const leadingWhitespace = line.match(/^[ \t]*/)?.[0].length ?? 0;
+  const trailingWhitespace = line.match(/[ \t]*$/)?.[0].length ?? 0;
+  const targetStart = hasSelection ? start : lineStart + leadingWhitespace;
+  const targetEnd = hasSelection
+    ? end
+    : Math.max(targetStart, lineEnd - trailingWhitespace);
+
+  if (targetStart === targetEnd) {
+    return { value, selectionStart: start, selectionEnd: end };
+  }
+
+  const { open, close } = syntax;
+  const selectedValue = value.slice(targetStart, targetEnd);
+  const selectionHasMarkers =
+    selectedValue.startsWith(open) && selectedValue.endsWith(close);
+  const markersWrapSelection =
+    targetStart >= open.length &&
+    value.slice(targetStart - open.length, targetStart) === open &&
+    value.slice(targetEnd, targetEnd + close.length) === close;
+
+  if (selectionHasMarkers) {
+    const nextValue = `${value.slice(0, targetStart)}${selectedValue.slice(
+      open.length,
+      selectedValue.length - close.length,
+    )}${value.slice(targetEnd)}`;
+    const nextStart = hasSelection
+      ? targetStart
+      : Math.max(targetStart, start - open.length);
+    const nextEnd = hasSelection
+      ? targetEnd - open.length - close.length
+      : nextStart;
+
+    return {
+      value: nextValue,
+      selectionStart: nextStart,
+      selectionEnd: nextEnd,
+    };
+  }
+
+  if (markersWrapSelection) {
+    return {
+      value: `${value.slice(0, targetStart - open.length)}${selectedValue}${value.slice(
+        targetEnd + close.length,
+      )}`,
+      selectionStart: targetStart - open.length,
+      selectionEnd: targetEnd - open.length,
+    };
+  }
+
+  const nextValue = `${value.slice(0, targetStart)}${open}${selectedValue}${close}${value.slice(
+    targetEnd,
+  )}`;
+
+  return {
+    value: nextValue,
+    selectionStart: hasSelection ? targetStart + open.length : start + open.length,
+    selectionEnd: hasSelection ? targetEnd + open.length : start + open.length,
   };
 }

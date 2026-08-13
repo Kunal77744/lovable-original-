@@ -42,6 +42,38 @@ describe("GuidedProjectWorkspace", () => {
     window.localStorage.clear();
   });
 
+  it("edits the semantic project with HTML-aware keyboard shortcuts", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <GuidedProjectWorkspace
+        projectSlug="semantic-html-article"
+        initialProject={starterProject}
+        initialFeedback={null}
+        practiceContinuation={{ href: "/practice", label: "Continue practice" }}
+      />,
+    );
+
+    const editor = screen.getByLabelText(
+      "Semantic HTML project",
+    ) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+
+    expect(editor.value).toBe(`<!--${starterProject.html}-->`);
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "guided-project-editor-keyboard-hint",
+    );
+    expect(
+      screen.getByText(
+        "Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("restores an account-scoped browser draft without replacing saved HTML", async () => {
     const savedHtml = "<main><article><h1>Saved guide</h1></article></main>";
     const recoveredHtml = "<main><article><h1>Recovered guide</h1></article></main>";
