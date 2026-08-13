@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -74,6 +75,10 @@ export default async function SemanticHtmlProjectPage() {
         href: "/practice",
         label: "Review the completed JavaScript path",
       };
+  const browserRecoveryScope = createHash("sha256")
+    .update(session.user.id)
+    .digest("hex")
+    .slice(0, 24);
 
   return (
     <main className="project-page">
@@ -128,6 +133,7 @@ export default async function SemanticHtmlProjectPage() {
         </header>
 
         <GuidedProjectWorkspace
+          browserRecoveryScope={browserRecoveryScope}
           projectSlug={GUIDED_PROJECT_SLUG}
           initialProject={project}
           initialFeedback={projectFeedback?.feedback ?? null}

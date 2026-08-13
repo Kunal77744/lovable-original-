@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -29,6 +30,10 @@ export default async function HtmlCssResourceLibraryPage() {
   if (progress.completedCount !== progress.totalCount) redirect("/practice/css");
 
   const project = await getHtmlCssCapstoneForStudent(session.user.id);
+  const browserRecoveryScope = createHash("sha256")
+    .update(session.user.id)
+    .digest("hex")
+    .slice(0, 24);
 
   return (
     <main className="html-css-capstone-page">
@@ -68,6 +73,7 @@ export default async function HtmlCssResourceLibraryPage() {
           </aside>
         </header>
         <HtmlCssCapstoneWorkspace
+          browserRecoveryScope={browserRecoveryScope}
           projectSlug={HTML_CSS_CAPSTONE_SLUG}
           initialProject={project}
         />

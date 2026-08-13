@@ -9107,6 +9107,14 @@ h1 {
   color: #173f2d;
 }
 
+.project-browser-draft-recovery {
+  margin: 0 0 1rem;
+  border: 1px solid #486052;
+  border-radius: 1rem;
+  background: #20342a;
+  box-shadow: 0 14px 34px rgba(23, 35, 30, 0.12);
+}
+
 .loaded-submission-cue > div {
   display: grid;
   gap: 4px;
