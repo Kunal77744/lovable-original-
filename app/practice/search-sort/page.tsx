@@ -9,6 +9,7 @@ import {
   getJavaScriptLabExerciseDrafts,
 } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ export default async function JavaScriptSearchSortPage() {
         </header>
 
         <JavaScriptSearchSortLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
           initialDrafts={initialDrafts}
         />

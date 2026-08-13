@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptDataStructuresLab } from "@/components/javascript-data-structures-lab";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 import {
   getCompletedJavaScriptLabExerciseIds,
   getJavaScriptLabExerciseDrafts,
@@ -66,6 +67,7 @@ export default async function JavaScriptDataStructuresPage() {
         </header>
 
         <JavaScriptDataStructuresLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
           initialDrafts={initialDrafts}
         />

@@ -32,9 +32,11 @@ const exerciseIds = JAVASCRIPT_TREES_GRAPHS_EXERCISES.map(
 export function JavaScriptTreesGraphsLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -46,12 +48,14 @@ export function JavaScriptTreesGraphsLab({
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "trees-graphs",
     exerciseId: exercise?.slug ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -272,6 +276,7 @@ export function JavaScriptTreesGraphsLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="function-lab-actions">

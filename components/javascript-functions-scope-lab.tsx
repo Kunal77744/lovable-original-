@@ -32,9 +32,11 @@ const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map(
 export function JavaScriptFunctionsScopeLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -46,12 +48,14 @@ export function JavaScriptFunctionsScopeLab({
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "functions",
     exerciseId: exercise?.slug ?? JAVASCRIPT_FUNCTION_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -268,6 +272,7 @@ export function JavaScriptFunctionsScopeLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="function-lab-actions">
