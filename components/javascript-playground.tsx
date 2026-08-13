@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import {
   type PlaygroundCheckResult,
@@ -16,6 +17,11 @@ type JavaScriptPlaygroundProps = {
   initialCode: string;
   initialQuickChecks: string;
   initialUpdatedAt: string | null;
+  acceptedTransfer?: {
+    problemSlug: string;
+    problemTitle: string;
+    source: string;
+  } | null;
 };
 
 type RunState =
@@ -34,6 +40,7 @@ export function JavaScriptPlayground({
   initialCode,
   initialQuickChecks,
   initialUpdatedAt,
+  acceptedTransfer = null,
 }: JavaScriptPlaygroundProps) {
   const [code, setCode] = useState(initialCode);
   const latestCode = useRef(initialCode);
@@ -53,6 +60,9 @@ export function JavaScriptPlayground({
     checks: [],
     message: "Add one expression per line. Each check should return true.",
   });
+  const [transferState, setTransferState] = useState<
+    "offered" | "loaded" | "dismissed"
+  >(acceptedTransfer ? "offered" : "dismissed");
 
   async function runCode() {
     setRunState({
@@ -162,8 +172,61 @@ export function JavaScriptPlayground({
     setSaveState("unsaved");
   }
 
+  function loadAcceptedCopy() {
+    if (!acceptedTransfer) return;
+
+    latestCode.current = acceptedTransfer.source;
+    setCode(acceptedTransfer.source);
+    setCheckSource("");
+    setSaveState("unsaved");
+    setRunState({
+      kind: "ready",
+      output: [],
+      message: "Run the Accepted copy to see console output here.",
+    });
+    setCheckState({
+      kind: "ready",
+      checks: [],
+      message: "Add one expression per line. Each check should return true.",
+    });
+    setTransferState("loaded");
+  }
+
   return (
     <section className="playground-workbench" aria-labelledby="playground-editor-title">
+      {acceptedTransfer && transferState === "offered" ? (
+        <aside className="playground-transfer" aria-label="Accepted solution copy">
+          <div>
+            <span>Accepted solution</span>
+            <strong>Experiment beyond the judge</strong>
+          </div>
+          <p>
+            Load a copy of your saved {acceptedTransfer.problemTitle} solution.
+            Your judged source, Accepted result, and saved playground file stay
+            unchanged until you choose to save here.
+          </p>
+          <div className="playground-transfer-actions">
+            <button type="button" onClick={() => setTransferState("dismissed")}>
+              Keep current file
+            </button>
+            <button type="button" onClick={loadAcceptedCopy}>
+              Use Accepted copy
+            </button>
+          </div>
+        </aside>
+      ) : null}
+      {acceptedTransfer && transferState === "loaded" ? (
+        <div className="playground-transfer-loaded" role="status">
+          <span>Unsaved copy</span>
+          <p>
+            Loaded from {acceptedTransfer.problemTitle}. Your judged solution is
+            still untouched.
+          </p>
+          <Link href={`/practice/${acceptedTransfer.problemSlug}`}>
+            Return to problem
+          </Link>
+        </div>
+      ) : null}
       <header className="playground-filebar">
         <div>
           <span className="playground-file-dot" aria-hidden="true" />

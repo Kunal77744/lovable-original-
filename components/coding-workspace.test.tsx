@@ -2121,6 +2121,14 @@ describe("CodingWorkspace", () => {
       screen.getByRole("button", { name: "Download Accepted .js" }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole("link", {
+        name: "Experiment with an Accepted copy in the playground",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/playground?accepted_from=sum-two-numbers",
+    );
+    expect(
       screen.getByRole("heading", {
         name: "Compare your plan with what passed.",
       }),
@@ -2349,6 +2357,11 @@ describe("CodingWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download Accepted .js" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: "Experiment with an Accepted copy in the playground",
+      }),
+    ).not.toBeInTheDocument();
     signedInView.unmount();
 
     render(
@@ -2367,6 +2380,11 @@ describe("CodingWorkspace", () => {
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Download Accepted .js" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: "Experiment with an Accepted copy in the playground",
+      }),
     ).not.toBeInTheDocument();
   });
 

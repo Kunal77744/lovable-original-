@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -25,24 +25,53 @@ vi.mock("@/db/javascript-playground", () => ({
   }),
 }));
 
+vi.mock("@/db/coding-practice", () => ({
+  getCodingProblemForStudent: vi.fn().mockResolvedValue({
+    latestAcceptedCode:
+      "function solve(input) { return String(Number(input) * 2); }",
+  }),
+}));
+
 vi.mock("@/components/javascript-playground", () => ({
   JavaScriptPlayground: ({
     initialCode,
     initialQuickChecks,
+    acceptedTransfer,
   }: {
     initialCode: string;
     initialQuickChecks: string;
+    acceptedTransfer?: {
+      problemTitle: string;
+      source: string;
+    } | null;
   }) => (
     <section aria-label="JavaScript playground editor">
       <pre>{initialCode}</pre>
       <pre>{initialQuickChecks}</pre>
+      {acceptedTransfer ? (
+        <div>
+          <span>{acceptedTransfer.problemTitle}</span>
+          <pre>{acceptedTransfer.source}</pre>
+        </div>
+      ) : null}
     </section>
   ),
 }));
 
+import { getCodingProblemForStudent } from "@/db/coding-practice";
 import PlaygroundPage, { metadata } from "./page";
 
 describe("PlaygroundPage", () => {
+  afterEach(cleanup);
+
+  beforeEach(() => {
+    vi.mocked(getCodingProblemForStudent).mockReset();
+    vi.mocked(getCodingProblemForStudent).mockResolvedValue({
+      latestAcceptedCode:
+        "function solve(input) { return String(Number(input) * 2); }",
+    } as never);
+  });
+
   it("labels the saved workspace as private beside the page heading", async () => {
     render(await PlaygroundPage());
 
@@ -69,5 +98,47 @@ describe("PlaygroundPage", () => {
       index: false,
       follow: false,
     });
+  });
+
+  it("offers only the signed-in learner's exact Accepted source", async () => {
+    render(
+      await PlaygroundPage({
+        searchParams: Promise.resolve({ accepted_from: "even-or-odd" }),
+      }),
+    );
+
+    expect(getCodingProblemForStudent).toHaveBeenCalledWith(
+      "learner-1",
+      "even-or-odd",
+    );
+    expect(screen.getByText("Even or odd")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "function solve(input) { return String(Number(input) * 2); }",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("ignores invalid and non-Accepted transfer requests", async () => {
+    vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+      latestAcceptedCode: null,
+    } as never);
+
+    const nonAcceptedView = render(
+      await PlaygroundPage({
+        searchParams: Promise.resolve({ accepted_from: "even-or-odd" }),
+      }),
+    );
+
+    expect(screen.queryByText("Even or odd")).not.toBeInTheDocument();
+    nonAcceptedView.unmount();
+
+    render(
+      await PlaygroundPage({
+        searchParams: Promise.resolve({ accepted_from: "not-a-real-problem" }),
+      }),
+    );
+
+    expect(getCodingProblemForStudent).toHaveBeenCalledTimes(1);
   });
 });

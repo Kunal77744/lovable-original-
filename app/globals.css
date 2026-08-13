@@ -10295,6 +10295,28 @@ h1 {
   outline-offset: 4px;
 }
 
+.accepted-playground-link {
+  width: fit-content;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #bde7cb;
+  font-size: 11px;
+  font-weight: 780;
+  text-decoration: none;
+}
+
+.accepted-playground-link:hover {
+  color: #f1f7f3;
+}
+
+.accepted-playground-link:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid rgba(131, 221, 168, 0.32);
+  outline-offset: 4px;
+}
+
 .accepted-source-download {
   margin-top: 20px;
   padding: 16px;
@@ -13101,6 +13123,106 @@ h1 {
   box-shadow: 0 28px 64px rgba(23, 35, 30, 0.17);
 }
 
+.playground-transfer {
+  min-height: 96px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.7fr) minmax(18rem, 1.4fr) auto;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #486052;
+  background: #20342a;
+}
+
+.playground-transfer > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.playground-transfer span,
+.playground-transfer-loaded span {
+  color: #91cca9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.playground-transfer strong {
+  color: #f1f7f3;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.playground-transfer p,
+.playground-transfer-loaded p {
+  margin: 0;
+  color: #c3d1c8;
+  font-size: 11px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.playground-transfer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.playground-transfer-actions button {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid #647a6d;
+  border-radius: 999px;
+  background: transparent;
+  color: #dce8df;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.playground-transfer-actions button:last-child {
+  color: #173f2d;
+  border-color: #bde7cb;
+  background: #e9f4ed;
+}
+
+.playground-transfer-actions button:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.playground-transfer-actions button:last-child:hover {
+  color: #173f2d;
+  background: #ffffff;
+}
+
+.playground-transfer-actions button:focus-visible,
+.playground-transfer-loaded a:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.32);
+  outline-offset: 3px;
+}
+
+.playground-transfer-loaded {
+  min-height: 50px;
+  padding: 11px 22px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid #486052;
+  background: #20342a;
+}
+
+.playground-transfer-loaded a {
+  color: #dce8df;
+  font-size: 10px;
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
 .playground-filebar {
   min-height: 60px;
   padding: 0 24px;
@@ -15136,6 +15258,26 @@ footer {
   .playground-workbench {
     margin-top: 38px;
     border-radius: 12px;
+  }
+
+  .playground-transfer {
+    padding: 17px;
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .playground-transfer-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .playground-transfer-loaded {
+    padding: 13px 17px;
+    grid-template-columns: 1fr auto;
+  }
+
+  .playground-transfer-loaded span {
+    grid-column: 1 / -1;
   }
 
   .playground-filebar {

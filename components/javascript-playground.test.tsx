@@ -84,6 +84,104 @@ describe("JavaScriptPlayground", () => {
     );
   });
 
+  it("loads an Accepted copy only after confirmation and keeps it unsaved", () => {
+    render(
+      <JavaScriptPlayground
+        initialCode="console.log('current playground');"
+        initialQuickChecks="currentCheck() === true"
+        initialUpdatedAt="2026-08-13T01:00:00.000Z"
+        acceptedTransfer={{
+          problemSlug: "even-or-odd",
+          problemTitle: "Even or odd",
+          source:
+            "function solve(input) { return Number(input) % 2 === 0 ? 'Even' : 'Odd'; }",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('current playground');",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("currentCheck() === true");
+    expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Use Accepted copy" }));
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "function solve(input) { return Number(input) % 2 === 0 ? 'Even' : 'Odd'; }",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("");
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByText(/Loaded from Even or odd\./)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Return to problem" })).toHaveAttribute(
+      "href",
+      "/practice/even-or-odd",
+    );
+  });
+
+  it("keeps the current playground file when the Accepted copy is declined", () => {
+    render(
+      <JavaScriptPlayground
+        initialCode="console.log('keep me');"
+        initialQuickChecks="true"
+        initialUpdatedAt="2026-08-13T01:00:00.000Z"
+        acceptedTransfer={{
+          problemSlug: "sum-two-numbers",
+          problemTitle: "Sum two numbers",
+          source: "function solve(input) { return input; }",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep current file" }));
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('keep me');",
+    );
+    expect(screen.queryByText("Experiment beyond the judge")).not.toBeInTheDocument();
+    expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+  });
+
+  it("saves only the confirmed Accepted copy and cleared checks", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ file: {} }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const transferredSource =
+      "function solve(input) { return String(Number(input) * 2); }";
+    render(
+      <JavaScriptPlayground
+        initialCode="console.log('old');"
+        initialQuickChecks="oldCheck()"
+        initialUpdatedAt="2026-08-13T01:00:00.000Z"
+        acceptedTransfer={{
+          problemSlug: "double-a-number",
+          problemTitle: "Double a number",
+          source: transferredSource,
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Use Accepted copy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/playground",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ code: transferredSource, quickChecks: "" }),
+        }),
+      ),
+    );
+  });
+
   it("runs learner-authored checks against the exact editor source", async () => {
     runPlaygroundChecks.mockResolvedValue({
       status: "finished",

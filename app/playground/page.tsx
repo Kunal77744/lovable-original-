@@ -3,9 +3,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { JavaScriptPlayground } from "@/components/javascript-playground";
+import { getCodingProblemForStudent } from "@/db/coding-practice";
 import { getPlaygroundFile } from "@/db/javascript-playground";
 import { auth } from "@/lib/auth";
 import { getSignInHref } from "@/lib/account-destination";
+import { getCodingProblem } from "@/lib/coding-problems";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -20,16 +22,40 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function PlaygroundPage() {
+type PlaygroundPageProps = {
+  searchParams?: Promise<{ accepted_from?: string | string[] }>;
+};
+
+export default async function PlaygroundPage({ searchParams }: PlaygroundPageProps = {}) {
+  const requestedProblemSlug = (await searchParams)?.accepted_from;
+  const problemSlug =
+    typeof requestedProblemSlug === "string" ? requestedProblemSlug : null;
+  const requestedProblem = problemSlug ? getCodingProblem(problemSlug) : null;
+  const returnDestination = requestedProblem
+    ? `/playground?accepted_from=${encodeURIComponent(requestedProblem.slug)}`
+    : "/playground";
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    redirect(getSignInHref("/playground"));
+    redirect(getSignInHref(returnDestination));
   }
 
-  const file = await getPlaygroundFile(session.user.id);
+  const [file, studentState] = await Promise.all([
+    getPlaygroundFile(session.user.id),
+    requestedProblem
+      ? getCodingProblemForStudent(session.user.id, requestedProblem.slug)
+      : Promise.resolve(null),
+  ]);
+  const acceptedTransfer =
+    requestedProblem && studentState?.latestAcceptedCode
+      ? {
+          problemSlug: requestedProblem.slug,
+          problemTitle: requestedProblem.title,
+          source: studentState.latestAcceptedCode,
+        }
+      : null;
 
   return (
     <main className="playground-page">
@@ -62,6 +88,7 @@ export default async function PlaygroundPage() {
           initialCode={file.code}
           initialQuickChecks={file.quickChecks}
           initialUpdatedAt={file.updatedAt}
+          acceptedTransfer={acceptedTransfer}
         />
 
         <aside className="playground-boundary" aria-label="Playground boundaries">

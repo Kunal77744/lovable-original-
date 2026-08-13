@@ -2528,11 +2528,20 @@ export function CodingWorkspace({
           </section>
         ) : null}
         {acceptedReview && acceptedCode ? (
-          <AcceptedSolutionDownload
-            problemSlug={problem.slug}
-            problemTitle={problem.title}
-            source={acceptedCode}
-          />
+          <>
+            <AcceptedSolutionDownload
+              problemSlug={problem.slug}
+              problemTitle={problem.title}
+              source={acceptedCode}
+            />
+            <Link
+              className="accepted-playground-link"
+              href={`/playground?accepted_from=${encodeURIComponent(problem.slug)}`}
+            >
+              Experiment with an Accepted copy in the playground
+              <span aria-hidden="true">→</span>
+            </Link>
+          </>
         ) : null}
         <div className="practice-recovery-cue">
           <span aria-hidden="true" />
