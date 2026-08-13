@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
 import { ProjectFeedback } from "@/components/project-feedback";
+import { ProjectLocalFileImport } from "@/components/project-local-file-import";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { SemanticHtmlRepairDrill } from "@/components/semantic-html-repair-drill";
 import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
@@ -312,6 +313,14 @@ export function GuidedProjectWorkspace({
                       : "Starter"}
             </span>
           </div>
+          <ProjectLocalFileImport
+            accept=".html,text/html"
+            extension=".html"
+            fileLabel="HTML"
+            maxLength={MAX_SEMANTIC_HTML_LENGTH}
+            onImport={updateHtml}
+            titleId="guided-project-import-title"
+          />
           <label htmlFor="guided-project-editor">Semantic HTML project</label>
           <textarea
             id="guided-project-editor"

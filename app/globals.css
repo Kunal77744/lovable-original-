@@ -5364,6 +5364,94 @@ h1 {
   line-height: 1.45;
 }
 
+.project-local-import {
+  padding: 9px 18px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: #17231e;
+}
+
+.project-local-import-trigger,
+.project-local-import-actions button {
+  min-height: 30px;
+  padding: 4px 0;
+  color: #b8c5be;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.project-local-import-trigger:hover,
+.project-local-import-actions button:hover {
+  color: #ffffff;
+}
+
+.project-local-import-trigger:focus-visible,
+.project-local-import-actions button:focus-visible {
+  outline: 2px solid #66dc9d;
+  outline-offset: 3px;
+}
+
+.project-local-import-message {
+  margin: 0;
+  color: #b8d7c5;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.project-local-import-message.is-error {
+  color: #f6c899;
+}
+
+.project-local-import-confirmation {
+  width: 100%;
+  padding-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.project-local-import-confirmation strong {
+  color: #f3f7f4;
+  font-size: 13px;
+}
+
+.project-local-import-confirmation p {
+  max-width: 520px;
+  margin: 3px 0 0;
+  color: #9fb0a7;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.project-local-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.project-local-import-actions button:last-child {
+  color: #66dc9d;
+}
+
+.js-capstone-editor > .project-local-import {
+  margin: -20px -28px 20px;
+  padding-right: 20px;
+  padding-left: 20px;
+}
+
 .js-capstone-editor .project-editor-keyboard-hint {
   margin: 14px 0 -12px;
   padding: 10px 0 0;
@@ -25334,6 +25422,16 @@ footer {
 
   .js-capstone-editor .workspace-panel-label {
     margin: 0 -22px 20px;
+  }
+
+  .js-capstone-editor > .project-local-import {
+    margin-right: -22px;
+    margin-left: -22px;
+  }
+
+  .project-local-import-confirmation {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .js-capstone-checks {

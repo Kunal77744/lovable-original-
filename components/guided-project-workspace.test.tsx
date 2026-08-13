@@ -74,6 +74,42 @@ describe("GuidedProjectWorkspace", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("imports local HTML as unsaved project work after confirmation", async () => {
+    const importedHtml = "<main><article><h1>Imported guide</h1></article></main>";
+    const file = new File([importedHtml], "my-guide.html", {
+      type: "text/html",
+    });
+    Object.defineProperty(file, "text", {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(importedHtml),
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <GuidedProjectWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="semantic-html-article"
+        initialProject={starterProject}
+        initialFeedback={null}
+        practiceContinuation={{ href: "/practice", label: "Continue practice" }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose HTML file to import"), {
+      target: { files: [file] },
+    });
+    await waitFor(() =>
+      expect(screen.getByText("Import my-guide.html?")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(screen.getByLabelText("Semantic HTML project")).toHaveValue(
+      importedHtml,
+    );
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("restores an account-scoped browser draft without replacing saved HTML", async () => {
     const savedHtml = "<main><article><h1>Saved guide</h1></article></main>";
     const recoveredHtml = "<main><article><h1>Recovered guide</h1></article></main>";

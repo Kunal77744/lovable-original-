@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
+import { ProjectLocalFileImport } from "@/components/project-local-file-import";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import {
@@ -382,6 +383,14 @@ export function HtmlCssCapstoneWorkspace({
                       : "Starter"}
               </span>
             </div>
+            <ProjectLocalFileImport
+              accept=".html,text/html"
+              extension=".html"
+              fileLabel="HTML"
+              maxLength={MAX_HTML_CSS_CAPSTONE_HTML_LENGTH}
+              onImport={updateHtml}
+              titleId="html-css-capstone-html-import-title"
+            />
             <label htmlFor="html-css-capstone-html">Semantic HTML</label>
             <textarea
               id="html-css-capstone-html"
@@ -412,6 +421,14 @@ export function HtmlCssCapstoneWorkspace({
                       : "Starter"}
               </span>
             </div>
+            <ProjectLocalFileImport
+              accept=".css,text/css"
+              extension=".css"
+              fileLabel="CSS"
+              maxLength={MAX_HTML_CSS_CAPSTONE_CSS_LENGTH}
+              onImport={updateCss}
+              titleId="html-css-capstone-css-import-title"
+            />
             <label htmlFor="html-css-capstone-css">Component CSS</label>
             <textarea
               id="html-css-capstone-css"
