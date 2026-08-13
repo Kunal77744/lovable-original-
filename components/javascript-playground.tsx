@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type PlaygroundCheckResult,
   runPlaygroundChecks,
@@ -13,11 +13,19 @@ import {
   MAX_PLAYGROUND_CODE_LENGTH,
   validatePlaygroundChecks,
 } from "@/lib/javascript-playground";
+import {
+  getPlaygroundDraftRecoveryKey,
+  INITIAL_PLAYGROUND_RECOVERY_FILE_ID,
+  parsePlaygroundDraftRecovery,
+  serializePlaygroundDraftRecovery,
+  type PlaygroundDraftRecovery,
+} from "@/lib/playground-draft-recovery";
 import type { PlaygroundWorkspaceFile } from "@/db/javascript-playground";
 
 type JavaScriptPlaygroundProps = {
   initialFiles: PlaygroundWorkspaceFile[];
   initialActiveFileId: string | null;
+  browserRecoveryScope?: string | null;
   acceptedTransfer?: {
     problemSlug: string;
     problemTitle: string;
@@ -40,6 +48,7 @@ type CheckState =
 export function JavaScriptPlayground({
   initialFiles,
   initialActiveFileId,
+  browserRecoveryScope = null,
   acceptedTransfer = null,
 }: JavaScriptPlaygroundProps) {
   const initialActiveFile =
@@ -76,6 +85,126 @@ export function JavaScriptPlayground({
   const [transferState, setTransferState] = useState<
     "offered" | "loaded" | "dismissed"
   >(acceptedTransfer ? "offered" : "dismissed");
+  const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
+    useState<PlaygroundDraftRecovery | null>(null);
+  const activeSavedFile = files.find((file) => file.id === activeFileId);
+  const activeRecoveryFileId =
+    activeFileId ?? INITIAL_PLAYGROUND_RECOVERY_FILE_ID;
+  const browserRecoveryKey =
+    browserRecoveryScope
+      ? getPlaygroundDraftRecoveryKey(
+          browserRecoveryScope,
+          activeRecoveryFileId,
+        )
+      : null;
+
+  useEffect(() => {
+    if (!browserRecoveryKey || !activeSavedFile) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedValue = window.localStorage.getItem(browserRecoveryKey);
+      const browserDraft = parsePlaygroundDraftRecovery(storedValue);
+
+      if (!browserDraft) {
+        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      if (
+        browserDraft.code === activeSavedFile.code &&
+        browserDraft.quickChecks === activeSavedFile.quickChecks
+      ) {
+        window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      if (
+        browserDraft.code === latestDraft.current.code &&
+        browserDraft.quickChecks === latestDraft.current.quickChecks
+      ) {
+        return;
+      }
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDraft(browserDraft);
+      }, 0);
+    } catch {
+      // Private server saving remains available when browser storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [
+    activeSavedFile,
+    browserRecoveryKey,
+  ]);
+
+  function persistBrowserRecovery(nextDraft: {
+    code: string;
+    quickChecks: string;
+  }) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.setItem(
+        browserRecoveryKey,
+        serializePlaygroundDraftRecovery(
+          nextDraft.code,
+          nextDraft.quickChecks,
+        ),
+      );
+      setRecoverableBrowserDraft(null);
+    } catch {
+      // Explicit private saving remains available when browser storage is blocked.
+    }
+  }
+
+  function reconcileBrowserRecoveryAfterSave(
+    previousFileId: string | null,
+    savedFileId: string | null,
+    savedDraft: { code: string; quickChecks: string },
+  ) {
+    if (!browserRecoveryScope || !savedFileId) return;
+
+    const previousRecoveryKey = getPlaygroundDraftRecoveryKey(
+      browserRecoveryScope,
+      previousFileId ?? INITIAL_PLAYGROUND_RECOVERY_FILE_ID,
+    );
+    const savedRecoveryKey = getPlaygroundDraftRecoveryKey(
+      browserRecoveryScope,
+      savedFileId,
+    );
+
+    try {
+      const browserDraft = parsePlaygroundDraftRecovery(
+        window.localStorage.getItem(previousRecoveryKey),
+      );
+
+      if (
+        browserDraft?.code === savedDraft.code &&
+        browserDraft.quickChecks === savedDraft.quickChecks
+      ) {
+        window.localStorage.removeItem(previousRecoveryKey);
+        return;
+      }
+
+      if (browserDraft && previousRecoveryKey !== savedRecoveryKey) {
+        window.localStorage.setItem(
+          savedRecoveryKey,
+          serializePlaygroundDraftRecovery(
+            browserDraft.code,
+            browserDraft.quickChecks,
+          ),
+        );
+        window.localStorage.removeItem(previousRecoveryKey);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
 
   async function runCode() {
     setRunState({
@@ -145,6 +274,7 @@ export function JavaScriptPlayground({
             )
           : [file];
       });
+      reconcileBrowserRecoveryAfterSave(activeFileId, file.id, submittedDraft);
       setSaveState(
         latestDraft.current.code === submittedDraft.code &&
           latestDraft.current.quickChecks === submittedDraft.quickChecks
@@ -185,12 +315,15 @@ export function JavaScriptPlayground({
       message: "Add one expression per line. Each check should return true.",
     });
     setTransferState(acceptedTransfer ? "offered" : "dismissed");
+    setRecoverableBrowserDraft(null);
   }
 
   function confirmDiscard(action: string) {
     return (
       (saveState !== "unsaved" && saveState !== "error") ||
-      window.confirm(`Discard the unsaved editor changes before you ${action}?`)
+      window.confirm(
+        `Leave the unsaved editor changes before you ${action}? This browser will keep a recovery copy for this file.`,
+      )
     );
   }
 
@@ -351,6 +484,18 @@ export function JavaScriptPlayground({
             isActive: file.id === payload.activeFile!.id,
           })),
       );
+      if (browserRecoveryScope) {
+        try {
+          window.localStorage.removeItem(
+            getPlaygroundDraftRecoveryKey(
+              browserRecoveryScope,
+              payload.deletedFileId,
+            ),
+          );
+        } catch {
+          // The deleted account file remains authoritative if cleanup is blocked.
+        }
+      }
       showFile(payload.activeFile);
       setFileMessage(`${activeFile.name} was deleted.`);
     } catch {
@@ -393,28 +538,34 @@ export function JavaScriptPlayground({
   }
 
   function updateCode(nextCode: string) {
-    latestDraft.current = { ...latestDraft.current, code: nextCode };
+    const nextDraft = { ...latestDraft.current, code: nextCode };
+    latestDraft.current = nextDraft;
     setCode(nextCode);
     setSaveState("unsaved");
+    persistBrowserRecovery(nextDraft);
   }
 
   function updateCheckSource(nextSource: string) {
-    latestDraft.current = {
+    const nextDraft = {
       ...latestDraft.current,
       quickChecks: nextSource,
     };
+    latestDraft.current = nextDraft;
     setCheckSource(nextSource);
     setSaveState("unsaved");
+    persistBrowserRecovery(nextDraft);
   }
 
   function loadAcceptedCopy() {
     if (!acceptedTransfer) return;
     if (!confirmDiscard("load the Accepted copy")) return;
 
-    latestDraft.current = { code: acceptedTransfer.source, quickChecks: "" };
+    const nextDraft = { code: acceptedTransfer.source, quickChecks: "" };
+    latestDraft.current = nextDraft;
     setCode(acceptedTransfer.source);
     setCheckSource("");
     setSaveState("unsaved");
+    persistBrowserRecovery(nextDraft);
     setRunState({
       kind: "ready",
       output: [],
@@ -426,6 +577,41 @@ export function JavaScriptPlayground({
       message: "Add one expression per line. Each check should return true.",
     });
     setTransferState("loaded");
+  }
+
+  function restoreBrowserDraft() {
+    if (!recoverableBrowserDraft) return;
+
+    const nextDraft = {
+      code: recoverableBrowserDraft.code,
+      quickChecks: recoverableBrowserDraft.quickChecks,
+    };
+    latestDraft.current = nextDraft;
+    setCode(nextDraft.code);
+    setCheckSource(nextDraft.quickChecks);
+    setSaveState("unsaved");
+    setRecoverableBrowserDraft(null);
+    setRunState({
+      kind: "ready",
+      output: [],
+      message: "Run the recovered browser copy to see console output here.",
+    });
+    setCheckState({
+      kind: "ready",
+      checks: [],
+      message: "Add one expression per line. Each check should return true.",
+    });
+  }
+
+  function keepPrivateSavedFile() {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.removeItem(browserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDraft(null);
   }
 
   return (
@@ -555,6 +741,31 @@ export function JavaScriptPlayground({
             Return to problem
           </Link>
         </div>
+      ) : null}
+      {recoverableBrowserDraft ? (
+        <aside
+          className="browser-draft-recovery"
+          aria-labelledby="playground-browser-recovery-title"
+        >
+          <div>
+            <span>Browser recovery</span>
+            <strong id="playground-browser-recovery-title">
+              Newer playground work is available.
+            </strong>
+          </div>
+          <p>
+            Your private saved code and Quick checks are still loaded. Restore
+            this browser copy as unsaved work, or keep the account-backed file.
+          </p>
+          <div className="browser-draft-recovery-actions">
+            <button type="button" onClick={keepPrivateSavedFile}>
+              Keep saved file
+            </button>
+            <button type="button" onClick={restoreBrowserDraft}>
+              Restore browser work
+            </button>
+          </div>
+        </aside>
       ) : null}
       <header className="playground-filebar">
         <div>

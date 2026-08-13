@@ -7,6 +7,12 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getPlaygroundDraftRecoveryKey,
+  INITIAL_PLAYGROUND_RECOVERY_FILE_ID,
+  parsePlaygroundDraftRecovery,
+  serializePlaygroundDraftRecovery,
+} from "@/lib/playground-draft-recovery";
 import { JavaScriptPlayground } from "./javascript-playground";
 
 const runPlaygroundCode = vi.fn();
@@ -41,6 +47,7 @@ describe("JavaScriptPlayground", () => {
     vi.restoreAllMocks();
     runPlaygroundCode.mockReset();
     runPlaygroundChecks.mockReset();
+    window.localStorage.clear();
   });
 
   it("runs the exact editor source from the keyboard and announces the result", async () => {
@@ -96,6 +103,370 @@ describe("JavaScriptPlayground", () => {
     expect(actions).not.toBeNull();
     expect(actions).toContainElement(
       screen.getByRole("button", { name: "Run code" }),
+    );
+  });
+
+  it("offers newer code and Quick checks without replacing the private saved file", async () => {
+    const recoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      "file-1",
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializePlaygroundDraftRecovery(
+        "const recovered = 84;",
+        "recovered === 84",
+        "2026-08-13T16:00:00.000Z",
+      ),
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "const saved = 42;",
+          "saved === 42",
+          "2026-08-13T15:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "const saved = 42;",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("saved === 42");
+    expect(
+      await screen.findByText("Newer playground work is available."),
+    ).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser work" }),
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "const recovered = 84;",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("recovered === 84");
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(window.localStorage.getItem(recoveryKey)).not.toBeNull();
+  });
+
+  it("keeps the account-backed file and clears a declined browser copy", async () => {
+    const recoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      "file-1",
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializePlaygroundDraftRecovery(
+        "const recovered = 84;",
+        "recovered === 84",
+      ),
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "const saved = 42;",
+          "saved === 42",
+          "2026-08-13T15:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    await screen.findByText("Newer playground work is available.");
+    fireEvent.click(screen.getByRole("button", { name: "Keep saved file" }));
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "const saved = 42;",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("saved === 42");
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+    expect(
+      screen.queryByText("Newer playground work is available."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears browser recovery only after the exact draft saves privately", async () => {
+    let finishSave: ((response: Response) => void) | undefined;
+    vi.spyOn(globalThis, "fetch").mockReturnValue(
+      new Promise((resolve) => {
+        finishSave = resolve;
+      }),
+    );
+    const recoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      "file-1",
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializePlaygroundDraftRecovery(
+        "const recovered = 84;",
+        "recovered === 84",
+      ),
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "const saved = 42;",
+          "saved === 42",
+          "2026-08-13T15:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    await screen.findByText("Newer playground work is available.");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser work" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "JavaScript file" }), {
+      target: { value: "const newest = 126;" },
+    });
+
+    await act(async () => {
+      finishSave?.(
+        new Response(
+          JSON.stringify({
+            file: {
+              id: "file-1",
+              name: "playground.js",
+              code: "const recovered = 84;",
+              quickChecks: "recovered === 84",
+              updatedAt: "2026-08-13T16:10:00.000Z",
+              isActive: true,
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(
+      parsePlaygroundDraftRecovery(window.localStorage.getItem(recoveryKey)),
+    ).toMatchObject({
+      code: "const newest = 126;",
+      quickChecks: "recovered === 84",
+    });
+  });
+
+  it("clears the exact browser copy after its matching private save succeeds", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          file: {
+            id: "file-1",
+            name: "playground.js",
+            code: "const recovered = 84;",
+            quickChecks: "recovered === 84",
+            updatedAt: "2026-08-13T16:10:00.000Z",
+            isActive: true,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    const recoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      "file-1",
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializePlaygroundDraftRecovery(
+        "const recovered = 84;",
+        "recovered === 84",
+      ),
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "const saved = 42;",
+          "saved === 42",
+          "2026-08-13T15:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    await screen.findByText("Newer playground work is available.");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser work" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    expect(await screen.findByText("Saved to your account")).toBeVisible();
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+  });
+
+  it("recovers the unsaved starter file before its first private save", async () => {
+    const initialFiles = [
+      {
+        ...playgroundFiles("const saved = 42;", "saved === 42")[0],
+        id: null,
+      },
+    ];
+    const recoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      INITIAL_PLAYGROUND_RECOVERY_FILE_ID,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializePlaygroundDraftRecovery(
+        "const recovered = 84;",
+        "recovered === 84",
+      ),
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={initialFiles}
+        initialActiveFileId={null}
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    expect(
+      await screen.findByText("Newer playground work is available."),
+    ).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser work" }),
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "const recovered = 84;",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("recovered === 84");
+  });
+
+  it("moves a newer starter recovery copy to its first saved file id", async () => {
+    let finishSave: ((response: Response) => void) | undefined;
+    vi.spyOn(globalThis, "fetch").mockReturnValue(
+      new Promise((resolve) => {
+        finishSave = resolve;
+      }),
+    );
+    const initialRecoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      INITIAL_PLAYGROUND_RECOVERY_FILE_ID,
+    );
+    const savedRecoveryKey = getPlaygroundDraftRecoveryKey(
+      "learner-1",
+      "file-1",
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={[
+          {
+            ...playgroundFiles("const first = 42;")[0],
+            id: null,
+          },
+        ]}
+        initialActiveFileId={null}
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "JavaScript file" }), {
+      target: { value: "const newer = 84;" },
+    });
+
+    await act(async () => {
+      finishSave?.(
+        new Response(
+          JSON.stringify({
+            file: {
+              id: "file-1",
+              name: "playground.js",
+              code: "const first = 42;",
+              quickChecks: "",
+              updatedAt: "2026-08-13T16:20:00.000Z",
+              isActive: true,
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(window.localStorage.getItem(initialRecoveryKey)).toBeNull();
+    expect(
+      parsePlaygroundDraftRecovery(
+        window.localStorage.getItem(savedRecoveryKey),
+      ),
+    ).toMatchObject({ code: "const newer = 84;", quickChecks: "" });
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "const newer = 84;",
+    );
+    expect(
+      screen.queryByText("Newer playground work is available."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("isolates recovery offers by private file", async () => {
+    const firstFile = playgroundFiles(
+      "console.log('first saved');",
+      "firstReady === true",
+      "2026-08-13T15:00:00.000Z",
+    )[0];
+    const secondFile = {
+      ...firstFile,
+      id: "file-2",
+      name: "arrays.js",
+      code: "console.log('second saved');",
+      quickChecks: "secondReady === true",
+      isActive: false,
+    };
+    window.localStorage.setItem(
+      getPlaygroundDraftRecoveryKey("learner-1", "file-2"),
+      serializePlaygroundDraftRecovery(
+        "console.log('second recovered');",
+        "secondRecovered === true",
+      ),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ file: { ...secondFile, isActive: true } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    render(
+      <JavaScriptPlayground
+        initialFiles={[firstFile, secondFile]}
+        initialActiveFileId="file-1"
+        browserRecoveryScope="learner-1"
+      />,
+    );
+
+    expect(
+      screen.queryByText("Newer playground work is available."),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "arrays.js" }));
+
+    expect(
+      await screen.findByText("Newer playground work is available."),
+    ).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('second saved');",
     );
   });
 

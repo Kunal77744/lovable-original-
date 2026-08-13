@@ -87,6 +87,7 @@ export default async function PlaygroundPage({ searchParams }: PlaygroundPagePro
         <JavaScriptPlayground
           initialFiles={workspace.files}
           initialActiveFileId={workspace.activeFileId}
+          browserRecoveryScope={session.user.id}
           acceptedTransfer={acceptedTransfer}
         />
 

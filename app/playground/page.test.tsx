@@ -41,9 +41,11 @@ vi.mock("@/db/coding-practice", () => ({
 vi.mock("@/components/javascript-playground", () => ({
   JavaScriptPlayground: ({
     initialFiles,
+    browserRecoveryScope,
     acceptedTransfer,
   }: {
     initialFiles: Array<{ code: string; quickChecks: string }>;
+    browserRecoveryScope?: string | null;
     acceptedTransfer?: {
       problemTitle: string;
       source: string;
@@ -52,6 +54,7 @@ vi.mock("@/components/javascript-playground", () => ({
     <section aria-label="JavaScript playground editor">
       <pre>{initialFiles[0].code}</pre>
       <pre>{initialFiles[0].quickChecks}</pre>
+      <span>{browserRecoveryScope}</span>
       {acceptedTransfer ? (
         <div>
           <span>{acceptedTransfer.problemTitle}</span>
@@ -95,6 +98,7 @@ describe("PlaygroundPage", () => {
     );
     expect(screen.getByText("console.log('private');")).toBeInTheDocument();
     expect(screen.getByText("double(4) === 8")).toBeInTheDocument();
+    expect(screen.getByText("learner-1")).toBeInTheDocument();
   });
 
   it("keeps the account-only page out of search", () => {
