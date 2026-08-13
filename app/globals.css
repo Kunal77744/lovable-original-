@@ -13521,7 +13521,7 @@ h1 {
 .playground-editor textarea {
   width: 100%;
   min-height: 410px;
-  padding: 30px 32px 54px 58px;
+  padding: 30px 32px 64px 58px;
   resize: vertical;
   color: #eaf1ed;
   border: 0;
@@ -13546,9 +13546,20 @@ h1 {
   bottom: 16px;
   left: 58px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
   color: #84958b;
   font-size: 10px;
+}
+
+.playground-editor-meta span:first-child {
+  letter-spacing: 0.01em;
+}
+
+.playground-editor-meta span:last-child {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .playground-actions {
@@ -15543,7 +15554,7 @@ footer {
 
   .playground-editor textarea {
     min-height: 390px;
-    padding: 24px 17px 52px 40px;
+    padding: 24px 17px 74px 40px;
     background:
       linear-gradient(90deg, #152019 0 29px, #24332b 29px 30px, transparent 30px),
       #111a16;
@@ -15553,6 +15564,13 @@ footer {
   .playground-editor-meta {
     right: 16px;
     left: 40px;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .playground-editor-meta span:first-child {
+    max-width: 210px;
+    line-height: 1.45;
   }
 
   .playground-actions {

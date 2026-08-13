@@ -99,6 +99,78 @@ describe("JavaScriptPlayground", () => {
     );
   });
 
+  it("indents selected code while keeping an explicit keyboard exit", () => {
+    const source = "function answer() {\nreturn 42;\n}";
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(source)}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript file",
+    }) as HTMLTextAreaElement;
+    const lineStart = source.indexOf("return");
+    editor.setSelectionRange(lineStart, lineStart + "return 42;".length);
+
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
+    expect(editor).toHaveValue("function answer() {\n  return 42;\n}");
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+
+    fireEvent.keyDown(editor, { key: "Escape" });
+    const valueBeforeExit = editor.value;
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(true);
+    expect(editor).toHaveValue(valueBeforeExit);
+  });
+
+  it("toggles line comments for the selected block", () => {
+    const source = "const first = 1;\nconst second = 2;";
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(source)}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript file",
+    }) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, source.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+
+    expect(editor).toHaveValue("// const first = 1;\n// const second = 2;");
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "playground-editor-keyboard-hint",
+    );
+    expect(
+      screen.getByText(
+        "Tab indents · Ctrl/⌘ + / comments · Escape then Tab exits",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("wraps selected source with a smart pair", () => {
+    const source = "first + second";
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(source)}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript file",
+    }) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, source.length);
+    fireEvent.keyDown(editor, { key: "(" });
+
+    expect(editor).toHaveValue("(first + second)");
+    expect(editor.selectionStart).toBe(1);
+    expect(editor.selectionEnd).toBe(source.length + 1);
+  });
+
   it("downloads only the exact saved active file and hides the control after an edit", () => {
     const createObjectURL = vi.fn().mockReturnValue("blob:playground-file");
     const revokeObjectURL = vi.fn();
