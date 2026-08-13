@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { SubmissionSnapshot } from "@/components/submission-history";
+import { SubmissionSourceDownload } from "@/components/submission-source-download";
 import { getCodingSubmissionForStudent } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
 import { SiteFooter, SiteNav } from "../../site-chrome";
@@ -51,6 +52,14 @@ export default async function SubmissionPage({
         aria-labelledby="submission-snapshot-title"
       >
         <SubmissionSnapshot submission={submission} />
+        {submission.code === null ? null : (
+          <SubmissionSourceDownload
+            createdAt={submission.createdAt}
+            problemSlug={submission.problemSlug}
+            problemTitle={submission.problemTitle}
+            source={submission.code}
+          />
+        )}
       </section>
       <SiteFooter />
     </main>
