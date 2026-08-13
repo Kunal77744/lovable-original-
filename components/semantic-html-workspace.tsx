@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
 import {
@@ -77,10 +78,27 @@ export function SemanticHtmlWorkspace({
     [editorHtml],
   );
   const passedCount = checks.filter((check) => check.passed).length;
+  const {
+    textareaRef: htmlTextareaRef,
+    handleKeyDown: handleHtmlKeyDown,
+  } = useCodeEditorKeyboard({
+    value: editorHtml,
+    onChange: updateHtml,
+    commentSyntax: "html",
+  });
 
   useEffect(() => {
     htmlRef.current = editorHtml;
   }, [editorHtml]);
+
+  function updateHtml(nextHtml: string) {
+    htmlRef.current = nextHtml;
+    setHtml(nextHtml);
+    dismissRecoveredDraft();
+    preserveDraft(nextHtml);
+    setSaveState("unsaved");
+    setMessage("You have unsaved changes.");
+  }
 
   async function submitAssignment() {
     if (!isSignedIn) {
@@ -197,19 +215,22 @@ export function SemanticHtmlWorkspace({
           </div>
           <label htmlFor="semantic-html-editor">Semantic HTML</label>
           <textarea
+            ref={htmlTextareaRef}
             id="semantic-html-editor"
+            aria-describedby="semantic-html-editor-keyboard-hint"
             value={editorHtml}
-            onChange={(event) => {
-              htmlRef.current = event.target.value;
-              setHtml(htmlRef.current);
-              dismissRecoveredDraft();
-              preserveDraft(htmlRef.current);
-              setSaveState("unsaved");
-              setMessage("You have unsaved changes.");
-            }}
+            onChange={(event) => updateHtml(event.target.value)}
+            onKeyDown={handleHtmlKeyDown}
             maxLength={MAX_SEMANTIC_HTML_LENGTH}
             spellCheck={false}
           />
+          <p
+            className="project-editor-keyboard-hint"
+            id="semantic-html-editor-keyboard-hint"
+          >
+            Tab indents · Shift + Tab outdents · Ctrl/⌘ + / comments · Escape,
+            then Tab exits
+          </p>
         </div>
 
         <div className="workspace-preview">

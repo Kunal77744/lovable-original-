@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CssPathFeedback } from "@/components/css-path-feedback";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import type { CssPracticeAttempt } from "@/db/css-practice";
 import type { SavedCssPathFeedback } from "@/lib/css-path-feedback";
 import {
@@ -92,6 +93,14 @@ export function CssChallengeWorkspace({
   const previewDocument = useMemo(() => buildCssChallengePreview(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
   const hasSavedAttempt = attempts.length > 0;
+  const {
+    textareaRef: cssTextareaRef,
+    handleKeyDown: handleCssKeyDown,
+  } = useCodeEditorKeyboard({
+    value: css,
+    onChange: updateCss,
+    commentSyntax: "css",
+  });
 
   useEffect(() => {
     return () => {
@@ -292,12 +301,22 @@ export function CssChallengeWorkspace({
           </div>
           <label htmlFor="css-challenge-editor">CSS solution</label>
           <textarea
+            ref={cssTextareaRef}
             id="css-challenge-editor"
             aria-label="CSS solution"
+            aria-describedby="css-challenge-editor-keyboard-hint"
             value={css}
             onChange={(event) => updateCss(event.target.value)}
+            onKeyDown={handleCssKeyDown}
             spellCheck={false}
           />
+          <p
+            className="project-editor-keyboard-hint"
+            id="css-challenge-editor-keyboard-hint"
+          >
+            Tab indents · Shift + Tab outdents · Ctrl/⌘ + / comments · Escape,
+            then Tab exits
+          </p>
         </div>
 
         <div className="css-challenge-preview">
