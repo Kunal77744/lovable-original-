@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptCodeEditor } from "@/components/guided-javascript-code-editor";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -250,19 +251,18 @@ export function JavaScriptRecursionLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
-          <label htmlFor="recursion-lab-code">JavaScript recursion code</label>
-          <textarea
+          <GuidedJavaScriptCodeEditor
             id="recursion-lab-code"
+            label="JavaScript recursion code"
             value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
+            onChange={(value) => {
+              setCode(value);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
             maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
-            spellCheck={false}
           />
           <PrivateJavaScriptLabDraftStatus
             state={draftState}

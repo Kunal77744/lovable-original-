@@ -2,19 +2,32 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import {
   buildHtmlCssCapstonePreview,
   getEmptyHtmlCssCapstoneChecks,
+  MAX_HTML_CSS_CAPSTONE_CSS_LENGTH,
+  MAX_HTML_CSS_CAPSTONE_HTML_LENGTH,
   type HtmlCssCapstoneRecord,
 } from "@/lib/html-css-capstone";
 import { captureProjectCompleted } from "@/lib/product-analytics";
+import {
+  getProjectDraftRecoveryKey,
+  parseProjectDraftRecovery,
+  serializeProjectDraftRecovery,
+  type ProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 
 type RequestState = "idle" | "saving" | "submitting" | "error";
 
 export function HtmlCssCapstoneWorkspace({
+  browserRecoveryScope,
   projectSlug,
   initialProject,
 }: {
+  browserRecoveryScope?: string | null;
   projectSlug: string;
   initialProject: HtmlCssCapstoneRecord;
 }) {
@@ -23,6 +36,10 @@ export function HtmlCssCapstoneWorkspace({
   const htmlRef = useRef(initialProject.html);
   const cssRef = useRef(initialProject.css);
   const [project, setProject] = useState(initialProject);
+  const [recoverableBrowserDrafts, setRecoverableBrowserDrafts] = useState<{
+    html: ProjectDraftRecovery | null;
+    css: ProjectDraftRecovery | null;
+  } | null>(null);
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestInFlight = useRef(false);
@@ -47,6 +64,90 @@ export function HtmlCssCapstoneWorkspace({
     project.submission?.status === "completed" && !hasUnreviewedChanges;
   const isWorking = requestState === "saving" || requestState === "submitting";
   const firstFailedCheck = checks.find((check) => !check.passed);
+  const recoverableFileLabel = recoverableBrowserDrafts?.html
+    ? recoverableBrowserDrafts.css
+      ? "HTML and CSS"
+      : "HTML"
+    : "CSS";
+  const htmlBrowserRecoveryKey = browserRecoveryScope
+    ? getProjectDraftRecoveryKey(
+        browserRecoveryScope,
+        projectSlug,
+        "index.html",
+      )
+    : null;
+  const cssBrowserRecoveryKey = browserRecoveryScope
+    ? getProjectDraftRecoveryKey(
+        browserRecoveryScope,
+        projectSlug,
+        "styles.css",
+      )
+    : null;
+  const {
+    textareaRef: htmlTextareaRef,
+    handleKeyDown: handleHtmlKeyDown,
+  } = useCodeEditorKeyboard({
+    value: html,
+    onChange: updateHtml,
+    commentSyntax: "html",
+  });
+  const {
+    textareaRef: cssTextareaRef,
+    handleKeyDown: handleCssKeyDown,
+  } = useCodeEditorKeyboard({
+    value: css,
+    onChange: updateCss,
+    commentSyntax: "css",
+  });
+
+  useEffect(() => {
+    if (!htmlBrowserRecoveryKey || !cssBrowserRecoveryKey) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedHtml = window.localStorage.getItem(htmlBrowserRecoveryKey);
+      const storedCss = window.localStorage.getItem(cssBrowserRecoveryKey);
+      const browserHtml = parseProjectDraftRecovery(
+        storedHtml,
+        MAX_HTML_CSS_CAPSTONE_HTML_LENGTH,
+      );
+      const browserCss = parseProjectDraftRecovery(
+        storedCss,
+        MAX_HTML_CSS_CAPSTONE_CSS_LENGTH,
+      );
+      const recoverableHtml =
+        browserHtml?.source === initialProject.html ? null : browserHtml;
+      const recoverableCss =
+        browserCss?.source === initialProject.css ? null : browserCss;
+
+      if (storedHtml && !recoverableHtml) {
+        window.localStorage.removeItem(htmlBrowserRecoveryKey);
+      }
+      if (storedCss && !recoverableCss) {
+        window.localStorage.removeItem(cssBrowserRecoveryKey);
+      }
+      if (!recoverableHtml && !recoverableCss) return;
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDrafts({
+          html: recoverableHtml,
+          css: recoverableCss,
+        });
+      }, 0);
+    } catch {
+      // Private autosave remains available when browser storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [
+    cssBrowserRecoveryKey,
+    htmlBrowserRecoveryKey,
+    initialProject.css,
+    initialProject.html,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -67,6 +168,7 @@ export function HtmlCssCapstoneWorkspace({
     setHtml(value);
     if (requestState === "error") setRequestState("idle");
     setMessage("Draft changed. Saving both files privately…");
+    persistBrowserRecovery(htmlBrowserRecoveryKey, value);
     scheduleDraftSave();
   }
 
@@ -75,6 +177,67 @@ export function HtmlCssCapstoneWorkspace({
     setCss(value);
     if (requestState === "error") setRequestState("idle");
     setMessage("Draft changed. Saving both files privately…");
+    persistBrowserRecovery(cssBrowserRecoveryKey, value);
+    scheduleDraftSave();
+  }
+
+  function persistBrowserRecovery(key: string | null, source: string) {
+    if (!key) return;
+    try {
+      window.localStorage.setItem(
+        key,
+        serializeProjectDraftRecovery(source),
+      );
+      setRecoverableBrowserDrafts(null);
+    } catch {
+      // Private autosave remains the fallback when browser storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(
+    key: string | null,
+    savedSource: string,
+    maxSourceLength: number,
+  ) {
+    if (!key) return;
+    try {
+      const browserDraft = parseProjectDraftRecovery(
+        window.localStorage.getItem(key),
+        maxSourceLength,
+      );
+      if (browserDraft?.source === savedSource) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
+
+  function keepPrivateSavedFiles() {
+    if (!htmlBrowserRecoveryKey || !cssBrowserRecoveryKey) return;
+    try {
+      window.localStorage.removeItem(htmlBrowserRecoveryKey);
+      window.localStorage.removeItem(cssBrowserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDrafts(null);
+  }
+
+  function restoreBrowserFiles() {
+    if (!recoverableBrowserDrafts) return;
+
+    const recoveredHtml = recoverableBrowserDrafts.html?.source ?? htmlRef.current;
+    const recoveredCss = recoverableBrowserDrafts.css?.source ?? cssRef.current;
+    htmlRef.current = recoveredHtml;
+    cssRef.current = recoveredCss;
+    setHtml(recoveredHtml);
+    setCss(recoveredCss);
+    setRecoverableBrowserDrafts(null);
+    setRequestState("idle");
+    setMessage(
+      "Browser files restored as unsaved work. Your private saved files stay unchanged until these exact versions save.",
+    );
     scheduleDraftSave();
   }
 
@@ -122,6 +285,16 @@ export function HtmlCssCapstoneWorkspace({
 
       setProject(payload);
       setRequestState("idle");
+      clearBrowserRecoveryIfMatches(
+        htmlBrowserRecoveryKey,
+        submittedHtml,
+        MAX_HTML_CSS_CAPSTONE_HTML_LENGTH,
+      );
+      clearBrowserRecoveryIfMatches(
+        cssBrowserRecoveryKey,
+        submittedCss,
+        MAX_HTML_CSS_CAPSTONE_CSS_LENGTH,
+      );
 
       if (payload.firstCompletedReview && payload.submission?.status === "completed") {
         captureProjectCompleted({
@@ -182,6 +355,18 @@ export function HtmlCssCapstoneWorkspace({
         </div>
       </header>
 
+      {recoverableBrowserDrafts ? (
+        <ProjectBrowserDraftRecovery
+          titleId="html-css-capstone-browser-recovery-title"
+          fileLabel={recoverableFileLabel}
+          multiple={Boolean(
+            recoverableBrowserDrafts.html && recoverableBrowserDrafts.css,
+          )}
+          onKeepSaved={keepPrivateSavedFiles}
+          onRestore={restoreBrowserFiles}
+        />
+      ) : null}
+
       <div className="html-css-capstone-workbench js-capstone-workbench">
         <div className="html-css-capstone-editors">
           <div className="html-css-capstone-editor js-capstone-editor">
@@ -200,10 +385,19 @@ export function HtmlCssCapstoneWorkspace({
             <label htmlFor="html-css-capstone-html">Semantic HTML</label>
             <textarea
               id="html-css-capstone-html"
+              ref={htmlTextareaRef}
+              aria-describedby="html-css-capstone-html-keyboard-hint"
               value={html}
               onChange={(event) => updateHtml(event.target.value)}
+              onKeyDown={handleHtmlKeyDown}
               spellCheck={false}
             />
+            <p
+              className="project-editor-keyboard-hint"
+              id="html-css-capstone-html-keyboard-hint"
+            >
+              Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+            </p>
           </div>
           <div className="html-css-capstone-editor js-capstone-editor">
             <div className="workspace-panel-label">
@@ -221,10 +415,19 @@ export function HtmlCssCapstoneWorkspace({
             <label htmlFor="html-css-capstone-css">Component CSS</label>
             <textarea
               id="html-css-capstone-css"
+              ref={cssTextareaRef}
+              aria-describedby="html-css-capstone-css-keyboard-hint"
               value={css}
               onChange={(event) => updateCss(event.target.value)}
+              onKeyDown={handleCssKeyDown}
               spellCheck={false}
             />
+            <p
+              className="project-editor-keyboard-hint"
+              id="html-css-capstone-css-keyboard-hint"
+            >
+              Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+            </p>
           </div>
         </div>
 
@@ -309,6 +512,29 @@ export function HtmlCssCapstoneWorkspace({
           >
             {message}
           </p>
+          {project.saved && !hasUnsavedChanges ? (
+            <div
+              className="project-source-downloads"
+              aria-label="Download saved project files"
+            >
+              <span>Saved project files</span>
+              <p>Take both exact saved files with you.</p>
+              <div className="project-source-download-list">
+                <SavedWorkspaceDownload
+                  fileName="index.html"
+                  label="Download index.html"
+                  mimeType="text/html"
+                  source={html}
+                />
+                <SavedWorkspaceDownload
+                  fileName="styles.css"
+                  label="Download styles.css"
+                  mimeType="text/css"
+                  source={css}
+                />
+              </div>
+            </div>
+          ) : null}
           {isComplete ? (
             <div className="html-css-capstone-teaching js-capstone-teaching">
               <span>What this proves</span>

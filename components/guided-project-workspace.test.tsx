@@ -10,6 +10,10 @@ import {
   getEmptyGuidedProjectChecks,
   type GuidedProjectRecord,
 } from "@/lib/guided-project";
+import {
+  getProjectDraftRecoveryKey,
+  serializeProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 import { GuidedProjectWorkspace } from "./guided-project-workspace";
 
 const analyticsMocks = vi.hoisted(() => ({
@@ -30,10 +34,124 @@ describe("GuidedProjectWorkspace", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     analyticsMocks.captureProjectCompleted.mockReset();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
+  });
+
+  it("edits the semantic project with HTML-aware keyboard shortcuts", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <GuidedProjectWorkspace
+        projectSlug="semantic-html-article"
+        initialProject={starterProject}
+        initialFeedback={null}
+        practiceContinuation={{ href: "/practice", label: "Continue practice" }}
+      />,
+    );
+
+    const editor = screen.getByLabelText(
+      "Semantic HTML project",
+    ) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+
+    expect(editor.value).toBe(`<!--${starterProject.html}-->`);
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "guided-project-editor-keyboard-hint",
+    );
+    expect(
+      screen.getByText(
+        "Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("restores an account-scoped browser draft without replacing saved HTML", async () => {
+    const savedHtml = "<main><article><h1>Saved guide</h1></article></main>";
+    const recoveredHtml = "<main><article><h1>Recovered guide</h1></article></main>";
+    const recoveryKey = getProjectDraftRecoveryKey(
+      "learner-a",
+      "semantic-html-article",
+      "field-guide.html",
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeProjectDraftRecovery(recoveredHtml),
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ...starterProject,
+        html: recoveredHtml,
+        saved: true,
+        updatedAt: "2026-08-13T10:00:00.000Z",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <GuidedProjectWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="semantic-html-article"
+        initialProject={{ ...starterProject, html: savedHtml, saved: true }}
+        initialFeedback={null}
+        practiceContinuation={{ href: "/practice", label: "Continue practice" }}
+      />,
+    );
+
+    const editor = screen.getByLabelText("Semantic HTML project");
+    expect(editor).toHaveValue(savedHtml);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Restore browser draft" }),
+    );
+    expect(editor).toHaveValue(recoveredHtml);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    await waitFor(() => expect(window.localStorage.getItem(recoveryKey)).toBeNull());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/semantic-html-article",
+      expect.objectContaining({
+        body: JSON.stringify({ action: "save", html: recoveredHtml }),
+      }),
+    );
+  });
+
+  it("never offers another account's project browser copy", async () => {
+    window.localStorage.setItem(
+      getProjectDraftRecoveryKey(
+        "learner-b",
+        "semantic-html-article",
+        "field-guide.html",
+      ),
+      serializeProjectDraftRecovery("<main>Another learner's guide</main>"),
+    );
+
+    render(
+      <GuidedProjectWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="semantic-html-article"
+        initialProject={starterProject}
+        initialFeedback={null}
+        practiceContinuation={{ href: "/practice", label: "Continue practice" }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText("Semantic HTML project")).toHaveValue(
+      starterProject.html,
+    );
   });
 
   it("saves an exact draft separately from project review", async () => {
@@ -93,6 +211,16 @@ describe("GuidedProjectWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Submit for review" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download field-guide.html" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML project"), {
+      target: { value: `${revisedHtml}\n<!-- newer work -->` },
+    });
+    expect(
+      screen.queryByRole("button", { name: "Download field-guide.html" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a failed draft save recoverable", async () => {

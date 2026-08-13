@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -48,6 +49,10 @@ export default async function JavaScriptExpenseReportPage() {
   }
 
   const project = await getJavaScriptCapstoneForStudent(session.user.id);
+  const browserRecoveryScope = createHash("sha256")
+    .update(session.user.id)
+    .digest("hex")
+    .slice(0, 24);
 
   return (
     <main className="js-capstone-page">
@@ -99,6 +104,7 @@ export default async function JavaScriptExpenseReportPage() {
         </header>
 
         <JavaScriptCapstoneWorkspace
+          browserRecoveryScope={browserRecoveryScope}
           projectSlug={JAVASCRIPT_CAPSTONE_SLUG}
           initialProject={project}
         />

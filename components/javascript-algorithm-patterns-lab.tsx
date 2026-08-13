@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptCodeEditor } from "@/components/guided-javascript-code-editor";
 import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
@@ -252,21 +253,18 @@ export function JavaScriptAlgorithmPatternsLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
-          <label htmlFor="algorithm-patterns-code">
-            JavaScript algorithm pattern code
-          </label>
-          <textarea
+          <GuidedJavaScriptCodeEditor
             id="algorithm-patterns-code"
+            label="JavaScript algorithm pattern code"
             value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
+            onChange={(value) => {
+              setCode(value);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
             maxLength={20_000}
-            spellCheck={false}
           />
           <PrivateJavaScriptLabDraftStatus
             state={draftState}

@@ -5355,6 +5355,20 @@ h1 {
   box-shadow: inset 0 0 0 3px rgba(102, 220, 157, 0.42);
 }
 
+.project-editor-keyboard-hint {
+  margin: 0;
+  padding: 10px 18px 12px;
+  color: #8fa198;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.js-capstone-editor .project-editor-keyboard-hint {
+  margin: 14px 0 -12px;
+  padding: 10px 0 0;
+}
+
 .project-preview .workspace-panel-label {
   color: #607068;
   border-bottom-color: #dce1da;
@@ -5756,6 +5770,33 @@ h1 {
   font-size: 11px;
   font-weight: 800;
   text-underline-offset: 4px;
+}
+
+.project-source-downloads {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.project-source-downloads > span {
+  display: block;
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.project-source-downloads > p {
+  margin: 6px 0 11px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.project-source-download-list {
+  display: grid;
+  gap: 7px;
 }
 
 .flashcard-workbench {
@@ -9078,6 +9119,14 @@ h1 {
   border-color: #ffffff;
   background: #ffffff;
   color: #173f2d;
+}
+
+.project-browser-draft-recovery {
+  margin: 0 0 1rem;
+  border: 1px solid #486052;
+  border-radius: 1rem;
+  background: #20342a;
+  box-shadow: 0 14px 34px rgba(23, 35, 30, 0.12);
 }
 
 .loaded-submission-cue > div {
@@ -13411,6 +13460,42 @@ h1 {
   gap: 10px;
 }
 
+.playground-filebar-status {
+  justify-content: flex-end;
+  gap: 14px !important;
+}
+
+.playground-filebar-status .workspace-download {
+  display: grid;
+  justify-items: end;
+}
+
+.playground-filebar-status .workspace-download button {
+  width: auto;
+  min-height: 44px;
+  padding: 7px 11px;
+  color: #dce8df;
+  border-color: #43564c;
+  background: transparent;
+  font-size: 10px;
+}
+
+.playground-filebar-status .workspace-download button:hover {
+  color: #ffffff;
+  border-color: #71867a;
+  background: #223029;
+}
+
+.playground-filebar-status .workspace-download button:focus-visible {
+  outline-color: rgba(131, 221, 168, 0.32);
+}
+
+.playground-filebar-status .workspace-download-status {
+  color: #91dfae;
+  font-size: 9px;
+  text-align: right;
+}
+
 .playground-filebar strong,
 .playground-console header strong {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -13458,7 +13543,7 @@ h1 {
 .playground-editor textarea {
   width: 100%;
   min-height: 410px;
-  padding: 30px 32px 54px 58px;
+  padding: 30px 32px 64px 58px;
   resize: vertical;
   color: #eaf1ed;
   border: 0;
@@ -13483,9 +13568,20 @@ h1 {
   bottom: 16px;
   left: 58px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
   color: #84958b;
   font-size: 10px;
+}
+
+.playground-editor-meta span:first-child {
+  letter-spacing: 0.01em;
+}
+
+.playground-editor-meta span:last-child {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .playground-actions {
@@ -15469,12 +15565,18 @@ footer {
 
   .playground-filebar {
     min-height: 56px;
-    padding: 0 17px;
+    padding: 10px 17px;
+  }
+
+  .playground-filebar-status {
+    align-items: flex-end !important;
+    flex-direction: column;
+    gap: 6px !important;
   }
 
   .playground-editor textarea {
     min-height: 390px;
-    padding: 24px 17px 52px 40px;
+    padding: 24px 17px 74px 40px;
     background:
       linear-gradient(90deg, #152019 0 29px, #24332b 29px 30px, transparent 30px),
       #111a16;
@@ -15484,6 +15586,13 @@ footer {
   .playground-editor-meta {
     right: 16px;
     left: 40px;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .playground-editor-meta span:first-child {
+    max-width: 210px;
+    line-height: 1.45;
   }
 
   .playground-actions {
@@ -29471,4 +29580,15 @@ footer {
   border-radius: 3px;
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+.guided-code-editor-shortcuts {
+  margin: 0;
+  padding: 10px 16px;
+  color: #aebdb4;
+  border-right: 1px solid #35483e;
+  border-left: 1px solid #35483e;
+  background: #16231d;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }

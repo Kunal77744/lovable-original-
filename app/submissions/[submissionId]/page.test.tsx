@@ -73,8 +73,8 @@ describe("SubmissionPage", () => {
       problemSlug: "sum-two-numbers",
       problemNumber: 1,
       problemTitle: "Sum two numbers",
-      verdict: "Accepted",
-      passedTests: 4,
+      verdict: "Wrong Answer",
+      passedTests: 3,
       totalTests: 4,
       createdAt: "2026-08-04T10:30:00.000Z",
       hasSource: true,
@@ -92,7 +92,46 @@ describe("SubmissionPage", () => {
     expect(mocks.getSubmission).toHaveBeenCalledWith("learner-1", "attempt-1");
     expect(screen.getByText(/function sum/)).toBeInTheDocument();
     expect(screen.getByText("Use this source in the editor")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Download this submission .js",
+      }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("keeps the download absent for an older result without saved source", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: "learner-1", name: "Learner", email: "private@example.com" },
+    });
+    mocks.getSubmission.mockResolvedValue({
+      id: "attempt-legacy",
+      problemSlug: "sum-two-numbers",
+      problemNumber: 1,
+      problemTitle: "Sum two numbers",
+      verdict: "Wrong Answer",
+      passedTests: 1,
+      totalTests: 4,
+      createdAt: "2026-08-03T10:30:00.000Z",
+      hasSource: false,
+      code: null,
+      previousSubmission: null,
+      nextSubmission: null,
+    });
+
+    render(
+      await SubmissionPage({
+        params: Promise.resolve({ submissionId: "attempt-legacy" }),
+      }),
+    );
+
+    expect(
+      screen.getByText("This earlier result has no source snapshot."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Download this submission .js",
+      }),
+    ).not.toBeInTheDocument();
   });
 });

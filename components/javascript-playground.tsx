@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type PlaygroundCheckResult,
   runPlaygroundChecks,
@@ -14,6 +15,10 @@ import {
   validatePlaygroundChecks,
 } from "@/lib/javascript-playground";
 import type { PlaygroundWorkspaceFile } from "@/db/javascript-playground";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { toggleEditorLineComments } from "@/lib/code-editor-comments";
+import { applyEditorIndentation } from "@/lib/code-editor-indentation";
+import { applyEditorSmartEditing } from "@/lib/code-editor-smart-editing";
 
 type JavaScriptPlaygroundProps = {
   initialFiles: PlaygroundWorkspaceFile[];
@@ -51,6 +56,12 @@ export function JavaScriptPlayground({
     code: initialActiveFile.code,
     quickChecks: initialActiveFile.quickChecks,
   });
+  const editorTextarea = useRef<HTMLTextAreaElement | null>(null);
+  const pendingEditorSelection = useRef<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const allowNextEditorTabToExit = useRef(false);
   const saveRequestPending = useRef(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
@@ -76,6 +87,16 @@ export function JavaScriptPlayground({
   const [transferState, setTransferState] = useState<
     "offered" | "loaded" | "dismissed"
   >(acceptedTransfer ? "offered" : "dismissed");
+  const activeFile = files.find((file) => file.id === activeFileId);
+
+  useEffect(() => {
+    const selection = pendingEditorSelection.current;
+    if (!selection || !editorTextarea.current) return;
+
+    pendingEditorSelection.current = null;
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(selection.start, selection.end);
+  }, [code]);
 
   async function runCode() {
     setRunState({
@@ -398,6 +419,114 @@ export function JavaScriptPlayground({
     setSaveState("unsaved");
   }
 
+  function applyEditorResult(result: {
+    value: string;
+    selectionStart: number;
+    selectionEnd: number;
+  }) {
+    pendingEditorSelection.current = {
+      start: result.selectionStart,
+      end: result.selectionEnd,
+    };
+    updateCode(result.value);
+  }
+
+  function handleEditorKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      event.key === "/" &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      const result = toggleEditorLineComments(
+        code,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+      );
+
+      if (result.value !== code) applyEditorResult(result);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      allowNextEditorTabToExit.current = true;
+      return;
+    }
+
+    if (event.key === "Tab") {
+      if (allowNextEditorTabToExit.current) {
+        allowNextEditorTabToExit.current = false;
+        return;
+      }
+
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.nativeEvent.isComposing
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const result = applyEditorIndentation(
+        code,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        event.shiftKey,
+      );
+
+      if (result.value !== code) applyEditorResult(result);
+      return;
+    }
+
+    allowNextEditorTabToExit.current = false;
+
+    if (
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      const result = applyEditorSmartEditing(
+        code,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        event.key,
+      );
+
+      if (result) {
+        event.preventDefault();
+
+        if (result.value === code) {
+          event.currentTarget.setSelectionRange(
+            result.selectionStart,
+            result.selectionEnd,
+          );
+        } else {
+          applyEditorResult(result);
+        }
+        return;
+      }
+    }
+
+    if (
+      event.key === "Enter" &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      void runCode();
+    }
+  }
+
   function updateCheckSource(nextSource: string) {
     latestDraft.current = {
       ...latestDraft.current,
@@ -560,48 +689,58 @@ export function JavaScriptPlayground({
         <div>
           <span className="playground-file-dot" aria-hidden="true" />
           <strong id="playground-editor-title">
-            {files.find((file) => file.id === activeFileId)?.name ?? "playground.js"}
+            {activeFile?.name ?? "playground.js"}
           </strong>
         </div>
-        <span
-          className={
-            saveState === "saved"
-              ? "playground-save-state is-saved"
-              : saveState === "error"
-                ? "playground-save-state is-error"
-                : "playground-save-state"
-          }
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {saveState === "saving"
-            ? "Saving…"
-            : saveState === "saved"
-              ? "Saved to your account"
-              : saveState === "error"
-                ? "Save failed"
-                : "Unsaved changes"}
-        </span>
+        <div className="playground-filebar-status">
+          <span
+            className={
+              saveState === "saved"
+                ? "playground-save-state is-saved"
+                : saveState === "error"
+                  ? "playground-save-state is-error"
+                  : "playground-save-state"
+            }
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "saved"
+                ? "Saved to your account"
+                : saveState === "error"
+                  ? "Save failed"
+                  : "Unsaved changes"}
+          </span>
+          {saveState === "saved" && activeFile?.id ? (
+            <SavedWorkspaceDownload
+              fileName={activeFile.name}
+              label="Download saved .js"
+              mimeType="text/javascript"
+              source={activeFile.code}
+            />
+          ) : null}
+        </div>
       </header>
 
       <div className="playground-editor">
         <label htmlFor="playground-code">JavaScript file</label>
         <textarea
           id="playground-code"
+          ref={editorTextarea}
           aria-label="JavaScript file"
+          aria-describedby="playground-editor-keyboard-hint"
           value={code}
           onChange={(event) => updateCode(event.target.value)}
-          onKeyDown={(event) => {
-            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-              event.preventDefault();
-              void runCode();
-            }
-          }}
+          onKeyDown={handleEditorKeyDown}
           maxLength={MAX_PLAYGROUND_CODE_LENGTH}
           spellCheck={false}
         />
         <div className="playground-editor-meta">
+          <span id="playground-editor-keyboard-hint">
+            Tab indents · Ctrl/⌘ + / comments · Escape then Tab exits
+          </span>
           <span>
             {code.length.toLocaleString()}/{MAX_PLAYGROUND_CODE_LENGTH.toLocaleString()}
           </span>

@@ -2,29 +2,43 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getEmptyJavaScriptCapstoneChecks,
   getJavaScriptCapstoneInputs,
   JAVASCRIPT_CAPSTONE_SAMPLE,
+  MAX_JAVASCRIPT_CAPSTONE_LENGTH,
   type JavaScriptCapstoneRecord,
 } from "@/lib/javascript-capstone";
+import {
+  getProjectDraftRecoveryKey,
+  parseProjectDraftRecovery,
+  serializeProjectDraftRecovery,
+  type ProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 import { captureProjectCompleted } from "@/lib/product-analytics";
 
 type RequestState = "idle" | "running" | "saving" | "submitting" | "error";
 
 type JavaScriptCapstoneWorkspaceProps = {
+  browserRecoveryScope?: string | null;
   projectSlug: string;
   initialProject: JavaScriptCapstoneRecord;
 };
 
 export function JavaScriptCapstoneWorkspace({
+  browserRecoveryScope = null,
   projectSlug,
   initialProject,
 }: JavaScriptCapstoneWorkspaceProps) {
   const [code, setCode] = useState(initialProject.code);
   const codeRef = useRef(initialProject.code);
   const [project, setProject] = useState(initialProject);
+  const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
+    useState<ProjectDraftRecovery | null>(null);
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [sampleOutput, setSampleOutput] = useState<string | null>(null);
   const [samplePassed, setSamplePassed] = useState<boolean | null>(null);
@@ -54,6 +68,50 @@ export function JavaScriptCapstoneWorkspace({
     project.submission?.status === "completed" && !hasUnreviewedChanges;
   const isWorking = requestState !== "idle" && requestState !== "error";
   const firstFailedCheck = checks.find((check) => !check.passed);
+  const browserRecoveryKey = browserRecoveryScope
+    ? getProjectDraftRecoveryKey(
+        browserRecoveryScope,
+        projectSlug,
+        "expense-report.js",
+      )
+    : null;
+  const {
+    textareaRef: codeTextareaRef,
+    handleKeyDown: handleCodeKeyDown,
+  } = useCodeEditorKeyboard({
+    value: code,
+    onChange: updateCode,
+    commentSyntax: "javascript",
+  });
+
+  useEffect(() => {
+    if (!browserRecoveryKey) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedValue = window.localStorage.getItem(browserRecoveryKey);
+      const browserDraft = parseProjectDraftRecovery(
+        storedValue,
+        MAX_JAVASCRIPT_CAPSTONE_LENGTH,
+      );
+
+      if (!browserDraft || browserDraft.source === initialProject.code) {
+        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDraft(browserDraft);
+      }, 0);
+    } catch {
+      // Private autosave remains available when browser storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [browserRecoveryKey, initialProject.code]);
 
   useEffect(() => {
     return () => {
@@ -66,12 +124,60 @@ export function JavaScriptCapstoneWorkspace({
     setCode(nextCode);
     setRequestState((current) => (current === "error" ? "idle" : current));
     setMessage("Draft changed. Saving privately…");
+    persistBrowserRecovery(nextCode);
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
       draftTimer.current = null;
       void saveDraft(nextCode);
     }, 700);
+  }
+
+  function persistBrowserRecovery(source: string) {
+    if (!browserRecoveryKey) return;
+    try {
+      window.localStorage.setItem(
+        browserRecoveryKey,
+        serializeProjectDraftRecovery(source),
+      );
+      setRecoverableBrowserDraft(null);
+    } catch {
+      // Private autosave remains the fallback when browser storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(savedSource: string) {
+    if (!browserRecoveryKey) return;
+    try {
+      const browserDraft = parseProjectDraftRecovery(
+        window.localStorage.getItem(browserRecoveryKey),
+        MAX_JAVASCRIPT_CAPSTONE_LENGTH,
+      );
+      if (browserDraft?.source === savedSource) {
+        window.localStorage.removeItem(browserRecoveryKey);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
+
+  function keepPrivateSavedDraft() {
+    if (!browserRecoveryKey) return;
+    try {
+      window.localStorage.removeItem(browserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDraft(null);
+  }
+
+  function restoreBrowserDraft() {
+    if (!recoverableBrowserDraft) return;
+
+    updateCode(recoverableBrowserDraft.source);
+    setMessage(
+      "Browser draft restored as unsaved work. Your private saved JavaScript stays unchanged until this exact code saves.",
+    );
   }
 
   async function runSample() {
@@ -131,6 +237,7 @@ export function JavaScriptCapstoneWorkspace({
 
       setProject(payload);
       setRequestState("idle");
+      clearBrowserRecoveryIfMatches(submittedCode);
       setMessage(
         codeRef.current === submittedCode
           ? "Saved privately to your account."
@@ -219,6 +326,7 @@ export function JavaScriptCapstoneWorkspace({
 
       setProject(payload);
       setRequestState("idle");
+      clearBrowserRecoveryIfMatches(submittedCode);
 
       if (
         payload.firstCompletedReview &&
@@ -275,6 +383,15 @@ export function JavaScriptCapstoneWorkspace({
         </div>
       </header>
 
+      {recoverableBrowserDraft ? (
+        <ProjectBrowserDraftRecovery
+          titleId="javascript-capstone-browser-recovery-title"
+          fileLabel="JavaScript"
+          onKeepSaved={keepPrivateSavedDraft}
+          onRestore={restoreBrowserDraft}
+        />
+      ) : null}
+
       <div className="js-capstone-workbench">
         <div className="js-capstone-editor">
           <div className="workspace-panel-label">
@@ -294,10 +411,19 @@ export function JavaScriptCapstoneWorkspace({
           <label htmlFor="js-capstone-editor">JavaScript project</label>
           <textarea
             id="js-capstone-editor"
+            ref={codeTextareaRef}
+            aria-describedby="js-capstone-editor-keyboard-hint"
             value={code}
             onChange={(event) => updateCode(event.target.value)}
+            onKeyDown={handleCodeKeyDown}
             spellCheck={false}
           />
+          <p
+            className="project-editor-keyboard-hint"
+            id="js-capstone-editor-keyboard-hint"
+          >
+            Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+          </p>
         </div>
 
         <aside className="js-capstone-contract" aria-label="Project input and output contract">
@@ -398,6 +524,21 @@ export function JavaScriptCapstoneWorkspace({
           >
             {message}
           </p>
+          {project.saved && !hasUnsavedChanges ? (
+            <div
+              className="project-source-downloads"
+              aria-label="Download saved project files"
+            >
+              <span>Saved project file</span>
+              <p>Take the exact saved JavaScript with you.</p>
+              <SavedWorkspaceDownload
+                fileName="expense-report.js"
+                label="Download expense-report.js"
+                mimeType="text/javascript"
+                source={code}
+              />
+            </div>
+          ) : null}
           {isComplete ? (
             <div className="js-capstone-teaching">
               <span>What this proves</span>
