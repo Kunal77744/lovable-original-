@@ -1642,6 +1642,82 @@ describe("CodingWorkspace", () => {
     ).toBeInTheDocument();
   });
 
+  it("opens the exact editor location from a runtime error", async () => {
+    const source = [
+      "function solve(input) {",
+      "  const value = Number(input);",
+      "  return missingValue + value;",
+      "}",
+    ].join("\n");
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "Line 3, column 10: missingValue is not defined",
+      debugOutput: [],
+    });
+
+    renderWorkspace({ initialCode: source });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+    const openLine = await screen.findByRole("button", {
+      name: "Open line 3, column 10 in the editor",
+    });
+    fireEvent.click(openLine);
+
+    const editor = screen.getByLabelText<HTMLTextAreaElement>(
+      "JavaScript solution",
+    );
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(source.indexOf("missingValue"));
+    expect(editor.selectionEnd).toBe(source.indexOf("missingValue"));
+  });
+
+  it("hides runtime navigation after the learner edits the failed source", async () => {
+    const source = [
+      "function solve(input) {",
+      "  return missingValue;",
+      "}",
+    ].join("\n");
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "Line 2, column 10: missingValue is not defined",
+      debugOutput: [],
+    });
+
+    renderWorkspace({ initialCode: source });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+    expect(
+      await screen.findByRole("button", {
+        name: "Open line 2, column 10 in the editor",
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("JavaScript solution"), {
+      target: { value: `${source}\n` },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: /Open line/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not offer editor navigation for a generic runner error", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "missingValue is not defined",
+      debugOutput: [],
+    });
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+
+    expect(await screen.findByText("Runner stopped")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Open line/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps custom-input debug output within the visible runner bounds", async () => {
     const oversizedLine = "x".repeat(520);
     runCodingSolution.mockResolvedValue({

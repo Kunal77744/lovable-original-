@@ -24,6 +24,7 @@ import {
 } from "@/lib/coding-problems";
 import { toggleEditorLineComments } from "@/lib/code-editor-comments";
 import { applyEditorIndentation } from "@/lib/code-editor-indentation";
+import { getCodeEditorLocation } from "@/lib/code-editor-location";
 import { applyEditorSmartEditing } from "@/lib/code-editor-smart-editing";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
 import { getSignInHref } from "@/lib/account-destination";
@@ -145,7 +146,12 @@ type RunState =
       checks: { label: string; passed: boolean }[];
     }
   | { kind: "timeout"; message: string }
-  | { kind: "error"; message: string; debugOutput?: string[] };
+  | {
+      kind: "error";
+      message: string;
+      debugOutput?: string[];
+      source?: string;
+    };
 
 type RunnerRecovery = {
   label: string;
@@ -489,6 +495,10 @@ export function CodingWorkspace({
     anonymousDraft !== initialCode;
   const recoveredAnonymousDraft = isSignedIn && canUseAnonymousDraft;
   const editorCode = canUseAnonymousDraft ? anonymousDraft : code;
+  const runtimeErrorLocation =
+    runState.kind === "error" && runState.source === editorCode
+      ? getCodeEditorLocation(editorCode, runState.message)
+      : null;
   const editorSearchMatches = findCodeMatches(
     editorCode,
     editorSearchQuery,
@@ -803,6 +813,16 @@ export function CodingWorkspace({
     editorTextarea.current?.focus();
   }
 
+  function openRuntimeErrorLocation() {
+    if (!runtimeErrorLocation || !editorTextarea.current) return;
+
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(
+      runtimeErrorLocation.cursorOffset,
+      runtimeErrorLocation.cursorOffset,
+    );
+  }
+
   function selectEditorSearchMatch(index: number) {
     if (editorSearchMatches.length === 0 || !editorTextarea.current) return;
 
@@ -957,6 +977,7 @@ export function CodingWorkspace({
         kind: "error",
         message: result.message,
         debugOutput: result.debugOutput,
+        source: editorCode,
       });
       return;
     }
@@ -1002,6 +1023,7 @@ export function CodingWorkspace({
         kind: "error",
         message: result.message,
         debugOutput: boundVisibleDebugOutput(result.debugOutput),
+        source: editorCode,
       });
       return;
     }
@@ -1036,6 +1058,7 @@ export function CodingWorkspace({
         kind: "error",
         message: result.message,
         debugOutput: result.debugOutput,
+        source: editorCode,
       });
       return;
     }
@@ -1221,7 +1244,11 @@ export function CodingWorkspace({
     }
 
     if (result.status !== "finished") {
-      setRunState({ kind: "error", message: result.message });
+      setRunState({
+        kind: "error",
+        message: result.message,
+        source: submittedCode,
+      });
       return;
     }
 
@@ -2190,6 +2217,17 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
+        {runtimeErrorLocation ? (
+          <button
+            className="runtime-location-action"
+            type="button"
+            aria-label={`Open line ${runtimeErrorLocation.line}, column ${runtimeErrorLocation.column} in the editor`}
+            data-draft-save-action="true"
+            onClick={openRuntimeErrorLocation}
+          >
+            Open line {runtimeErrorLocation.line}
+          </button>
+        ) : null}
         {runState.kind === "verdict" && runState.checks.length > 0 ? (
           <section
             className="judge-check-results"
