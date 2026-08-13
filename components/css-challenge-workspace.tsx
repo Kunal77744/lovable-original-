@@ -82,6 +82,7 @@ export function CssChallengeWorkspace({
   const [submitting, setSubmitting] = useState(false);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestCss = useRef(initialCss);
+  const hasPendingDraft = useRef(false);
   const draftSaveInFlight = useRef(false);
   const queuedDraft = useRef<string | null>(null);
   const submittingRef = useRef(false);
@@ -90,10 +91,34 @@ export function CssChallengeWorkspace({
   const hasSavedAttempt = attempts.length > 0;
 
   useEffect(() => {
+    function savePendingDraftBeforeLeave() {
+      if (!isSignedIn || !hasPendingDraft.current) return;
+
+      if (draftTimer.current) {
+        clearTimeout(draftTimer.current);
+        draftTimer.current = null;
+      }
+
+      if (typeof navigator.sendBeacon !== "function") return;
+
+      const queued = navigator.sendBeacon(
+        `/api/practice/css/${challenge.slug}`,
+        new Blob(
+          [JSON.stringify({ mode: "draft", css: latestCss.current })],
+          { type: "application/json" },
+        ),
+      );
+
+      if (queued) hasPendingDraft.current = false;
+    }
+
+    window.addEventListener("pagehide", savePendingDraftBeforeLeave);
+
     return () => {
+      window.removeEventListener("pagehide", savePendingDraftBeforeLeave);
       if (draftTimer.current) clearTimeout(draftTimer.current);
     };
-  }, []);
+  }, [challenge.slug, isSignedIn]);
 
   async function saveDraft(nextCss: string) {
     if (!isSignedIn) return;
@@ -118,6 +143,7 @@ export function CssChallengeWorkspace({
       }
 
       if (latestCss.current === nextCss) {
+        hasPendingDraft.current = false;
         setSaveState("saved");
         setStatus("Draft saved. Submit to refresh the checks.");
       }
@@ -136,6 +162,7 @@ export function CssChallengeWorkspace({
 
   function updateCss(nextCss: string) {
     latestCss.current = nextCss;
+    hasPendingDraft.current = true;
     setCss(nextCss);
     setSaveState("unsaved");
     setStatus(
@@ -146,6 +173,7 @@ export function CssChallengeWorkspace({
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
+      draftTimer.current = null;
       void saveDraft(nextCss);
     }, 700);
   }
@@ -205,6 +233,7 @@ export function CssChallengeWorkspace({
           "Your attempt is saved. Newer CSS changes are still unsaved and unchecked.",
         );
       } else {
+        hasPendingDraft.current = false;
         setSaveState("saved");
         setStatus(
           payload.verdict === "Completed"
