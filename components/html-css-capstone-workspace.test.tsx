@@ -71,6 +71,51 @@ describe("HtmlCssCapstoneWorkspace", () => {
     expect(screen.getAllByText("Unsaved")).toHaveLength(2);
   });
 
+  it("imports HTML and CSS independently after explicit confirmation", async () => {
+    vi.useFakeTimers();
+    const importedHtml = '<main class="library">Imported</main>';
+    const importedCss = ".library { display: grid; }";
+    const htmlFile = new File([importedHtml], "index.html", {
+      type: "text/html",
+    });
+    const cssFile = new File([importedCss], "styles.css", {
+      type: "text/css",
+    });
+    Object.defineProperty(htmlFile, "text", {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(importedHtml),
+    });
+    Object.defineProperty(cssFile, "text", {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(importedCss),
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <HtmlCssCapstoneWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="html-css-resource-library"
+        initialProject={starter}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose HTML file to import"), {
+      target: { files: [htmlFile] },
+    });
+    await act(async () => Promise.resolve());
+    fireEvent.click(screen.getAllByRole("button", { name: "Import file" })[0]);
+    fireEvent.change(screen.getByLabelText("Choose CSS file to import"), {
+      target: { files: [cssFile] },
+    });
+    await act(async () => Promise.resolve());
+    fireEvent.click(screen.getAllByRole("button", { name: "Import file" })[0]);
+
+    expect(screen.getByLabelText("Semantic HTML")).toHaveValue(importedHtml);
+    expect(screen.getByLabelText("Component CSS")).toHaveValue(importedCss);
+    expect(screen.getAllByText("Unsaved")).toHaveLength(2);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("restores exact files and keeps a newer CSS copy when an older save returns", async () => {
     const recoveredHtml = `${HTML_CSS_CAPSTONE_STARTER_HTML}\n<!-- recovered -->`;
     const recoveredCss = `${HTML_CSS_CAPSTONE_STARTER_CSS}\n/* recovered */`;

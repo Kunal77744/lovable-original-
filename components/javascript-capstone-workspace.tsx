@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
+import { ProjectLocalFileImport } from "@/components/project-local-file-import";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import { runCodingSolution } from "@/lib/coding-runner";
@@ -408,6 +409,14 @@ export function JavaScriptCapstoneWorkspace({
                       : "Starter"}
             </span>
           </div>
+          <ProjectLocalFileImport
+            accept=".js,text/javascript,application/javascript"
+            extension=".js"
+            fileLabel="JavaScript"
+            maxLength={MAX_JAVASCRIPT_CAPSTONE_LENGTH}
+            onImport={updateCode}
+            titleId="javascript-capstone-import-title"
+          />
           <label htmlFor="js-capstone-editor">JavaScript project</label>
           <textarea
             id="js-capstone-editor"

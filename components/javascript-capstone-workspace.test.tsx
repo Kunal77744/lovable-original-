@@ -78,6 +78,37 @@ describe("JavaScriptCapstoneWorkspace", () => {
     expect(screen.getByText("Unsaved")).toBeInTheDocument();
   });
 
+  it("imports local JavaScript through the existing private autosave path", async () => {
+    vi.useFakeTimers();
+    const importedCode = "export function buildReport() { return 'ready'; }";
+    const file = new File([importedCode], "expense-report.js", {
+      type: "text/javascript",
+    });
+    Object.defineProperty(file, "text", {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(importedCode),
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <JavaScriptCapstoneWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="javascript-expense-report"
+        initialProject={starterProject}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose JavaScript file to import"), {
+      target: { files: [file] },
+    });
+    await act(async () => Promise.resolve());
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(screen.getByLabelText("JavaScript project")).toHaveValue(importedCode);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("adds and removes smart pairs while keeping a keyboard exit", () => {
     render(
       <JavaScriptCapstoneWorkspace
