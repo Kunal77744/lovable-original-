@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptCodeEditor } from "@/components/guided-javascript-code-editor";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -228,12 +229,12 @@ export function JavaScriptFoundationsWarmup({
           <span>foundations.js</span>
           <span>Draft saves privately</span>
         </div>
-        <label htmlFor="foundations-code">JavaScript warm-up code</label>
-        <textarea
+        <GuidedJavaScriptCodeEditor
           id="foundations-code"
+          label="JavaScript warm-up code"
           value={code}
-          onChange={(event) => {
-            setCode(event.target.value);
+          onChange={(value) => {
+            setCode(value);
             setCheckState({
               kind: "idle",
               message:
@@ -241,7 +242,6 @@ export function JavaScriptFoundationsWarmup({
             });
           }}
           maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
-          spellCheck={false}
         />
         <PrivateJavaScriptLabDraftStatus
           state={draftState}

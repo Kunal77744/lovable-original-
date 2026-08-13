@@ -29559,3 +29559,14 @@ footer {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
+
+.guided-code-editor-shortcuts {
+  margin: 0;
+  padding: 10px 16px;
+  color: #aebdb4;
+  border-right: 1px solid #35483e;
+  border-left: 1px solid #35483e;
+  background: #16231d;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}

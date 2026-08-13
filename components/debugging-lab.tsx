@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptCodeEditor } from "@/components/guided-javascript-code-editor";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -176,15 +177,12 @@ export function DebuggingLab({
           <span>broken-solution.js</span>
           <span>Draft saves privately</span>
         </div>
-        <label htmlFor="debugging-source">
-          JavaScript source for {drill.title}
-        </label>
-        <textarea
+        <GuidedJavaScriptCodeEditor
           id="debugging-source"
+          label={`JavaScript source for ${drill.title}`}
           value={source}
-          onChange={(event) => updateSource(event.target.value)}
+          onChange={updateSource}
           maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
-          spellCheck={false}
         />
         <PrivateJavaScriptLabDraftStatus
           state={draftState}

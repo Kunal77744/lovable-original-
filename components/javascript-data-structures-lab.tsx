@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptCodeEditor } from "@/components/guided-javascript-code-editor";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -247,19 +248,18 @@ export function JavaScriptDataStructuresLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
-          <label htmlFor="data-lab-code">JavaScript data-structure code</label>
-          <textarea
+          <GuidedJavaScriptCodeEditor
             id="data-lab-code"
+            label="JavaScript data-structure code"
             value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
+            onChange={(value) => {
+              setCode(value);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
             maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
-            spellCheck={false}
           />
           <PrivateJavaScriptLabDraftStatus
             state={draftState}

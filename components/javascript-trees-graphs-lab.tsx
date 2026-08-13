@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptCodeEditor } from "@/components/guided-javascript-code-editor";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -253,21 +254,18 @@ export function JavaScriptTreesGraphsLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
-          <label htmlFor="trees-graphs-lab-code">
-            JavaScript trees and graphs code
-          </label>
-          <textarea
+          <GuidedJavaScriptCodeEditor
             id="trees-graphs-lab-code"
+            label="JavaScript trees and graphs code"
             value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
+            onChange={(value) => {
+              setCode(value);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
             maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
-            spellCheck={false}
           />
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
