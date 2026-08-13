@@ -227,6 +227,172 @@ describe("CssChallengeWorkspace", () => {
     expect(screen.getByText("Saved")).toBeInTheDocument();
   });
 
+  it("queues the exact pending CSS when the learner leaves immediately", async () => {
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const latestCss = ".learning-card { color: #287652; }";
+
+    try {
+      render(
+        <CssChallengeWorkspace
+          attempts={[]}
+          bestVerdict={null}
+          challenge={{
+            slug: challenge.slug,
+            title: challenge.title,
+            checks: gradeCssPracticeChallenge(
+              challenge.slug,
+              challenge.starterCss,
+            )!,
+            successTakeaway: challenge.successTakeaway,
+          }}
+          initialCss={challenge.starterCss}
+          isSignedIn
+          nextChallengeSlug="class-selector"
+        />,
+      );
+
+      fireEvent.change(screen.getByLabelText("CSS solution"), {
+        target: { value: latestCss },
+      });
+      fireEvent(window, new Event("pagehide"));
+
+      expect(sendBeacon).toHaveBeenCalledTimes(1);
+      const [url, body] = sendBeacon.mock.calls[0];
+      expect(url).toBe("/api/practice/css/class-selector");
+      expect(body).toBeInstanceOf(Blob);
+      expect((body as Blob).type).toBe("application/json");
+      const payload = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error);
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(body as Blob);
+      });
+      expect(JSON.parse(payload)).toEqual({ mode: "draft", css: latestCss });
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
+  });
+
+  it("does not queue CSS again after the exact draft saves", async () => {
+    vi.useFakeTimers();
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ savedAt: "2026-08-13T00:00:00.000Z" })),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      render(
+        <CssChallengeWorkspace
+          attempts={[]}
+          bestVerdict={null}
+          challenge={{
+            slug: challenge.slug,
+            title: challenge.title,
+            checks: gradeCssPracticeChallenge(
+              challenge.slug,
+              challenge.starterCss,
+            )!,
+            successTakeaway: challenge.successTakeaway,
+          }}
+          initialCss={challenge.starterCss}
+          isSignedIn
+          nextChallengeSlug="class-selector"
+        />,
+      );
+
+      fireEvent.change(screen.getByLabelText("CSS solution"), {
+        target: { value: ".learning-card { color: #287652; }" },
+      });
+      await vi.advanceTimersByTimeAsync(700);
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      fireEvent(window, new Event("pagehide"));
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(screen.getByText("Saved")).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
+  });
+
+  it("does not send signed-out CSS when the learner leaves", () => {
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+
+    try {
+      render(
+        <CssChallengeWorkspace
+          attempts={[]}
+          bestVerdict={null}
+          challenge={{
+            slug: challenge.slug,
+            title: challenge.title,
+            checks: gradeCssPracticeChallenge(
+              challenge.slug,
+              challenge.starterCss,
+            )!,
+            successTakeaway: challenge.successTakeaway,
+          }}
+          initialCss={challenge.starterCss}
+          isSignedIn={false}
+          nextChallengeSlug="class-selector"
+        />,
+      );
+
+      fireEvent.change(screen.getByLabelText("CSS solution"), {
+        target: { value: ".learning-card { color: #287652; }" },
+      });
+      fireEvent(window, new Event("pagehide"));
+
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(screen.getByText("Local only")).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
+  });
+
   it("keeps newer CSS visibly unchecked when an older attempt finishes", async () => {
     const submittedCss = `.learning-card {
       background: #ffffff;
