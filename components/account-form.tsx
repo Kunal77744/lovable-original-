@@ -101,6 +101,7 @@ export function AccountForm() {
           role="tab"
           aria-selected={mode === "create"}
           className="account-tab"
+          disabled={isSubmitting}
           onClick={() => changeMode("create")}
         >
           Create account
@@ -110,6 +111,7 @@ export function AccountForm() {
           role="tab"
           aria-selected={mode === "signin"}
           className="account-tab"
+          disabled={isSubmitting}
           onClick={() => changeMode("signin")}
         >
           Sign in
