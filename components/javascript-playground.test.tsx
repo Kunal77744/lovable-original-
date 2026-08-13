@@ -99,6 +99,64 @@ describe("JavaScriptPlayground", () => {
     );
   });
 
+  it("downloads only the exact saved active file and hides the control after an edit", () => {
+    const createObjectURL = vi.fn().mockReturnValue("blob:playground-file");
+    const revokeObjectURL = vi.fn();
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectURL,
+    });
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "const savedAnswer = 42;",
+          "savedAnswer === 42",
+          "2026-08-13T06:30:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    );
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL.mock.calls[0]?.[0]).toBeInstanceOf(Blob);
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:playground-file");
+    expect(screen.getByText("playground.js downloaded.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "JavaScript file" }), {
+      target: { value: "const newerAnswer = 84;" },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+  });
+
+  it("keeps downloads unavailable for a file that has not saved privately", () => {
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles("console.log('local starter');")}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("creates the first private file without leaving a duplicate starter tab", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
