@@ -47,6 +47,26 @@ describe("JavaScriptCapstoneWorkspace", () => {
     cleanup();
   });
 
+  it("offers the exact saved project file only while the editor matches it", () => {
+    render(
+      <JavaScriptCapstoneWorkspace
+        projectSlug="javascript-expense-report"
+        initialProject={{ ...starterProject, saved: true }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download expense-report.js" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("JavaScript project"), {
+      target: { value: `${JAVASCRIPT_CAPSTONE_STARTER}\n// newer work` },
+    });
+    expect(
+      screen.queryByRole("button", { name: "Download expense-report.js" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps newer code visibly unsaved when an older save finishes", async () => {
     let resolveSave: ((value: Response) => void) | undefined;
     const firstRevision = `${JAVASCRIPT_CAPSTONE_STARTER}\n// first revision`;

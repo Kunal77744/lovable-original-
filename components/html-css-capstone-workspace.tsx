@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import {
   buildHtmlCssCapstonePreview,
   getEmptyHtmlCssCapstoneChecks,
@@ -309,6 +310,29 @@ export function HtmlCssCapstoneWorkspace({
           >
             {message}
           </p>
+          {project.saved && !hasUnsavedChanges ? (
+            <div
+              className="project-source-downloads"
+              aria-label="Download saved project files"
+            >
+              <span>Saved project files</span>
+              <p>Take both exact saved files with you.</p>
+              <div className="project-source-download-list">
+                <SavedWorkspaceDownload
+                  fileName="index.html"
+                  label="Download index.html"
+                  mimeType="text/html"
+                  source={html}
+                />
+                <SavedWorkspaceDownload
+                  fileName="styles.css"
+                  label="Download styles.css"
+                  mimeType="text/css"
+                  source={css}
+                />
+              </div>
+            </div>
+          ) : null}
           {isComplete ? (
             <div className="html-css-capstone-teaching js-capstone-teaching">
               <span>What this proves</span>

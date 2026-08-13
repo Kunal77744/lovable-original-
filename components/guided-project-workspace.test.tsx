@@ -93,6 +93,16 @@ describe("GuidedProjectWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Submit for review" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download field-guide.html" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML project"), {
+      target: { value: `${revisedHtml}\n<!-- newer work -->` },
+    });
+    expect(
+      screen.queryByRole("button", { name: "Download field-guide.html" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a failed draft save recoverable", async () => {

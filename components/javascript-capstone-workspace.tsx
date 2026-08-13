@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getEmptyJavaScriptCapstoneChecks,
@@ -398,6 +399,21 @@ export function JavaScriptCapstoneWorkspace({
           >
             {message}
           </p>
+          {project.saved && !hasUnsavedChanges ? (
+            <div
+              className="project-source-downloads"
+              aria-label="Download saved project files"
+            >
+              <span>Saved project file</span>
+              <p>Take the exact saved JavaScript with you.</p>
+              <SavedWorkspaceDownload
+                fileName="expense-report.js"
+                label="Download expense-report.js"
+                mimeType="text/javascript"
+                source={code}
+              />
+            </div>
+          ) : null}
           {isComplete ? (
             <div className="js-capstone-teaching">
               <span>What this proves</span>

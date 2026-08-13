@@ -26,6 +26,32 @@ describe("HtmlCssCapstoneWorkspace", () => {
     cleanup();
   });
 
+  it("offers both saved project files only while both editors match them", () => {
+    render(
+      <HtmlCssCapstoneWorkspace
+        projectSlug="html-css-resource-library"
+        initialProject={{ ...starter, saved: true }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download index.html" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download styles.css" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Component CSS"), {
+      target: { value: `${HTML_CSS_CAPSTONE_STARTER_CSS}\n/* newer work */` },
+    });
+    expect(
+      screen.queryByRole("button", { name: "Download index.html" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download styles.css" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps newer edits visibly unsaved when an older two-file save finishes", async () => {
     let resolveSave: ((value: Response) => void) | undefined;
     vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise<Response>((resolve) => { resolveSave = resolve; })));

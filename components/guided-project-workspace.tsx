@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { ProjectFeedback } from "@/components/project-feedback";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { SemanticHtmlRepairDrill } from "@/components/semantic-html-repair-drill";
 import {
   getEmptyGuidedProjectChecks,
@@ -287,6 +288,21 @@ export function GuidedProjectWorkspace({
           >
             {message}
           </p>
+          {project.saved && !hasUnsavedChanges ? (
+            <div
+              className="project-source-downloads"
+              aria-label="Download saved project files"
+            >
+              <span>Saved project file</span>
+              <p>Take the exact saved HTML with you.</p>
+              <SavedWorkspaceDownload
+                fileName="field-guide.html"
+                label="Download field-guide.html"
+                mimeType="text/html"
+                source={html}
+              />
+            </div>
+          ) : null}
           {isComplete ? (
             <>
               <Link href={practiceContinuation.href}>
