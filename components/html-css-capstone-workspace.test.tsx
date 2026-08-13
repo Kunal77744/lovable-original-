@@ -35,6 +35,42 @@ describe("HtmlCssCapstoneWorkspace", () => {
     window.localStorage.clear();
   });
 
+  it("uses language-aware keyboard editing in both project files", () => {
+    render(
+      <HtmlCssCapstoneWorkspace
+        projectSlug="html-css-resource-library"
+        initialProject={{
+          ...starter,
+          html: "<main>Library</main>",
+          css: ".library { display: grid; }",
+        }}
+      />,
+    );
+
+    const htmlEditor = screen.getByLabelText(
+      "Semantic HTML",
+    ) as HTMLTextAreaElement;
+    const cssEditor = screen.getByLabelText(
+      "Component CSS",
+    ) as HTMLTextAreaElement;
+    htmlEditor.setSelectionRange(0, htmlEditor.value.length);
+    fireEvent.keyDown(htmlEditor, { key: "/", ctrlKey: true });
+    cssEditor.setSelectionRange(0, cssEditor.value.length);
+    fireEvent.keyDown(cssEditor, { key: "/", ctrlKey: true });
+
+    expect(htmlEditor).toHaveValue("<!--<main>Library</main>-->");
+    expect(cssEditor).toHaveValue("/*.library { display: grid; }*/");
+    expect(htmlEditor).toHaveAttribute(
+      "aria-describedby",
+      "html-css-capstone-html-keyboard-hint",
+    );
+    expect(cssEditor).toHaveAttribute(
+      "aria-describedby",
+      "html-css-capstone-css-keyboard-hint",
+    );
+    expect(screen.getAllByText("Unsaved")).toHaveLength(2);
+  });
+
   it("restores exact files and keeps a newer CSS copy when an older save returns", async () => {
     const recoveredHtml = `${HTML_CSS_CAPSTONE_STARTER_HTML}\n<!-- recovered -->`;
     const recoveredCss = `${HTML_CSS_CAPSTONE_STARTER_CSS}\n/* recovered */`;

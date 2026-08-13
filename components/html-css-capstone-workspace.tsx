@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import {
   buildHtmlCssCapstonePreview,
   getEmptyHtmlCssCapstoneChecks,
@@ -82,6 +83,22 @@ export function HtmlCssCapstoneWorkspace({
         "styles.css",
       )
     : null;
+  const {
+    textareaRef: htmlTextareaRef,
+    handleKeyDown: handleHtmlKeyDown,
+  } = useCodeEditorKeyboard({
+    value: html,
+    onChange: updateHtml,
+    commentSyntax: "html",
+  });
+  const {
+    textareaRef: cssTextareaRef,
+    handleKeyDown: handleCssKeyDown,
+  } = useCodeEditorKeyboard({
+    value: css,
+    onChange: updateCss,
+    commentSyntax: "css",
+  });
 
   useEffect(() => {
     if (!htmlBrowserRecoveryKey || !cssBrowserRecoveryKey) return;
@@ -368,10 +385,19 @@ export function HtmlCssCapstoneWorkspace({
             <label htmlFor="html-css-capstone-html">Semantic HTML</label>
             <textarea
               id="html-css-capstone-html"
+              ref={htmlTextareaRef}
+              aria-describedby="html-css-capstone-html-keyboard-hint"
               value={html}
               onChange={(event) => updateHtml(event.target.value)}
+              onKeyDown={handleHtmlKeyDown}
               spellCheck={false}
             />
+            <p
+              className="project-editor-keyboard-hint"
+              id="html-css-capstone-html-keyboard-hint"
+            >
+              Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+            </p>
           </div>
           <div className="html-css-capstone-editor js-capstone-editor">
             <div className="workspace-panel-label">
@@ -389,10 +415,19 @@ export function HtmlCssCapstoneWorkspace({
             <label htmlFor="html-css-capstone-css">Component CSS</label>
             <textarea
               id="html-css-capstone-css"
+              ref={cssTextareaRef}
+              aria-describedby="html-css-capstone-css-keyboard-hint"
               value={css}
               onChange={(event) => updateCss(event.target.value)}
+              onKeyDown={handleCssKeyDown}
               spellCheck={false}
             />
+            <p
+              className="project-editor-keyboard-hint"
+              id="html-css-capstone-css-keyboard-hint"
+            >
+              Tab/Shift+Tab indent · Ctrl/⌘ + / comments · Escape then Tab exits
+            </p>
           </div>
         </div>
 

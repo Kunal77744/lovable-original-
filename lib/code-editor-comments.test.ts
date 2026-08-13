@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { toggleEditorLineComments } from "./code-editor-comments";
+import {
+  toggleEditorBlockComments,
+  toggleEditorLineComments,
+} from "./code-editor-comments";
 
 describe("toggleEditorLineComments", () => {
   it("comments and uncomments the current line at its indentation", () => {
@@ -56,6 +59,60 @@ describe("toggleEditorLineComments", () => {
       value: "first\n   \nthird",
       selectionStart: 7,
       selectionEnd: 7,
+    });
+  });
+});
+
+describe("toggleEditorBlockComments", () => {
+  it("toggles an indented HTML line while preserving the cursor", () => {
+    const source = "<main>\n  <article>Guide</article>\n</main>";
+    const cursor = source.indexOf("Guide");
+    const commented = toggleEditorBlockComments(source, cursor, cursor, {
+      open: "<!--",
+      close: "-->",
+    });
+
+    expect(commented.value).toBe(
+      "<main>\n  <!--<article>Guide</article>-->\n</main>",
+    );
+    expect(commented.selectionStart).toBe(cursor + 4);
+    expect(
+      toggleEditorBlockComments(
+        commented.value,
+        commented.selectionStart,
+        commented.selectionEnd,
+        { open: "<!--", close: "-->" },
+      ),
+    ).toEqual({
+      value: source,
+      selectionStart: cursor,
+      selectionEnd: cursor,
+    });
+  });
+
+  it("wraps and unwraps selected CSS without changing the selected source", () => {
+    const source = ".card {\n  display: grid;\n}";
+    const start = source.indexOf("display");
+    const end = start + "display: grid;".length;
+    const commented = toggleEditorBlockComments(source, start, end, {
+      open: "/*",
+      close: "*/",
+    });
+
+    expect(commented.value).toContain("/*display: grid;*/");
+    expect(commented.selectionStart).toBe(start + 2);
+    expect(commented.selectionEnd).toBe(end + 2);
+    expect(
+      toggleEditorBlockComments(
+        commented.value,
+        commented.selectionStart,
+        commented.selectionEnd,
+        { open: "/*", close: "*/" },
+      ),
+    ).toEqual({
+      value: source,
+      selectionStart: start,
+      selectionEnd: end,
     });
   });
 });
