@@ -2,20 +2,31 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import {
   buildHtmlCssCapstonePreview,
   getEmptyHtmlCssCapstoneChecks,
+  MAX_HTML_CSS_CAPSTONE_CSS_LENGTH,
+  MAX_HTML_CSS_CAPSTONE_HTML_LENGTH,
   type HtmlCssCapstoneRecord,
 } from "@/lib/html-css-capstone";
 import { captureProjectCompleted } from "@/lib/product-analytics";
+import {
+  getProjectDraftRecoveryKey,
+  parseProjectDraftRecovery,
+  serializeProjectDraftRecovery,
+  type ProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 
 type RequestState = "idle" | "saving" | "submitting" | "error";
 
 export function HtmlCssCapstoneWorkspace({
+  browserRecoveryScope,
   projectSlug,
   initialProject,
 }: {
+  browserRecoveryScope?: string | null;
   projectSlug: string;
   initialProject: HtmlCssCapstoneRecord;
 }) {
@@ -24,6 +35,10 @@ export function HtmlCssCapstoneWorkspace({
   const htmlRef = useRef(initialProject.html);
   const cssRef = useRef(initialProject.css);
   const [project, setProject] = useState(initialProject);
+  const [recoverableBrowserDrafts, setRecoverableBrowserDrafts] = useState<{
+    html: ProjectDraftRecovery | null;
+    css: ProjectDraftRecovery | null;
+  } | null>(null);
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestInFlight = useRef(false);
@@ -48,6 +63,74 @@ export function HtmlCssCapstoneWorkspace({
     project.submission?.status === "completed" && !hasUnreviewedChanges;
   const isWorking = requestState === "saving" || requestState === "submitting";
   const firstFailedCheck = checks.find((check) => !check.passed);
+  const recoverableFileLabel = recoverableBrowserDrafts?.html
+    ? recoverableBrowserDrafts.css
+      ? "HTML and CSS"
+      : "HTML"
+    : "CSS";
+  const htmlBrowserRecoveryKey = browserRecoveryScope
+    ? getProjectDraftRecoveryKey(
+        browserRecoveryScope,
+        projectSlug,
+        "index.html",
+      )
+    : null;
+  const cssBrowserRecoveryKey = browserRecoveryScope
+    ? getProjectDraftRecoveryKey(
+        browserRecoveryScope,
+        projectSlug,
+        "styles.css",
+      )
+    : null;
+
+  useEffect(() => {
+    if (!htmlBrowserRecoveryKey || !cssBrowserRecoveryKey) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedHtml = window.localStorage.getItem(htmlBrowserRecoveryKey);
+      const storedCss = window.localStorage.getItem(cssBrowserRecoveryKey);
+      const browserHtml = parseProjectDraftRecovery(
+        storedHtml,
+        MAX_HTML_CSS_CAPSTONE_HTML_LENGTH,
+      );
+      const browserCss = parseProjectDraftRecovery(
+        storedCss,
+        MAX_HTML_CSS_CAPSTONE_CSS_LENGTH,
+      );
+      const recoverableHtml =
+        browserHtml?.source === initialProject.html ? null : browserHtml;
+      const recoverableCss =
+        browserCss?.source === initialProject.css ? null : browserCss;
+
+      if (storedHtml && !recoverableHtml) {
+        window.localStorage.removeItem(htmlBrowserRecoveryKey);
+      }
+      if (storedCss && !recoverableCss) {
+        window.localStorage.removeItem(cssBrowserRecoveryKey);
+      }
+      if (!recoverableHtml && !recoverableCss) return;
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDrafts({
+          html: recoverableHtml,
+          css: recoverableCss,
+        });
+      }, 0);
+    } catch {
+      // Private autosave remains available when browser storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [
+    cssBrowserRecoveryKey,
+    htmlBrowserRecoveryKey,
+    initialProject.css,
+    initialProject.html,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -68,6 +151,7 @@ export function HtmlCssCapstoneWorkspace({
     setHtml(value);
     if (requestState === "error") setRequestState("idle");
     setMessage("Draft changed. Saving both files privately…");
+    persistBrowserRecovery(htmlBrowserRecoveryKey, value);
     scheduleDraftSave();
   }
 
@@ -76,6 +160,67 @@ export function HtmlCssCapstoneWorkspace({
     setCss(value);
     if (requestState === "error") setRequestState("idle");
     setMessage("Draft changed. Saving both files privately…");
+    persistBrowserRecovery(cssBrowserRecoveryKey, value);
+    scheduleDraftSave();
+  }
+
+  function persistBrowserRecovery(key: string | null, source: string) {
+    if (!key) return;
+    try {
+      window.localStorage.setItem(
+        key,
+        serializeProjectDraftRecovery(source),
+      );
+      setRecoverableBrowserDrafts(null);
+    } catch {
+      // Private autosave remains the fallback when browser storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(
+    key: string | null,
+    savedSource: string,
+    maxSourceLength: number,
+  ) {
+    if (!key) return;
+    try {
+      const browserDraft = parseProjectDraftRecovery(
+        window.localStorage.getItem(key),
+        maxSourceLength,
+      );
+      if (browserDraft?.source === savedSource) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
+
+  function keepPrivateSavedFiles() {
+    if (!htmlBrowserRecoveryKey || !cssBrowserRecoveryKey) return;
+    try {
+      window.localStorage.removeItem(htmlBrowserRecoveryKey);
+      window.localStorage.removeItem(cssBrowserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDrafts(null);
+  }
+
+  function restoreBrowserFiles() {
+    if (!recoverableBrowserDrafts) return;
+
+    const recoveredHtml = recoverableBrowserDrafts.html?.source ?? htmlRef.current;
+    const recoveredCss = recoverableBrowserDrafts.css?.source ?? cssRef.current;
+    htmlRef.current = recoveredHtml;
+    cssRef.current = recoveredCss;
+    setHtml(recoveredHtml);
+    setCss(recoveredCss);
+    setRecoverableBrowserDrafts(null);
+    setRequestState("idle");
+    setMessage(
+      "Browser files restored as unsaved work. Your private saved files stay unchanged until these exact versions save.",
+    );
     scheduleDraftSave();
   }
 
@@ -123,6 +268,16 @@ export function HtmlCssCapstoneWorkspace({
 
       setProject(payload);
       setRequestState("idle");
+      clearBrowserRecoveryIfMatches(
+        htmlBrowserRecoveryKey,
+        submittedHtml,
+        MAX_HTML_CSS_CAPSTONE_HTML_LENGTH,
+      );
+      clearBrowserRecoveryIfMatches(
+        cssBrowserRecoveryKey,
+        submittedCss,
+        MAX_HTML_CSS_CAPSTONE_CSS_LENGTH,
+      );
 
       if (payload.firstCompletedReview && payload.submission?.status === "completed") {
         captureProjectCompleted({
@@ -182,6 +337,18 @@ export function HtmlCssCapstoneWorkspace({
           <small>{isComplete ? "Project complete" : "outcomes passing"}</small>
         </div>
       </header>
+
+      {recoverableBrowserDrafts ? (
+        <ProjectBrowserDraftRecovery
+          titleId="html-css-capstone-browser-recovery-title"
+          fileLabel={recoverableFileLabel}
+          multiple={Boolean(
+            recoverableBrowserDrafts.html && recoverableBrowserDrafts.css,
+          )}
+          onKeepSaved={keepPrivateSavedFiles}
+          onRestore={restoreBrowserFiles}
+        />
+      ) : null}
 
       <div className="html-css-capstone-workbench js-capstone-workbench">
         <div className="html-css-capstone-editors">

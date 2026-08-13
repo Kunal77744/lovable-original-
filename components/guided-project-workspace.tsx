@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ProjectBrowserDraftRecovery } from "@/components/project-browser-draft-recovery";
 import { ProjectFeedback } from "@/components/project-feedback";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { SemanticHtmlRepairDrill } from "@/components/semantic-html-repair-drill";
@@ -9,11 +10,21 @@ import {
   getEmptyGuidedProjectChecks,
   type GuidedProjectRecord,
 } from "@/lib/guided-project";
+import {
+  getProjectDraftRecoveryKey,
+  parseProjectDraftRecovery,
+  serializeProjectDraftRecovery,
+  type ProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 import { captureProjectCompleted } from "@/lib/product-analytics";
 import type { SavedProjectFeedback } from "@/lib/project-feedback";
-import { buildSandboxedPreviewDocument } from "@/lib/semantic-html-workspace";
+import {
+  buildSandboxedPreviewDocument,
+  MAX_SEMANTIC_HTML_LENGTH,
+} from "@/lib/semantic-html-workspace";
 
 type GuidedProjectWorkspaceProps = {
+  browserRecoveryScope?: string | null;
   projectSlug: string;
   initialProject: GuidedProjectRecord;
   initialFeedback: SavedProjectFeedback | null;
@@ -24,6 +35,7 @@ type GuidedProjectWorkspaceProps = {
 };
 
 export function GuidedProjectWorkspace({
+  browserRecoveryScope = null,
   projectSlug,
   initialProject,
   initialFeedback,
@@ -32,6 +44,8 @@ export function GuidedProjectWorkspace({
   const [html, setHtml] = useState(initialProject.html);
   const htmlRef = useRef(initialProject.html);
   const [project, setProject] = useState(initialProject);
+  const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
+    useState<ProjectDraftRecovery | null>(null);
   const [requestState, setRequestState] = useState<
     "idle" | "saving" | "submitting" | "error"
   >("idle");
@@ -61,6 +75,92 @@ export function GuidedProjectWorkspace({
   const isComplete =
     project.submission?.status === "completed" && !hasUnreviewedChanges;
   const firstFailedCheck = checks.find((check) => !check.passed);
+  const browserRecoveryKey = browserRecoveryScope
+    ? getProjectDraftRecoveryKey(
+        browserRecoveryScope,
+        projectSlug,
+        "field-guide.html",
+      )
+    : null;
+
+  useEffect(() => {
+    if (!browserRecoveryKey) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedValue = window.localStorage.getItem(browserRecoveryKey);
+      const browserDraft = parseProjectDraftRecovery(
+        storedValue,
+        MAX_SEMANTIC_HTML_LENGTH,
+      );
+
+      if (!browserDraft || browserDraft.source === initialProject.html) {
+        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDraft(browserDraft);
+      }, 0);
+    } catch {
+      // Private server saving remains available when browser storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [browserRecoveryKey, initialProject.html]);
+
+  function persistBrowserRecovery(source: string) {
+    if (!browserRecoveryKey) return;
+    try {
+      window.localStorage.setItem(
+        browserRecoveryKey,
+        serializeProjectDraftRecovery(source),
+      );
+      setRecoverableBrowserDraft(null);
+    } catch {
+      // Manual private saving remains the fallback when storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(savedSource: string) {
+    if (!browserRecoveryKey) return;
+    try {
+      const browserDraft = parseProjectDraftRecovery(
+        window.localStorage.getItem(browserRecoveryKey),
+        MAX_SEMANTIC_HTML_LENGTH,
+      );
+      if (browserDraft?.source === savedSource) {
+        window.localStorage.removeItem(browserRecoveryKey);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
+
+  function keepPrivateSavedDraft() {
+    if (!browserRecoveryKey) return;
+    try {
+      window.localStorage.removeItem(browserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDraft(null);
+  }
+
+  function restoreBrowserDraft() {
+    if (!recoverableBrowserDraft) return;
+
+    htmlRef.current = recoverableBrowserDraft.source;
+    setHtml(recoverableBrowserDraft.source);
+    setRecoverableBrowserDraft(null);
+    setRequestState("idle");
+    setMessage(
+      "Browser draft restored as unsaved work. Your private saved HTML stays unchanged until this exact draft saves.",
+    );
+  }
 
   async function persist(action: "save" | "submit") {
     const submittedHtml = htmlRef.current;
@@ -93,6 +193,7 @@ export function GuidedProjectWorkspace({
 
       setProject(payload);
       setRequestState("idle");
+      clearBrowserRecoveryIfMatches(submittedHtml);
 
       if (action === "save") {
         setMessage(
@@ -169,6 +270,15 @@ export function GuidedProjectWorkspace({
         </div>
       </header>
 
+      {recoverableBrowserDraft ? (
+        <ProjectBrowserDraftRecovery
+          titleId="guided-project-browser-recovery-title"
+          fileLabel="HTML"
+          onKeepSaved={keepPrivateSavedDraft}
+          onRestore={restoreBrowserDraft}
+        />
+      ) : null}
+
       <div className="project-panels">
         <div className="project-editor">
           <div className="workspace-panel-label">
@@ -192,6 +302,7 @@ export function GuidedProjectWorkspace({
             onChange={(event) => {
               htmlRef.current = event.target.value;
               setHtml(htmlRef.current);
+              persistBrowserRecovery(htmlRef.current);
               setRequestState((current) =>
                 current === "error" ? "idle" : current,
               );

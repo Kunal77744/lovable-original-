@@ -12,6 +12,10 @@ import {
   JAVASCRIPT_CAPSTONE_STARTER,
   type JavaScriptCapstoneRecord,
 } from "@/lib/javascript-capstone";
+import {
+  getProjectDraftRecoveryKey,
+  serializeProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 import { JavaScriptCapstoneWorkspace } from "./javascript-capstone-workspace";
 
 const mocks = vi.hoisted(() => ({
@@ -40,11 +44,62 @@ describe("JavaScriptCapstoneWorkspace", () => {
     vi.restoreAllMocks();
     mocks.runCodingSolution.mockReset();
     mocks.captureProjectCompleted.mockReset();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     cleanup();
+    window.localStorage.clear();
+  });
+
+  it("restores a browser copy as unsaved JavaScript and clears it after exact save", async () => {
+    const savedCode = `${JAVASCRIPT_CAPSTONE_STARTER}\n// saved account code`;
+    const recoveredCode = `${JAVASCRIPT_CAPSTONE_STARTER}\n// recovered browser code`;
+    const recoveryKey = getProjectDraftRecoveryKey(
+      "learner-a",
+      "javascript-expense-report",
+      "expense-report.js",
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeProjectDraftRecovery(recoveredCode),
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ...starterProject,
+        code: recoveredCode,
+        saved: true,
+        updatedAt: "2026-08-13T10:00:00.000Z",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <JavaScriptCapstoneWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="javascript-expense-report"
+        initialProject={{ ...starterProject, code: savedCode, saved: true }}
+      />,
+    );
+
+    const editor = screen.getByLabelText("JavaScript project");
+    expect(editor).toHaveValue(savedCode);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Restore browser draft" }),
+    );
+    expect(editor).toHaveValue(recoveredCode);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save now" }));
+    await waitFor(() => expect(window.localStorage.getItem(recoveryKey)).toBeNull());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/javascript-expense-report",
+      expect.objectContaining({
+        body: JSON.stringify({ action: "save", code: recoveredCode }),
+      }),
+    );
   });
 
   it("offers the exact saved project file only while the editor matches it", () => {

@@ -6,6 +6,11 @@ import {
   HTML_CSS_CAPSTONE_STARTER_HTML,
   type HtmlCssCapstoneRecord,
 } from "@/lib/html-css-capstone";
+import {
+  getProjectDraftRecoveryKey,
+  parseProjectDraftRecovery,
+  serializeProjectDraftRecovery,
+} from "@/lib/project-draft-recovery";
 import { HtmlCssCapstoneWorkspace } from "./html-css-capstone-workspace";
 
 vi.mock("@/lib/product-analytics", () => ({ captureProjectCompleted: vi.fn() }));
@@ -20,10 +25,96 @@ const starter: HtmlCssCapstoneRecord = {
 };
 
 describe("HtmlCssCapstoneWorkspace", () => {
-  beforeEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    window.localStorage.clear();
+  });
   afterEach(() => {
     vi.useRealTimers();
     cleanup();
+    window.localStorage.clear();
+  });
+
+  it("restores exact files and keeps a newer CSS copy when an older save returns", async () => {
+    const recoveredHtml = `${HTML_CSS_CAPSTONE_STARTER_HTML}\n<!-- recovered -->`;
+    const recoveredCss = `${HTML_CSS_CAPSTONE_STARTER_CSS}\n/* recovered */`;
+    const newerCss = `${recoveredCss}\n/* newer */`;
+    const htmlRecoveryKey = getProjectDraftRecoveryKey(
+      "learner-a",
+      "html-css-resource-library",
+      "index.html",
+    );
+    const cssRecoveryKey = getProjectDraftRecoveryKey(
+      "learner-a",
+      "html-css-resource-library",
+      "styles.css",
+    );
+    window.localStorage.setItem(
+      htmlRecoveryKey,
+      serializeProjectDraftRecovery(recoveredHtml),
+    );
+    window.localStorage.setItem(
+      cssRecoveryKey,
+      serializeProjectDraftRecovery(recoveredCss),
+    );
+    let resolveSave: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise<Response>((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <HtmlCssCapstoneWorkspace
+        browserRecoveryScope="learner-a"
+        projectSlug="html-css-resource-library"
+        initialProject={{ ...starter, saved: true }}
+      />,
+    );
+
+    const htmlEditor = screen.getByLabelText("Semantic HTML");
+    const cssEditor = screen.getByLabelText("Component CSS");
+    expect(htmlEditor).toHaveValue(HTML_CSS_CAPSTONE_STARTER_HTML);
+    expect(cssEditor).toHaveValue(HTML_CSS_CAPSTONE_STARTER_CSS);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Restore browser files" }),
+    );
+    expect(htmlEditor).toHaveValue(recoveredHtml);
+    expect(cssEditor).toHaveValue(recoveredCss);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save now" }));
+    fireEvent.change(cssEditor, { target: { value: newerCss } });
+    resolveSave?.({
+      ok: true,
+      json: async () => ({
+        ...starter,
+        html: recoveredHtml,
+        css: recoveredCss,
+        saved: true,
+      }),
+    } as Response);
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(htmlRecoveryKey)).toBeNull();
+      expect(
+        parseProjectDraftRecovery(
+          window.localStorage.getItem(cssRecoveryKey),
+          20_000,
+        ),
+      ).toEqual(expect.objectContaining({ source: newerCss }));
+    });
+    expect(cssEditor).toHaveValue(newerCss);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/html-css-resource-library",
+      expect.objectContaining({
+        body: JSON.stringify({
+          action: "save",
+          html: recoveredHtml,
+          css: recoveredCss,
+        }),
+      }),
+    );
   });
 
   it("offers both saved project files only while both editors match them", () => {
