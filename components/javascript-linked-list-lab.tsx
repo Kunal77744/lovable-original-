@@ -33,9 +33,11 @@ const exerciseIds = JAVASCRIPT_LINKED_LIST_EXERCISES.map(
 export function JavaScriptLinkedListLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -47,12 +49,14 @@ export function JavaScriptLinkedListLab({
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "linked-lists",
     exerciseId: exercise?.slug ?? JAVASCRIPT_LINKED_LIST_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_LINKED_LIST_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -267,6 +271,7 @@ export function JavaScriptLinkedListLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="function-lab-actions">

@@ -32,9 +32,11 @@ const exerciseIds = JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES.map(
 export function JavaScriptAlgorithmPatternsLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -47,6 +49,7 @@ export function JavaScriptAlgorithmPatternsLab({
     updateSource: setCode,
     restoreStarter: restoreDraftStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "algorithm-patterns",
     exerciseId:
@@ -55,6 +58,7 @@ export function JavaScriptAlgorithmPatternsLab({
       exercise?.starterCode ??
       JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -269,6 +273,7 @@ export function JavaScriptAlgorithmPatternsLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="function-lab-actions">

@@ -33,9 +33,11 @@ const exerciseIds = JAVASCRIPT_STACKS_QUEUES_EXERCISES.map(
 export function JavaScriptStacksQueuesLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -47,6 +49,7 @@ export function JavaScriptStacksQueuesLab({
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "stacks-queues",
     exerciseId: exercise?.slug ?? JAVASCRIPT_STACKS_QUEUES_EXERCISES[0].slug,
@@ -54,6 +57,7 @@ export function JavaScriptStacksQueuesLab({
       exercise?.starterCode ??
       JAVASCRIPT_STACKS_QUEUES_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -271,6 +275,7 @@ export function JavaScriptStacksQueuesLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="function-lab-actions">

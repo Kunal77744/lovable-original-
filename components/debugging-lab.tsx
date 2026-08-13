@@ -32,9 +32,11 @@ const exerciseIds = JAVASCRIPT_DEBUGGING_DRILLS.map(
 export function DebuggingLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [drillIndex, setDrillIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -45,12 +47,14 @@ export function DebuggingLab({
     state: draftState,
     updateSource: setSource,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "debugging",
     exerciseId: drill?.slug ?? JAVASCRIPT_DEBUGGING_DRILLS[0].slug,
     starterCode:
       drill?.starterCode ?? JAVASCRIPT_DEBUGGING_DRILLS[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
@@ -187,6 +191,7 @@ export function DebuggingLab({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          browserRecovery={browserRecovery}
         />
       </div>
 

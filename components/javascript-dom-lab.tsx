@@ -31,9 +31,11 @@ const exerciseIds = JAVASCRIPT_DOM_EXERCISES.map((exercise) => exercise.slug);
 export function JavaScriptDomLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -45,12 +47,14 @@ export function JavaScriptDomLab({
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "dom",
     exerciseId: exercise?.slug ?? JAVASCRIPT_DOM_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_DOM_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -236,6 +240,7 @@ export function JavaScriptDomLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="dom-lab-actions">

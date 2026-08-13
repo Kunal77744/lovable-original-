@@ -27,6 +27,20 @@ const codeLabs = [
   ["javascript-trees-graphs-lab.tsx", JAVASCRIPT_TREES_GRAPHS_EXERCISES],
 ] as const;
 
+const labRoutes = [
+  "foundations",
+  "debugging",
+  "data-structures",
+  "dom",
+  "functions",
+  "recursion",
+  "search-sort",
+  "stacks-queues",
+  "linked-lists",
+  "algorithm-patterns",
+  "trees-graphs",
+] as const;
+
 describe("guided JavaScript code editor coverage", () => {
   it("keeps all 42 code-writing exercises on the shared keyboard model", () => {
     expect(codeLabs).toHaveLength(11);
@@ -41,7 +55,22 @@ describe("guided JavaScript code editor coverage", () => {
       );
 
       expect(source).toContain("<GuidedJavaScriptCodeEditor");
+      expect(source).toContain("browserRecoveryScope");
+      expect(source).toContain("browserRecovery={browserRecovery}");
       expect(source).not.toContain("<textarea");
+    }
+  });
+
+  it("scopes browser recovery on all 11 private lab routes", () => {
+    expect(labRoutes).toHaveLength(11);
+
+    for (const route of labRoutes) {
+      const source = readFileSync(
+        join(process.cwd(), "app", "practice", route, "page.tsx"),
+        "utf8",
+      );
+
+      expect(source).toContain("createBrowserRecoveryScope(session.user.id)");
     }
   });
 });

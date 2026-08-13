@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DebuggingLab } from "@/components/debugging-lab";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 import {
   getCompletedJavaScriptLabExerciseIds,
   getJavaScriptLabExerciseDrafts,
@@ -59,6 +60,7 @@ export default async function JavaScriptDebuggingLabPage() {
             </aside>
           </header>
           <DebuggingLab
+            browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
             completedExerciseIds={completedExerciseIds}
             initialDrafts={initialDrafts}
           />

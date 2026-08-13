@@ -33,9 +33,11 @@ const exerciseIds = JAVASCRIPT_DATA_STRUCTURE_EXERCISES.map(
 export function JavaScriptDataStructuresLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -47,6 +49,7 @@ export function JavaScriptDataStructuresLab({
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "data-structures",
     exerciseId: exercise?.slug ?? JAVASCRIPT_DATA_STRUCTURE_EXERCISES[0].slug,
@@ -54,6 +57,7 @@ export function JavaScriptDataStructuresLab({
       exercise?.starterCode ??
       JAVASCRIPT_DATA_STRUCTURE_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -264,6 +268,7 @@ export function JavaScriptDataStructuresLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
           />
 
           <div className="data-lab-actions">
