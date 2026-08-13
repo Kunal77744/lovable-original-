@@ -96,6 +96,43 @@ describe("CssChallengeWorkspace", () => {
         "No saved attempts yet. Your first submission will appear here.",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .css" }),
+    ).toBeInTheDocument();
+  });
+
+  it("offers only the exact privately saved CSS for download", () => {
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        hasSavedDraft
+        initialCss=".learning-card { color: #287652; }"
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download saved .css" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("CSS solution"), {
+      target: { value: ".learning-card { color: #17231e; }" },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps a signed-out attempt local and offers account creation", () => {
@@ -136,6 +173,9 @@ describe("CssChallengeWorkspace", () => {
       screen.queryByRole("heading", {
         name: challenge.successTakeaway.concept,
       }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Did this path make CSS clearer?" }),

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CssPathFeedback } from "@/components/css-path-feedback";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import type { CssPracticeAttempt } from "@/db/css-practice";
 import type { SavedCssPathFeedback } from "@/lib/css-path-feedback";
@@ -334,14 +335,24 @@ export function CssChallengeWorkspace({
       </div>
 
       <div className="css-challenge-submit">
-        <button
-          className="submit-code-action"
-          type="button"
-          onClick={submitAttempt}
-          disabled={submitting || saveState === "saving"}
-        >
-          {submitting ? "Checking CSS…" : "Check and save attempt"}
-        </button>
+        <div className="css-challenge-submit-actions">
+          <button
+            className="submit-code-action"
+            type="button"
+            onClick={submitAttempt}
+            disabled={submitting || saveState === "saving"}
+          >
+            {submitting ? "Checking CSS…" : "Check and save attempt"}
+          </button>
+          {isSignedIn && saveState === "saved" ? (
+            <SavedWorkspaceDownload
+              fileName={`${challenge.slug}.css`}
+              label="Download saved .css"
+              mimeType="text/css"
+              source={css}
+            />
+          ) : null}
+        </div>
         <p
           className={saveState === "error" ? "is-error" : ""}
           aria-live="polite"

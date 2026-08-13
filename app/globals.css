@@ -11561,6 +11561,30 @@ h1 {
   background: #1a2721;
 }
 
+.css-challenge-submit-actions {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.css-challenge-submit-actions .workspace-download button {
+  width: auto;
+  min-height: 40px;
+  color: #d8e1dc;
+  border-color: #55685e;
+  background: #223029;
+}
+
+.css-challenge-submit-actions .workspace-download button:hover {
+  color: #ffffff;
+  border-color: #83dda8;
+  background: #293a31;
+}
+
+.css-challenge-submit-actions .workspace-download-status {
+  color: #91dfae;
+}
+
 .css-challenge-submit p {
   margin: 0;
   color: #aebbb4;
@@ -14516,6 +14540,8 @@ footer {
   }
 
   .css-challenge-submit .submit-code-action,
+  .css-challenge-submit-actions,
+  .css-challenge-submit-actions .workspace-download button,
   .css-practice-bridge > a {
     width: 100%;
   }
