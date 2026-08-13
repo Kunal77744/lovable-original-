@@ -13,7 +13,15 @@ export function SignOutButton() {
     setIsSigningOut(true);
     setError(null);
 
-    const result = await authClient.signOut();
+    let result: Awaited<ReturnType<typeof authClient.signOut>>;
+
+    try {
+      result = await authClient.signOut();
+    } catch {
+      setError("We couldn’t sign you out. Check your connection and try again.");
+      setIsSigningOut(false);
+      return;
+    }
 
     if (result.error) {
       setError("We couldn’t sign you out. Try again.");
