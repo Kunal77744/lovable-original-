@@ -13,6 +13,7 @@ import {
   parseCodingDraftRecovery,
   serializeCodingDraftRecovery,
 } from "@/lib/coding-draft-recovery";
+import { MAX_CODING_SOLUTION_LENGTH } from "@/lib/coding-problems";
 import { CodingWorkspace } from "./coding-workspace";
 
 const runCodingSolution = vi.fn();
@@ -173,6 +174,15 @@ function submissionResponse(
   );
 }
 
+function createJavaScriptFile(name: string, source: string) {
+  const file = new File([source], name, { type: "text/javascript" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
+}
+
 describe("CodingWorkspace", () => {
   afterEach(() => {
     cleanup();
@@ -235,11 +245,216 @@ describe("CodingWorkspace", () => {
 
     renderWorkspace();
 
-    const editor = screen.getByLabelText("JavaScript solution");
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
     await waitFor(() => {
       expect(editor).toHaveStyle({ fontSize: "13px", whiteSpace: "pre-wrap" });
     });
     expect(editor).toHaveAttribute("wrap", "soft");
+  });
+
+  it("imports one local JavaScript file as normal unsaved editor work", async () => {
+    vi.useFakeTimers();
+    const importedCode = `function solve(input) {
+  return input.trim();
+}`;
+    const file = createJavaScriptFile("trim-input.js", importedCode);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(null, { status: 200 }),
+    );
+    renderWorkspace();
+
+    fireEvent.change(
+      screen.getByLabelText("Choose JavaScript file to import"),
+      { target: { files: [file] } },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(
+      screen.getByText("Import trim-input.js?"),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(editor).toHaveValue(importedCode);
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(0);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "trim-input.js imported locally as editor work. Normal private autosave applies.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(
+      parseCodingDraftRecovery(
+        window.localStorage.getItem(
+          getCodingDraftRecoveryKey("learner-a", problem.slug),
+        ),
+      )?.code,
+    ).toBe(importedCode);
+    expect(runCodingSolution).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `/api/practice/${problem.slug}`,
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: importedCode }),
+      }),
+    );
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("keeps the current editor untouched when a local import is cancelled", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    const initialCode = "function solve(input) { return input; }";
+
+    fireEvent.change(
+      screen.getByLabelText("Choose JavaScript file to import"),
+      {
+        target: {
+          files: [
+            createJavaScriptFile(
+              "replacement.js",
+              "function solve() { return 'replacement'; }",
+            ),
+          ],
+        },
+      },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(editor).toHaveValue(initialCode);
+    fireEvent.click(screen.getByRole("button", { name: "Keep editor" }));
+
+    expect(editor).toHaveValue(initialCode);
+    expect(
+      screen.getByText("Import cancelled. Your editor was not changed."),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+  });
+
+  it("rejects multiple, non-JavaScript, oversized, and empty file imports", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const input = screen.getByLabelText("Choose JavaScript file to import");
+    const editor = screen.getByLabelText("JavaScript solution");
+    const initialCode = "function solve(input) { return input; }";
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createJavaScriptFile("one.js", "return 1;"),
+          createJavaScriptFile("two.js", "return 2;"),
+        ],
+      },
+    });
+    expect(
+      screen.getByText("Choose one JavaScript file at a time."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createJavaScriptFile("notes.txt", "return 1;")] },
+    });
+    expect(screen.getByText("Choose a file ending in .js.")).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createJavaScriptFile(
+            "too-large.js",
+            "x".repeat(MAX_CODING_SOLUTION_LENGTH + 1),
+          ),
+        ],
+      },
+    });
+    expect(
+      screen.getByText(
+        `Keep imported files to ${MAX_CODING_SOLUTION_LENGTH.toLocaleString()} bytes or fewer.`,
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createJavaScriptFile("empty.js", "")] },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByText(
+        "That file is empty. Choose a .js file with source code.",
+      ),
+    ).toBeInTheDocument();
+
+    expect(editor).toHaveValue(initialCode);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+  });
+
+  it("keeps imported clean-practice source local until deliberate submission", async () => {
+    vi.useFakeTimers();
+    const importedCode = "function solve() { return 'practice'; }";
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({ isCleanPractice: true });
+
+    fireEvent.change(
+      screen.getByLabelText("Choose JavaScript file to import"),
+      {
+        target: {
+          files: [createJavaScriptFile("clean-practice.js", importedCode)],
+        },
+      },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(800);
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      importedCode,
+    );
+    expect(
+      screen.getByText(
+        "clean-practice.js imported as unsaved work. It stays local until you submit.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("keeps local file import unavailable while signed out", () => {
+    renderWorkspace({ isSignedIn: false });
+
+    expect(
+      screen.queryByRole("button", { name: "Import .js" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Choose JavaScript file to import"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the fresh scaffold without offering a destructive restore", () => {

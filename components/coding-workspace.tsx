@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { FocusEvent, KeyboardEvent } from "react";
+import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AcceptedSolutionDownload } from "@/components/accepted-solution-download";
 import { PracticeFeedback } from "@/components/practice-feedback";
@@ -18,7 +18,10 @@ import {
   type CodingTestCase,
   validateCodingTestCases,
 } from "@/lib/coding-test-cases";
-import { normalizeCodingOutput } from "@/lib/coding-problems";
+import {
+  MAX_CODING_SOLUTION_LENGTH,
+  normalizeCodingOutput,
+} from "@/lib/coding-problems";
 import { toggleEditorLineComments } from "@/lib/code-editor-comments";
 import { applyEditorIndentation } from "@/lib/code-editor-indentation";
 import { applyEditorSmartEditing } from "@/lib/code-editor-smart-editing";
@@ -212,6 +215,7 @@ function clearAnonymousDraft(problemSlug: string) {
 
 const EDITOR_VIEW_STORAGE_KEY = "lovable-original:judged-editor-view";
 const EDITOR_FONT_SIZES = [13, 15, 17] as const;
+const MAX_JAVASCRIPT_IMPORT_BYTES = MAX_CODING_SOLUTION_LENGTH;
 type EditorFontSize = (typeof EDITOR_FONT_SIZES)[number];
 
 function readEditorViewPreference() {
@@ -428,9 +432,19 @@ export function CodingWorkspace({
   const [editorSearchQuery, setEditorSearchQuery] = useState("");
   const [editorReplacement, setEditorReplacement] = useState("");
   const [editorSearchIndex, setEditorSearchIndex] = useState(0);
+  const [editorImportState, setEditorImportState] = useState<{
+    kind: "idle" | "reading" | "success" | "error";
+    message: string;
+  }>({ kind: "idle", message: "" });
+  const [pendingEditorImport, setPendingEditorImport] = useState<{
+    fileName: string;
+    code: string;
+  } | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editorTextarea = useRef<HTMLTextAreaElement | null>(null);
   const editorFocusButton = useRef<HTMLButtonElement | null>(null);
+  const editorImportInput = useRef<HTMLInputElement | null>(null);
+  const editorImportRevision = useRef(0);
   const editorSearchInput = useRef<HTMLInputElement | null>(null);
   const pendingEditorSelection = useRef<{
     start: number;
@@ -826,6 +840,101 @@ export function CodingWorkspace({
       ),
     );
     updateCode(nextCode);
+  }
+
+  async function importJavaScriptFile(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const files = event.currentTarget.files;
+    event.currentTarget.value = "";
+    const importRevision = editorImportRevision.current + 1;
+    editorImportRevision.current = importRevision;
+    setPendingEditorImport(null);
+
+    if (!files || files.length !== 1) {
+      setEditorImportState({
+        kind: "error",
+        message: "Choose one JavaScript file at a time.",
+      });
+      return;
+    }
+
+    const file = files[0];
+
+    if (!/\.js$/i.test(file.name)) {
+      setEditorImportState({
+        kind: "error",
+        message: "Choose a file ending in .js.",
+      });
+      return;
+    }
+
+    if (file.size > MAX_JAVASCRIPT_IMPORT_BYTES) {
+      setEditorImportState({
+        kind: "error",
+        message: `Keep imported files to ${MAX_JAVASCRIPT_IMPORT_BYTES.toLocaleString()} bytes or fewer.`,
+      });
+      return;
+    }
+
+    setEditorImportState({
+      kind: "reading",
+      message: `Reading ${file.name} in this browser…`,
+    });
+
+    try {
+      const importedCode = await file.text();
+      if (editorImportRevision.current !== importRevision) return;
+
+      if (importedCode.length === 0) {
+        setEditorImportState({
+          kind: "error",
+          message: "That file is empty. Choose a .js file with source code.",
+        });
+        return;
+      }
+
+      if (importedCode.length > MAX_CODING_SOLUTION_LENGTH) {
+        setEditorImportState({
+          kind: "error",
+          message: `Keep imported JavaScript to ${MAX_CODING_SOLUTION_LENGTH.toLocaleString()} characters or fewer.`,
+        });
+        return;
+      }
+
+      setPendingEditorImport({ fileName: file.name, code: importedCode });
+      setEditorImportState({ kind: "idle", message: "" });
+    } catch {
+      if (editorImportRevision.current !== importRevision) return;
+
+      setEditorImportState({
+        kind: "error",
+        message: "This file could not be read. Choose the .js file again.",
+      });
+    }
+  }
+
+  function confirmJavaScriptImport() {
+    if (!pendingEditorImport) return;
+
+    const { fileName, code: importedCode } = pendingEditorImport;
+    setPendingEditorImport(null);
+    pendingEditorSelection.current = { start: 0, end: 0 };
+    updateCode(importedCode);
+    setEditorImportState({
+      kind: "success",
+      message: isCleanPractice
+        ? `${fileName} imported as unsaved work. It stays local until you submit.`
+        : `${fileName} imported locally as editor work. Normal private autosave applies.`,
+    });
+  }
+
+  function cancelJavaScriptImport() {
+    setPendingEditorImport(null);
+    setEditorImportState({
+      kind: "success",
+      message: "Import cancelled. Your editor was not changed.",
+    });
   }
 
   async function runExamples() {
@@ -1375,6 +1484,32 @@ export function CodingWorkspace({
         <div className="code-editor-bar">
           <div className="code-editor-file">
             <span>solution.js</span>
+            {isSignedIn ? (
+              <>
+                <input
+                  ref={editorImportInput}
+                  type="file"
+                  accept=".js,text/javascript,application/javascript"
+                  aria-label="Choose JavaScript file to import"
+                  onChange={importJavaScriptFile}
+                  hidden
+                />
+                <button
+                  type="button"
+                  className="editor-import-trigger"
+                  aria-describedby="coding-editor-import-help"
+                  data-draft-save-action="true"
+                  onClick={() => editorImportInput.current?.click()}
+                  disabled={runState.kind === "running"}
+                >
+                  Import .js
+                </button>
+                <span className="sr-only" id="coding-editor-import-help">
+                  Choose one JavaScript file up to 12,000 bytes. The file is
+                  read in this browser and becomes normal unsaved editor work.
+                </span>
+              </>
+            ) : null}
           </div>
           <div
             className="editor-view-controls"
@@ -1486,6 +1621,52 @@ export function CodingWorkspace({
               : "Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits"}
           </span>
         </div>
+        {editorImportState.kind !== "idle" ? (
+          <p
+            className={
+              editorImportState.kind === "error"
+                ? "code-editor-import-message is-error"
+                : "code-editor-import-message"
+            }
+            role="status"
+            aria-live="polite"
+          >
+            {editorImportState.message}
+          </p>
+        ) : null}
+        {pendingEditorImport ? (
+          <div
+            className="starter-restore-confirmation editor-import-confirmation"
+            role="group"
+            aria-labelledby="editor-import-confirmation-title"
+          >
+            <div>
+              <strong id="editor-import-confirmation-title">
+                Import {pendingEditorImport.fileName}?
+              </strong>
+              <p>
+                This replaces the current editor text. Your saved results stay
+                unchanged, and the imported source becomes unsaved work.
+              </p>
+            </div>
+            <div>
+              <button
+                type="button"
+                className="starter-restore-trigger"
+                onClick={cancelJavaScriptImport}
+              >
+                Keep editor
+              </button>
+              <button
+                type="button"
+                className="starter-restore-confirm"
+                onClick={confirmJavaScriptImport}
+              >
+                Import file
+              </button>
+            </div>
+          </div>
+        ) : null}
         {loadedSubmission ? (
           <div className="loaded-submission-cue" role="status">
             <div>

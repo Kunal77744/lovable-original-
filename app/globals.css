@@ -8631,6 +8631,8 @@ h1 {
 .code-editor.is-focused .clean-practice-cue,
 .code-editor.is-focused .browser-draft-recovery,
 .code-editor.is-focused .code-editor-search,
+.code-editor.is-focused .code-editor-import-message,
+.code-editor.is-focused .editor-import-confirmation,
 .code-editor.is-focused .starter-restore {
   flex: 0 0 auto;
 }
@@ -8651,7 +8653,37 @@ h1 {
   min-width: 0;
   display: flex;
   align-items: center;
+  gap: 12px;
   white-space: nowrap;
+}
+
+.editor-import-trigger {
+  min-height: 29px;
+  padding: 3px 0;
+  color: #91a099;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.editor-import-trigger:hover:not(:disabled) {
+  color: #eef4ef;
+}
+
+.editor-import-trigger:focus-visible {
+  outline: 2px solid #66dc9d;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.editor-import-trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .code-editor-shortcuts {
@@ -8872,6 +8904,27 @@ h1 {
   color: #9fb0a7;
   border-color: transparent;
   background: transparent;
+}
+
+.code-editor-import-message {
+  margin: 0;
+  padding: 9px 18px;
+  color: #b8d7c5;
+  border-bottom: 1px solid #31423a;
+  background: #17231e;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.code-editor-import-message.is-error {
+  color: #f6c899;
+}
+
+.editor-import-confirmation {
+  padding: 10px 22px;
+  border-bottom: 1px solid #31423a;
+  background: #17231e;
 }
 
 .code-editor label {
@@ -14398,6 +14451,15 @@ footer {
   .code-editor-file {
     max-width: 100%;
     flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .code-editor-import-message {
+    padding: 10px 14px;
+  }
+
+  .editor-import-confirmation {
+    padding: 12px 14px;
   }
 
   .code-editor-shortcuts {
