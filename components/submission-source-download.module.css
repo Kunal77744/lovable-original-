@@ -1,0 +1,88 @@
+.download {
+  margin-top: 28px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.52);
+}
+.copy {
+  display: grid;
+  gap: 5px;
+}
+
+.copy span {
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.copy strong {
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+}
+
+.copy p {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.action {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+}
+
+.action button {
+  min-height: 42px;
+  padding: 0 14px;
+  color: var(--accent-deep);
+  border: 1px solid #9eb6a5;
+  border-radius: 7px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out;
+}
+
+.action button:hover {
+  border-color: var(--accent);
+  background: #edf4ee;
+}
+
+.action button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.action p {
+  min-height: 15px;
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+@media (max-width: 620px) {
+  .download {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .action {
+    justify-items: stretch;
+  }
+}
