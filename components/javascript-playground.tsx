@@ -14,6 +14,7 @@ import {
   validatePlaygroundChecks,
 } from "@/lib/javascript-playground";
 import type { PlaygroundWorkspaceFile } from "@/db/javascript-playground";
+import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 
 type JavaScriptPlaygroundProps = {
   initialFiles: PlaygroundWorkspaceFile[];
@@ -76,6 +77,7 @@ export function JavaScriptPlayground({
   const [transferState, setTransferState] = useState<
     "offered" | "loaded" | "dismissed"
   >(acceptedTransfer ? "offered" : "dismissed");
+  const activeFile = files.find((file) => file.id === activeFileId);
 
   async function runCode() {
     setRunState({
@@ -560,29 +562,39 @@ export function JavaScriptPlayground({
         <div>
           <span className="playground-file-dot" aria-hidden="true" />
           <strong id="playground-editor-title">
-            {files.find((file) => file.id === activeFileId)?.name ?? "playground.js"}
+            {activeFile?.name ?? "playground.js"}
           </strong>
         </div>
-        <span
-          className={
-            saveState === "saved"
-              ? "playground-save-state is-saved"
-              : saveState === "error"
-                ? "playground-save-state is-error"
-                : "playground-save-state"
-          }
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {saveState === "saving"
-            ? "Saving…"
-            : saveState === "saved"
-              ? "Saved to your account"
-              : saveState === "error"
-                ? "Save failed"
-                : "Unsaved changes"}
-        </span>
+        <div className="playground-filebar-status">
+          <span
+            className={
+              saveState === "saved"
+                ? "playground-save-state is-saved"
+                : saveState === "error"
+                  ? "playground-save-state is-error"
+                  : "playground-save-state"
+            }
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "saved"
+                ? "Saved to your account"
+                : saveState === "error"
+                  ? "Save failed"
+                  : "Unsaved changes"}
+          </span>
+          {saveState === "saved" && activeFile?.id ? (
+            <SavedWorkspaceDownload
+              fileName={activeFile.name}
+              label="Download saved .js"
+              mimeType="text/javascript"
+              source={activeFile.code}
+            />
+          ) : null}
+        </div>
       </header>
 
       <div className="playground-editor">

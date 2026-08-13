@@ -13438,6 +13438,42 @@ h1 {
   gap: 10px;
 }
 
+.playground-filebar-status {
+  justify-content: flex-end;
+  gap: 14px !important;
+}
+
+.playground-filebar-status .workspace-download {
+  display: grid;
+  justify-items: end;
+}
+
+.playground-filebar-status .workspace-download button {
+  width: auto;
+  min-height: 44px;
+  padding: 7px 11px;
+  color: #dce8df;
+  border-color: #43564c;
+  background: transparent;
+  font-size: 10px;
+}
+
+.playground-filebar-status .workspace-download button:hover {
+  color: #ffffff;
+  border-color: #71867a;
+  background: #223029;
+}
+
+.playground-filebar-status .workspace-download button:focus-visible {
+  outline-color: rgba(131, 221, 168, 0.32);
+}
+
+.playground-filebar-status .workspace-download-status {
+  color: #91dfae;
+  font-size: 9px;
+  text-align: right;
+}
+
 .playground-filebar strong,
 .playground-console header strong {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -15496,7 +15532,13 @@ footer {
 
   .playground-filebar {
     min-height: 56px;
-    padding: 0 17px;
+    padding: 10px 17px;
+  }
+
+  .playground-filebar-status {
+    align-items: flex-end !important;
+    flex-direction: column;
+    gap: 6px !important;
   }
 
   .playground-editor textarea {
