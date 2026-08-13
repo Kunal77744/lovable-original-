@@ -5758,6 +5758,33 @@ h1 {
   text-underline-offset: 4px;
 }
 
+.project-source-downloads {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.project-source-downloads > span {
+  display: block;
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.project-source-downloads > p {
+  margin: 6px 0 11px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.project-source-download-list {
+  display: grid;
+  gap: 7px;
+}
+
 .flashcard-workbench {
   margin-top: 40px;
   overflow: hidden;
