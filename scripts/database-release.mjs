@@ -221,6 +221,9 @@ const requiredColumns = {
   playground_file: [
     "id",
     "user_id",
+    "name",
+    "slot",
+    "is_active",
     "code",
     "quick_checks",
     "created_at",

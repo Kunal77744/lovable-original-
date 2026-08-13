@@ -8,15 +8,16 @@ import {
   runPlaygroundCode,
 } from "@/lib/coding-runner";
 import {
+  MAX_PLAYGROUND_FILES,
   MAX_PLAYGROUND_CHECKS,
   MAX_PLAYGROUND_CODE_LENGTH,
   validatePlaygroundChecks,
 } from "@/lib/javascript-playground";
+import type { PlaygroundWorkspaceFile } from "@/db/javascript-playground";
 
 type JavaScriptPlaygroundProps = {
-  initialCode: string;
-  initialQuickChecks: string;
-  initialUpdatedAt: string | null;
+  initialFiles: PlaygroundWorkspaceFile[];
+  initialActiveFileId: string | null;
   acceptedTransfer?: {
     problemSlug: string;
     problemTitle: string;
@@ -37,24 +38,36 @@ type CheckState =
   | { kind: "error"; checks: PlaygroundCheckResult[]; message: string };
 
 export function JavaScriptPlayground({
-  initialCode,
-  initialQuickChecks,
-  initialUpdatedAt,
+  initialFiles,
+  initialActiveFileId,
   acceptedTransfer = null,
 }: JavaScriptPlaygroundProps) {
-  const [code, setCode] = useState(initialCode);
-  const latestCode = useRef(initialCode);
+  const initialActiveFile =
+    initialFiles.find((file) => file.id === initialActiveFileId) ?? initialFiles[0];
+  const [files, setFiles] = useState(initialFiles);
+  const [activeFileId, setActiveFileId] = useState(initialActiveFile.id);
+  const [code, setCode] = useState(initialActiveFile.code);
+  const latestDraft = useRef({
+    code: initialActiveFile.code,
+    quickChecks: initialActiveFile.quickChecks,
+  });
   const saveRequestPending = useRef(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
-  >(initialUpdatedAt ? "saved" : "unsaved");
+  >(initialActiveFile.updatedAt ? "saved" : "unsaved");
   const [isSaving, setIsSaving] = useState(false);
+  const [isManagingFiles, setIsManagingFiles] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [renameValue, setRenameValue] = useState(initialActiveFile.name);
+  const [fileMessage, setFileMessage] = useState(
+    `${initialFiles.length} of ${MAX_PLAYGROUND_FILES} private files.`,
+  );
   const [runState, setRunState] = useState<RunState>({
     kind: "ready",
     output: [],
-    message: "Run playground.js to see console output here.",
+    message: `Run ${initialActiveFile.name} to see console output here.`,
   });
-  const [checkSource, setCheckSource] = useState(initialQuickChecks);
+  const [checkSource, setCheckSource] = useState(initialActiveFile.quickChecks);
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "ready",
     checks: [],
@@ -94,7 +107,7 @@ export function JavaScriptPlayground({
   async function saveFile() {
     if (saveRequestPending.current) return;
 
-    const submittedCode = latestCode.current;
+    const submittedDraft = latestDraft.current;
     saveRequestPending.current = true;
     setIsSaving(true);
     setSaveState("saving");
@@ -104,28 +117,246 @@ export function JavaScriptPlayground({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: submittedCode,
-          quickChecks: checkSource,
+          fileId: activeFileId,
+          code: submittedDraft.code,
+          quickChecks: submittedDraft.quickChecks,
         }),
       });
 
       if (!response.ok) {
         setSaveState(
-          latestCode.current === submittedCode ? "error" : "unsaved",
+          latestDraft.current.code === submittedDraft.code &&
+            latestDraft.current.quickChecks === submittedDraft.quickChecks
+            ? "error"
+            : "unsaved",
         );
         return;
       }
 
+      const { file } = (await response.json()) as {
+        file: PlaygroundWorkspaceFile;
+      };
+      setActiveFileId(file.id);
+      setFiles((currentFiles) => {
+        const hasFile = currentFiles.some((candidate) => candidate.id === file.id);
+        return hasFile
+          ? currentFiles.map((candidate) =>
+              candidate.id === file.id ? file : candidate,
+            )
+          : [file];
+      });
       setSaveState(
-        latestCode.current === submittedCode ? "saved" : "unsaved",
+        latestDraft.current.code === submittedDraft.code &&
+          latestDraft.current.quickChecks === submittedDraft.quickChecks
+          ? "saved"
+          : "unsaved",
       );
     } catch {
       setSaveState(
-        latestCode.current === submittedCode ? "error" : "unsaved",
+        latestDraft.current.code === submittedDraft.code &&
+          latestDraft.current.quickChecks === submittedDraft.quickChecks
+          ? "error"
+          : "unsaved",
       );
     } finally {
       saveRequestPending.current = false;
       setIsSaving(false);
+    }
+  }
+
+  function showFile(file: PlaygroundWorkspaceFile) {
+    setActiveFileId(file.id);
+    setCode(file.code);
+    setCheckSource(file.quickChecks);
+    latestDraft.current = {
+      code: file.code,
+      quickChecks: file.quickChecks,
+    };
+    setRenameValue(file.name);
+    setSaveState(file.updatedAt ? "saved" : "unsaved");
+    setRunState({
+      kind: "ready",
+      output: [],
+      message: `Run ${file.name} to see console output here.`,
+    });
+    setCheckState({
+      kind: "ready",
+      checks: [],
+      message: "Add one expression per line. Each check should return true.",
+    });
+    setTransferState(acceptedTransfer ? "offered" : "dismissed");
+  }
+
+  function confirmDiscard(action: string) {
+    return (
+      (saveState !== "unsaved" && saveState !== "error") ||
+      window.confirm(`Discard the unsaved editor changes before you ${action}?`)
+    );
+  }
+
+  async function switchFile(file: PlaygroundWorkspaceFile) {
+    if (file.id === activeFileId || !file.id || isManagingFiles) return;
+    if (!confirmDiscard(`open ${file.name}`)) return;
+
+    setIsManagingFiles(true);
+    setFileMessage(`Opening ${file.name}…`);
+
+    try {
+      const response = await fetch("/api/playground", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "activate", fileId: file.id }),
+      });
+      const payload = (await response.json()) as {
+        file?: PlaygroundWorkspaceFile;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.file) {
+        setFileMessage(payload.error ?? "Couldn’t open that private file.");
+        return;
+      }
+
+      setFiles((currentFiles) =>
+        currentFiles.map((candidate) => ({
+          ...(candidate.id === payload.file!.id ? payload.file! : candidate),
+          isActive: candidate.id === payload.file!.id,
+        })),
+      );
+      showFile(payload.file);
+      setFileMessage(`${payload.file.name} is open.`);
+    } catch {
+      setFileMessage("Couldn’t open that private file. Try again.");
+    } finally {
+      setIsManagingFiles(false);
+    }
+  }
+
+  async function createFile() {
+    if (isManagingFiles || files.length >= MAX_PLAYGROUND_FILES) return;
+    if (!confirmDiscard("create a new file")) return;
+
+    setIsManagingFiles(true);
+    setFileMessage("Creating a private file…");
+
+    try {
+      const response = await fetch("/api/playground", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", name: newFileName }),
+      });
+      const payload = (await response.json()) as {
+        file?: PlaygroundWorkspaceFile;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.file) {
+        setFileMessage(payload.error ?? "Couldn’t create that private file.");
+        return;
+      }
+
+      setFiles((currentFiles) =>
+        currentFiles.every((file) => file.id === null)
+          ? [payload.file!]
+          : [
+              ...currentFiles.map((file) => ({ ...file, isActive: false })),
+              payload.file!,
+            ],
+      );
+      showFile(payload.file);
+      setNewFileName("");
+      setFileMessage(`${payload.file.name} was created and saved privately.`);
+    } catch {
+      setFileMessage("Couldn’t create that private file. Try again.");
+    } finally {
+      setIsManagingFiles(false);
+    }
+  }
+
+  async function renameFile() {
+    if (!activeFileId || isManagingFiles) return;
+    setIsManagingFiles(true);
+    setFileMessage("Renaming the private file…");
+
+    try {
+      const response = await fetch("/api/playground", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "rename",
+          fileId: activeFileId,
+          name: renameValue,
+        }),
+      });
+      const payload = (await response.json()) as {
+        file?: PlaygroundWorkspaceFile;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.file) {
+        setFileMessage(payload.error ?? "Couldn’t rename that private file.");
+        return;
+      }
+
+      setFiles((currentFiles) =>
+        currentFiles.map((file) =>
+          file.id === payload.file!.id ? { ...file, name: payload.file!.name } : file,
+        ),
+      );
+      setRenameValue(payload.file.name);
+      setFileMessage(`Renamed to ${payload.file.name}.`);
+    } catch {
+      setFileMessage("Couldn’t rename that private file. Try again.");
+    } finally {
+      setIsManagingFiles(false);
+    }
+  }
+
+  async function deleteFile() {
+    const activeFile = files.find((file) => file.id === activeFileId);
+    if (!activeFile?.id || files.length === 1 || isManagingFiles) return;
+    if (
+      !window.confirm(
+        `Delete ${activeFile.name}? Its saved code and quick checks cannot be recovered.`,
+      )
+    ) {
+      return;
+    }
+
+    setIsManagingFiles(true);
+    setFileMessage(`Deleting ${activeFile.name}…`);
+
+    try {
+      const response = await fetch("/api/playground", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: activeFile.id }),
+      });
+      const payload = (await response.json()) as {
+        deletedFileId?: string;
+        activeFile?: PlaygroundWorkspaceFile;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.deletedFileId || !payload.activeFile) {
+        setFileMessage(payload.error ?? "Couldn’t delete that private file.");
+        return;
+      }
+
+      setFiles((currentFiles) =>
+        currentFiles
+          .filter((file) => file.id !== payload.deletedFileId)
+          .map((file) => ({
+            ...(file.id === payload.activeFile!.id ? payload.activeFile! : file),
+            isActive: file.id === payload.activeFile!.id,
+          })),
+      );
+      showFile(payload.activeFile);
+      setFileMessage(`${activeFile.name} was deleted.`);
+    } catch {
+      setFileMessage("Couldn’t delete that private file. Try again.");
+    } finally {
+      setIsManagingFiles(false);
     }
   }
 
@@ -162,20 +393,25 @@ export function JavaScriptPlayground({
   }
 
   function updateCode(nextCode: string) {
-    latestCode.current = nextCode;
+    latestDraft.current = { ...latestDraft.current, code: nextCode };
     setCode(nextCode);
     setSaveState("unsaved");
   }
 
   function updateCheckSource(nextSource: string) {
+    latestDraft.current = {
+      ...latestDraft.current,
+      quickChecks: nextSource,
+    };
     setCheckSource(nextSource);
     setSaveState("unsaved");
   }
 
   function loadAcceptedCopy() {
     if (!acceptedTransfer) return;
+    if (!confirmDiscard("load the Accepted copy")) return;
 
-    latestCode.current = acceptedTransfer.source;
+    latestDraft.current = { code: acceptedTransfer.source, quickChecks: "" };
     setCode(acceptedTransfer.source);
     setCheckSource("");
     setSaveState("unsaved");
@@ -194,6 +430,98 @@ export function JavaScriptPlayground({
 
   return (
     <section className="playground-workbench" aria-labelledby="playground-editor-title">
+      <section className="playground-files" aria-labelledby="playground-files-title">
+        <div className="playground-files-heading">
+          <div>
+            <span>Private files</span>
+            <strong id="playground-files-title">
+              {files.length} of {MAX_PLAYGROUND_FILES}
+            </strong>
+          </div>
+          <p role="status" aria-live="polite" aria-atomic="true">
+            {fileMessage}
+          </p>
+        </div>
+        <div className="playground-file-tabs" role="tablist" aria-label="JavaScript files">
+          {files.map((file) => {
+            const isActive = file.id === activeFileId;
+
+            return (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={isActive ? "is-active" : undefined}
+                onClick={() => void switchFile(file)}
+                disabled={isManagingFiles}
+                key={file.id ?? "new-playground"}
+              >
+                <span aria-hidden="true" />
+                {file.name}
+              </button>
+            );
+          })}
+        </div>
+        <div className="playground-file-tools">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createFile();
+            }}
+          >
+            <label htmlFor="playground-new-file">New file</label>
+            <div>
+              <input
+                id="playground-new-file"
+                value={newFileName}
+                onChange={(event) => setNewFileName(event.target.value)}
+                placeholder="arrays.js"
+                disabled={isManagingFiles || files.length >= MAX_PLAYGROUND_FILES}
+              />
+              <button
+                type="submit"
+                disabled={
+                  isManagingFiles ||
+                  files.length >= MAX_PLAYGROUND_FILES ||
+                  newFileName.trim().length === 0
+                }
+              >
+                Create file
+              </button>
+            </div>
+          </form>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void renameFile();
+            }}
+          >
+            <label htmlFor="playground-rename-file">Current filename</label>
+            <div>
+              <input
+                id="playground-rename-file"
+                value={renameValue}
+                onChange={(event) => setRenameValue(event.target.value)}
+                disabled={isManagingFiles || !activeFileId}
+              />
+              <button
+                type="submit"
+                disabled={isManagingFiles || !activeFileId || renameValue.trim().length === 0}
+              >
+                Rename
+              </button>
+            </div>
+          </form>
+          <button
+            className="playground-delete-file"
+            type="button"
+            onClick={() => void deleteFile()}
+            disabled={isManagingFiles || !activeFileId || files.length === 1}
+          >
+            Delete current file
+          </button>
+        </div>
+      </section>
       {acceptedTransfer && transferState === "offered" ? (
         <aside className="playground-transfer" aria-label="Accepted solution copy">
           <div>
@@ -201,16 +529,17 @@ export function JavaScriptPlayground({
             <strong>Experiment beyond the judge</strong>
           </div>
           <p>
-            Load a copy of your saved {acceptedTransfer.problemTitle} solution.
-            Your judged source, Accepted result, and saved playground file stay
-            unchanged until you choose to save here.
+            Replace the open editor with a copy of your saved{" "}
+            {acceptedTransfer.problemTitle} solution. Your judged source,
+            Accepted result, and other playground files stay unchanged. This
+            copy stays unsaved until you choose Save file.
           </p>
           <div className="playground-transfer-actions">
             <button type="button" onClick={() => setTransferState("dismissed")}>
               Keep current file
             </button>
             <button type="button" onClick={loadAcceptedCopy}>
-              Use Accepted copy
+              Replace editor with copy
             </button>
           </div>
         </aside>
@@ -230,7 +559,9 @@ export function JavaScriptPlayground({
       <header className="playground-filebar">
         <div>
           <span className="playground-file-dot" aria-hidden="true" />
-          <strong id="playground-editor-title">playground.js</strong>
+          <strong id="playground-editor-title">
+            {files.find((file) => file.id === activeFileId)?.name ?? "playground.js"}
+          </strong>
         </div>
         <span
           className={

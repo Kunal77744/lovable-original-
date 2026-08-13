@@ -2,8 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
-  getPlaygroundFile: vi.fn(),
+  getPlaygroundWorkspace: vi.fn(),
   savePlaygroundFile: vi.fn(),
+  createPlaygroundFile: vi.fn(),
+  activatePlaygroundFile: vi.fn(),
+  renamePlaygroundFile: vi.fn(),
+  deletePlaygroundFile: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -11,128 +15,167 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({
-  auth: {
-    api: {
-      getSession: mocks.getSession,
-    },
-  },
+  auth: { api: { getSession: mocks.getSession } },
 }));
 
 vi.mock("@/db/javascript-playground", () => ({
-  getPlaygroundFile: mocks.getPlaygroundFile,
+  getPlaygroundWorkspace: mocks.getPlaygroundWorkspace,
   savePlaygroundFile: mocks.savePlaygroundFile,
+  createPlaygroundFile: mocks.createPlaygroundFile,
+  activatePlaygroundFile: mocks.activatePlaygroundFile,
+  renamePlaygroundFile: mocks.renamePlaygroundFile,
+  deletePlaygroundFile: mocks.deletePlaygroundFile,
+  PlaygroundWorkspaceError: class PlaygroundWorkspaceError extends Error {
+    constructor(
+      public readonly code: "file_limit" | "file_missing" | "last_file",
+      message: string,
+    ) {
+      super(message);
+    }
+  },
 }));
 
-import { GET, POST } from "./route";
+import { DELETE, GET, PATCH, POST } from "./route";
+
+function request(method: string, payload: unknown) {
+  return new Request("http://localhost/api/playground", {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
 
 describe("playground route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("rejects signed-out reads and writes before touching private files", async () => {
+  it("rejects every signed-out operation before touching private files", async () => {
     mocks.getSession.mockResolvedValue(null);
 
-    const readResponse = await GET();
-    const writeResponse = await POST(
-      new Request("http://localhost/api/playground", {
-        method: "POST",
-        body: JSON.stringify({ code: "console.log('private')" }),
-      }),
-    );
+    const responses = await Promise.all([
+      GET(),
+      POST(request("POST", { code: "console.log('private')" })),
+      PATCH(request("PATCH", { action: "create", name: "arrays.js" })),
+      DELETE(request("DELETE", { fileId: "file-1" })),
+    ]);
 
-    expect(readResponse.status).toBe(401);
-    expect(writeResponse.status).toBe(401);
-    expect(mocks.getPlaygroundFile).not.toHaveBeenCalled();
+    expect(responses.map((response) => response.status)).toEqual([
+      401, 401, 401, 401,
+    ]);
+    expect(mocks.getPlaygroundWorkspace).not.toHaveBeenCalled();
     expect(mocks.savePlaygroundFile).not.toHaveBeenCalled();
+    expect(mocks.createPlaygroundFile).not.toHaveBeenCalled();
+    expect(mocks.deletePlaygroundFile).not.toHaveBeenCalled();
   });
 
-  it("scopes every restored file to the current account", async () => {
+  it("scopes every restored workspace to the current account", async () => {
     mocks.getSession
       .mockResolvedValueOnce({ user: { id: "student-a" } })
       .mockResolvedValueOnce({ user: { id: "student-b" } });
-    mocks.getPlaygroundFile
-      .mockResolvedValueOnce({
-        code: "console.log('student a')",
-        quickChecks: "studentAOnly() === true",
-        updatedAt: "2026-07-27T03:00:00.000Z",
-      })
-      .mockResolvedValueOnce({
-        code: "console.log('student b')",
-        quickChecks: "studentBOnly() === true",
-        updatedAt: "2026-07-27T03:01:00.000Z",
-      });
+    mocks.getPlaygroundWorkspace
+      .mockResolvedValueOnce({ files: [{ name: "a.js" }], activeFileId: "a" })
+      .mockResolvedValueOnce({ files: [{ name: "b.js" }], activeFileId: "b" });
 
-    const firstResponse = await GET();
-    const secondResponse = await GET();
-
-    await expect(firstResponse.json()).resolves.toMatchObject({
-      file: {
-        code: "console.log('student a')",
-        quickChecks: "studentAOnly() === true",
-      },
+    await expect((await GET()).json()).resolves.toMatchObject({
+      workspace: { files: [{ name: "a.js" }] },
     });
-    await expect(secondResponse.json()).resolves.toMatchObject({
-      file: {
-        code: "console.log('student b')",
-        quickChecks: "studentBOnly() === true",
-      },
+    await expect((await GET()).json()).resolves.toMatchObject({
+      workspace: { files: [{ name: "b.js" }] },
     });
-    expect(mocks.getPlaygroundFile).toHaveBeenNthCalledWith(1, "student-a");
-    expect(mocks.getPlaygroundFile).toHaveBeenNthCalledWith(2, "student-b");
+    expect(mocks.getPlaygroundWorkspace).toHaveBeenNthCalledWith(1, "student-a");
+    expect(mocks.getPlaygroundWorkspace).toHaveBeenNthCalledWith(2, "student-b");
   });
 
-  it("saves exact code and quick checks for the signed-in account only", async () => {
+  it("saves the exact selected file for the signed-in account", async () => {
     const code = "  const exact = true;\nconsole.log(exact);  ";
     const quickChecks = "exact === true\nexact !== false";
     mocks.getSession.mockResolvedValue({ user: { id: "student-a" } });
-    mocks.savePlaygroundFile.mockResolvedValue({
-      code,
-      quickChecks,
-      updatedAt: "2026-07-27T03:02:00.000Z",
-    });
+    mocks.savePlaygroundFile.mockResolvedValue({ id: "file-2", code, quickChecks });
 
     const response = await POST(
-      new Request("http://localhost/api/playground", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, quickChecks }),
-      }),
+      request("POST", { fileId: "file-2", code, quickChecks }),
     );
 
     expect(response.status).toBe(200);
     expect(mocks.savePlaygroundFile).toHaveBeenCalledWith(
       "student-a",
+      "file-2",
       code,
       quickChecks,
     );
-    expect(mocks.savePlaygroundFile).toHaveBeenCalledTimes(1);
-    await expect(response.json()).resolves.toMatchObject({
-      file: { code, quickChecks },
-    });
   });
 
-  it("rejects more than six quick checks before saving private work", async () => {
+  it("creates, activates, renames, and deletes only account-scoped files", async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: "student-a" } });
+    mocks.createPlaygroundFile.mockResolvedValue({ id: "file-2" });
+    mocks.activatePlaygroundFile.mockResolvedValue({ id: "file-2" });
+    mocks.renamePlaygroundFile.mockResolvedValue({ id: "file-2", name: "loops.js" });
+    mocks.deletePlaygroundFile.mockResolvedValue({
+      deletedFileId: "file-2",
+      activeFile: { id: "file-1" },
+    });
+
+    expect(
+      (await PATCH(request("PATCH", { action: "create", name: "arrays" }))).status,
+    ).toBe(200);
+    expect(
+      (await PATCH(
+        request("PATCH", { action: "activate", fileId: "file-2" }),
+      )).status,
+    ).toBe(200);
+    expect(
+      (await PATCH(
+        request("PATCH", {
+          action: "rename",
+          fileId: "file-2",
+          name: "loops",
+        }),
+      )).status,
+    ).toBe(200);
+    expect(
+      (await DELETE(request("DELETE", { fileId: "file-2" }))).status,
+    ).toBe(200);
+
+    expect(mocks.createPlaygroundFile).toHaveBeenCalledWith(
+      "student-a",
+      "arrays.js",
+    );
+    expect(mocks.activatePlaygroundFile).toHaveBeenCalledWith(
+      "student-a",
+      "file-2",
+    );
+    expect(mocks.renamePlaygroundFile).toHaveBeenCalledWith(
+      "student-a",
+      "file-2",
+      "loops.js",
+    );
+    expect(mocks.deletePlaygroundFile).toHaveBeenCalledWith(
+      "student-a",
+      "file-2",
+    );
+  });
+
+  it("rejects invalid file names and more than six quick checks", async () => {
     mocks.getSession.mockResolvedValue({ user: { id: "student-a" } });
 
-    const response = await POST(
-      new Request("http://localhost/api/playground", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: "const ready = true;",
-          quickChecks: Array.from(
-            { length: 7 },
-            (_, index) => `ready === ${index === 0 ? "true" : "false"}`,
-          ).join("\n"),
-        }),
+    const invalidName = await PATCH(
+      request("PATCH", { action: "create", name: "../private.js" }),
+    );
+    const tooManyChecks = await POST(
+      request("POST", {
+        fileId: "file-1",
+        code: "const ready = true;",
+        quickChecks: Array.from(
+          { length: 7 },
+          (_, index) => `ready === ${index === 0 ? "true" : "false"}`,
+        ).join("\n"),
       }),
     );
 
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: "Run up to 6 quick checks at a time.",
-    });
+    expect(invalidName.status).toBe(400);
+    expect(tooManyChecks.status).toBe(400);
+    expect(mocks.createPlaygroundFile).not.toHaveBeenCalled();
     expect(mocks.savePlaygroundFile).not.toHaveBeenCalled();
   });
 });

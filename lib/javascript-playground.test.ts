@@ -5,6 +5,8 @@ import {
   MAX_PLAYGROUND_CHECK_SOURCE_LENGTH,
   MAX_PLAYGROUND_CODE_LENGTH,
   validatePlaygroundFile,
+  validatePlaygroundFileId,
+  validatePlaygroundFileName,
   validatePlaygroundCode,
   validatePlaygroundChecks,
 } from "./javascript-playground";
@@ -41,6 +43,7 @@ describe("validatePlaygroundFile", () => {
       }),
     ).toEqual({
       valid: true,
+      fileId: null,
       code: "const double = (value) => value * 2;",
       quickChecks,
     });
@@ -71,6 +74,36 @@ describe("validatePlaygroundFile", () => {
       valid: false,
       error: `Keep saved quick checks under ${MAX_PLAYGROUND_CHECK_SOURCE_LENGTH.toLocaleString()} characters.`,
     });
+  });
+});
+
+describe("playground file identity", () => {
+  it("normalizes bounded JavaScript filenames", () => {
+    expect(validatePlaygroundFileName({ name: "Array Practice" }).valid).toBe(
+      false,
+    );
+    expect(validatePlaygroundFileName({ name: "arrays" })).toEqual({
+      valid: true,
+      name: "arrays.js",
+    });
+    expect(validatePlaygroundFileName({ name: "SEARCH-2.JS" })).toEqual({
+      valid: true,
+      name: "search-2.js",
+    });
+    expect(validatePlaygroundFileName({ name: "../private.js" }).valid).toBe(
+      false,
+    );
+  });
+
+  it("requires a bounded private file id", () => {
+    expect(validatePlaygroundFileId({ fileId: "file-1" })).toEqual({
+      valid: true,
+      fileId: "file-1",
+    });
+    expect(validatePlaygroundFileId({ fileId: "" }).valid).toBe(false);
+    expect(validatePlaygroundFileId({ fileId: "x".repeat(101) }).valid).toBe(
+      false,
+    );
   });
 });
 

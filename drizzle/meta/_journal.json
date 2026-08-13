@@ -232,6 +232,13 @@
       "when": 1786460400000,
       "tag": "0032_private_guided_javascript_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1786592959946,
+      "tag": "0033_private_playground_files",
+      "breakpoints": true
     }
   ]
 }

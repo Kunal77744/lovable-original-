@@ -5,13 +5,14 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 
 describe("database release contract", () => {
-  it("orders and verifies the combined private-result and draft migrations", async () => {
+  it("orders and verifies the combined private-result, draft, and playground migrations", async () => {
     const [
       journalSource,
       timedMigration,
       projectMigration,
       quizMigration,
       guidedDraftMigration,
+      playgroundFilesMigration,
       releaseScript,
     ] = await Promise.all([
       readFile(path.join(root, "drizzle/meta/_journal.json"), "utf8"),
@@ -25,13 +26,17 @@ describe("database release contract", () => {
         path.join(root, "drizzle/0032_private_guided_javascript_drafts.sql"),
         "utf8",
       ),
+      readFile(
+        path.join(root, "drizzle/0033_private_playground_files.sql"),
+        "utf8",
+      ),
       readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
     ]);
     const journal = JSON.parse(journalSource) as {
       entries: Array<{ idx: number; tag: string }>;
     };
 
-    expect(journal.entries.slice(-4)).toEqual([
+    expect(journal.entries.slice(-5)).toEqual([
       expect.objectContaining({
         idx: 29,
         tag: "0029_timed-coding-challenge-results",
@@ -41,6 +46,10 @@ describe("database release contract", () => {
       expect.objectContaining({
         idx: 32,
         tag: "0032_private_guided_javascript_drafts",
+      }),
+      expect.objectContaining({
+        idx: 33,
+        tag: "0033_private_playground_files",
       }),
     ]);
     expect(timedMigration).toContain(
@@ -55,6 +64,12 @@ describe("database release contract", () => {
     );
     expect(guidedDraftMigration).toContain(
       'CREATE TABLE "coding_lab_exercise_draft"',
+    );
+    expect(playgroundFilesMigration).toContain(
+      'ADD COLUMN "name" text DEFAULT \'playground.js\' NOT NULL',
+    );
+    expect(playgroundFilesMigration).toContain(
+      'CREATE UNIQUE INDEX "playground_file_user_active_unique"',
     );
     expect(releaseScript).toMatch(
       /timed_coding_challenge_result:\s*\[[\s\S]*?"challenge_set_id",[\s\S]*?"elapsed_seconds"/,
@@ -73,6 +88,9 @@ describe("database release contract", () => {
     );
     expect(releaseScript).toMatch(
       /table_name in \([\s\S]*?'coding_lab_exercise_draft'[\s\S]*?\)/,
+    );
+    expect(releaseScript).toMatch(
+      /playground_file:\s*\[[\s\S]*?"name",[\s\S]*?"slot",[\s\S]*?"is_active"/,
     );
   });
 

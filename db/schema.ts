@@ -946,6 +946,9 @@ export const playgroundFile = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull().default("playground.js"),
+    slot: integer("slot").notNull().default(1),
+    isActive: boolean("is_active").notNull().default(true),
     code: text("code").notNull(),
     quickChecks: text("quick_checks").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -956,7 +959,12 @@ export const playgroundFile = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("playground_file_user_unique").on(table.userId),
+    uniqueIndex("playground_file_user_name_unique").on(table.userId, table.name),
+    uniqueIndex("playground_file_user_slot_unique").on(table.userId, table.slot),
+    uniqueIndex("playground_file_user_active_unique")
+      .on(table.userId)
+      .where(sql`${table.isActive} = true`),
     index("playground_file_user_id_idx").on(table.userId),
+    check("playground_file_slot_bound", sql`${table.slot} between 1 and 6`),
   ],
 );

@@ -18,10 +18,16 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/db/javascript-playground", () => ({
-  getPlaygroundFile: vi.fn().mockResolvedValue({
-    code: "console.log('private');",
-    quickChecks: "double(4) === 8",
-    updatedAt: null,
+  getPlaygroundWorkspace: vi.fn().mockResolvedValue({
+    files: [{
+      id: "file-1",
+      name: "playground.js",
+      code: "console.log('private');",
+      quickChecks: "double(4) === 8",
+      updatedAt: null,
+      isActive: true,
+    }],
+    activeFileId: "file-1",
   }),
 }));
 
@@ -34,20 +40,18 @@ vi.mock("@/db/coding-practice", () => ({
 
 vi.mock("@/components/javascript-playground", () => ({
   JavaScriptPlayground: ({
-    initialCode,
-    initialQuickChecks,
+    initialFiles,
     acceptedTransfer,
   }: {
-    initialCode: string;
-    initialQuickChecks: string;
+    initialFiles: Array<{ code: string; quickChecks: string }>;
     acceptedTransfer?: {
       problemTitle: string;
       source: string;
     } | null;
   }) => (
     <section aria-label="JavaScript playground editor">
-      <pre>{initialCode}</pre>
-      <pre>{initialQuickChecks}</pre>
+      <pre>{initialFiles[0].code}</pre>
+      <pre>{initialFiles[0].quickChecks}</pre>
       {acceptedTransfer ? (
         <div>
           <span>{acceptedTransfer.problemTitle}</span>
@@ -77,7 +81,7 @@ describe("PlaygroundPage", () => {
 
     const heading = screen.getByRole("heading", {
       level: 1,
-      name: "Try one idea. Keep the file.",
+      name: "Keep your JavaScript ideas together.",
     });
     const titleRow = heading.closest(".playground-title-row");
     const privateCue = titleRow?.querySelector(".playground-private-badge");

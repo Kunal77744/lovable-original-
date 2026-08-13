@@ -13123,6 +13123,175 @@ h1 {
   box-shadow: 0 28px 64px rgba(23, 35, 30, 0.17);
 }
 
+.playground-files {
+  padding: 18px 22px 20px;
+  border-bottom: 1px solid #304239;
+  background: #17231d;
+}
+
+.playground-files-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.playground-files-heading > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.playground-files-heading span {
+  color: #f0f6f2;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.playground-files-heading strong,
+.playground-files-heading p {
+  color: #8fa096;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+}
+
+.playground-files-heading p {
+  max-width: 48ch;
+  margin: 0;
+  text-align: right;
+}
+
+.playground-file-tabs {
+  margin-top: 15px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.playground-file-tabs button {
+  min-height: 40px;
+  padding: 0 13px;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  color: #aebcb4;
+  border: 1px solid #3d5046;
+  border-radius: 7px 7px 3px 7px;
+  background: #111a16;
+  font: 700 11px/1 ui-monospace, "SFMono-Regular", Consolas, monospace;
+  cursor: pointer;
+}
+
+.playground-file-tabs button > span {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #72837a;
+  border-radius: 50%;
+}
+
+.playground-file-tabs button.is-active {
+  color: #eff6f1;
+  border-color: #7bb894;
+  background: #21342a;
+}
+
+.playground-file-tabs button.is-active > span {
+  border-color: #83dda8;
+  background: #83dda8;
+}
+
+.playground-file-tabs button:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: #71867a;
+}
+
+.playground-file-tabs button:focus-visible,
+.playground-file-tools input:focus-visible,
+.playground-file-tools button:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.32);
+  outline-offset: 2px;
+}
+
+.playground-file-tools {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.playground-file-tools form,
+.playground-file-tools form > div {
+  display: grid;
+}
+
+.playground-file-tools form {
+  gap: 6px;
+}
+
+.playground-file-tools form > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.playground-file-tools label {
+  color: #899a90;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.playground-file-tools input,
+.playground-file-tools button {
+  min-height: 42px;
+  border: 1px solid #42564b;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.playground-file-tools input {
+  min-width: 0;
+  padding: 0 12px;
+  color: #edf5f0;
+  border-radius: 7px 0 0 7px;
+  background: #101914;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.playground-file-tools form button {
+  padding: 0 12px;
+  color: #dce8df;
+  border-left: 0;
+  border-radius: 0 7px 7px 0;
+  background: #23332b;
+  cursor: pointer;
+}
+
+.playground-delete-file {
+  padding: 0 13px;
+  color: #bea7a2;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.playground-file-tools button:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: #71867a;
+  background: #2a3c32;
+}
+
+.playground-file-tools button:disabled,
+.playground-file-tabs button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 .playground-transfer {
   min-height: 96px;
   padding: 18px 22px;
@@ -15258,6 +15427,24 @@ footer {
   .playground-workbench {
     margin-top: 38px;
     border-radius: 12px;
+  }
+
+  .playground-files {
+    padding: 17px;
+  }
+
+  .playground-files-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .playground-file-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .playground-delete-file {
+    min-height: 42px;
+    justify-self: stretch;
   }
 
   .playground-transfer {
