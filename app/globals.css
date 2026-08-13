@@ -4132,6 +4132,10 @@ h1 {
 }
 
 .workspace-editor {
+  grid-template-rows: auto 1fr auto;
+}
+
+.workspace-editor {
   color: #dce8df;
   border-right: 1px solid #31423a;
   background: #111b17;

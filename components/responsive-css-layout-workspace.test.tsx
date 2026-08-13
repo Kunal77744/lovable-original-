@@ -26,6 +26,32 @@ const completedCss = `.resource-grid {
 .resource-card { min-width: 0; }`;
 
 describe("ResponsiveCssLayoutWorkspace", () => {
+  it("keeps keyboard editing inside the responsive CSS workspace until Escape", () => {
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss=".resource-grid { display: grid; }"
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    const editor = screen.getByLabelText(
+      "Responsive layout CSS",
+    ) as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
+    expect(editor).toHaveValue("  .resource-grid { display: grid; }");
+
+    fireEvent.keyDown(editor, { key: "Escape" });
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(true);
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "responsive-css-editor-keyboard-hint",
+    );
+  });
+
   it("keeps signed-out work in the browser", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

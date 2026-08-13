@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
+import { useCodeEditorKeyboard } from "@/components/use-code-editor-keyboard";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
 import {
@@ -78,10 +79,27 @@ export function ResponsiveCssLayoutWorkspace({
     [editorCss],
   );
   const passedCount = checks.filter((check) => check.passed).length;
+  const {
+    textareaRef: cssTextareaRef,
+    handleKeyDown: handleCssKeyDown,
+  } = useCodeEditorKeyboard({
+    value: editorCss,
+    onChange: updateCss,
+    commentSyntax: "css",
+  });
 
   useEffect(() => {
     latestCss.current = editorCss;
   }, [editorCss]);
+
+  function updateCss(nextCss: string) {
+    latestCss.current = nextCss;
+    setCss(nextCss);
+    dismissRecoveredDraft();
+    preserveDraft(nextCss);
+    setSaveState("unsaved");
+    setMessage("You have unsaved changes.");
+  }
 
   async function savePractice() {
     if (!isSignedIn) {
@@ -204,19 +222,22 @@ export function ResponsiveCssLayoutWorkspace({
           </div>
           <label htmlFor="responsive-css-editor">Responsive layout CSS</label>
           <textarea
+            ref={cssTextareaRef}
             id="responsive-css-editor"
+            aria-describedby="responsive-css-editor-keyboard-hint"
             value={editorCss}
-            onChange={(event) => {
-              latestCss.current = event.target.value;
-              setCss(latestCss.current);
-              dismissRecoveredDraft();
-              preserveDraft(latestCss.current);
-              setSaveState("unsaved");
-              setMessage("You have unsaved changes.");
-            }}
+            onChange={(event) => updateCss(event.target.value)}
+            onKeyDown={handleCssKeyDown}
             maxLength={MAX_RESPONSIVE_CSS_LENGTH}
             spellCheck={false}
           />
+          <p
+            className="project-editor-keyboard-hint"
+            id="responsive-css-editor-keyboard-hint"
+          >
+            Tab indents · Shift + Tab outdents · Ctrl/⌘ + / comments · Escape,
+            then Tab exits
+          </p>
         </div>
 
         <div className="workspace-preview">

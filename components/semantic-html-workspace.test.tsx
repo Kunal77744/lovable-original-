@@ -52,6 +52,31 @@ describe("SemanticHtmlWorkspace", () => {
     window.localStorage.clear();
   });
 
+  it("edits lesson HTML with keyboard-native comments and smart pairs", () => {
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main>Lesson</main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+      />,
+    );
+
+    const editor = screen.getByLabelText("Semantic HTML") as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+    expect(editor).toHaveValue("<!--<main>Lesson</main>-->");
+
+    editor.setSelectionRange(editor.value.length, editor.value.length);
+    fireEvent.keyDown(editor, { key: "{" });
+    expect(editor).toHaveValue("<!--<main>Lesson</main>-->{}");
+    expect(editor.selectionStart).toBe(editor.value.length - 1);
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "semantic-html-editor-keyboard-hint",
+    );
+  });
+
   it("updates an empty-sandbox preview without exposing network-bearing markup", async () => {
     render(
       <SemanticHtmlWorkspace

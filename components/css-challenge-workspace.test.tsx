@@ -34,6 +34,36 @@ afterEach(() => {
 const challenge = getCssPracticeChallenge("class-selector")!;
 
 describe("CssChallengeWorkspace", () => {
+  it("edits challenge CSS with the same keyboard model as the coding path", () => {
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss=".learning-card { color: #17231e; }"
+        isSignedIn={false}
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution") as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+    expect(editor).toHaveValue("/*.learning-card { color: #17231e; }*/");
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "css-challenge-editor-keyboard-hint",
+    );
+  });
+
   it("marks an account-backed draft as saved before the first attempt", () => {
     render(
       <CssChallengeWorkspace

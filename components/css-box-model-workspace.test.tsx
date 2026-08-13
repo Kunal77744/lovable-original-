@@ -10,6 +10,31 @@ afterEach(() => {
 });
 
 describe("CssBoxModelWorkspace", () => {
+  it("edits lesson CSS with keyboard-native indentation and comments", () => {
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss=".learning-card { color: #17231e; }"
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    const editor = screen.getByLabelText("Card CSS") as HTMLTextAreaElement;
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "Tab" });
+    expect(editor).toHaveValue("  .learning-card { color: #17231e; }");
+
+    editor.setSelectionRange(2, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", metaKey: true });
+    expect(editor).toHaveValue("  /*.learning-card { color: #17231e; }*/");
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "css-box-model-editor-keyboard-hint",
+    );
+  });
+
   it("keeps signed-out practice local until the learner chooses to save", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
