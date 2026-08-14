@@ -95,6 +95,36 @@ describe("LessonReadingProgress", () => {
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ section: 3 }),
+        keepalive: true,
+      }),
+    );
+  });
+
+  it("keeps a newly reached section eligible to save during navigation", () => {
+    vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
+    const { unmount } = renderProgress(0);
+    const secondSection = document.getElementById("lesson-section-2");
+
+    act(() => {
+      observerCallback(
+        [
+          {
+            isIntersecting: true,
+            target: secondSection,
+          } as unknown as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver,
+      );
+    });
+
+    unmount();
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/lessons/semantic-html/reading-progress",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ section: 2 }),
+        keepalive: true,
       }),
     );
   });
