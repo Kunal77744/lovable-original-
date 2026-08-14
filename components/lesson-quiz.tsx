@@ -13,6 +13,7 @@ import {
 import { announceLessonProgress } from "@/lib/lesson-progress-events";
 import { CourseFeedback } from "@/components/course-feedback";
 import { RevisionPack } from "@/components/revision-pack";
+import { useBrowserLessonQuizProgress } from "@/components/use-browser-lesson-quiz-progress";
 
 type QuizResult = {
   score: number;
@@ -40,6 +41,7 @@ type LessonQuizProps = {
     updatedAt: string;
   } | null;
   isSignedIn?: boolean;
+  studentScope?: string | null;
   completedLessonsAfterPass?: number;
   nextLesson?: { title: string; href: string } | null;
   showRevisionPack?: boolean;
@@ -120,11 +122,11 @@ export function LessonQuiz({
   initialScore,
   initialFeedback,
   isSignedIn = true,
+  studentScope = null,
   completedLessonsAfterPass = courseLessonCount,
   nextLesson = null,
   showRevisionPack = lessonSlug === "semantic-html",
 }: LessonQuizProps) {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(
     initialCompleted && initialScore !== null
       ? {
@@ -139,6 +141,13 @@ export function LessonQuiz({
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { answers, recovered, setAnswers } = useBrowserLessonQuizProgress({
+    courseSlug,
+    lessonSlug,
+    questions,
+    studentScope: isSignedIn ? studentScope : null,
+    hasGradedResult: result !== null,
+  });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -282,6 +291,11 @@ export function LessonQuiz({
           ? "Answer from memory. A wrong attempt is saved as progress, and you can retry immediately."
           : "Answer from memory. You can choose all four answers before deciding whether to check them."}
       </p>
+      {recovered ? (
+        <p className="quiz-recovery-message" role="status">
+          Recovered your unfinished quiz choices in this browser.
+        </p>
+      ) : null}
 
       <form onSubmit={handleSubmit}>
         {questions.map((question, questionIndex) => (

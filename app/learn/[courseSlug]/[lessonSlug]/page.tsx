@@ -302,6 +302,7 @@ export default async function LessonPage({
             initialScore={studentLesson.quizScore}
             initialFeedback={courseFeedback?.feedback ?? null}
             isSignedIn={Boolean(session)}
+            studentScope={session?.user.id ?? null}
             completedLessonsAfterPass={Math.min(
               studentLesson.completedLessons +
                 (studentLesson.completed ? 0 : 1),

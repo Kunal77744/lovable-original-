@@ -42,6 +42,7 @@ describe("LessonQuiz analytics", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -70,6 +71,104 @@ describe("LessonQuiz analytics", () => {
     );
   });
 
+  it("restores exact unfinished choices for the signed-in learner", async () => {
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        version: 1,
+        questionSignature: JSON.stringify(
+          questions.map((question) => ({
+            id: question.id,
+            choiceIds: question.choices.map((choice) => choice.id),
+          })),
+        ),
+        answers: { q1: "b" },
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Second answer")).toBeChecked(),
+    );
+    expect(screen.getByLabelText("Third answer")).not.toBeChecked();
+    expect(
+      screen.getByText(
+        "Recovered your unfinished quiz choices in this browser.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "a stale question set",
+      {
+        version: 1,
+        questionSignature: "old-question-set",
+        answers: { q1: "a" },
+      },
+    ],
+    [
+      "a malformed choice",
+      {
+        version: 1,
+        questionSignature: JSON.stringify(
+          questions.map((question) => ({
+            id: question.id,
+            choiceIds: question.choices.map((choice) => choice.id),
+          })),
+        ),
+        answers: { q1: "not-an-authored-choice" },
+      },
+    ],
+  ])("rejects %s from browser recovery", async (_label, storedProgress) => {
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    window.localStorage.setItem(storageKey, JSON.stringify(storedProgress));
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).toBeNull(),
+    );
+    expect(screen.getByLabelText("First answer")).not.toBeChecked();
+    expect(
+      screen.queryByText(
+        "Recovered your unfinished quiz choices in this browser.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it("captures quiz completion after the result is saved without quiz content", async () => {
     render(
       <LessonQuiz
@@ -83,6 +182,7 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        studentScope="student-1"
       />,
     );
 
@@ -144,6 +244,51 @@ describe("LessonQuiz analytics", () => {
         name: "Continue to JavaScript practice",
       }),
     ).toHaveAttribute("href", "/practice");
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html",
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps unfinished choices recoverable when grading does not save", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "The result could not be saved." }),
+      }),
+    );
+
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).not.toBeNull(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(
+      await screen.findByText("The result could not be saved."),
+    ).toBeInTheDocument();
+    expect(window.localStorage.getItem(storageKey)).not.toBeNull();
   });
 
   it("shows the concept map when a saved completion is restored", () => {
@@ -309,6 +454,7 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        studentScope="student-1"
       />,
     );
 
@@ -333,6 +479,13 @@ describe("LessonQuiz analytics", () => {
       "href",
       "/courses/web-development-foundations/quiz-history",
     );
+    expect(screen.getByLabelText("First answer")).toBeChecked();
+    expect(screen.getByLabelText("Third answer")).toBeChecked();
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html",
+      ),
+    ).toBeNull();
 
     fireEvent.click(screen.getByLabelText("Fourth answer"));
 
@@ -344,5 +497,12 @@ describe("LessonQuiz analytics", () => {
     expect(
       screen.getByRole("button", { name: "Check my answers" }),
     ).toBeEnabled();
+    await waitFor(() =>
+      expect(
+        window.localStorage.getItem(
+          "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html",
+        ),
+      ).not.toBeNull(),
+    );
   });
 });
