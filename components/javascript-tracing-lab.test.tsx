@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { JAVASCRIPT_TRACE_EXERCISES } from "@/lib/javascript-tracing";
 import { JavaScriptTracingLab } from "./javascript-tracing-lab";
 
 const saveJavaScriptLabExercise = vi.fn();
@@ -101,5 +102,24 @@ describe("JavaScriptTracingLab", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
     expect(screen.queryByText("Correct. Here is the exact trace.")).not.toBeInTheDocument();
+  });
+
+  it("reviews completed traces in order without another private save", async () => {
+    render(
+      <JavaScriptTracingLab
+        completedExerciseIds={JAVASCRIPT_TRACE_EXERCISES.map(
+          (exercise) => exercise.id,
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Review exercises/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "14" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check prediction" }));
+
+    expect(await screen.findByText("Correct. Here is the exact trace.")).toBeInTheDocument();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Next trace" }));
+    expect(screen.getByText("Trace 2 of 4")).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -64,6 +65,7 @@ export function JavaScriptDomLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -82,6 +84,14 @@ export function JavaScriptDomLab({
 
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${result.checks.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise(
         "dom",
         exercise.slug,
@@ -124,6 +134,7 @@ export function JavaScriptDomLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_DOM_EXERCISES[nextIndex];
     if (!nextExercise) {
@@ -133,6 +144,17 @@ export function JavaScriptDomLab({
 
     setExerciseIndex(nextIndex);
     setCheckState({ kind: "idle", message: readyMessage });
+  }
+
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_DOM_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
   }
 
   if (!exercise) {
@@ -145,7 +167,9 @@ export function JavaScriptDomLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">DOM lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab ? "DOM review complete" : "DOM lab complete"}
+          </p>
           <h2 id="dom-lab-complete-title">
             JavaScript can now change the page.
           </h2>
@@ -160,6 +184,10 @@ export function JavaScriptDomLab({
           <Link className="dom-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

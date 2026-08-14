@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -66,6 +67,7 @@ export function JavaScriptTreesGraphsLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -91,6 +93,14 @@ export function JavaScriptTreesGraphsLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise(
         "trees-graphs",
         exercise.slug,
@@ -133,6 +143,7 @@ export function JavaScriptTreesGraphsLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_TREES_GRAPHS_EXERCISES[nextIndex];
 
@@ -145,6 +156,17 @@ export function JavaScriptTreesGraphsLab({
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_TREES_GRAPHS_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -155,7 +177,11 @@ export function JavaScriptTreesGraphsLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">Trees and graphs complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Trees and graphs review complete"
+              : "Trees and graphs complete"}
+          </p>
           <h2 id="trees-graphs-lab-complete-title">
             Choose the visit order before you write the loop.
           </h2>
@@ -169,6 +195,10 @@ export function JavaScriptTreesGraphsLab({
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

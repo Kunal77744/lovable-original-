@@ -106,6 +106,13 @@ describe("JavaScript lab progress catalog", () => {
     expect(getFirstIncompleteExerciseIndex(ids, ids)).toBe(3);
   });
 
+  it("moves through completed exercises in order during an explicit review", () => {
+    const ids = ["one", "two", "three"];
+
+    expect(getNextIncompleteExerciseIndex(ids, ids, 0, true)).toBe(1);
+    expect(getNextIncompleteExerciseIndex(ids, ids, 2, true)).toBe(3);
+  });
+
   it("builds one honest private record across every saved lab", () => {
     const foundations = JAVASCRIPT_LABS[0];
     const tracing = JAVASCRIPT_LABS[1];

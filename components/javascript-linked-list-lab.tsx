@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -66,6 +67,7 @@ export function JavaScriptLinkedListLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -91,6 +93,14 @@ export function JavaScriptLinkedListLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise(
         "linked-lists",
         exercise.slug,
@@ -133,6 +143,7 @@ export function JavaScriptLinkedListLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_LINKED_LIST_EXERCISES[nextIndex];
 
@@ -145,6 +156,17 @@ export function JavaScriptLinkedListLab({
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_LINKED_LIST_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -155,7 +177,11 @@ export function JavaScriptLinkedListLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">Linked-list fundamentals complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Linked-list fundamentals review complete"
+              : "Linked-list fundamentals complete"}
+          </p>
           <h2 id="linked-list-lab-complete-title">
             Follow the references before changing them.
           </h2>
@@ -169,6 +195,10 @@ export function JavaScriptLinkedListLab({
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

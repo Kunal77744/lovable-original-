@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
@@ -68,6 +69,7 @@ export function JavaScriptAlgorithmPatternsLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -93,6 +95,14 @@ export function JavaScriptAlgorithmPatternsLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise(
         "algorithm-patterns",
         exercise.slug,
@@ -135,6 +145,7 @@ export function JavaScriptAlgorithmPatternsLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[nextIndex];
 
@@ -147,6 +158,17 @@ export function JavaScriptAlgorithmPatternsLab({
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -157,7 +179,11 @@ export function JavaScriptAlgorithmPatternsLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">Algorithm patterns complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Algorithm patterns review complete"
+              : "Algorithm patterns complete"}
+          </p>
           <h2 id="algorithm-patterns-complete-title">
             Recognize the shape before writing the loop.
           </h2>
@@ -171,6 +197,10 @@ export function JavaScriptAlgorithmPatternsLab({
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

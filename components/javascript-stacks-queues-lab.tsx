@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -67,6 +68,7 @@ export function JavaScriptStacksQueuesLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -92,6 +94,14 @@ export function JavaScriptStacksQueuesLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise(
         "stacks-queues",
         exercise.slug,
@@ -134,6 +144,7 @@ export function JavaScriptStacksQueuesLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_STACKS_QUEUES_EXERCISES[nextIndex];
 
@@ -146,6 +157,17 @@ export function JavaScriptStacksQueuesLab({
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_STACKS_QUEUES_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -156,7 +178,11 @@ export function JavaScriptStacksQueuesLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">Stacks and queues complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Stacks and queues review complete"
+              : "Stacks and queues complete"}
+          </p>
           <h2 id="stacks-queues-lab-complete-title">
             Choose the removal order before the code.
           </h2>
@@ -170,6 +196,10 @@ export function JavaScriptStacksQueuesLab({
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

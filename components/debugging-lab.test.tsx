@@ -6,6 +6,7 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { JAVASCRIPT_DEBUGGING_DRILLS } from "@/lib/debugging-lab";
 import { DebuggingLab } from "./debugging-lab";
 
 const runCodingSolution = vi.fn();
@@ -133,5 +134,27 @@ describe("DebuggingLab", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Defect repaired")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
+  });
+
+  it("reopens saved defects without writing another repair", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["Even", "Odd", "Even"],
+    });
+    render(
+      <DebuggingLab
+        completedExerciseIds={JAVASCRIPT_DEBUGGING_DRILLS.map(
+          (drill) => drill.slug,
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Review exercises/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+
+    expect(await screen.findByText(/Saved completion stayed unchanged/)).toBeInTheDocument();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Open next defect" }));
+    expect(screen.getByRole("heading", { name: "Reset the total" })).toBeInTheDocument();
   });
 });

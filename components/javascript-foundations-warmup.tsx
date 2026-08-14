@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -42,6 +43,7 @@ export function JavaScriptFoundationsWarmup({
   browserRecoveryScope = null,
 }: JavaScriptFoundationsWarmupProps) {
   const [completedIds, setCompletedIds] = useState(completedExerciseIds);
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
@@ -90,6 +92,14 @@ export function JavaScriptFoundationsWarmup({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.includes(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const response = await saveJavaScriptLabExercise(
         "foundations",
         exercise.slug,
@@ -138,6 +148,7 @@ export function JavaScriptFoundationsWarmup({
       exerciseIds,
       nextCompletedIds,
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_FOUNDATION_EXERCISES[nextIndex];
     if (!nextExercise) {
@@ -153,13 +164,28 @@ export function JavaScriptFoundationsWarmup({
     });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_FOUNDATION_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
         className="foundations-complete"
         aria-label="Foundations warm-up complete"
       >
-        <p className="eyebrow">Foundations complete · saved to your account</p>
+        <p className="eyebrow">
+          {reviewingCompletedLab
+            ? "Foundations coding review complete"
+            : "Foundations complete · saved to your account"}
+        </p>
         <h2>Four steps ready for judged practice.</h2>
         <p>
           Your judge, parsing, branching, and loop steps will remain complete
@@ -168,6 +194,17 @@ export function JavaScriptFoundationsWarmup({
         <Link className="foundations-run" href="/practice/sum-two-numbers">
           Start problem 01 <span aria-hidden="true">→</span>
         </Link>
+        <Link className="foundations-review-link" href="/practice/judge-basics">
+          Review the judge checkpoint
+        </Link>
+        <CompletedLabReviewButton
+          label={
+            reviewingCompletedLab
+              ? "Review coding exercises again"
+              : "Review coding exercises"
+          }
+          onReview={reviewExercises}
+        />
       </section>
     );
   }
