@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { CssAttemptNote } from "@/components/css-attempt-note";
 import { CssChallengeWorkspace } from "@/components/css-challenge-workspace";
 import {
+  getCssPracticeAttemptNoteForStudent,
   getCssPracticeCatalogProgress,
   getCssPracticeChallengeForStudent,
   getCssPracticePathFeedbackForStudent,
@@ -55,9 +57,12 @@ export default async function CssChallengePage({
   const session = await auth.api.getSession({ headers: await headers() });
   const isReviewSession =
     Boolean(session) && resolvedSearchParams?.review === "1";
-  const [studentState, catalogProgress] = await Promise.all([
+  const [studentState, catalogProgress, attemptNote] = await Promise.all([
     getCssPracticeChallengeForStudent(session?.user.id ?? null, challengeSlug),
     getCssPracticeCatalogProgress(session?.user.id ?? null),
+    session
+      ? getCssPracticeAttemptNoteForStudent(session.user.id, challengeSlug)
+      : Promise.resolve(null),
   ]);
   const pathFeedbackState = session
     ? await getCssPracticePathFeedbackForStudent(session.user.id)
@@ -126,6 +131,13 @@ export default async function CssChallengePage({
           isPathFeedbackEligible={pathFeedbackState.isEligible}
           nextChallengeSlug={catalogProgress.nextChallengeSlug}
         />
+
+        {session ? (
+          <CssAttemptNote
+            challengeSlug={challenge.slug}
+            initialNote={attemptNote}
+          />
+        ) : null}
 
         <nav
           className="problem-step-navigation"

@@ -11389,6 +11389,157 @@ h1 {
   box-shadow: 0 25px 58px rgba(23, 35, 30, 0.2);
 }
 
+.css-attempt-note {
+  margin-top: 18px;
+  padding: 29px 31px;
+  display: grid;
+  grid-template-columns: minmax(250px, 0.64fr) minmax(0, 1fr);
+  gap: 48px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 14px 14px 5px 14px;
+  background:
+    linear-gradient(115deg, rgba(223, 234, 223, 0.56), transparent 46%),
+    rgba(255, 255, 255, 0.78);
+}
+
+.css-attempt-note-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: 8px 18px;
+}
+
+.css-attempt-note-intro h2 {
+  max-width: 13ch;
+  margin-top: 7px;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.css-attempt-note-intro > span {
+  width: fit-content;
+  min-height: 26px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-self: start;
+  align-items: center;
+  color: var(--accent-deep);
+  border: 1px solid #bfd4c5;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.css-attempt-note-intro > p:last-child {
+  grid-column: 1 / -1;
+  max-width: 39ch;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.css-attempt-note-editor {
+  min-width: 0;
+}
+
+.css-attempt-note-editor > label {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.css-attempt-note-editor textarea {
+  width: 100%;
+  min-height: 118px;
+  margin-top: 9px;
+  padding: 15px 16px;
+  resize: vertical;
+  color: var(--ink);
+  border: 1px solid #cbd5cc;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.86);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.css-attempt-note-editor textarea::placeholder {
+  color: #7c8982;
+}
+
+.css-attempt-note-editor textarea:hover {
+  border-color: #9fb4a4;
+}
+
+.css-attempt-note-editor textarea:focus {
+  border-color: var(--accent);
+  outline: 3px solid rgba(40, 118, 82, 0.16);
+  outline-offset: 1px;
+}
+
+.css-attempt-note-meta {
+  margin-top: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.css-attempt-note-meta small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.css-attempt-note-meta button {
+  min-width: 112px;
+  min-height: 40px;
+  padding: 0 17px;
+  color: var(--accent-deep);
+  border: 1px solid #abc3b0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.css-attempt-note-meta button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(223, 234, 223, 0.7);
+}
+
+.css-attempt-note-meta button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 3px;
+}
+
+.css-attempt-note-meta button:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
+.css-attempt-note-status {
+  min-height: 17px;
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.css-attempt-note-status.is-error {
+  color: #a53a2c;
+}
+
 .css-challenge-workspace-heading {
   padding: 31px 32px 27px;
   display: grid;
@@ -14029,6 +14180,11 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .css-attempt-note {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
   .css-success-takeaway {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -14493,6 +14649,24 @@ footer {
 
   .css-practice-bridge {
     padding: 22px;
+  }
+
+  .css-attempt-note {
+    padding: 24px;
+  }
+
+  .css-attempt-note-intro h2 {
+    font-size: 26px;
+  }
+
+  .css-attempt-note-meta {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .css-attempt-note-meta button {
+    width: 100%;
   }
 
   .css-check-list-heading {
