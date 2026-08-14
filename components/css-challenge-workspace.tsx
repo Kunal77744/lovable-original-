@@ -6,6 +6,7 @@ import { CssPathFeedback } from "@/components/css-path-feedback";
 import type { CssPracticeAttempt } from "@/db/css-practice";
 import type { SavedCssPathFeedback } from "@/lib/css-path-feedback";
 import {
+  getCssChallengeAnonymousDraftRecoveryKey,
   getCssChallengeDraftRecoveryKey,
   parseCssChallengeDraftRecovery,
   serializeCssChallengeDraftRecovery,
@@ -54,6 +55,10 @@ type AttemptResponse = {
   error?: string;
 };
 
+type RecoverableBrowserDraft = CssChallengeDraftRecovery & {
+  storageKey: string;
+};
+
 export function CssChallengeWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
@@ -93,7 +98,7 @@ export function CssChallengeWorkspace({
   );
   const [submitting, setSubmitting] = useState(false);
   const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
-    useState<CssChallengeDraftRecovery | null>(null);
+    useState<RecoverableBrowserDraft | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestCss = useRef(initialCss);
   const draftSaveInFlight = useRef(false);
@@ -106,24 +111,54 @@ export function CssChallengeWorkspace({
     isSignedIn && browserRecoveryScope
       ? getCssChallengeDraftRecoveryKey(browserRecoveryScope, challenge.slug)
       : null;
+  const anonymousBrowserRecoveryKey =
+    getCssChallengeAnonymousDraftRecoveryKey(challenge.slug);
+  const activeBrowserRecoveryKey =
+    browserRecoveryKey ?? anonymousBrowserRecoveryKey;
+  const accountHref = `/account?next=${encodeURIComponent(
+    `/practice/css/${challenge.slug}`,
+  )}`;
 
   useEffect(() => {
-    if (!browserRecoveryKey) return;
+    let cancelled = false;
 
     try {
-      const storedValue = window.localStorage.getItem(browserRecoveryKey);
-      const browserDraft = parseCssChallengeDraftRecovery(storedValue);
+      const recoveryKeys = browserRecoveryKey
+        ? [browserRecoveryKey, anonymousBrowserRecoveryKey]
+        : [anonymousBrowserRecoveryKey];
+      const browserDrafts = recoveryKeys.flatMap((storageKey) => {
+        const storedValue = window.localStorage.getItem(storageKey);
+        const browserDraft = parseCssChallengeDraftRecovery(storedValue);
 
-      if (!browserDraft || browserDraft.css === initialCss) {
-        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
-        return;
+        if (!browserDraft || browserDraft.css === initialCss) {
+          if (storedValue) window.localStorage.removeItem(storageKey);
+          return [];
+        }
+
+        return [{ ...browserDraft, storageKey }];
+      });
+      const newestBrowserDraft = browserDrafts.sort(
+        (left, right) =>
+          Date.parse(right.updatedAt) - Date.parse(left.updatedAt),
+      )[0];
+
+      if (!newestBrowserDraft) {
+        return () => {
+          cancelled = true;
+        };
       }
 
-      setRecoverableBrowserDraft(browserDraft);
+      queueMicrotask(() => {
+        if (!cancelled) setRecoverableBrowserDraft(newestBrowserDraft);
+      });
     } catch {
-      // Private server saving remains available when browser storage is blocked.
+      // The editor and private server saving remain available when storage is blocked.
     }
-  }, [browserRecoveryKey, initialCss]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [anonymousBrowserRecoveryKey, browserRecoveryKey, initialCss]);
 
   useEffect(() => {
     return () => {
@@ -132,11 +167,9 @@ export function CssChallengeWorkspace({
   }, []);
 
   function persistBrowserRecovery(nextCss: string) {
-    if (!browserRecoveryKey) return;
-
     try {
       window.localStorage.setItem(
-        browserRecoveryKey,
+        activeBrowserRecoveryKey,
         serializeCssChallengeDraftRecovery(nextCss),
       );
       setRecoverableBrowserDraft(null);
@@ -149,12 +182,17 @@ export function CssChallengeWorkspace({
     if (!browserRecoveryKey) return;
 
     try {
-      const browserDraft = parseCssChallengeDraftRecovery(
-        window.localStorage.getItem(browserRecoveryKey),
-      );
+      for (const recoveryKey of [
+        browserRecoveryKey,
+        anonymousBrowserRecoveryKey,
+      ]) {
+        const browserDraft = parseCssChallengeDraftRecovery(
+          window.localStorage.getItem(recoveryKey),
+        );
 
-      if (browserDraft?.css === savedCss) {
-        window.localStorage.removeItem(browserRecoveryKey);
+        if (browserDraft?.css === savedCss) {
+          window.localStorage.removeItem(recoveryKey);
+        }
       }
     } catch {
       // A blocked cleanup does not change the truth of the private save.
@@ -210,7 +248,7 @@ export function CssChallengeWorkspace({
     setStatus(
       isSignedIn
         ? "Draft changed. Submit to refresh the checks."
-        : "Local draft changed. Sign in before leaving to keep it.",
+        : "Local draft changed. Create an account to save and check it.",
     );
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
@@ -222,21 +260,36 @@ export function CssChallengeWorkspace({
   function restoreBrowserDraft() {
     if (!recoverableBrowserDraft) return;
 
+    const recoveredStorageKey = recoverableBrowserDraft.storageKey;
     updateCss(recoverableBrowserDraft.css);
+    if (recoveredStorageKey !== activeBrowserRecoveryKey) {
+      try {
+        window.localStorage.removeItem(recoveredStorageKey);
+      } catch {
+        // The recovered source remains in the editor if cleanup is blocked.
+      }
+    }
     setStatus(
-      "Browser CSS restored as unsaved work. Your private saved draft stays unchanged until this exact CSS saves.",
+      isSignedIn
+        ? "Browser CSS restored as unsaved work. Your private saved draft stays unchanged until this exact CSS saves."
+        : "Browser CSS restored locally. Create an account to save and check it.",
     );
   }
 
   function keepPrivateSavedDraft() {
-    if (!browserRecoveryKey) return;
+    if (!recoverableBrowserDraft) return;
 
     try {
-      window.localStorage.removeItem(browserRecoveryKey);
+      window.localStorage.removeItem(recoverableBrowserDraft.storageKey);
     } catch {
       // Hiding the offer is still safe when browser storage cleanup is blocked.
     }
     setRecoverableBrowserDraft(null);
+    setStatus(
+      isSignedIn
+        ? "Private saved CSS kept. Your account-backed draft is unchanged."
+        : "Starter CSS kept. The browser copy was discarded.",
+    );
   }
 
   async function submitAttempt() {
@@ -388,12 +441,13 @@ export function CssChallengeWorkspace({
                 </h3>
               </div>
               <p>
-                Your private saved CSS is still loaded. Restore the browser copy
-                as unsaved work, or keep the account-backed version.
+                {isSignedIn
+                  ? "Your private saved CSS is still loaded. Restore the browser copy as unsaved work, or keep the account-backed version."
+                  : "The starter CSS is still loaded. Restore the browser copy, or keep the clean starter."}
               </p>
               <div className="css-browser-draft-recovery-actions">
                 <button type="button" onClick={keepPrivateSavedDraft}>
-                  Keep saved CSS
+                  {isSignedIn ? "Keep saved CSS" : "Keep starter CSS"}
                 </button>
                 <button type="button" onClick={restoreBrowserDraft}>
                   Restore browser CSS
@@ -440,10 +494,13 @@ export function CssChallengeWorkspace({
           role="status"
         >
           {status}
-          {!isSignedIn && status.startsWith("Create a free account") ? (
+          {!isSignedIn &&
+          (status.startsWith("Create a free account") ||
+            status.startsWith("Local draft changed") ||
+            status.startsWith("Browser CSS restored")) ? (
             <>
               {" "}
-              <Link href="/account">Create account</Link>
+              <Link href={accountHref}>Create account</Link>
             </>
           ) : null}
         </p>

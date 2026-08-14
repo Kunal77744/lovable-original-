@@ -12,6 +12,7 @@ import {
   gradeCssPracticeChallenge,
 } from "@/lib/css-practice-challenges";
 import {
+  getCssChallengeAnonymousDraftRecoveryKey,
   getCssChallengeDraftRecoveryKey,
   parseCssChallengeDraftRecovery,
   serializeCssChallengeDraftRecovery,
@@ -72,6 +73,179 @@ describe("CssChallengeWorkspace", () => {
         "No saved attempts yet. Your first submission will appear here.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("keeps signed-out CSS through account entry and returns to the exact challenge", async () => {
+    const anonymousRecoveryKey =
+      getCssChallengeAnonymousDraftRecoveryKey(challenge.slug);
+    const browserCss = ".learning-card { color: #287652; }";
+    const { unmount } = render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn={false}
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("CSS solution"), {
+      target: { value: browserCss },
+    });
+
+    expect(
+      parseCssChallengeDraftRecovery(
+        window.localStorage.getItem(anonymousRecoveryKey),
+      ),
+    ).toMatchObject({ css: browserCss });
+    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+      "href",
+      "/account?next=%2Fpractice%2Fcss%2Fclass-selector",
+    );
+    unmount();
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope="account-scope-a"
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Unfinished CSS is available on this browser.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(
+      challenge.starterCss,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser CSS" }),
+    );
+
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(browserCss);
+    expect(window.localStorage.getItem(anonymousRecoveryKey)).toBeNull();
+    expect(
+      parseCssChallengeDraftRecovery(
+        window.localStorage.getItem(
+          getCssChallengeDraftRecoveryKey(
+            "account-scope-a",
+            challenge.slug,
+          ),
+        ),
+      ),
+    ).toMatchObject({ css: browserCss });
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+  });
+
+  it("recovers a signed-out CSS draft after a reload without replacing the starter", async () => {
+    const anonymousRecoveryKey =
+      getCssChallengeAnonymousDraftRecoveryKey(challenge.slug);
+    const browserCss = ".learning-card { padding: 24px; }";
+    window.localStorage.setItem(
+      anonymousRecoveryKey,
+      serializeCssChallengeDraftRecovery(browserCss),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn={false}
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Restore browser CSS" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(
+      challenge.starterCss,
+    );
+    expect(
+      screen.getByRole("button", { name: "Keep starter CSS" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser CSS" }),
+    );
+
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(browserCss);
+    expect(
+      screen.getByText(/browser CSS restored locally/i),
+    ).toBeInTheDocument();
+    expect(window.localStorage.getItem(anonymousRecoveryKey)).not.toBeNull();
+  });
+
+  it("keeps private CSS authoritative until anonymous work is explicitly restored", async () => {
+    const anonymousRecoveryKey =
+      getCssChallengeAnonymousDraftRecoveryKey(challenge.slug);
+    const browserCss = ".learning-card { color: #287652; }";
+    const privateCss = ".learning-card { color: #17231e; }";
+    window.localStorage.setItem(
+      anonymousRecoveryKey,
+      serializeCssChallengeDraftRecovery(browserCss),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope="account-scope-a"
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(challenge.slug, privateCss)!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={privateCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Restore browser CSS" }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(privateCss);
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep saved CSS" }));
+
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(privateCss);
+    expect(window.localStorage.getItem(anonymousRecoveryKey)).toBeNull();
   });
 
   it("keeps the private draft loaded until browser CSS is explicitly restored", async () => {
@@ -496,13 +670,16 @@ describe("CssChallengeWorkspace", () => {
     );
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(window.localStorage).toHaveLength(0);
+    expect(window.localStorage).toHaveLength(1);
     expect(
       screen.getByText(/create a free account to check and save/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Create account" }),
-    ).toHaveAttribute("href", "/account");
+    ).toHaveAttribute(
+      "href",
+      "/account?next=%2Fpractice%2Fcss%2Fclass-selector",
+    );
     expect(
       screen.queryByRole("heading", {
         name: challenge.successTakeaway.concept,

@@ -2,6 +2,8 @@ import { MAX_CSS_CHALLENGE_LENGTH } from "@/lib/css-practice-challenges";
 
 const CSS_CHALLENGE_DRAFT_RECOVERY_PREFIX =
   "lovable:css-challenge-draft-recovery:v1";
+const CSS_CHALLENGE_ANONYMOUS_DRAFT_RECOVERY_PREFIX =
+  "lovable:css-challenge-anonymous-draft-recovery:v1";
 
 export type CssChallengeDraftRecovery = {
   css: string;
@@ -13,6 +15,12 @@ export function getCssChallengeDraftRecoveryKey(
   challengeSlug: string,
 ) {
   return `${CSS_CHALLENGE_DRAFT_RECOVERY_PREFIX}:${browserRecoveryScope}:${challengeSlug}`;
+}
+
+export function getCssChallengeAnonymousDraftRecoveryKey(
+  challengeSlug: string,
+) {
+  return `${CSS_CHALLENGE_ANONYMOUS_DRAFT_RECOVERY_PREFIX}:${challengeSlug}`;
 }
 
 export function serializeCssChallengeDraftRecovery(
