@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getStudentState: vi.fn(),
   getProgress: vi.fn(),
   getFeedback: vi.fn(),
+  getAttemptNote: vi.fn(),
   workspace: vi.fn(),
 }));
 
@@ -28,6 +29,15 @@ vi.mock("@/db/css-practice", () => ({
   getCssPracticeChallengeForStudent: mocks.getStudentState,
   getCssPracticeCatalogProgress: mocks.getProgress,
   getCssPracticePathFeedbackForStudent: mocks.getFeedback,
+  getCssPracticeAttemptNoteForStudent: mocks.getAttemptNote,
+}));
+
+vi.mock("@/components/css-attempt-note", () => ({
+  CssAttemptNote: (props: { initialNote: { content: string } | null }) => (
+    <div data-testid="attempt-note">
+      {props.initialNote?.content ?? "empty note"}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/css-challenge-workspace", () => ({
@@ -60,12 +70,17 @@ describe("CssChallengePage review context", () => {
       nextChallengeSlug: "class-selector",
     });
     mocks.getFeedback.mockResolvedValue({ isEligible: false, feedback: null });
+    mocks.getAttemptNote.mockResolvedValue(null);
   });
 
   afterEach(() => cleanup());
 
   it("keeps signed-in review context on the exact CSS challenge", async () => {
     mocks.getSession.mockResolvedValue({ user: { id: "learner-a" } });
+    mocks.getAttemptNote.mockResolvedValue({
+      content: "Try the class selector next.",
+      updatedAt: "2026-08-14T20:00:00.000Z",
+    });
 
     render(
       await CssChallengePage({
@@ -91,6 +106,10 @@ describe("CssChallengePage review context", () => {
 
   it("passes the account-backed draft fact into the workspace", async () => {
     mocks.getSession.mockResolvedValue({ user: { id: "learner-a" } });
+    mocks.getAttemptNote.mockResolvedValue({
+      content: "Try the class selector next.",
+      updatedAt: "2026-08-14T20:00:00.000Z",
+    });
     mocks.getStudentState.mockResolvedValue({
       css: ".learning-card { color: #287652; }",
       hasSavedDraft: true,
@@ -106,6 +125,13 @@ describe("CssChallengePage review context", () => {
 
     expect(mocks.workspace).toHaveBeenCalledWith(
       expect.objectContaining({ hasSavedDraft: true, isSignedIn: true }),
+    );
+    expect(mocks.getAttemptNote).toHaveBeenCalledWith(
+      "learner-a",
+      "class-selector",
+    );
+    expect(screen.getByTestId("attempt-note")).toHaveTextContent(
+      "Try the class selector next.",
     );
   });
 
@@ -125,6 +151,8 @@ describe("CssChallengePage review context", () => {
     );
     expect(screen.queryByText("Private CSS review")).not.toBeInTheDocument();
     expect(mocks.getFeedback).not.toHaveBeenCalled();
+    expect(mocks.getAttemptNote).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("attempt-note")).not.toBeInTheDocument();
     expect(mocks.workspace).toHaveBeenCalledWith(
       expect.objectContaining({
         browserRecoveryScope: null,
