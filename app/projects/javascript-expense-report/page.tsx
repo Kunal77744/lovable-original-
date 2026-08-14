@@ -9,6 +9,7 @@ import {
 } from "@/db/javascript-capstone";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   getJavaScriptCapstoneAccess,
   JAVASCRIPT_CAPSTONE_SLUG,
@@ -34,7 +35,7 @@ export default async function JavaScriptExpenseReportPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects/javascript-expense-report"));
   }
 
   const [summary, labProgress] = await Promise.all([

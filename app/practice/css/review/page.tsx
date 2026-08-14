@@ -7,6 +7,7 @@ import {
   getCssReviewSessionForStudent,
 } from "@/db/css-practice";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav } from "../../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export default async function CssReviewPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/css/review"));
   }
 
   const [reviewItems, progress] = await Promise.all([

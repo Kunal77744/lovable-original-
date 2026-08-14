@@ -6,6 +6,7 @@ import { CodingSkillRecord } from "@/components/coding-skill-record";
 import { getCodingSkillRecordForStudent } from "@/db/coding-skill-record";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { buildCodingSkillRecord } from "@/lib/coding-skill-record";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 import styles from "./saved-workspaces-entry.module.css";
@@ -28,7 +29,7 @@ export default async function PracticeProgressPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/progress"));
   }
 
   const [snapshot, labProgress] = await Promise.all([

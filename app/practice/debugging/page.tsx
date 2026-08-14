@@ -7,6 +7,7 @@ import {
   getCompletedJavaScriptLabExerciseIds,
   getJavaScriptLabExerciseDrafts,
 } from "@/db/javascript-lab-progress";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export default async function JavaScriptDebuggingLabPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/debugging"));
     return null;
   }
   const [completedExerciseIds, initialDrafts] = await Promise.all([
