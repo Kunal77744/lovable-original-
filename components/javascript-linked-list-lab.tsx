@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -32,9 +33,11 @@ const exerciseIds = JAVASCRIPT_LINKED_LIST_EXERCISES.map(
 export function JavaScriptLinkedListLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -43,15 +46,18 @@ export function JavaScriptLinkedListLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "linked-lists",
     exerciseId: exercise?.slug ?? JAVASCRIPT_LINKED_LIST_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_LINKED_LIST_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -250,6 +256,18 @@ export function JavaScriptLinkedListLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="linked-list-lab-code">
             JavaScript linked-list code
           </label>
@@ -269,6 +287,9 @@ export function JavaScriptLinkedListLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="function-lab-actions">

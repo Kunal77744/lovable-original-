@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
@@ -31,9 +32,11 @@ const exerciseIds = JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES.map(
 export function JavaScriptAlgorithmPatternsLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -43,9 +46,11 @@ export function JavaScriptAlgorithmPatternsLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restoreDraftStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "algorithm-patterns",
     exerciseId:
@@ -54,6 +59,7 @@ export function JavaScriptAlgorithmPatternsLab({
       exercise?.starterCode ??
       JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -252,6 +258,18 @@ export function JavaScriptAlgorithmPatternsLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="algorithm-patterns-code">
             JavaScript algorithm pattern code
           </label>
@@ -271,6 +289,9 @@ export function JavaScriptAlgorithmPatternsLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="function-lab-actions">

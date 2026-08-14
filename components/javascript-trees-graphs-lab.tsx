@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -32,9 +33,11 @@ const exerciseIds = JAVASCRIPT_TREES_GRAPHS_EXERCISES.map(
 export function JavaScriptTreesGraphsLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -43,15 +46,18 @@ export function JavaScriptTreesGraphsLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "trees-graphs",
     exerciseId: exercise?.slug ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_TREES_GRAPHS_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -253,6 +259,18 @@ export function JavaScriptTreesGraphsLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="trees-graphs-lab-code">
             JavaScript trees and graphs code
           </label>
@@ -272,6 +290,9 @@ export function JavaScriptTreesGraphsLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="function-lab-actions">

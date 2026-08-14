@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -30,9 +31,11 @@ const exerciseIds = JAVASCRIPT_DOM_EXERCISES.map((exercise) => exercise.slug);
 export function JavaScriptDomLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -41,15 +44,18 @@ export function JavaScriptDomLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "dom",
     exerciseId: exercise?.slug ?? JAVASCRIPT_DOM_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_DOM_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -219,6 +225,18 @@ export function JavaScriptDomLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="dom-lab-code">JavaScript DOM code</label>
           <textarea
             id="dom-lab-code"
@@ -236,6 +254,9 @@ export function JavaScriptDomLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="dom-lab-actions">

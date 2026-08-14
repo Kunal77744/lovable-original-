@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -28,6 +29,7 @@ type CheckState =
 type JavaScriptFoundationsWarmupProps = {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 };
 
 const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
@@ -37,6 +39,7 @@ const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
 export function JavaScriptFoundationsWarmup({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: JavaScriptFoundationsWarmupProps) {
   const [completedIds, setCompletedIds] = useState(completedExerciseIds);
   const [exerciseIndex, setExerciseIndex] = useState(() =>
@@ -46,15 +49,18 @@ export function JavaScriptFoundationsWarmup({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "foundations",
     exerciseId: exercise?.slug ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -228,6 +234,18 @@ export function JavaScriptFoundationsWarmup({
           <span>foundations.js</span>
           <span>Draft saves privately</span>
         </div>
+        <GuidedJavaScriptFileImport
+          key={exercise.slug}
+          destinationName="foundations.js"
+          disabled={checkState.kind === "running"}
+          onImport={(nextCode) => {
+            setCode(nextCode);
+            setCheckState({
+              kind: "idle",
+              message: "Imported code is local. Run the three checks when it is ready.",
+            });
+          }}
+        />
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
         <textarea
           id="foundations-code"
@@ -246,6 +264,9 @@ export function JavaScriptFoundationsWarmup({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          browserRecovery={browserRecovery}
+          savedSource={savedSource}
+          fileName="foundations.js"
         />
 
         <div className="foundations-actions">
