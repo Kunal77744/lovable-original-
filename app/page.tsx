@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { SiteFooter, SiteNav, SkipLink } from "./site-chrome";
 
 const javascriptProblemCount = CODING_PROBLEMS.length;
+const courseLessonCount = FIRST_COURSE_LESSONS.length;
+const courseMinutes = FIRST_COURSE_LESSONS.reduce(
+  (total, lesson) => total + lesson.estimatedMinutes,
+  0,
+);
 
 const learningLoop = [
   {
     number: "01",
     title: "Learn one idea clearly",
-    copy: "Start with a complete 18-minute lesson on the semantic HTML choices that give a page meaning.",
+    copy: `Start with ${courseLessonCount} public lessons covering semantic HTML, CSS, and responsive layout.`,
   },
   {
     number: "02",
@@ -74,8 +80,9 @@ export default function Home() {
               <ArrowIcon />
             </Link>
             <p className="launch-note">
-              Start with one public 18-minute lesson. A free account keeps your
-              work, quiz result, and practice progress.
+              Start with {courseLessonCount} public lessons totaling{" "}
+              {courseMinutes} minutes. A free account keeps your work, quiz
+              result, and practice progress.
             </p>
             <p className="spelling-note">
               Searched for &quot;Loveable Original&quot;? You&apos;re in the
@@ -92,7 +99,9 @@ export default function Home() {
                 <span className="window-logo">L</span>
                 <span>Web Development Foundations</span>
               </div>
-              <span className="progress-label">Path preview · step 1 of 3</span>
+              <span className="progress-label">
+                Course preview · {courseLessonCount} lessons
+              </span>
             </div>
 
             <div className="course-content">
@@ -110,7 +119,10 @@ export default function Home() {
               <div className="lesson-checklist">
                 <div>
                   <CheckIcon />
-                  <span>Read one complete 18-minute lesson</span>
+                  <span>
+                    Read {courseLessonCount} complete lessons · {courseMinutes}{" "}
+                    min
+                  </span>
                 </div>
                 <div>
                   <CheckIcon />
