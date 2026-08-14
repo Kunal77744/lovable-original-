@@ -4169,6 +4169,90 @@ h1 {
   border: 0;
 }
 
+.lesson-local-import {
+  min-height: 42px;
+  padding: 7px 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  border-bottom: 1px solid rgba(141, 161, 152, 0.2);
+  background: #17231e;
+}
+
+.lesson-local-import-trigger,
+.lesson-local-import-actions button {
+  min-height: 28px;
+  padding: 3px 0;
+  color: #aebdb5;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.lesson-local-import-trigger:hover,
+.lesson-local-import-actions button:hover {
+  color: #ffffff;
+}
+
+.lesson-local-import-trigger:focus-visible,
+.lesson-local-import-actions button:focus-visible {
+  outline: 2px solid #66dc9d;
+  outline-offset: 3px;
+}
+
+.lesson-local-import-message {
+  margin: 0;
+  color: #b8d7c5;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.lesson-local-import-message.is-error {
+  color: #f6c899;
+}
+
+.lesson-local-import-confirmation {
+  width: 100%;
+  padding-top: 8px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(141, 161, 152, 0.2);
+}
+
+.lesson-local-import-confirmation strong {
+  color: #f3f7f4;
+  font-size: 13px;
+}
+
+.lesson-local-import-confirmation p {
+  max-width: 520px;
+  margin: 3px 0 0;
+  color: #9fb0a7;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.lesson-local-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.lesson-local-import-actions button:last-child {
+  color: #66dc9d;
+}
+
 .workspace-editor textarea {
   width: 100%;
   min-height: 455px;

@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -11,6 +12,15 @@ import {
   RESPONSIVE_CSS_STARTER,
 } from "@/lib/responsive-css-practice";
 import { ResponsiveCssLayoutWorkspace } from "./responsive-css-layout-workspace";
+
+function createLocalCssFile(source: string) {
+  const file = new File([source], "layout.css", { type: "text/css" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
+}
 
 beforeEach(() => window.localStorage.clear());
 afterEach(() => {
@@ -123,6 +133,37 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     );
     expect(screen.getByText(/browser draft restored after sign-in/i)).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("imports confirmed layout CSS through browser recovery", async () => {
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={RESPONSIVE_CSS_STARTER}
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose CSS file to import"), {
+      target: { files: [createLocalCssFile(completedCss)] },
+    });
+    await act(async () => Promise.resolve());
+    expect(screen.getByLabelText("Responsive layout CSS")).toHaveValue(
+      RESPONSIVE_CSS_STARTER,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(screen.getByLabelText("Responsive layout CSS")).toHaveValue(
+      completedCss,
+    );
+    expect(screen.getByText("Local draft")).toBeInTheDocument();
+    expect(window.localStorage).toHaveLength(1);
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();

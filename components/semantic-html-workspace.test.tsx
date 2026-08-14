@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -7,6 +8,15 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SemanticHtmlWorkspace } from "./semantic-html-workspace";
+
+function createLocalHtmlFile(source: string) {
+  const file = new File([source], "article.html", { type: "text/html" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
+}
 
 const initialChecks = [
   {
@@ -322,6 +332,34 @@ describe("SemanticHtmlWorkspace", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .html" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("imports confirmed HTML through the existing unsaved browser-draft path", async () => {
+    const localHtml = "<main><article>Imported lesson work</article></main>";
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose HTML file to import"), {
+      target: { files: [createLocalHtmlFile(localHtml)] },
+    });
+    await act(async () => Promise.resolve());
+    expect(screen.getByLabelText("Semantic HTML")).toHaveValue("<main></main>");
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(screen.getByLabelText("Semantic HTML")).toHaveValue(localHtml);
+    expect(screen.getByText("Local draft")).toBeInTheDocument();
+    expect(window.localStorage).toHaveLength(1);
     expect(
       screen.queryByRole("button", { name: "Download saved .html" }),
     ).not.toBeInTheDocument();
