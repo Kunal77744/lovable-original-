@@ -3,6 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { WEB_FOUNDATIONS_REVIEW_ITEMS } from "@/lib/web-foundations-review";
 import { WebFoundationsReview } from "./web-foundations-review";
 
+const continuation = {
+  href: "/practice/array-sum",
+  label: "Solve problem 03",
+};
+
 describe("WebFoundationsReview", () => {
   afterEach(() => {
     cleanup();
@@ -21,7 +26,12 @@ describe("WebFoundationsReview", () => {
         { status: 200, headers: { "content-type": "application/json" } },
       ),
     );
-    render(<WebFoundationsReview initialResult={null} />);
+    render(
+      <WebFoundationsReview
+        continuation={continuation}
+        initialResult={null}
+      />,
+    );
 
     for (const [index, item] of WEB_FOUNDATIONS_REVIEW_ITEMS.entries()) {
       const choice =
@@ -58,8 +68,8 @@ describe("WebFoundationsReview", () => {
     );
     expect(fetchSpy.mock.calls[0]?.[1]?.body).not.toContain("option");
     expect(
-      screen.getByRole("link", { name: "Continue the field guide" }),
-    ).toHaveAttribute("href", "/projects/semantic-html-article");
+      screen.getByRole("link", { name: "Solve problem 03" }),
+    ).toHaveAttribute("href", "/practice/array-sum");
   });
 
   it("keeps completion hidden and retryable after a failed save", async () => {
@@ -69,7 +79,12 @@ describe("WebFoundationsReview", () => {
         headers: { "content-type": "application/json" },
       }),
     );
-    render(<WebFoundationsReview initialResult={null} />);
+    render(
+      <WebFoundationsReview
+        continuation={continuation}
+        initialResult={null}
+      />,
+    );
 
     for (const [index, item] of WEB_FOUNDATIONS_REVIEW_ITEMS.entries()) {
       const choice = item.options.find((option) => option.id === item.correctOptionId)!;

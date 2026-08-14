@@ -7,11 +7,14 @@ import {
   formatWebFoundationsReviewDueDate,
   WEB_FOUNDATIONS_REVIEW_ITEMS,
 } from "@/lib/web-foundations-review";
+import type { LearnerProfileAction } from "@/lib/learner-profile";
 
 export function WebFoundationsReview({
   initialResult,
+  continuation,
 }: {
   initialResult: SavedWebFoundationsReviewResult | null;
+  continuation: Pick<LearnerProfileAction, "href" | "label">;
 }) {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
@@ -102,8 +105,8 @@ export function WebFoundationsReview({
             choices stayed in this browser, and course completion did not change.
           </p>
           <div className="mixed-review-complete-actions">
-            <Link className="primary-action" href="/projects/semantic-html-article">
-              Continue the field guide <span aria-hidden="true">→</span>
+            <Link className="primary-action" href={continuation.href}>
+              {continuation.label} <span aria-hidden="true">→</span>
             </Link>
             <Link className="mixed-review-record-link" href="/dashboard">
               Return to dashboard
