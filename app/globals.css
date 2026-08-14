@@ -29530,6 +29530,7 @@ footer {
   display: flex;
   min-height: 24px;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin: -6px 0 18px;
   color: #56655d;
@@ -29580,6 +29581,18 @@ footer {
   border-radius: 3px;
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+.private-lab-draft-download {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.private-lab-draft-download > span:not(:empty) {
+  color: #75847c;
+  font-weight: 500;
 }
 
 .guided-code-editor-shortcuts {

@@ -47,6 +47,7 @@ export function JavaScriptFoundationsWarmup({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter,
     retrySave,
@@ -246,6 +247,8 @@ export function JavaScriptFoundationsWarmup({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          savedSource={savedSource}
+          fileName="foundations.js"
         />
 
         <div className="foundations-actions">

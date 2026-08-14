@@ -54,6 +54,21 @@ describe("JavaScriptFoundationsWarmup", () => {
     ).toHaveAttribute("aria-current", "step");
   });
 
+  it("offers a saved foundations exercise as a JavaScript file", () => {
+    render(
+      <JavaScriptFoundationsWarmup
+        completedExerciseIds={["understand-the-judge"]}
+        initialDrafts={{
+          "parse-and-sum": "function solve(input) { return 13; }",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
+  });
+
   it("resumes at the first exercise not completed by this account", () => {
     render(
       <JavaScriptFoundationsWarmup completedExerciseIds={["parse-and-sum"]} />,

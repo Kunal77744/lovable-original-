@@ -43,6 +43,7 @@ export function DebuggingLab({
   const {
     source,
     state: draftState,
+    savedSource,
     updateSource: setSource,
     retrySave,
   } = usePrivateJavaScriptLabDraft({
@@ -187,6 +188,8 @@ export function DebuggingLab({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          savedSource={savedSource}
+          fileName="broken-solution.js"
         />
       </div>
 

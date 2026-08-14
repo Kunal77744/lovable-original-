@@ -134,26 +134,37 @@ export function usePrivateJavaScriptLabDraft({
 
   const source = sources[exerciseId] ?? starterCode;
   const state = states[exerciseId] ?? "starter";
+  const savedSource = state === "saved" ? source : null;
 
   return useMemo(
     () => ({
       source,
       state,
+      savedSource,
       updateSource,
       restoreStarter: () => updateSource(starterCode),
       retrySave,
     }),
-    [retrySave, source, starterCode, state, updateSource],
+    [retrySave, savedSource, source, starterCode, state, updateSource],
   );
+}
+
+export function savedJavaScriptLabSourceFileContents(source: string) {
+  return source;
 }
 
 export function PrivateJavaScriptLabDraftStatus({
   state,
   onRetry,
+  savedSource,
+  fileName,
 }: {
   state: PrivateLabDraftState;
   onRetry: () => void;
+  savedSource: string | null;
+  fileName: string;
 }) {
+  const [downloadedFile, setDownloadedFile] = useState<string | null>(null);
   const message = {
     starter: "Starter ready. Your edits will save privately.",
     unsaved: "Unsaved changes",
@@ -161,6 +172,25 @@ export function PrivateJavaScriptLabDraftStatus({
     saved: "Saved privately to your account",
     error: "Couldn’t save this draft. Your code is still here.",
   }[state];
+
+  function downloadSavedSource() {
+    if (savedSource === null) return;
+
+    const blob = new Blob([savedJavaScriptLabSourceFileContents(savedSource)], {
+      type: "text/javascript;charset=utf-8",
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    anchor.hidden = true;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+    setDownloadedFile(fileName);
+  }
 
   return (
     <div
@@ -175,6 +205,16 @@ export function PrivateJavaScriptLabDraftStatus({
         <button type="button" onClick={onRetry}>
           Retry save
         </button>
+      ) : null}
+      {state === "saved" && savedSource !== null ? (
+        <div className="private-lab-draft-download">
+          <button type="button" onClick={downloadSavedSource}>
+            Download saved .js
+          </button>
+          <span aria-live="polite">
+            {downloadedFile ? `${downloadedFile} downloaded.` : ""}
+          </span>
+        </div>
       ) : null}
     </div>
   );
