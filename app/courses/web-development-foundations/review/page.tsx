@@ -107,6 +107,7 @@ export default async function WebFoundationsReviewPage() {
           <WebFoundationsReview
             continuation={continuation}
             initialResult={reviewDue ? null : savedResult}
+            studentScope={session.user.id}
           />
         ) : (
           <section

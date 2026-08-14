@@ -5,26 +5,41 @@ import { useState } from "react";
 import type { SavedJavaScriptMixedReviewResult } from "@/db/javascript-mixed-review";
 import type { JavaScriptMixedReviewItem } from "@/lib/javascript-mixed-review";
 import { formatJavaScriptMixedReviewDueDate } from "@/lib/javascript-mixed-review";
+import { useBrowserReviewProgress } from "./use-browser-review-progress";
 
 export function JavaScriptMixedReview({
   items,
   initialResult,
   nextHref,
   nextLabel,
+  studentScope,
 }: {
   items: JavaScriptMixedReviewItem[];
   initialResult: SavedJavaScriptMixedReviewResult | null;
   nextHref: string;
   nextLabel: string;
+  studentScope: string;
 }) {
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [checkedOptionId, setCheckedOptionId] = useState<string | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
   const [savedResult, setSavedResult] =
     useState<SavedJavaScriptMixedReviewResult | null>(initialResult);
   const [saveStatus, setSaveStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const {
+    checkedOptionId,
+    correctCount,
+    questionIndex,
+    recovered,
+    selectedOptionId,
+    setCheckedOptionId,
+    setCorrectCount,
+    setQuestionIndex,
+    setSelectedOptionId,
+  } = useBrowserReviewProgress({
+    completed: Boolean(savedResult),
+    items,
+    reviewId: "javascript-mixed",
+    studentScope,
+  });
 
   const question = items[questionIndex];
   const isCorrect = checkedOptionId === question.correctOptionId;
@@ -127,6 +142,11 @@ export function JavaScriptMixedReview({
           />
         </div>
       </div>
+      {recovered ? (
+        <p className="mixed-review-recovery-status" role="status">
+          Recovered your unfinished review in this browser.
+        </p>
+      ) : null}
 
       <div className="mixed-review-question-heading">
         <p className="eyebrow">
