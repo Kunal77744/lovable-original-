@@ -75,6 +75,7 @@ export function usePrivateJavaScriptLabDraft({
   const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const revisionsRef = useRef(new Map<string, number>());
   const saveChainRef = useRef(Promise.resolve());
+  const queuedSaveCountsRef = useRef(new Map<string, number>());
 
   const getBrowserRecoveryKey = useCallback(
     (nextExerciseId: string) =>
@@ -111,22 +112,39 @@ export function usePrivateJavaScriptLabDraft({
   const persist = useCallback(
     (draft: PendingDraft) => {
       setStates((current) => ({ ...current, [draft.exerciseId]: "saving" }));
+      queuedSaveCountsRef.current.set(
+        draft.exerciseId,
+        (queuedSaveCountsRef.current.get(draft.exerciseId) ?? 0) + 1,
+      );
       saveChainRef.current = saveChainRef.current.then(async () => {
-        const response = await saveDraft(labSlug, draft);
-        const latest = pendingRef.current.get(draft.exerciseId);
-        const isLatest =
-          latest?.revision === draft.revision && latest.source === draft.source;
+        try {
+          const response = await saveDraft(labSlug, draft);
+          const latest = pendingRef.current.get(draft.exerciseId);
+          const isLatest =
+            latest?.revision === draft.revision && latest.source === draft.source;
 
-        if (!isLatest) return;
+          if (!isLatest) return;
 
-        if (response?.ok) {
-          pendingRef.current.delete(draft.exerciseId);
-          clearBrowserRecoveryIfMatches(draft.exerciseId, draft.source);
-          setStates((current) => ({ ...current, [draft.exerciseId]: "saved" }));
-          return;
+          if (response?.ok) {
+            pendingRef.current.delete(draft.exerciseId);
+            clearBrowserRecoveryIfMatches(draft.exerciseId, draft.source);
+            setStates((current) => ({
+              ...current,
+              [draft.exerciseId]: "saved",
+            }));
+            return;
+          }
+
+          setStates((current) => ({ ...current, [draft.exerciseId]: "error" }));
+        } finally {
+          const remaining =
+            (queuedSaveCountsRef.current.get(draft.exerciseId) ?? 1) - 1;
+          if (remaining > 0) {
+            queuedSaveCountsRef.current.set(draft.exerciseId, remaining);
+          } else {
+            queuedSaveCountsRef.current.delete(draft.exerciseId);
+          }
         }
-
-        setStates((current) => ({ ...current, [draft.exerciseId]: "error" }));
       });
     },
     [clearBrowserRecoveryIfMatches, labSlug],
@@ -242,6 +260,7 @@ export function usePrivateJavaScriptLabDraft({
 
     function flushPending() {
       for (const draft of pendingRef.current.values()) {
+        if (queuedSaveCountsRef.current.has(draft.exerciseId)) continue;
         void saveDraft(labSlug, draft, true);
       }
     }

@@ -23,15 +23,17 @@ const recoveryKey = getJavaScriptLabDraftRecoveryKey(
 );
 
 function DraftHarness({
+  exerciseId = "base-case",
   initialDrafts = {},
   browserRecoveryScope = "learner-a",
 }: {
+  exerciseId?: string;
   initialDrafts?: Record<string, string>;
   browserRecoveryScope?: string;
 }) {
   const draft = usePrivateJavaScriptLabDraft({
     labSlug: "recursion",
-    exerciseId: "base-case",
+    exerciseId,
     starterCode: "starter code",
     initialDrafts,
     browserRecoveryScope,
@@ -50,7 +52,7 @@ function DraftHarness({
         state={draft.state}
         onRetry={draft.retrySave}
         savedSource={draft.savedSource}
-        fileName="base-case.js"
+        fileName={`${exerciseId}.js`}
       />
     </>
   );
@@ -222,6 +224,101 @@ describe("private guided JavaScript drafts", () => {
     expect(
       screen.getByRole("button", { name: "Download saved .js" }),
     ).toBeInTheDocument();
+  });
+
+  it("does not race a newer exit draft against an older in-flight save", async () => {
+    const first = deferredResponse();
+    const fetchMock = vi.fn().mockReturnValue(first.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    render(<DraftHarness />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "first revision" },
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(700);
+      await Promise.resolve();
+    });
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "newest revision before exit" },
+    });
+    window.dispatchEvent(new Event("pagehide"));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(window.localStorage.getItem(recoveryKey)).toContain(
+      "newest revision before exit",
+    );
+
+    cleanup();
+    await act(async () => {
+      first.resolve(new Response(null, { status: 200 }));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(window.localStorage.getItem(recoveryKey)).toContain(
+      "newest revision before exit",
+    );
+  });
+
+  it("does not race an exit draft against an older save queued behind another exercise", async () => {
+    const first = deferredResponse();
+    const fetchMock = vi.fn().mockReturnValue(first.promise);
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(<DraftHarness />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "first exercise revision" },
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(700);
+      await Promise.resolve();
+    });
+
+    view.rerender(<DraftHarness exerciseId="recursive-step" />);
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "queued older revision" },
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(700);
+      await Promise.resolve();
+    });
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "newest queued exercise revision" },
+    });
+    window.dispatchEvent(new Event("pagehide"));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    await act(async () => {
+      first.resolve(new Response(null, { status: 200 }));
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  });
+
+  it("flushes the latest pending draft on exit when no save is queued", () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<DraftHarness />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "latest pending revision" },
+    });
+    window.dispatchEvent(new Event("pagehide"));
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ keepalive: true });
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1].body as string)).toEqual({
+      exerciseId: "base-case",
+      source: "latest pending revision",
+    });
   });
 
   it("offers a newer browser copy without replacing private saved source", async () => {
