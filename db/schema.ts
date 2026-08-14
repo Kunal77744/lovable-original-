@@ -732,6 +732,31 @@ export const cssPracticeAttempt = pgTable(
   ],
 );
 
+export const cssPracticeNote = pgTable(
+  "css_practice_note",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSlug: text("challenge_slug").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_practice_note_user_challenge_unique").on(
+      table.userId,
+      table.challengeSlug,
+    ),
+    index("css_practice_note_user_id_idx").on(table.userId),
+  ],
+);
+
 export const cssPracticeFeedback = pgTable(
   "css_practice_feedback",
   {
