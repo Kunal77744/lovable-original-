@@ -44,7 +44,16 @@ describe("JavaScriptDataStructuresLab", () => {
   });
 
   it("loads a confirmed local JavaScript file as unsaved editor work", async () => {
-    render(<JavaScriptDataStructuresLab />);
+    render(
+      <JavaScriptDataStructuresLab
+        initialDrafts={{
+          "sum-even-values": "function solve(input) { return 'saved'; }",
+        }}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
     const file = new File(
       ["function solve(input) { return input.trim(); }"],
       "array-answer.js",
@@ -74,6 +83,9 @@ describe("JavaScriptDataStructuresLab", () => {
         "Imported code is local. Run the three checks when it is ready.",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
     expect(runCodingSolution).not.toHaveBeenCalled();
     expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
   });

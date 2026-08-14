@@ -46,6 +46,7 @@ export function JavaScriptAlgorithmPatternsLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restoreDraftStarter,
     retrySave,
@@ -289,6 +290,8 @@ export function JavaScriptAlgorithmPatternsLab({
             state={draftState}
             onRetry={retrySave}
             browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="function-lab-actions">

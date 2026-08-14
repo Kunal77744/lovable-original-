@@ -47,6 +47,20 @@ describe("JavaScriptRecursionLab", () => {
     ).toContain("function sumTo");
   });
 
+  it("offers the exact saved recursion exercise as a JavaScript file", () => {
+    render(
+      <JavaScriptRecursionLab
+        initialDrafts={{
+          "stop-at-the-base-case": "function solve(input) { return 'Go'; }",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
+  });
+
   it("runs deterministic checks through the isolated worker", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
