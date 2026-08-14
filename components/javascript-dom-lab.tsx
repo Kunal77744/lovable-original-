@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -27,6 +28,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
     message: readyMessage,
   });
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -45,6 +47,14 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${result.checks.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise("dom", exercise.slug);
       if (!saveResponse?.ok) {
         setCheckState({
@@ -82,6 +92,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_DOM_EXERCISES[nextIndex];
     if (!nextExercise) {
@@ -94,6 +105,17 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_DOM_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section className="dom-lab-complete" aria-labelledby="dom-lab-complete-title">
@@ -101,7 +123,9 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
           4/4
         </div>
         <div>
-          <p className="eyebrow">DOM lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab ? "DOM review complete" : "DOM lab complete"}
+          </p>
           <h2 id="dom-lab-complete-title">JavaScript can now change the page.</h2>
           <p>
             You selected an element, changed its text, toggled a class, and
@@ -114,6 +138,10 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
           <Link className="dom-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );
