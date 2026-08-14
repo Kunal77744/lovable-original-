@@ -7,20 +7,35 @@ import {
   formatWebFoundationsReviewDueDate,
   WEB_FOUNDATIONS_REVIEW_ITEMS,
 } from "@/lib/web-foundations-review";
+import { useBrowserReviewProgress } from "./use-browser-review-progress";
 
 export function WebFoundationsReview({
   initialResult,
+  studentScope,
 }: {
   initialResult: SavedWebFoundationsReviewResult | null;
+  studentScope: string;
 }) {
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [checkedOptionId, setCheckedOptionId] = useState<string | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
   const [savedResult, setSavedResult] =
     useState<SavedWebFoundationsReviewResult | null>(initialResult);
   const [saveStatus, setSaveStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const {
+    checkedOptionId,
+    correctCount,
+    questionIndex,
+    recovered,
+    selectedOptionId,
+    setCheckedOptionId,
+    setCorrectCount,
+    setQuestionIndex,
+    setSelectedOptionId,
+  } = useBrowserReviewProgress({
+    completed: Boolean(savedResult),
+    items: WEB_FOUNDATIONS_REVIEW_ITEMS,
+    reviewId: "web-foundations",
+    studentScope,
+  });
 
   const question = WEB_FOUNDATIONS_REVIEW_ITEMS[questionIndex];
   const isCorrect = checkedOptionId === question.correctOptionId;
@@ -137,6 +152,11 @@ export function WebFoundationsReview({
           />
         </div>
       </div>
+      {recovered ? (
+        <p className="mixed-review-recovery-status" role="status">
+          Recovered your unfinished review in this browser.
+        </p>
+      ) : null}
 
       <div className="mixed-review-question-heading">
         <p className="eyebrow">

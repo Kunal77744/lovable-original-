@@ -6,6 +6,7 @@ import { WebFoundationsReview } from "./web-foundations-review";
 describe("WebFoundationsReview", () => {
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -21,7 +22,9 @@ describe("WebFoundationsReview", () => {
         { status: 200, headers: { "content-type": "application/json" } },
       ),
     );
-    render(<WebFoundationsReview initialResult={null} />);
+    render(
+      <WebFoundationsReview initialResult={null} studentScope="student-one" />,
+    );
 
     for (const [index, item] of WEB_FOUNDATIONS_REVIEW_ITEMS.entries()) {
       const choice =
@@ -57,6 +60,7 @@ describe("WebFoundationsReview", () => {
       },
     );
     expect(fetchSpy.mock.calls[0]?.[1]?.body).not.toContain("option");
+    await waitFor(() => expect(window.localStorage.length).toBe(0));
     expect(
       screen.getByRole("link", { name: "Continue the field guide" }),
     ).toHaveAttribute("href", "/projects/semantic-html-article");
@@ -69,7 +73,9 @@ describe("WebFoundationsReview", () => {
         headers: { "content-type": "application/json" },
       }),
     );
-    render(<WebFoundationsReview initialResult={null} />);
+    render(
+      <WebFoundationsReview initialResult={null} studentScope="student-one" />,
+    );
 
     for (const [index, item] of WEB_FOUNDATIONS_REVIEW_ITEMS.entries()) {
       const choice = item.options.find((option) => option.id === item.correctOptionId)!;
@@ -87,5 +93,39 @@ describe("WebFoundationsReview", () => {
     );
     expect(screen.queryByText("Private lesson review saved")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry saving result" })).toBeInTheDocument();
+  });
+
+  it("recovers the exact unfinished lesson review after reload", async () => {
+    const { unmount } = render(
+      <WebFoundationsReview initialResult={null} studentScope="student-one" />,
+    );
+    const firstItem = WEB_FOUNDATIONS_REVIEW_ITEMS[0];
+    const secondItem = WEB_FOUNDATIONS_REVIEW_ITEMS[1];
+    const firstCorrectChoice = firstItem.options.find(
+      (option) => option.id === firstItem.correctOptionId,
+    )!;
+    const secondWrongChoice = secondItem.options.find(
+      (option) => option.id !== secondItem.correctOptionId,
+    )!;
+
+    fireEvent.click(screen.getByLabelText(firstCorrectChoice.label));
+    fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next concept" }));
+    fireEvent.click(screen.getByLabelText(secondWrongChoice.label));
+    fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+    unmount();
+
+    render(
+      <WebFoundationsReview initialResult={null} studentScope="student-one" />,
+    );
+
+    expect(
+      await screen.findByText("Recovered your unfinished review in this browser."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Concept 2 of 4")).toBeInTheDocument();
+    expect(screen.getByText("One more pass")).toBeInTheDocument();
+    expect(screen.getByLabelText(secondWrongChoice.label)).toBeChecked();
   });
 });

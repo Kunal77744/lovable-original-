@@ -63,6 +63,7 @@ const items: JavaScriptMixedReviewItem[] = [
 describe("JavaScriptMixedReview", () => {
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
     vi.restoreAllMocks();
   });
 
@@ -84,6 +85,7 @@ describe("JavaScriptMixedReview", () => {
         items={items}
         nextHref="/practice/test-design?exercise=1"
         nextLabel="Continue Test design, exercise 1"
+        studentScope="student-one"
       />,
     );
 
@@ -122,6 +124,7 @@ describe("JavaScriptMixedReview", () => {
       body: JSON.stringify({ correctCount: 2, totalCount: 3 }),
     });
     expect(fetchSpy.mock.calls[0]?.[1]?.body).not.toContain("option");
+    await waitFor(() => expect(window.localStorage.length).toBe(0));
     expect(
       screen.getByRole("link", {
         name: "Continue Test design, exercise 1",
@@ -142,6 +145,7 @@ describe("JavaScriptMixedReview", () => {
         items={items}
         nextHref="/practice"
         nextLabel="Return to JavaScript practice"
+        studentScope="student-one"
       />,
     );
 
@@ -170,5 +174,86 @@ describe("JavaScriptMixedReview", () => {
     expect(
       screen.getByRole("button", { name: "Retry saving result" }),
     ).toBeInTheDocument();
+  });
+
+  it("recovers an unfinished account-scoped review after reload", async () => {
+    const { unmount } = render(
+      <JavaScriptMixedReview
+        initialResult={null}
+        items={items}
+        nextHref="/practice"
+        nextLabel="Return to JavaScript practice"
+        studentScope="student-one"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByLabelText("Split the input before converting values."),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next concept" }));
+    fireEvent.click(
+      screen.getByLabelText("Track each value after every statement."),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+    unmount();
+
+    render(
+      <JavaScriptMixedReview
+        initialResult={null}
+        items={items}
+        nextHref="/practice"
+        nextLabel="Return to JavaScript practice"
+        studentScope="student-one"
+      />,
+    );
+
+    expect(
+      await screen.findByText("Recovered your unfinished review in this browser."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Concept 2 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Recalled")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Track each value after every statement."),
+    ).toBeChecked();
+  });
+
+  it("does not expose one account's unfinished review to another", async () => {
+    const firstRender = render(
+      <JavaScriptMixedReview
+        initialResult={null}
+        items={items}
+        nextHref="/practice"
+        nextLabel="Return to JavaScript practice"
+        studentScope="student-one"
+      />,
+    );
+    fireEvent.click(
+      screen.getByLabelText("Split the input before converting values."),
+    );
+    await waitFor(() => expect(window.localStorage.length).toBe(1));
+    firstRender.unmount();
+
+    render(
+      <JavaScriptMixedReview
+        initialResult={null}
+        items={items}
+        nextHref="/practice"
+        nextLabel="Return to JavaScript practice"
+        studentScope="student-two"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Concept 1 of 3")).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByText("Recovered your unfinished review in this browser."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Split the input before converting values."),
+    ).not.toBeChecked();
   });
 });

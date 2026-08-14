@@ -95,6 +95,7 @@ export default async function WebFoundationsReviewPage() {
         {course.courseCompleted ? (
           <WebFoundationsReview
             initialResult={reviewDue ? null : savedResult}
+            studentScope={session.user.id}
           />
         ) : (
           <section
