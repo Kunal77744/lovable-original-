@@ -1,17 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { AcceptedSolutionDownload } from "@/components/accepted-solution-download";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
+import {
+  getCodingDraftRecoveryKey,
+  parseCodingDraftRecovery,
+  serializeCodingDraftRecovery,
+  type CodingDraftRecovery,
+} from "@/lib/coding-draft-recovery";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   MAX_CODING_TEST_CASES,
   type CodingTestCase,
   validateCodingTestCases,
 } from "@/lib/coding-test-cases";
-import { normalizeCodingOutput } from "@/lib/coding-problems";
+import {
+  MAX_CODING_SOLUTION_LENGTH,
+  normalizeCodingOutput,
+} from "@/lib/coding-problems";
+import { toggleEditorLineComments } from "@/lib/code-editor-comments";
+import { applyEditorIndentation } from "@/lib/code-editor-indentation";
+import { getCodeEditorLocation } from "@/lib/code-editor-location";
+import { applyEditorSmartEditing } from "@/lib/code-editor-smart-editing";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
@@ -23,14 +39,17 @@ import type { SavedPracticeSolutionNote } from "@/lib/practice-solution-note";
 type CodingWorkspaceProps = {
   attempts: CodingProblemAttempt[];
   bestVerdict: string | null;
+  browserRecoveryScope?: string | null;
   initialCode: string;
   initialAcceptedCode?: string | null;
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback: SavedPracticeFeedback | null;
   initialSolutionNote?: SavedPracticeSolutionNote | null;
   isSignedIn: boolean;
+  hasSavedCode?: boolean;
   isPracticeFeedbackEligible: boolean;
   isReviewSession?: boolean;
+  isCleanPractice?: boolean;
   dailyChallengeDate?: string | null;
   loadedSubmission?: {
     createdAt: string;
@@ -47,13 +66,21 @@ type CodingWorkspaceProps = {
       concept: string;
       whyItWorks: string;
       commonMistake: string;
+      efficiency: {
+        time: string;
+        space: string;
+        explanation: string;
+      };
+    };
+    workedTrace: {
+      steps: [string, string, string];
     };
     starterCode: string;
-    tests: { input: string }[];
-    example: {
+    tests: { label: string; input: string }[];
+    examples: {
       input: string;
       expectedOutput: string;
-    };
+    }[];
   };
 };
 
@@ -71,6 +98,7 @@ type SubmissionResponse = {
   isFirstAcceptedResult: boolean;
   dailyChallengeCompleted: boolean;
   dailyChallengeDate: string | null;
+  checks?: { label: string; passed: boolean }[];
   error?: string;
 };
 
@@ -78,13 +106,22 @@ type RunState =
   | { kind: "idle"; message: string }
   | { kind: "running"; message: string }
   | {
-      kind: "sample";
+      kind: "examples";
+      message: string;
+      results: {
+        input: string;
+        output: string;
+        expectedOutput: string;
+        passed: boolean;
+      }[];
+      debugOutput: string[];
+    }
+  | {
+      kind: "custom";
       message: string;
       output: string;
       debugOutput: string[];
-      passed: boolean;
     }
-  | { kind: "custom"; message: string; output: string }
   | {
       kind: "test-suite";
       message: string;
@@ -106,14 +143,180 @@ type RunState =
       totalCount: number;
       nextProblemSlug: string | null;
       dailyChallengeCompleted: boolean;
+      checks: { label: string; passed: boolean }[];
     }
   | { kind: "timeout"; message: string }
-  | { kind: "error"; message: string; debugOutput?: string[] };
+  | {
+      kind: "error";
+      message: string;
+      debugOutput?: string[];
+      source?: string;
+    };
 
 type RunnerRecovery = {
   label: string;
   guidance: string;
 };
+
+function codingTestCasesMatch(
+  left: CodingTestCase[],
+  right: CodingTestCase[],
+) {
+  return (
+    left.length === right.length &&
+    left.every(
+      (testCase, index) =>
+        testCase.input === right[index]?.input &&
+        testCase.expectedOutput === right[index]?.expectedOutput,
+    )
+  );
+}
+
+const ANONYMOUS_DRAFT_KEY_PREFIX = "lovable-original:practice-draft:v1:";
+const ANONYMOUS_DRAFT_EVENT = "lovable-original:practice-draft-changed";
+
+function getAnonymousDraftKey(problemSlug: string) {
+  return `${ANONYMOUS_DRAFT_KEY_PREFIX}${problemSlug}`;
+}
+
+function readAnonymousDraft(problemSlug: string) {
+  try {
+    return window.localStorage.getItem(getAnonymousDraftKey(problemSlug));
+  } catch {
+    return null;
+  }
+}
+
+function subscribeToAnonymousDrafts(onStoreChange: () => void) {
+  window.addEventListener(ANONYMOUS_DRAFT_EVENT, onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+
+  return () => {
+    window.removeEventListener(ANONYMOUS_DRAFT_EVENT, onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function announceAnonymousDraftChange() {
+  window.dispatchEvent(new Event(ANONYMOUS_DRAFT_EVENT));
+}
+
+function writeAnonymousDraft(problemSlug: string, code: string) {
+  try {
+    window.localStorage.setItem(getAnonymousDraftKey(problemSlug), code);
+    announceAnonymousDraftChange();
+  } catch {
+    // The editor still works when browser storage is unavailable.
+  }
+}
+
+function clearAnonymousDraft(problemSlug: string) {
+  try {
+    window.localStorage.removeItem(getAnonymousDraftKey(problemSlug));
+    announceAnonymousDraftChange();
+  } catch {
+    // A blocked storage cleanup must not interrupt saving or submission.
+  }
+}
+
+const EDITOR_VIEW_STORAGE_KEY = "lovable-original:judged-editor-view";
+const EDITOR_FONT_SIZES = [13, 15, 17] as const;
+const MAX_JAVASCRIPT_IMPORT_BYTES = MAX_CODING_SOLUTION_LENGTH;
+type EditorFontSize = (typeof EDITOR_FONT_SIZES)[number];
+
+function readEditorViewPreference() {
+  try {
+    const storedPreference = window.localStorage.getItem(
+      EDITOR_VIEW_STORAGE_KEY,
+    );
+    if (!storedPreference) return null;
+
+    const parsedPreference = JSON.parse(storedPreference) as {
+      fontSize?: unknown;
+      wrapLines?: unknown;
+    };
+    if (
+      !EDITOR_FONT_SIZES.includes(parsedPreference.fontSize as EditorFontSize) ||
+      typeof parsedPreference.wrapLines !== "boolean"
+    ) {
+      return null;
+    }
+
+    return {
+      fontSize: parsedPreference.fontSize as EditorFontSize,
+      wrapLines: parsedPreference.wrapLines,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveEditorViewPreference(
+  fontSize: EditorFontSize,
+  wrapLines: boolean,
+) {
+  try {
+    window.localStorage.setItem(
+      EDITOR_VIEW_STORAGE_KEY,
+      JSON.stringify({ fontSize, wrapLines }),
+    );
+  } catch {
+    // Editor view preferences are optional when browser storage is unavailable.
+  }
+}
+
+type CodeSearchMatch = {
+  start: number;
+  end: number;
+};
+
+function findCodeMatches(code: string, query: string): CodeSearchMatch[] {
+  if (!query) return [];
+
+  const matches: CodeSearchMatch[] = [];
+  const searchableCode = code.toLowerCase();
+  const searchableQuery = query.toLowerCase();
+  let searchFrom = 0;
+
+  while (searchFrom <= searchableCode.length - searchableQuery.length) {
+    const start = searchableCode.indexOf(searchableQuery, searchFrom);
+    if (start === -1) break;
+
+    matches.push({ start, end: start + query.length });
+    searchFrom = start + query.length;
+  }
+
+  return matches;
+}
+
+function getJudgeChecks(
+  checks: SubmissionResponse["checks"],
+  tests: CodingWorkspaceProps["problem"]["tests"],
+) {
+  if (
+    !Array.isArray(checks) ||
+    checks.length !== tests.length ||
+    checks.some(
+      (check, index) =>
+        check.label !== tests[index]?.label || typeof check.passed !== "boolean",
+    )
+  ) {
+    return [];
+  }
+
+  return checks;
+}
+
+const MAX_VISIBLE_DEBUG_LINES = 80;
+const MAX_VISIBLE_DEBUG_LINE_LENGTH = 500;
+
+function boundVisibleDebugOutput(debugOutput: string[]) {
+  return debugOutput.slice(0, MAX_VISIBLE_DEBUG_LINES).map((line) =>
+    line.length > MAX_VISIBLE_DEBUG_LINE_LENGTH
+      ? `${line.slice(0, MAX_VISIBLE_DEBUG_LINE_LENGTH)}…`
+      : line,
+  );
+}
 
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
@@ -160,31 +363,41 @@ function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
 export function CodingWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
+  browserRecoveryScope = null,
   initialCode,
   initialAcceptedCode = null,
   initialCustomTestCases = [],
   initialPracticeFeedback,
   initialSolutionNote = null,
   isSignedIn,
+  hasSavedCode = false,
   isPracticeFeedbackEligible,
   isReviewSession = false,
+  isCleanPractice = false,
   dailyChallengeDate = null,
   loadedSubmission = null,
   problem,
 }: CodingWorkspaceProps) {
+  const lineNumberGutterRef = useRef<HTMLDivElement>(null);
   const [code, setCode] = useState(initialCode);
   const [acceptedCode, setAcceptedCode] = useState(initialAcceptedCode);
+  const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
+    useState<CodingDraftRecovery | null>(null);
   const [attempts, setAttempts] = useState(initialAttempts);
   const [bestVerdict, setBestVerdict] = useState(initialBestVerdict);
   const [showPracticeFeedback, setShowPracticeFeedback] = useState(
     isPracticeFeedbackEligible,
   );
+  const [anonymousDraftDismissed, setAnonymousDraftDismissed] = useState(false);
   const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
     useState(false);
-  const [customInput, setCustomInput] = useState(problem.example.input);
+  const [customInput, setCustomInput] = useState(problem.examples[0]?.input ?? "");
   const [customTestCases, setCustomTestCases] = useState(
     initialCustomTestCases,
   );
+  const latestCustomTestCases = useRef(initialCustomTestCases);
+  const testCaseSavePending = useRef(false);
+  const [isTestCaseSaving, setIsTestCaseSaving] = useState(false);
   const [testCaseSaveState, setTestCaseSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >("saved");
@@ -198,13 +411,16 @@ export function CodingWorkspace({
   >(
     loadedSubmission
       ? "unsaved"
-      : isSignedIn && initialAttempts.length > 0
+      : isSignedIn && hasSavedCode
         ? "saved"
         : "unsaved",
   );
+  const [hasEditableDraft, setHasEditableDraft] = useState(false);
   const [runState, setRunState] = useState<RunState>({
     kind: "idle",
-    message: loadedSubmission
+    message: isCleanPractice
+      ? "Clean starter loaded. Run freely; your saved solution stays untouched until you submit."
+      : loadedSubmission
       ? "A past submission is loaded as an unsaved copy. Loading it did not change your saved work."
       : isSignedIn
         ? initialBestVerdict === "Accepted"
@@ -214,21 +430,157 @@ export function CodingWorkspace({
   });
   const [revealedRecoveryHintCount, setRevealedRecoveryHintCount] =
     useState(0);
+  const [editorFontSize, setEditorFontSize] =
+    useState<EditorFontSize>(13);
+  const [wrapEditorLines, setWrapEditorLines] = useState(true);
+  const [isEditorFocused, setIsEditorFocused] = useState(false);
+  const [isEditorSearchOpen, setIsEditorSearchOpen] = useState(false);
+  const [editorSearchQuery, setEditorSearchQuery] = useState("");
+  const [editorReplacement, setEditorReplacement] = useState("");
+  const [editorSearchIndex, setEditorSearchIndex] = useState(0);
+  const [editorImportState, setEditorImportState] = useState<{
+    kind: "idle" | "reading" | "success" | "error";
+    message: string;
+  }>({ kind: "idle", message: "" });
+  const [pendingEditorImport, setPendingEditorImport] = useState<{
+    fileName: string;
+    code: string;
+  } | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editorTextarea = useRef<HTMLTextAreaElement | null>(null);
+  const editorFocusButton = useRef<HTMLButtonElement | null>(null);
+  const editorImportInput = useRef<HTMLInputElement | null>(null);
+  const editorImportRevision = useRef(0);
+  const editorSearchInput = useRef<HTMLInputElement | null>(null);
+  const pendingEditorSelection = useRef<{
+    start: number;
+    end: number;
+  } | null>(null);
+  const allowNextEditorTabToExit = useRef(false);
   const latestCode = useRef(initialCode);
   const hasPendingDraft = useRef(false);
+  const draftRevision = useRef(0);
+  const lastQueuedDraftRevision = useRef(-1);
+  const draftSaveChain = useRef<Promise<void>>(Promise.resolve());
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
-    (runState.kind === "idle" && initialBestVerdict === "Accepted");
+    (!isCleanPractice &&
+      runState.kind === "idle" &&
+      initialBestVerdict === "Accepted");
   const acceptedReview =
-    isSignedIn && acceptedCode
+    isSignedIn &&
+    acceptedCode &&
+    (!isCleanPractice ||
+      (runState.kind === "verdict" && runState.verdict === "Accepted"))
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
+  const cleanPracticeCompleted =
+    isCleanPractice &&
+    runState.kind === "verdict" &&
+    runState.verdict === "Accepted";
+  const cleanPracticeSubmitted =
+    isCleanPractice && runState.kind === "verdict";
   const runnerRecovery = getRunnerRecovery(runState);
+  const anonymousDraft = useSyncExternalStore(
+    subscribeToAnonymousDrafts,
+    () => readAnonymousDraft(problem.slug),
+    () => null,
+  );
+  const canUseAnonymousDraft =
+    !anonymousDraftDismissed &&
+    !isCleanPractice &&
+    !loadedSubmission &&
+    (!isSignedIn || !hasSavedCode) &&
+    anonymousDraft !== null &&
+    anonymousDraft !== initialCode;
+  const recoveredAnonymousDraft = isSignedIn && canUseAnonymousDraft;
+  const editorCode = canUseAnonymousDraft ? anonymousDraft : code;
+  const runtimeErrorLocation =
+    runState.kind === "error" && runState.source === editorCode
+      ? getCodeEditorLocation(editorCode, runState.message)
+      : null;
+  const editorSearchMatches = findCodeMatches(
+    editorCode,
+    editorSearchQuery,
+  );
+  const currentEditorSearchIndex = Math.min(
+    editorSearchIndex,
+    Math.max(0, editorSearchMatches.length - 1),
+  );
+
+  useEffect(() => {
+    latestCode.current = editorCode;
+  }, [editorCode]);
+
+  useEffect(() => {
+    if (isEditorSearchOpen) editorSearchInput.current?.focus();
+  }, [isEditorSearchOpen]);
+
+  useEffect(() => {
+    if (!isEditorFocused) return;
+
+    document.body.classList.add("editor-focus-active");
+
+    function exitEditorFocus(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+
+      setIsEditorFocused(false);
+      editorFocusButton.current?.focus();
+    }
+
+    window.addEventListener("keydown", exitEditorFocus);
+
+    return () => {
+      document.body.classList.remove("editor-focus-active");
+      window.removeEventListener("keydown", exitEditorFocus);
+    };
+  }, [isEditorFocused]);
+
+  useEffect(() => {
+    const preferenceTimer = window.setTimeout(() => {
+      const storedPreference = readEditorViewPreference();
+      if (!storedPreference) return;
+
+      setEditorFontSize(storedPreference.fontSize);
+      setWrapEditorLines(storedPreference.wrapLines);
+    }, 0);
+
+    return () => window.clearTimeout(preferenceTimer);
+  }, []);
+  const browserRecoveryKey =
+    isSignedIn && browserRecoveryScope && !loadedSubmission && !isCleanPractice
+      ? getCodingDraftRecoveryKey(browserRecoveryScope, problem.slug)
+      : null;
+
+  useEffect(() => {
+    if (!browserRecoveryKey) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedValue = window.localStorage.getItem(browserRecoveryKey);
+      const browserDraft = parseCodingDraftRecovery(storedValue);
+
+      if (!browserDraft || browserDraft.code === initialCode) {
+        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDraft(browserDraft);
+      }, 0);
+    } catch {
+      // Private server saving remains available when browser storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [browserRecoveryKey, initialCode]);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
-      if (!isSignedIn || !hasPendingDraft.current) return;
+      if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
 
       if (draftTimer.current) {
         clearTimeout(draftTimer.current);
@@ -254,30 +606,99 @@ export function CodingWorkspace({
       window.removeEventListener("pagehide", savePendingDraftBeforeLeave);
       if (draftTimer.current) clearTimeout(draftTimer.current);
     };
-  }, [isSignedIn, problem.slug]);
+  }, [isCleanPractice, isSignedIn, problem.slug]);
 
-  async function saveDraft(nextCode: string) {
-    if (!isSignedIn) return;
+  function saveDraft(nextCode: string, revision: number) {
+    if (!isSignedIn || isCleanPractice) return Promise.resolve();
 
     setSaveState("saving");
-    try {
-      const response = await fetch(`/api/practice/${problem.slug}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "draft", code: nextCode }),
-      });
+    lastQueuedDraftRevision.current = revision;
+    const request = draftSaveChain.current.then(async () => {
+      try {
+        const response = await fetch(`/api/practice/${problem.slug}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "draft", code: nextCode }),
+        });
 
-      if (!response.ok) {
-        setSaveState("error");
-        return;
+        if (!response.ok) {
+          if (draftRevision.current === revision) {
+            lastQueuedDraftRevision.current = -1;
+            setSaveState("error");
+          }
+          return;
+        }
+
+        if (
+          latestCode.current === nextCode &&
+          draftRevision.current === revision
+        ) {
+          hasPendingDraft.current = false;
+          setHasEditableDraft(false);
+          setCode(nextCode);
+          setAnonymousDraftDismissed(true);
+          clearAnonymousDraft(problem.slug);
+          setSaveState("saved");
+        }
+        clearBrowserRecoveryIfMatches(nextCode);
+      } catch {
+        if (draftRevision.current === revision) {
+          lastQueuedDraftRevision.current = -1;
+          setSaveState("error");
+        }
       }
+    });
+    draftSaveChain.current = request;
+    return request;
+  }
 
-      if (latestCode.current === nextCode) {
-        hasPendingDraft.current = false;
-        setSaveState("saved");
+  async function flushLatestDraft() {
+    if (!isSignedIn || !hasPendingDraft.current) {
+      await draftSaveChain.current;
+      return;
+    }
+
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+
+    const revision = draftRevision.current;
+    if (lastQueuedDraftRevision.current !== revision) {
+      await saveDraft(latestCode.current, revision);
+      return;
+    }
+
+    await draftSaveChain.current;
+  }
+
+  function persistBrowserRecovery(nextCode: string) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.setItem(
+        browserRecoveryKey,
+        serializeCodingDraftRecovery(nextCode),
+      );
+      setRecoverableBrowserDraft(null);
+    } catch {
+      // The existing private autosave remains the fallback when storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(savedCode: string) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      const browserDraft = parseCodingDraftRecovery(
+        window.localStorage.getItem(browserRecoveryKey),
+      );
+
+      if (browserDraft?.code === savedCode) {
+        window.localStorage.removeItem(browserRecoveryKey);
       }
     } catch {
-      setSaveState("error");
+      // A blocked cleanup does not change the truth of the private save.
     }
   }
 
@@ -285,14 +706,36 @@ export function CodingWorkspace({
     setCode(nextCode);
     setSaveState("unsaved");
     latestCode.current = nextCode;
+
+    if (isCleanPractice) return;
+
     hasPendingDraft.current = true;
+    setHasEditableDraft(true);
+    draftRevision.current += 1;
+    const revision = draftRevision.current;
+
+    if (!isSignedIn) {
+      writeAnonymousDraft(problem.slug, nextCode);
+    } else {
+      if (recoveredAnonymousDraft) setAnonymousDraftDismissed(true);
+      persistBrowserRecovery(nextCode);
+    }
 
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(() => {
       draftTimer.current = null;
-      void saveDraft(nextCode);
+      void saveDraft(nextCode, revision);
     }, 700);
   }
+
+  useEffect(() => {
+    const selection = pendingEditorSelection.current;
+    if (!selection || !editorTextarea.current) return;
+
+    pendingEditorSelection.current = null;
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(selection.start, selection.end);
+  }, [editorCode]);
 
   function restoreStarter() {
     if (draftTimer.current) {
@@ -301,8 +744,15 @@ export function CodingWorkspace({
     }
 
     setCode(problem.starterCode);
+    latestCode.current = problem.starterCode;
+    hasPendingDraft.current = false;
+    setHasEditableDraft(false);
+    draftRevision.current += 1;
     setSaveState("unsaved");
+    persistBrowserRecovery(problem.starterCode);
     setIsRestoreConfirmationOpen(false);
+    setAnonymousDraftDismissed(true);
+    clearAnonymousDraft(problem.slug);
     setRunState({
       kind: "idle",
       message:
@@ -310,20 +760,212 @@ export function CodingWorkspace({
     });
   }
 
-  function saveDraftNow() {
-    if (!isSignedIn || !hasPendingDraft.current) return;
+  function restoreBrowserDraft() {
+    if (!recoverableBrowserDraft) return;
 
-    if (draftTimer.current) {
-      clearTimeout(draftTimer.current);
-      draftTimer.current = null;
-    }
-
-    void saveDraft(latestCode.current);
+    const recoveredCode = recoverableBrowserDraft.code;
+    updateCode(recoveredCode);
+    setRunState({
+      kind: "idle",
+      message:
+        "Browser draft restored as unsaved work. Your private saved solution stays unchanged until this exact code saves.",
+    });
   }
 
-  async function runExample() {
-    setRunState({ kind: "running", message: "Running the example in your browser…" });
-    const result = await runCodingSolution(code, [problem.example.input]);
+  function keepPrivateSavedDraft() {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.removeItem(browserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDraft(null);
+  }
+
+  function saveDraftNow() {
+    if (!isSignedIn || isCleanPractice || !hasPendingDraft.current) return;
+    void flushLatestDraft();
+  }
+
+  function saveDraftOnBlur(event: FocusEvent<HTMLTextAreaElement>) {
+    if (
+      event.relatedTarget instanceof HTMLElement &&
+      event.relatedTarget.dataset.draftSaveAction === "true"
+    ) {
+      return;
+    }
+
+    saveDraftNow();
+  }
+
+  function openEditorSearch() {
+    if (isEditorSearchOpen) {
+      editorSearchInput.current?.focus();
+      return;
+    }
+
+    setIsEditorSearchOpen(true);
+  }
+
+  function closeEditorSearch() {
+    setIsEditorSearchOpen(false);
+    editorTextarea.current?.focus();
+  }
+
+  function openRuntimeErrorLocation() {
+    if (!runtimeErrorLocation || !editorTextarea.current) return;
+
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(
+      runtimeErrorLocation.cursorOffset,
+      runtimeErrorLocation.cursorOffset,
+    );
+  }
+
+  function selectEditorSearchMatch(index: number) {
+    if (editorSearchMatches.length === 0 || !editorTextarea.current) return;
+
+    const nextIndex =
+      (index + editorSearchMatches.length) % editorSearchMatches.length;
+    const match = editorSearchMatches[nextIndex];
+    setEditorSearchIndex(nextIndex);
+    editorTextarea.current.focus();
+    editorTextarea.current.setSelectionRange(match.start, match.end);
+  }
+
+  function previewFirstEditorSearchMatch(query: string) {
+    const firstMatch = findCodeMatches(editorCode, query)[0];
+    if (!firstMatch || !editorTextarea.current) return;
+
+    editorTextarea.current.setSelectionRange(firstMatch.start, firstMatch.end);
+  }
+
+  function replaceCurrentEditorSearchMatch() {
+    const match = editorSearchMatches[currentEditorSearchIndex];
+    if (!match) return;
+
+    const nextCode =
+      editorCode.slice(0, match.start) +
+      editorReplacement +
+      editorCode.slice(match.end);
+    pendingEditorSelection.current = {
+      start: match.start,
+      end: match.start + editorReplacement.length,
+    };
+    setEditorSearchIndex(
+      Math.min(
+        currentEditorSearchIndex,
+        Math.max(0, findCodeMatches(nextCode, editorSearchQuery).length - 1),
+      ),
+    );
+    updateCode(nextCode);
+  }
+
+  async function importJavaScriptFile(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const files = event.currentTarget.files;
+    event.currentTarget.value = "";
+    const importRevision = editorImportRevision.current + 1;
+    editorImportRevision.current = importRevision;
+    setPendingEditorImport(null);
+
+    if (!files || files.length !== 1) {
+      setEditorImportState({
+        kind: "error",
+        message: "Choose one JavaScript file at a time.",
+      });
+      return;
+    }
+
+    const file = files[0];
+
+    if (!/\.js$/i.test(file.name)) {
+      setEditorImportState({
+        kind: "error",
+        message: "Choose a file ending in .js.",
+      });
+      return;
+    }
+
+    if (file.size > MAX_JAVASCRIPT_IMPORT_BYTES) {
+      setEditorImportState({
+        kind: "error",
+        message: `Keep imported files to ${MAX_JAVASCRIPT_IMPORT_BYTES.toLocaleString()} bytes or fewer.`,
+      });
+      return;
+    }
+
+    setEditorImportState({
+      kind: "reading",
+      message: `Reading ${file.name} in this browser…`,
+    });
+
+    try {
+      const importedCode = await file.text();
+      if (editorImportRevision.current !== importRevision) return;
+
+      if (importedCode.length === 0) {
+        setEditorImportState({
+          kind: "error",
+          message: "That file is empty. Choose a .js file with source code.",
+        });
+        return;
+      }
+
+      if (importedCode.length > MAX_CODING_SOLUTION_LENGTH) {
+        setEditorImportState({
+          kind: "error",
+          message: `Keep imported JavaScript to ${MAX_CODING_SOLUTION_LENGTH.toLocaleString()} characters or fewer.`,
+        });
+        return;
+      }
+
+      setPendingEditorImport({ fileName: file.name, code: importedCode });
+      setEditorImportState({ kind: "idle", message: "" });
+    } catch {
+      if (editorImportRevision.current !== importRevision) return;
+
+      setEditorImportState({
+        kind: "error",
+        message: "This file could not be read. Choose the .js file again.",
+      });
+    }
+  }
+
+  function confirmJavaScriptImport() {
+    if (!pendingEditorImport) return;
+
+    const { fileName, code: importedCode } = pendingEditorImport;
+    setPendingEditorImport(null);
+    pendingEditorSelection.current = { start: 0, end: 0 };
+    updateCode(importedCode);
+    setEditorImportState({
+      kind: "success",
+      message: isCleanPractice
+        ? `${fileName} imported as unsaved work. It stays local until you submit.`
+        : `${fileName} imported locally as editor work. Normal private autosave applies.`,
+    });
+  }
+
+  function cancelJavaScriptImport() {
+    setPendingEditorImport(null);
+    setEditorImportState({
+      kind: "success",
+      message: "Import cancelled. Your editor was not changed.",
+    });
+  }
+
+  async function runExamples() {
+    setRunState({
+      kind: "running",
+      message: `Running ${problem.examples.length} ${problem.examples.length === 1 ? "example" : "examples"} in your browser…`,
+    });
+    const result = await runCodingSolution(
+      editorCode,
+      problem.examples.map((example) => example.input),
+    );
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -335,20 +977,32 @@ export function CodingWorkspace({
         kind: "error",
         message: result.message,
         debugOutput: result.debugOutput,
+        source: editorCode,
       });
       return;
     }
 
-    const output = result.outputs[0] ?? "";
-    const passed = output.trim() === problem.example.expectedOutput.trim();
+    const results = problem.examples.map((example, index) => {
+      const output = result.outputs[index] ?? "";
+
+      return {
+        ...example,
+        output,
+        passed:
+          normalizeCodingOutput(output) ===
+          normalizeCodingOutput(example.expectedOutput),
+      };
+    });
+    const passedCount = results.filter((example) => example.passed).length;
+    const allPassed = passedCount === results.length;
+
     setRunState({
-      kind: "sample",
-      output,
+      kind: "examples",
+      results,
       debugOutput: result.debugOutput,
-      passed,
-      message: passed
-        ? "Example passed. Submit when you’re ready for all four checks."
-        : "The example output doesn’t match yet.",
+      message: allPassed
+        ? `${passedCount} of ${results.length} visible ${results.length === 1 ? "example" : "examples"} passed. Submit when you’re ready for all four checks.`
+        : `${passedCount} of ${results.length} visible ${results.length === 1 ? "example" : "examples"} passed. Compare the differing output before you submit.`,
     });
   }
 
@@ -357,7 +1011,7 @@ export function CodingWorkspace({
       kind: "running",
       message: "Running your custom input in the browser…",
     });
-    const result = await runCodingSolution(code, [customInput]);
+    const result = await runCodingSolution(editorCode, [customInput]);
 
     if (result.status === "timeout") {
       setRunState({ kind: "timeout", message: result.message });
@@ -365,13 +1019,19 @@ export function CodingWorkspace({
     }
 
     if (result.status !== "finished") {
-      setRunState({ kind: "error", message: result.message });
+      setRunState({
+        kind: "error",
+        message: result.message,
+        debugOutput: boundVisibleDebugOutput(result.debugOutput),
+        source: editorCode,
+      });
       return;
     }
 
     setRunState({
       kind: "custom",
       output: result.outputs[0] ?? "",
+      debugOutput: boundVisibleDebugOutput(result.debugOutput),
       message: "Custom input finished. Review the output before you submit.",
     });
   }
@@ -384,7 +1044,7 @@ export function CodingWorkspace({
       message: `Running ${customTestCases.length} private test ${customTestCases.length === 1 ? "case" : "cases"} in your browser…`,
     });
     const result = await runCodingSolution(
-      code,
+      editorCode,
       customTestCases.map((testCase) => testCase.input),
     );
 
@@ -398,6 +1058,7 @@ export function CodingWorkspace({
         kind: "error",
         message: result.message,
         debugOutput: result.debugOutput,
+        source: editorCode,
       });
       return;
     }
@@ -430,7 +1091,7 @@ export function CodingWorkspace({
   }
 
   async function persistCustomTestCases(nextCases: CodingTestCase[]) {
-    if (!isSignedIn) return false;
+    if (!isSignedIn || testCaseSavePending.current) return false;
 
     const validation = validateCodingTestCases(nextCases);
 
@@ -440,6 +1101,12 @@ export function CodingWorkspace({
       return false;
     }
 
+    const submittedCases = validation.cases;
+    const casesWhenSaveStarted = latestCustomTestCases.current.map((testCase) => ({
+      ...testCase,
+    }));
+    testCaseSavePending.current = true;
+    setIsTestCaseSaving(true);
     setTestCaseSaveState("saving");
     setTestCaseMessage("Saving private test cases…");
 
@@ -449,7 +1116,7 @@ export function CodingWorkspace({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cases: validation.cases }),
+          body: JSON.stringify({ cases: submittedCases }),
         },
       );
       const payload = (await response.json()) as {
@@ -465,6 +1132,20 @@ export function CodingWorkspace({
         return false;
       }
 
+      if (
+        !codingTestCasesMatch(
+          latestCustomTestCases.current,
+          casesWhenSaveStarted,
+        )
+      ) {
+        setTestCaseSaveState("unsaved");
+        setTestCaseMessage(
+          "Your earlier test cases are saved. Your newer changes are still unsaved.",
+        );
+        return true;
+      }
+
+      latestCustomTestCases.current = payload.testCases.cases;
       setCustomTestCases(payload.testCases.cases);
       setTestCaseSaveState("saved");
       setTestCaseMessage(
@@ -479,58 +1160,81 @@ export function CodingWorkspace({
         "Your test cases could not be saved. Check your connection and try again.",
       );
       return false;
+    } finally {
+      testCaseSavePending.current = false;
+      setIsTestCaseSaving(false);
     }
   }
 
   async function saveCurrentCustomInput() {
-    if (customTestCases.some((testCase) => testCase.input === customInput)) {
+    if (
+      latestCustomTestCases.current.some(
+        (testCase) => testCase.input === customInput,
+      )
+    ) {
       setTestCaseSaveState("error");
       setTestCaseMessage("That exact input is already saved.");
       return;
     }
 
     await persistCustomTestCases([
-      ...customTestCases,
+      ...latestCustomTestCases.current,
       { input: customInput, expectedOutput: null },
     ]);
   }
 
   function updateCustomTestCase(index: number, input: string) {
-    setCustomTestCases((current) =>
-      current.map((testCase, savedIndex) =>
+    setCustomTestCases((current) => {
+      const nextCases = current.map((testCase, savedIndex) =>
         savedIndex === index ? { ...testCase, input } : testCase,
-      ),
-    );
+      );
+      latestCustomTestCases.current = nextCases;
+      return nextCases;
+    });
     setTestCaseSaveState("unsaved");
-    setTestCaseMessage("Test case changes are not saved yet.");
+    setTestCaseMessage(
+      isTestCaseSaving
+        ? "Saving your earlier test cases. Your newer changes are still unsaved."
+        : "Test case changes are not saved yet.",
+    );
   }
 
   function updateExpectedOutput(index: number, expectedOutput: string | null) {
-    setCustomTestCases((current) =>
-      current.map((testCase, savedIndex) =>
+    setCustomTestCases((current) => {
+      const nextCases = current.map((testCase, savedIndex) =>
         savedIndex === index ? { ...testCase, expectedOutput } : testCase,
-      ),
-    );
+      );
+      latestCustomTestCases.current = nextCases;
+      return nextCases;
+    });
     setTestCaseSaveState("unsaved");
-    setTestCaseMessage("Test case changes are not saved yet.");
+    setTestCaseMessage(
+      isTestCaseSaving
+        ? "Saving your earlier test cases. Your newer changes are still unsaved."
+        : "Test case changes are not saved yet.",
+    );
   }
 
   async function removeCustomTestCase(index: number) {
     await persistCustomTestCases(
-      customTestCases.filter((_, savedIndex) => savedIndex !== index),
+      latestCustomTestCases.current.filter(
+        (_, savedIndex) => savedIndex !== index,
+      ),
     );
   }
 
   async function submitSolution() {
     if (!isSignedIn) return;
 
+    const submittedCode = editorCode;
     setRevealedRecoveryHintCount(0);
     setRunState({
       kind: "running",
-      message: "Running four deterministic checks in your browser…",
+      message: `Running ${problem.tests.length} deterministic checks in your browser…`,
     });
+    await flushLatestDraft();
     const result = await runCodingSolution(
-      code,
+      submittedCode,
       problem.tests.map((test) => test.input),
     );
 
@@ -540,7 +1244,11 @@ export function CodingWorkspace({
     }
 
     if (result.status !== "finished") {
-      setRunState({ kind: "error", message: result.message });
+      setRunState({
+        kind: "error",
+        message: result.message,
+        source: submittedCode,
+      });
       return;
     }
 
@@ -550,7 +1258,7 @@ export function CodingWorkspace({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "submit",
-          code,
+          code: submittedCode,
           outputs: result.outputs,
           dailyChallengeDate,
         }),
@@ -566,8 +1274,13 @@ export function CodingWorkspace({
       }
 
       setBestVerdict(payload.bestVerdict);
-      if (payload.verdict === "Accepted") setAcceptedCode(code);
+      if (payload.verdict === "Accepted") setAcceptedCode(submittedCode);
+      hasPendingDraft.current = false;
+      setCode(submittedCode);
+      setAnonymousDraftDismissed(true);
+      clearAnonymousDraft(problem.slug);
       setSaveState("saved");
+      clearBrowserRecoveryIfMatches(submittedCode);
       setAttempts((current) => [
         {
           id: payload.id,
@@ -588,6 +1301,7 @@ export function CodingWorkspace({
         totalCount: payload.totalCount,
         nextProblemSlug: payload.nextProblemSlug,
         dailyChallengeCompleted: payload.dailyChallengeCompleted,
+        checks: getJudgeChecks(payload.checks, problem.tests),
         message:
           payload.verdict === "Accepted"
             ? payload.dailyChallengeCompleted
@@ -632,8 +1346,144 @@ export function CodingWorkspace({
     }
   }
 
+  function handleEditorKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      event.key.toLowerCase() === "f" &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      openEditorSearch();
+      return;
+    }
+
+    if (
+      event.key === "/" &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      const result = toggleEditorLineComments(
+        editorCode,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+      );
+
+      if (result.value === editorCode) return;
+
+      pendingEditorSelection.current = {
+        start: result.selectionStart,
+        end: result.selectionEnd,
+      };
+      updateCode(result.value);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      allowNextEditorTabToExit.current = true;
+      return;
+    }
+
+    if (event.key === "Tab") {
+      if (allowNextEditorTabToExit.current) {
+        allowNextEditorTabToExit.current = false;
+        return;
+      }
+
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.nativeEvent.isComposing
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const result = applyEditorIndentation(
+        editorCode,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        event.shiftKey,
+      );
+
+      if (result.value === editorCode) return;
+
+      pendingEditorSelection.current = {
+        start: result.selectionStart,
+        end: result.selectionEnd,
+      };
+      updateCode(result.value);
+      return;
+    }
+
+    allowNextEditorTabToExit.current = false;
+
+    if (
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.repeat &&
+      !event.nativeEvent.isComposing
+    ) {
+      const result = applyEditorSmartEditing(
+        editorCode,
+        event.currentTarget.selectionStart,
+        event.currentTarget.selectionEnd,
+        event.key,
+      );
+
+      if (result) {
+        event.preventDefault();
+
+        if (result.value === editorCode) {
+          event.currentTarget.setSelectionRange(
+            result.selectionStart,
+            result.selectionEnd,
+          );
+          return;
+        }
+
+        pendingEditorSelection.current = {
+          start: result.selectionStart,
+          end: result.selectionEnd,
+        };
+        updateCode(result.value);
+        return;
+      }
+    }
+
+    const usesPrimaryModifier = event.ctrlKey || event.metaKey;
+
+    if (
+      event.key !== "Enter" ||
+      !usesPrimaryModifier ||
+      event.altKey ||
+      event.repeat ||
+      event.nativeEvent.isComposing ||
+      (event.shiftKey && !isSignedIn)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (runState.kind === "running") return;
+
+    if (event.shiftKey) {
+      void submitSolution();
+      return;
+    }
+
+    void runExamples();
+  }
+
   const visibleDebugOutput =
-    runState.kind === "sample" ||
+    runState.kind === "examples" ||
+    runState.kind === "custom" ||
     runState.kind === "test-suite" ||
     runState.kind === "error"
       ? (runState.debugOutput ?? [])
@@ -648,7 +1498,7 @@ export function CodingWorkspace({
           <p>
             Define <code>solve(input)</code> and return the exact output. Network
             access is blocked and the runner stops after 1,000 ms. Run the
-            example to inspect local <code>console.log</code> output.
+            visible examples together to inspect local <code>console.log</code> output.
           </p>
         </div>
         <div className={bestVerdict === "Accepted" ? "best-verdict is-accepted" : "best-verdict"}>
@@ -657,21 +1507,193 @@ export function CodingWorkspace({
         </div>
       </header>
 
-      <div className="code-editor">
+      <div className={isEditorFocused ? "code-editor is-focused" : "code-editor"}>
         <div className="code-editor-bar">
-          <span>solution.js</span>
-          <span>
-            {isSignedIn
-              ? saveState === "saving"
-                ? "Saving…"
-                : saveState === "saved"
-                  ? "Saved"
-                  : saveState === "error"
-                    ? "Save failed"
-                    : "Unsaved"
-              : "Local only"}
+          <div className="code-editor-file">
+            <span>solution.js</span>
+            {isSignedIn ? (
+              <>
+                <input
+                  ref={editorImportInput}
+                  type="file"
+                  accept=".js,text/javascript,application/javascript"
+                  aria-label="Choose JavaScript file to import"
+                  onChange={importJavaScriptFile}
+                  hidden
+                />
+                <button
+                  type="button"
+                  className="editor-import-trigger"
+                  aria-describedby="coding-editor-import-help"
+                  data-draft-save-action="true"
+                  onClick={() => editorImportInput.current?.click()}
+                  disabled={runState.kind === "running"}
+                >
+                  Import .js
+                </button>
+                <span className="sr-only" id="coding-editor-import-help">
+                  Choose one JavaScript file up to 12,000 bytes. The file is
+                  read in this browser and becomes normal unsaved editor work.
+                </span>
+              </>
+            ) : null}
+          </div>
+          <div
+            className="editor-view-controls"
+            aria-label="Editor tools and view preferences"
+          >
+            <label>
+              <span>Text size</span>
+              <select
+                aria-label="Editor text size"
+                value={editorFontSize}
+                onChange={(event) => {
+                  const nextFontSize = Number(
+                    event.target.value,
+                  ) as EditorFontSize;
+                  setEditorFontSize(nextFontSize);
+                  saveEditorViewPreference(nextFontSize, wrapEditorLines);
+                }}
+              >
+                <option value={13}>Small</option>
+                <option value={15}>Comfortable</option>
+                <option value={17}>Large</option>
+              </select>
+            </label>
+            <label className="editor-wrap-control">
+              <input
+                type="checkbox"
+                checked={wrapEditorLines}
+                onChange={(event) => {
+                  const nextWrapEditorLines = event.target.checked;
+                  setWrapEditorLines(nextWrapEditorLines);
+                  saveEditorViewPreference(
+                    editorFontSize,
+                    nextWrapEditorLines,
+                  );
+                }}
+              />
+              <span>Wrap lines</span>
+            </label>
+            <button
+              type="button"
+              className="editor-search-trigger"
+              aria-expanded={isEditorSearchOpen}
+              aria-controls="coding-editor-search"
+              data-draft-save-action="true"
+              onClick={openEditorSearch}
+            >
+              Find
+            </button>
+            <button
+              ref={editorFocusButton}
+              type="button"
+              className="editor-focus-trigger"
+              aria-pressed={isEditorFocused}
+              aria-keyshortcuts={isEditorFocused ? "Escape" : undefined}
+              data-draft-save-action="true"
+              onClick={() => setIsEditorFocused((current) => !current)}
+            >
+              {isEditorFocused ? "Exit focus" : "Focus"}
+            </button>
+            <span className="sr-only">
+              These view preferences stay in this browser. Focus view is
+              temporary and does not change your saved work.
+            </span>
+          </div>
+          <div className="code-editor-save-status">
+            <span
+              className="code-editor-status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {isCleanPractice
+                ? cleanPracticeSubmitted
+                  ? "Submitted"
+                  : "Practice copy"
+                : isSignedIn
+                  ? saveState === "saving"
+                    ? "Saving…"
+                    : saveState === "saved"
+                      ? "Saved"
+                      : saveState === "error"
+                        ? "Save failed"
+                        : "Unsaved"
+                  : "Local only"}
+            </span>
+            {isSignedIn &&
+            !isCleanPractice &&
+            hasEditableDraft &&
+            saveState !== "saving" ? (
+              <button
+                type="button"
+                className={
+                  saveState === "error"
+                    ? "code-editor-save-action is-error"
+                    : "code-editor-save-action"
+                }
+                data-draft-save-action="true"
+                onClick={saveDraftNow}
+              >
+                {saveState === "error" ? "Retry save" : "Save now"}
+              </button>
+            ) : null}
+          </div>
+          <span
+            className="code-editor-shortcuts"
+            id="coding-editor-indentation-hint"
+          >
+            {isEditorFocused
+              ? "Focus view · Escape exits · Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds"
+              : "Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits"}
           </span>
         </div>
+        {editorImportState.kind !== "idle" ? (
+          <p
+            className={
+              editorImportState.kind === "error"
+                ? "code-editor-import-message is-error"
+                : "code-editor-import-message"
+            }
+            role="status"
+            aria-live="polite"
+          >
+            {editorImportState.message}
+          </p>
+        ) : null}
+        {pendingEditorImport ? (
+          <div
+            className="starter-restore-confirmation editor-import-confirmation"
+            role="group"
+            aria-labelledby="editor-import-confirmation-title"
+          >
+            <div>
+              <strong id="editor-import-confirmation-title">
+                Import {pendingEditorImport.fileName}?
+              </strong>
+              <p>
+                This replaces the current editor text. Your saved results stay
+                unchanged, and the imported source becomes unsaved work.
+              </p>
+            </div>
+            <div>
+              <button
+                type="button"
+                className="starter-restore-trigger"
+                onClick={cancelJavaScriptImport}
+              >
+                Keep editor
+              </button>
+              <button
+                type="button"
+                className="starter-restore-confirm"
+                onClick={confirmJavaScriptImport}
+              >
+                Import file
+              </button>
+            </div>
+          </div>
+        ) : null}
         {loadedSubmission ? (
           <div className="loaded-submission-cue" role="status">
             <div>
@@ -698,16 +1720,209 @@ export function CodingWorkspace({
             <Link href={`/practice/${problem.slug}`}>Restore saved editor</Link>
           </div>
         ) : null}
+        {isCleanPractice ? (
+          <div className="clean-practice-cue" role="status">
+            <div>
+              <span>Clean practice copy</span>
+              <strong>
+                {cleanPracticeSubmitted
+                  ? "This practice copy has been submitted."
+                  : "Solve from the starter, not the saved answer."}
+              </strong>
+            </div>
+            <p>
+              {cleanPracticeSubmitted
+                ? "Your attempt and editor are saved. Earlier source stays hidden until you leave clean practice."
+                : "Typing and browser runs stay local. Your saved solution changes only if you deliberately submit this copy."}
+            </p>
+            <Link href={`/practice/${problem.slug}`}>
+              {cleanPracticeSubmitted
+                ? "Open saved editor"
+                : "Return to saved solution"}
+            </Link>
+          </div>
+        ) : null}
+        {recoveredAnonymousDraft ? (
+          <div className="loaded-submission-cue anonymous-draft-cue" role="status">
+            <div>
+              <span>Local draft recovered</span>
+              <strong>Your work is back after sign-in</strong>
+              <small>Not saved to your account yet</small>
+            </div>
+            <p>
+              This browser copy did not replace account-owned code. Save it as
+              your current draft, keep editing, or submit when you’re ready.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                void saveDraft(editorCode, draftRevision.current)
+              }
+              disabled={saveState === "saving"}
+            >
+              {saveState === "saving" ? "Saving…" : "Save recovered draft"}
+            </button>
+          </div>
+        ) : null}
+        {recoverableBrowserDraft && !recoveredAnonymousDraft ? (
+          <aside
+            className="browser-draft-recovery"
+            aria-labelledby="browser-draft-recovery-title"
+          >
+            <div>
+              <span>Browser recovery</span>
+              <strong id="browser-draft-recovery-title">
+                Newer work is available on this browser.
+              </strong>
+            </div>
+            <p>
+              Your private saved solution is still loaded. Restore this copy as
+              unsaved work, or keep the account-backed version.
+            </p>
+            <div className="browser-draft-recovery-actions">
+              <button type="button" onClick={keepPrivateSavedDraft}>
+                Keep saved editor
+              </button>
+              <button type="button" onClick={restoreBrowserDraft}>
+                Restore browser draft
+              </button>
+            </div>
+          </aside>
+        ) : null}
+        {isEditorSearchOpen ? (
+          <section
+            className="code-editor-search"
+            id="coding-editor-search"
+            aria-label="Find and replace in code"
+          >
+            <div className="code-editor-search-fields">
+              <label>
+                <span>Find</span>
+                <input
+                  ref={editorSearchInput}
+                  type="search"
+                  value={editorSearchQuery}
+                  data-draft-save-action="true"
+                  onChange={(event) => {
+                    setEditorSearchQuery(event.target.value);
+                    setEditorSearchIndex(0);
+                    previewFirstEditorSearchMatch(event.target.value);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      closeEditorSearch();
+                    } else if (event.key === "Enter") {
+                      event.preventDefault();
+                      selectEditorSearchMatch(
+                        currentEditorSearchIndex + (event.shiftKey ? -1 : 1),
+                      );
+                    }
+                  }}
+                />
+              </label>
+              <label>
+                <span>Replace with</span>
+                <input
+                  type="text"
+                  value={editorReplacement}
+                  data-draft-save-action="true"
+                  onChange={(event) => setEditorReplacement(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      closeEditorSearch();
+                    }
+                  }}
+                />
+              </label>
+            </div>
+            <p className="code-editor-search-status" aria-live="polite">
+              {!editorSearchQuery
+                ? "Enter text to search this file."
+                : editorSearchMatches.length === 0
+                  ? "No matches"
+                  : `${currentEditorSearchIndex + 1} of ${editorSearchMatches.length} ${editorSearchMatches.length === 1 ? "match" : "matches"}`}
+            </p>
+            <div className="code-editor-search-actions">
+              <button
+                type="button"
+                data-draft-save-action="true"
+                onClick={() =>
+                  selectEditorSearchMatch(currentEditorSearchIndex - 1)
+                }
+                disabled={editorSearchMatches.length === 0}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                data-draft-save-action="true"
+                onClick={() =>
+                  selectEditorSearchMatch(currentEditorSearchIndex + 1)
+                }
+                disabled={editorSearchMatches.length === 0}
+              >
+                Next
+              </button>
+              <button
+                type="button"
+                data-draft-save-action="true"
+                onClick={replaceCurrentEditorSearchMatch}
+                disabled={editorSearchMatches.length === 0}
+              >
+                Replace match
+              </button>
+              <button
+                type="button"
+                className="code-editor-search-close"
+                data-draft-save-action="true"
+                onClick={closeEditorSearch}
+              >
+                Close
+              </button>
+            </div>
+          </section>
+        ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
-        <textarea
-          id="coding-solution"
-          aria-label="JavaScript solution"
-          value={code}
-          onChange={(event) => updateCode(event.target.value)}
-          onBlur={saveDraftNow}
-          spellCheck={false}
-        />
-        {isSignedIn ? (
+        <div className="code-editor-input">
+          <div
+            aria-hidden="true"
+            className="code-editor-line-numbers"
+            ref={lineNumberGutterRef}
+          >
+            {Array.from(
+              { length: Math.max(1, editorCode.split("\n").length) },
+              (_, index) => (
+                <span key={index}>{index + 1}</span>
+              ),
+            )}
+          </div>
+          <textarea
+            ref={editorTextarea}
+            id="coding-solution"
+            aria-label="JavaScript solution"
+            aria-describedby="coding-editor-keyboard-hint coding-editor-indentation-hint"
+            value={editorCode}
+            onChange={(event) => updateCode(event.target.value)}
+            onKeyDown={handleEditorKeyDown}
+            onBlur={isCleanPractice ? undefined : saveDraftOnBlur}
+            wrap={wrapEditorLines ? "soft" : "off"}
+            style={{
+              fontSize: `${editorFontSize}px`,
+              overflowWrap: wrapEditorLines ? "anywhere" : "normal",
+              whiteSpace: wrapEditorLines ? "pre-wrap" : "pre",
+            }}
+            onScroll={(event) => {
+              if (lineNumberGutterRef.current) {
+                lineNumberGutterRef.current.style.transform = `translateY(-${event.currentTarget.scrollTop}px)`;
+              }
+            }}
+            disabled={runState.kind === "running"}
+            spellCheck={false}
+          />
+        </div>
+        {isSignedIn && !isCleanPractice ? (
           <div className="starter-restore">
             {isRestoreConfirmationOpen ? (
               <div
@@ -727,6 +1942,7 @@ export function CodingWorkspace({
                     className="starter-restore-cancel"
                     type="button"
                     onClick={() => setIsRestoreConfirmationOpen(false)}
+                    disabled={runState.kind === "running"}
                   >
                     Keep my code
                   </button>
@@ -734,6 +1950,7 @@ export function CodingWorkspace({
                     className="starter-restore-confirm"
                     type="button"
                     onClick={restoreStarter}
+                    disabled={runState.kind === "running"}
                   >
                     Restore starter
                   </button>
@@ -746,9 +1963,12 @@ export function CodingWorkspace({
                 onClick={() => {
                   setIsRestoreConfirmationOpen(true);
                 }}
-                disabled={code === problem.starterCode}
+                disabled={
+                  editorCode === problem.starterCode ||
+                  runState.kind === "running"
+                }
               >
-                {code === problem.starterCode
+                {editorCode === problem.starterCode
                   ? "Clean starter loaded"
                   : "Restore clean starter"}
               </button>
@@ -760,18 +1980,20 @@ export function CodingWorkspace({
       <div className="coding-actions">
         <span
           className="coding-keyboard-hint"
-          id="run-example-keyboard-hint"
+          id="coding-editor-keyboard-hint"
         >
-          Keyboard: Tab to Run, then Enter
+          {isSignedIn
+            ? "Keyboard: Ctrl/⌘ + Enter to run · add Shift to submit"
+            : "Keyboard: Ctrl/⌘ + Enter to run"}
         </span>
         <button
           className="secondary-code-action"
           type="button"
-          onClick={runExample}
+          onClick={runExamples}
           disabled={runState.kind === "running"}
-          aria-describedby="run-example-keyboard-hint"
+          aria-describedby="coding-editor-keyboard-hint"
         >
-          Run example
+          {`Run ${problem.examples.length} ${problem.examples.length === 1 ? "example" : "examples"}`}
         </button>
         {isSignedIn ? (
           <button
@@ -779,13 +2001,14 @@ export function CodingWorkspace({
             type="button"
             onClick={submitSolution}
             disabled={runState.kind === "running"}
+            aria-describedby="coding-editor-keyboard-hint"
           >
             {runState.kind === "running" ? "Running checks…" : "Submit solution"}
           </button>
         ) : (
           <Link
             className="submit-code-action"
-            href="/account?mode=signin"
+            href={getSignInHref(`/practice/${problem.slug}`)}
           >
             Sign in to submit
           </Link>
@@ -820,12 +2043,12 @@ export function CodingWorkspace({
                 type="button"
                 onClick={() => void saveCurrentCustomInput()}
                 disabled={
-                  testCaseSaveState === "saving" ||
+                  isTestCaseSaving ||
                   customInput.trim().length === 0 ||
                   customTestCases.length >= MAX_CODING_TEST_CASES
                 }
               >
-                {testCaseSaveState === "saving" ? "Saving…" : "Save test case"}
+                {isTestCaseSaving ? "Saving…" : "Save test case"}
               </button>
             ) : null}
           </div>
@@ -912,7 +2135,7 @@ export function CodingWorkspace({
                         <button
                           type="button"
                           onClick={() => void removeCustomTestCase(index)}
-                          disabled={testCaseSaveState === "saving"}
+                          disabled={isTestCaseSaving}
                         >
                           Remove
                         </button>
@@ -931,8 +2154,9 @@ export function CodingWorkspace({
                 className="private-test-cases-save"
                 type="button"
                 onClick={() => void persistCustomTestCases(customTestCases)}
+                disabled={isTestCaseSaving}
               >
-                Save changes
+                {isTestCaseSaving ? "Saving…" : "Save changes"}
               </button>
             ) : null}
             <p
@@ -951,9 +2175,11 @@ export function CodingWorkspace({
             ? runState.verdict === "Accepted"
               ? " is-accepted"
               : " is-wrong"
-            : runState.kind === "sample" && runState.passed
+            : runState.kind === "examples" &&
+                runState.results.every((example) => example.passed)
               ? " is-accepted"
-              : runState.kind === "idle" &&
+              : !isCleanPractice &&
+                  runState.kind === "idle" &&
                   initialBestVerdict === "Accepted"
                 ? " is-accepted"
               : ""
@@ -966,10 +2192,10 @@ export function CodingWorkspace({
           <span>
             {runState.kind === "verdict"
               ? runState.verdict
-              : runState.kind === "sample"
-                ? runState.passed
-                  ? "Example passed"
-                  : "Example differs"
+              : runState.kind === "examples"
+                ? runState.results.every((example) => example.passed)
+                  ? "Examples passed"
+                  : "Examples differ"
                 : runState.kind === "custom"
                   ? "Custom run"
                   : runState.kind === "test-suite"
@@ -980,7 +2206,7 @@ export function CodingWorkspace({
                         ? "Time limit exceeded"
                         : runState.kind === "running"
                           ? "Judging"
-                          : initialBestVerdict === "Accepted"
+                          : !isCleanPractice && initialBestVerdict === "Accepted"
                             ? "Accepted"
                             : "Ready"}
           </span>
@@ -991,11 +2217,73 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
-        {runState.kind === "sample" || runState.kind === "custom" ? (
+        {runtimeErrorLocation ? (
+          <button
+            className="runtime-location-action"
+            type="button"
+            aria-label={`Open line ${runtimeErrorLocation.line}, column ${runtimeErrorLocation.column} in the editor`}
+            data-draft-save-action="true"
+            onClick={openRuntimeErrorLocation}
+          >
+            Open line {runtimeErrorLocation.line}
+          </button>
+        ) : null}
+        {runState.kind === "verdict" && runState.checks.length > 0 ? (
+          <section
+            className="judge-check-results"
+            aria-labelledby={`judge-check-results-${problem.slug}`}
+          >
+            <div>
+              <span>Judge coverage</span>
+              <h3 id={`judge-check-results-${problem.slug}`}>
+                What passed, and what needs work
+              </h3>
+            </div>
+            <ol>
+              {runState.checks.map((check) => (
+                <li className={check.passed ? "is-passed" : "is-revisit"} key={check.label}>
+                  <span aria-hidden="true">{check.passed ? "✓" : "·"}</span>
+                  <strong>{check.label}</strong>
+                  <small>{check.passed ? "Passed" : "Needs work"}</small>
+                </li>
+              ))}
+            </ol>
+            <p>
+              Check names describe coverage only. Inputs, expected outputs, and
+              solution code stay hidden.
+            </p>
+          </section>
+        ) : null}
+        {runState.kind === "custom" ? (
           <div className="sample-output">
             <span>Your output</span>
             <pre>{runState.output || "(empty)"}</pre>
           </div>
+        ) : null}
+        {runState.kind === "examples" ? (
+          <ol
+            className="example-run-results"
+            aria-label="Visible example results"
+          >
+            {runState.results.map((result, index) => (
+              <li key={`${index}-${result.input}`}>
+                <span>Example {index + 1}</span>
+                <div>
+                  <p>Input</p>
+                  <pre>{result.input}</pre>
+                </div>
+                <div>
+                  <p>Your output</p>
+                  <pre>{result.output || "(empty)"}</pre>
+                </div>
+                <div className={result.passed ? "is-matched" : "is-mismatch"}>
+                  <p>Expected</p>
+                  <pre>{result.expectedOutput || "(empty)"}</pre>
+                  <span>{result.passed ? "Matched" : "Mismatch"}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
         ) : null}
         {runState.kind === "test-suite" ? (
           <ol
@@ -1143,9 +2431,62 @@ export function CodingWorkspace({
               </h3>
             </div>
             <p>{problem.acceptedExplanation.whyItWorks}</p>
+            <section
+              className="accepted-worked-trace"
+              aria-labelledby={`accepted-worked-trace-${problem.slug}`}
+            >
+              <div className="accepted-worked-trace-heading">
+                <span>Worked trace</span>
+                <h4 id={`accepted-worked-trace-${problem.slug}`}>
+                  Follow the first example
+                </h4>
+              </div>
+              <div className="accepted-worked-trace-values">
+                <div>
+                  <span>Input</span>
+                  <pre>{problem.examples[0].input}</pre>
+                </div>
+                <div>
+                  <span>Expected output</span>
+                  <pre>{problem.examples[0].expectedOutput}</pre>
+                </div>
+              </div>
+              <ol>
+                {problem.workedTrace.steps.map((step, index) => (
+                  <li key={step}>
+                    <span aria-hidden="true">{index + 1}</span>
+                    <p>{step}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="accepted-worked-trace-note">
+                This follows the public example above. It does not analyze your
+                source or reveal a solution.
+              </p>
+            </section>
             <div className="accepted-mistake">
               <span>Common mistake</span>
               <p>{problem.acceptedExplanation.commonMistake}</p>
+            </div>
+            <div className="accepted-efficiency">
+              <div>
+                <span>Efficiency target</span>
+                <dl>
+                  <div>
+                    <dt>Time</dt>
+                    <dd>{problem.acceptedExplanation.efficiency.time}</dd>
+                  </div>
+                  <div>
+                    <dt>Extra space</dt>
+                    <dd>{problem.acceptedExplanation.efficiency.space}</dd>
+                  </div>
+                </dl>
+              </div>
+              <p>{problem.acceptedExplanation.efficiency.explanation}</p>
+              <small>
+                This is the target for a direct approach, not an analysis of
+                your exact source.
+              </small>
             </div>
           </section>
         ) : null}
@@ -1178,19 +2519,45 @@ export function CodingWorkspace({
               Built from your most recent Accepted source. No new attempt or
               learner record was created.
             </p>
+            <Link
+              className="accepted-code-review-debrief-link"
+              href={`/practice/${problem.slug}/debrief`}
+            >
+              Open private problem debrief <span aria-hidden="true">→</span>
+            </Link>
           </section>
+        ) : null}
+        {acceptedReview && acceptedCode ? (
+          <>
+            <AcceptedSolutionDownload
+              problemSlug={problem.slug}
+              problemTitle={problem.title}
+              source={acceptedCode}
+            />
+            <Link
+              className="accepted-playground-link"
+              href={`/playground?accepted_from=${encodeURIComponent(problem.slug)}`}
+            >
+              Experiment with an Accepted copy in the playground
+              <span aria-hidden="true">→</span>
+            </Link>
+          </>
         ) : null}
         <div className="practice-recovery-cue">
           <span aria-hidden="true" />
           <p>
-            {isSignedIn
+            {isCleanPractice && !cleanPracticeCompleted
+              ? cleanPracticeSubmitted
+                ? "This attempt and editor are saved. Earlier Accepted source remains hidden in clean practice."
+                : "Your saved Accepted solution stays untouched until you submit this practice copy."
+              : isSignedIn
               ? "Your saved code, attempts, and Accepted progress return after sign-in."
               : "Sign in to save this work. Your code, attempts, and Accepted progress return with your account."}
           </p>
         </div>
       </div>
 
-      {isSignedIn ? (
+      {isSignedIn && (!isCleanPractice || cleanPracticeCompleted) ? (
         <PracticeSolutionNote
           problemSlug={problem.slug}
           initialNote={initialSolutionNote}
@@ -1198,63 +2565,79 @@ export function CodingWorkspace({
         />
       ) : null}
 
-      {showPracticeFeedback ? (
+      {showPracticeFeedback && (!isCleanPractice || cleanPracticeCompleted) ? (
         <PracticeFeedback
           problemSlug={problem.slug}
           initialFeedback={initialPracticeFeedback}
         />
       ) : null}
 
-      <section className="attempt-history" aria-labelledby="attempt-history-title">
-        <div>
-          <p className="quiz-kicker">Saved attempts</p>
-          <h3 id="attempt-history-title">Verdict history</h3>
-        </div>
-        {attempts.length > 0 ? (
-          <ol>
-            {attempts.map((attempt, index) => (
-              <li key={attempt.id}>
-                <span>#{attempts.length - index}</span>
-                <strong
-                  className={
-                    attempt.verdict === "Accepted"
-                      ? "attempt-accepted"
-                      : "attempt-wrong"
-                  }
-                >
-                  {attempt.verdict}
-                </strong>
-                <span>
-                  {attempt.passedTests}/{attempt.totalTests} checks
-                </span>
-                <time dateTime={attempt.createdAt}>
-                  {new Intl.DateTimeFormat("en", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(new Date(attempt.createdAt))}
-                </time>
-                {attempt.hasSource ? (
-                  <Link
-                    className="attempt-source-link"
-                    href={`/submissions/${attempt.id}`}
-                    aria-label={`Review source for attempt ${attempts.length - index}`}
-                  >
-                    Review source <span aria-hidden="true">→</span>
-                  </Link>
-                ) : (
-                  <span className="attempt-source-state">Result only</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="attempt-history-empty">
-            No saved submissions yet. Your first verdict will appear here.
+      {isCleanPractice && !cleanPracticeCompleted ? (
+        <section
+          className="clean-practice-history"
+          aria-label="Saved work hidden"
+        >
+          <strong>Saved work stays out of view.</strong>
+          <p>
+            Finish this retrieval attempt first, or return to your saved
+            solution to review earlier source and notes.
           </p>
-        )}
-      </section>
+        </section>
+      ) : (
+        <section
+          className="attempt-history"
+          aria-labelledby="attempt-history-title"
+        >
+          <div>
+            <p className="quiz-kicker">Saved attempts</p>
+            <h3 id="attempt-history-title">Verdict history</h3>
+          </div>
+          {attempts.length > 0 ? (
+            <ol>
+              {attempts.map((attempt, index) => (
+                <li key={attempt.id}>
+                  <span>#{attempts.length - index}</span>
+                  <strong
+                    className={
+                      attempt.verdict === "Accepted"
+                        ? "attempt-accepted"
+                        : "attempt-wrong"
+                    }
+                  >
+                    {attempt.verdict}
+                  </strong>
+                  <span>
+                    {attempt.passedTests}/{attempt.totalTests} checks
+                  </span>
+                  <time dateTime={attempt.createdAt}>
+                    {new Intl.DateTimeFormat("en", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(attempt.createdAt))}
+                  </time>
+                  {attempt.hasSource ? (
+                    <Link
+                      className="attempt-source-link"
+                      href={`/submissions/${attempt.id}`}
+                      aria-label={`Review source for attempt ${attempts.length - index}`}
+                    >
+                      Review source <span aria-hidden="true">→</span>
+                    </Link>
+                  ) : (
+                    <span className="attempt-source-state">Result only</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="attempt-history-empty">
+              No saved submissions yet. Your first verdict will appear here.
+            </p>
+          )}
+        </section>
+      )}
     </section>
   );
 }

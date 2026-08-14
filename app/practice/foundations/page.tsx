@@ -4,7 +4,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { JavaScriptFoundationsWarmup } from "@/components/javascript-foundations-warmup";
 import { auth } from "@/lib/auth";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID } from "@/lib/javascript-foundations";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
@@ -29,7 +32,10 @@ export default async function JavaScriptFoundationsPage() {
     redirect("/account?mode=signin&next=/practice/foundations");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "foundations");
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "foundations"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "foundations"),
+  ]);
 
   if (!completedExerciseIds.includes(JAVASCRIPT_JUDGE_CONTRACT_EXERCISE_ID)) {
     redirect("/practice/judge-basics");
@@ -53,12 +59,15 @@ export default async function JavaScriptFoundationsPage() {
           </div>
           <p>
             Build on the judge lesson with three small programs: parse input,
-            choose a branch, and build output. Each completed step saves privately,
-            while every run stays in your browser.
+            choose a branch, and build output. Drafts and completed steps save
+            privately, while every run stays in your browser.
           </p>
         </header>
 
-        <JavaScriptFoundationsWarmup completedExerciseIds={completedExerciseIds} />
+        <JavaScriptFoundationsWarmup
+          completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
+        />
 
         <aside className="foundations-boundary" aria-label="Warm-up boundaries">
           <div>
@@ -73,8 +82,8 @@ export default async function JavaScriptFoundationsPage() {
           </div>
           <div>
             <span>03</span>
-            <strong>Private completion</strong>
-            <p>Your code stays local; completed exercises return after sign-in.</p>
+            <strong>Private recovery</strong>
+            <p>Your drafts and completed exercises return after sign-in.</p>
           </div>
         </aside>
       </div>

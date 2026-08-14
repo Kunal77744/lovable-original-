@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { InterviewDrill } from "@/components/interview-drill";
@@ -7,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { getSignInHref } from "@/lib/account-destination";
 import { JAVASCRIPT_INTERVIEW_DRILL } from "@/lib/interview-drill";
 import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
+import styles from "./interview-rehearsal.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +69,27 @@ export default async function JavaScriptInterviewDrillPage() {
           </header>
 
           <InterviewDrill initialProgress={progress} />
+
+          {progress.status === "completed" ? (
+            <aside
+              className={styles.entry}
+              aria-labelledby="interview-rehearsal-entry-title"
+            >
+              <div>
+                <p className="eyebrow">Reuse your completed round</p>
+                <h2 id="interview-rehearsal-entry-title">
+                  Practice the answers out loud.
+                </h2>
+                <p>
+                  Open a private rehearsal sheet with your five saved answers,
+                  the authored check points, and one follow-up for each topic.
+                </p>
+              </div>
+              <Link href="/interview/javascript-fundamentals/rehearsal">
+                Open rehearsal sheet <span aria-hidden="true">→</span>
+              </Link>
+            </aside>
+          ) : null}
         </section>
       </main>
       <SiteFooter />

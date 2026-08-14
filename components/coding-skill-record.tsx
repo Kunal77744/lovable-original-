@@ -92,6 +92,14 @@ export function CodingSkillRecord({
             <strong>Private to your account.</strong> Last activity:{" "}
             {formatPracticeDate(record.lastPracticedAt)}.
           </p>
+          {record.acceptedCount === record.totalCount ? (
+            <Link
+              className="skill-record-completion-link"
+              href="/practice/completion-record"
+            >
+              Open completion record <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
         </aside>
       </header>
 
@@ -115,10 +123,15 @@ export function CodingSkillRecord({
             <p className="eyebrow">12-problem evidence</p>
             <h2 id="skill-record-path-title">Your JavaScript skill path</h2>
           </div>
-          <p>
-            Accepted means every authored check passed. It is a saved result,
-            not a public score or ranking.
-          </p>
+          <div className="skill-record-path-note">
+            <p>
+              Accepted means every authored check passed. It is a saved result,
+              not a public score or ranking.
+            </p>
+            <Link href="/practice/journal">
+              Review private problem journals <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         </div>
 
         <ol className="skill-record-list">
@@ -136,7 +149,9 @@ export function CodingSkillRecord({
                 <span>{skill.resultLabel}</span>
               </div>
               <Link
-                href={`/practice/${skill.slug}`}
+                href={`/practice/${skill.slug}${
+                  skill.state === "accepted" ? "?mode=clean" : ""
+                }`}
                 aria-label={`${
                   skill.state === "retry"
                     ? "Retry"

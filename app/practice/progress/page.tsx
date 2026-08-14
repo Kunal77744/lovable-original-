@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { CodingSkillRecord } from "@/components/coding-skill-record";
 import { getCodingSkillRecordForStudent } from "@/db/coding-skill-record";
 import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { buildCodingSkillRecord } from "@/lib/coding-skill-record";
 import { SiteFooter, SiteNav } from "../../site-chrome";
+import styles from "./saved-workspaces-entry.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +29,7 @@ export default async function PracticeProgressPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/progress"));
   }
 
   const [snapshot, labProgress] = await Promise.all([
@@ -46,6 +49,15 @@ export default async function PracticeProgressPage() {
       >
         <CodingSkillRecord record={record} labProgress={labProgress} />
       </section>
+      <aside className={styles.entry} aria-label="Saved JavaScript workspaces">
+        <p>
+          <strong>Return to saved source.</strong> Reopen every account-backed
+          judged workspace, most recent first.
+        </p>
+        <Link href="/practice/workspaces">
+          Open saved workspaces <span aria-hidden="true">→</span>
+        </Link>
+      </aside>
       <SiteFooter />
     </main>
   );

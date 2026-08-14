@@ -1,9 +1,13 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CSS_BOX_MODEL_STARTER, gradeCssBoxModel } from "@/lib/css-box-model-practice";
 import { CssBoxModelWorkspace } from "./css-box-model-workspace";
 
-afterEach(cleanup);
+beforeEach(() => window.localStorage.clear());
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 describe("CssBoxModelWorkspace", () => {
   it("keeps signed-out practice local until the learner chooses to save", () => {
@@ -28,8 +32,45 @@ describe("CssBoxModelWorkspace", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
       "href",
-      "/account",
+      "/account?next=%2Flearn%2Fweb-development-foundations%2Fcss-selectors-box-model",
     );
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("recovers the exact local CSS after sign-in", async () => {
+    const localCss = ".learning-card { padding: 32px; }";
+    const { unmount } = render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("Card CSS"), {
+      target: { value: localCss },
+    });
+    unmount();
+
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+        isSignedIn
+      />,
+    );
+
+    expect(await screen.findByLabelText("Card CSS")).toHaveValue(localCss);
+    expect(screen.getByText(/browser draft restored after sign-in/i)).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 
   it("saves the exact CSS and restores the server checks", async () => {
@@ -80,6 +121,9 @@ describe("CssBoxModelWorkspace", () => {
       }),
     );
     expect(screen.getByLabelText("4 of 4 checks pass")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .css" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps newer CSS visibly unsaved when an older save finishes", async () => {
@@ -162,5 +206,8 @@ describe("CssBoxModelWorkspace", () => {
       "/api/lessons/css-selectors-box-model/workspace",
       expect.objectContaining({ body: JSON.stringify({ html: submittedCss }) }),
     );
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
   });
 });

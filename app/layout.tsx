@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
 import "./globals.css";
+import { LearnerEntrySourceTracker } from "./learner-entry-source-tracker";
 import { PublicPageviews } from "./public-pageviews";
 
 const javascriptProblemCount = CODING_PROBLEMS.length;
@@ -48,6 +50,9 @@ export default function RootLayout({
     <html lang="en" data-scroll-behavior="smooth">
       <body>
         {children}
+        <Suspense fallback={null}>
+          <LearnerEntrySourceTracker />
+        </Suspense>
         <PublicPageviews />
       </body>
     </html>

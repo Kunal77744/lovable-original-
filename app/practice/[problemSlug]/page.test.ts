@@ -44,6 +44,7 @@ vi.mock("@/db/coding-practice", () => ({
             attempts: [],
             bestVerdict: null,
             code: problem.starterCode,
+            hasSavedCode: false,
             latestAcceptedCode: null,
             customTestCases: [],
             solutionNote: null,
@@ -127,6 +128,12 @@ describe("practice problem metadata", () => {
         ),
       ).toBeInTheDocument();
       expect(
+        screen.getByRole("heading", { name: "Constraints" }),
+      ).toBeInTheDocument();
+      for (const constraint of problem.constraints) {
+        expect(screen.getByText(constraint)).toBeInTheDocument();
+      }
+      expect(
         screen.getAllByText(
           `Step ${problem.number} of ${CODING_PROBLEMS.length}`,
           { exact: false },
@@ -162,6 +169,23 @@ describe("practice problem metadata", () => {
     expect(capturePracticeProblemStarted).toHaveBeenCalledOnce();
     expect(capturePracticeProblemStarted).toHaveBeenCalledWith({
       problemSlug: CODING_PROBLEMS[0].slug,
+      entrySource: undefined,
+    });
+  });
+
+  it("passes an allowlisted direct-entry source into problem 01", async () => {
+    const problem = CODING_PROBLEMS[0];
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ entry_source: "walkthrough" }),
+      }),
+    );
+
+    expect(capturePracticeProblemStarted).toHaveBeenCalledWith({
+      problemSlug: problem.slug,
+      entrySource: "walkthrough",
     });
   });
 
@@ -175,6 +199,7 @@ describe("practice problem metadata", () => {
       attempts: [],
       bestVerdict: null,
       code: problem.starterCode,
+      hasSavedCode: true,
       latestAcceptedCode: null,
       customTestCases: [
         { input: "19 23", expectedOutput: "42" },
@@ -199,10 +224,92 @@ describe("practice problem metadata", () => {
       "returning-learner",
       problem.slug,
     );
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved")).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Try your own input"));
     expect(screen.getByDisplayValue("19 23")).toBeInTheDocument();
     expect(screen.getByDisplayValue("-5 8")).toBeInTheDocument();
     expect(screen.getByText("2 private test cases restored.")).toBeInTheDocument();
+  });
+
+  it("opens a clean starter instead of the saved Accepted answer on all 12 routes", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "completed-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+
+    for (const problem of CODING_PROBLEMS) {
+      const savedCode = `function solve(input) { return ${problem.number}; }`;
+      vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+        attempts: [
+          {
+            id: `accepted-${problem.slug}`,
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-08-09T12:00:00.000Z",
+            hasSource: true,
+          },
+        ],
+        bestVerdict: "Accepted",
+        code: savedCode,
+        hasSavedCode: true,
+        latestAcceptedCode: savedCode,
+        customTestCases: [],
+        solutionNote: null,
+      });
+
+      render(
+        await ProblemPage({
+          params: Promise.resolve({ problemSlug: problem.slug }),
+          searchParams: Promise.resolve({ mode: "clean" }),
+        }),
+      );
+
+      expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+        problem.starterCode,
+      );
+      expect(screen.getByLabelText("JavaScript solution")).not.toHaveValue(
+        savedCode,
+      );
+      expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Return to saved solution" }),
+      ).toHaveAttribute("href", `/practice/${problem.slug}`);
+      expect(
+        screen.queryByRole("link", { name: "Review source for attempt 1" }),
+      ).not.toBeInTheDocument();
+
+      cleanup();
+    }
+  });
+
+  it("ignores clean mode until a signed-in learner has an Accepted result", async () => {
+    const problem = CODING_PROBLEMS[0];
+    const savedWrongAnswer = "function solve(input) { return 'keep working'; }";
+    getSession.mockResolvedValue({
+      user: { id: "learning-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    vi.mocked(getCodingProblemForStudent).mockResolvedValueOnce({
+      attempts: [],
+      bestVerdict: "Wrong Answer",
+      code: savedWrongAnswer,
+      hasSavedCode: true,
+      latestAcceptedCode: null,
+      customTestCases: [],
+      solutionNote: null,
+    });
+
+    render(
+      await ProblemPage({
+        params: Promise.resolve({ problemSlug: problem.slug }),
+        searchParams: Promise.resolve({ mode: "clean" }),
+      }),
+    );
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      savedWrongAnswer,
+    );
+    expect(screen.queryByText("Clean practice copy")).not.toBeInTheDocument();
   });
 
   it("accepts only the exact signed-in review entry context", async () => {
@@ -299,6 +406,7 @@ describe("practice problem metadata", () => {
       ],
       bestVerdict: "Accepted",
       code: currentCode,
+      hasSavedCode: true,
       latestAcceptedCode: currentCode,
       customTestCases: [{ input: "19 23", expectedOutput: null }],
       solutionNote: null,
@@ -353,6 +461,7 @@ describe("practice problem metadata", () => {
       attempts: [],
       bestVerdict: null,
       code: currentCode,
+      hasSavedCode: true,
       latestAcceptedCode: null,
       customTestCases: [],
       solutionNote: null,

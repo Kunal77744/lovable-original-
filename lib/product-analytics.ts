@@ -1,5 +1,8 @@
 import posthog, { type CaptureResult } from "posthog-js";
-import type { LearnerEntrySource } from "./learner-entry-source";
+import {
+  parseLearnerEntrySource,
+  type LearnerEntrySource,
+} from "./learner-entry-source";
 
 const POSTHOG_KEY = "phc_mKF4BaB7MLJ2KcvCU3xqCpHLZoPZ6k5ZrYQyxKD2NXor";
 const POSTHOG_HOST = "https://us.i.posthog.com";
@@ -7,6 +10,7 @@ const TEST_CAPTURE_URL = process.env.NEXT_PUBLIC_ANALYTICS_TEST_CAPTURE_URL;
 const PRODUCTION_HOST = "lovable-original-eight.vercel.app";
 const VERCEL_PREVIEW_HOST = /\.vercel\.app$/;
 const JOURNEY_ID_KEY = "lovable_original_journey_id";
+const ENTRY_SOURCE_KEY = "lovable_original_entry_source";
 const E2E_RUN_KEY = "lovable_original_e2e_run";
 const CAPTURED_EVENTS_KEY = "lovable_original_captured_events";
 
@@ -39,6 +43,7 @@ type PracticeAcceptedProperties = {
 
 type PracticeStartedProperties = {
   problemSlug: string;
+  entrySource?: LearnerEntrySource;
 };
 
 type PracticeFeedbackProperties = {
@@ -52,6 +57,7 @@ type PracticePathCompletedProperties = {
 
 let initialized = false;
 let fallbackJourneyId: string | null = null;
+let fallbackEntrySource: LearnerEntrySource | null = null;
 const fallbackCapturedEvents = new Set<string>();
 
 function stripQueryString(value: unknown) {
@@ -160,6 +166,42 @@ function getJourneyId() {
   }
 }
 
+function getLearnerEntrySource() {
+  try {
+    return parseLearnerEntrySource(
+      window.sessionStorage.getItem(ENTRY_SOURCE_KEY) ?? undefined,
+    );
+  } catch {
+    return fallbackEntrySource ?? undefined;
+  }
+}
+
+export function rememberLearnerEntrySource(
+  value: string | string[] | undefined,
+) {
+  const entrySource = parseLearnerEntrySource(value);
+
+  if (!entrySource) {
+    return undefined;
+  }
+
+  getJourneyId();
+
+  const existingSource = getLearnerEntrySource();
+
+  if (existingSource) {
+    return existingSource;
+  }
+
+  try {
+    window.sessionStorage.setItem(ENTRY_SOURCE_KEY, entrySource);
+  } catch {
+    fallbackEntrySource = entrySource;
+  }
+
+  return entrySource;
+}
+
 function getCapturedEvents() {
   try {
     const captured = window.sessionStorage.getItem(CAPTURED_EVENTS_KEY);
@@ -189,6 +231,7 @@ function rememberCapturedEvent(key: string, capturedEvents: Set<string>) {
 
 function getCommonProperties(environment: AnalyticsEnvironment) {
   let e2eRun: string | null = null;
+  const entrySource = getLearnerEntrySource();
 
   try {
     e2eRun = window.sessionStorage.getItem(E2E_RUN_KEY);
@@ -201,6 +244,7 @@ function getCommonProperties(environment: AnalyticsEnvironment) {
     is_test: environment !== "production",
     journey_id: getJourneyId(),
     ...(e2eRun ? { e2e_run: e2eRun } : {}),
+    ...(entrySource ? { entry_source: entrySource } : {}),
   };
 }
 
@@ -267,15 +311,15 @@ export function captureLearnerEventOnce(
   eventName: "lesson_started" | "quiz_completed" | "feedback_submitted",
   properties: LearnerEventProperties,
 ) {
+  if (eventName === "lesson_started") {
+    rememberLearnerEntrySource(properties.entry_source);
+  }
+
   const safeProperties: LearnerEventProperties = {
     ...(properties.course_slug ? { course_slug: properties.course_slug } : {}),
     ...(properties.lesson_slug ? { lesson_slug: properties.lesson_slug } : {}),
     ...(typeof properties.passed === "boolean"
       ? { passed: properties.passed }
-      : {}),
-    ...(eventName === "lesson_started" &&
-    properties.entry_source === "founder_warm"
-      ? { entry_source: properties.entry_source }
       : {}),
   };
   const dedupeKey = [
@@ -424,7 +468,10 @@ export function captureCssPracticeCompleted(
 
 export function capturePracticeProblemStarted({
   problemSlug,
+  entrySource,
 }: PracticeStartedProperties) {
+  rememberLearnerEntrySource(entrySource);
+
   const dedupeKey = `practice_problem_started:${problemSlug}`;
   const capturedEvents = getCapturedEvents();
 

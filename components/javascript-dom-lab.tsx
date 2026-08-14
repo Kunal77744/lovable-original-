@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
-import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -18,15 +27,37 @@ const readyMessage =
 
 const exerciseIds = JAVASCRIPT_DOM_EXERCISES.map((exercise) => exercise.slug);
 
-export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
-  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
+export function JavaScriptDomLab({
+  completedExerciseIds = [],
+  initialDrafts = {},
+}: {
+  completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
+}) {
+  const [exerciseIndex, setExerciseIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
+  );
   const exercise = JAVASCRIPT_DOM_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(exercise?.starterCode ?? JAVASCRIPT_DOM_EXERCISES[0].starterCode);
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "dom",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_DOM_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_DOM_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
-  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [completedIds, setCompletedIds] = useState(
+    () => new Set(completedExerciseIds),
+  );
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -45,11 +76,15 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
-      const saveResponse = await saveJavaScriptLabExercise("dom", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "dom",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -70,10 +105,11 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -90,19 +126,23 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
   if (!exercise) {
     return (
-      <section className="dom-lab-complete" aria-labelledby="dom-lab-complete-title">
+      <section
+        className="dom-lab-complete"
+        aria-labelledby="dom-lab-complete-title"
+      >
         <div className="dom-lab-complete-mark" aria-hidden="true">
           4/4
         </div>
         <div>
           <p className="eyebrow">DOM lab complete</p>
-          <h2 id="dom-lab-complete-title">JavaScript can now change the page.</h2>
+          <h2 id="dom-lab-complete-title">
+            JavaScript can now change the page.
+          </h2>
           <p>
             You selected an element, changed its text, toggled a class, and
             responded to a click. Those four moves are the foundation of small
@@ -177,7 +217,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
         <div className="dom-lab-editor">
           <div className="dom-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Isolated worker</span>
+            <span>Draft saves privately</span>
           </div>
           <label htmlFor="dom-lab-code">JavaScript DOM code</label>
           <textarea
@@ -190,7 +230,12 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="dom-lab-actions">
@@ -203,7 +248,11 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
               Restore starter
             </button>
             {isPassed ? (
-              <button className="dom-lab-run" onClick={continueLab} type="button">
+              <button
+                className="dom-lab-run"
+                onClick={continueLab}
+                type="button"
+              >
                 {exercise.number === JAVASCRIPT_DOM_EXERCISES.length
                   ? "Finish the lab"
                   : `Continue to ${JAVASCRIPT_DOM_EXERCISES[exerciseIndex + 1].concept}`}
@@ -216,7 +265,9 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
                 onClick={runChecks}
                 type="button"
               >
-                {checkState.kind === "running" ? "Running checks…" : "Run 3 checks"}
+                {checkState.kind === "running"
+                  ? "Running checks…"
+                  : "Run 3 checks"}
               </button>
             )}
           </div>
@@ -239,7 +290,9 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
               </span>
               <strong>{checkState.message}</strong>
             </div>
-            {checkState.kind === "failed" ? <p>{exercise.recoveryCue}</p> : null}
+            {checkState.kind === "failed" ? (
+              <p>{exercise.recoveryCue}</p>
+            ) : null}
             {checkState.kind === "passed" ? (
               <p className="dom-lab-takeaway">
                 <span>Keep this:</span> {exercise.takeaway}
@@ -248,8 +301,8 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
           </div>
 
           <p className="dom-lab-privacy">
-            Code, checks, answers, and progress stay in this browser tab. No
-            code stays in this browser; completed exercises save privately.
+            Your draft and completion save privately to your account. Check
+            output stays in this browser.
           </p>
         </div>
       </div>

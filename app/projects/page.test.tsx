@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getCssPractice: vi.fn(),
   getGuidedProject: vi.fn(),
   getJavaScriptCapstone: vi.fn(),
+  getJavaScriptLabs: vi.fn(),
   getHtmlCssCapstone: vi.fn(),
 }));
 
@@ -42,6 +43,10 @@ vi.mock("@/db/javascript-capstone", () => ({
   getJavaScriptCapstoneSummary: mocks.getJavaScriptCapstone,
 }));
 
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getJavaScriptLabCatalogProgress: mocks.getJavaScriptLabs,
+}));
+
 vi.mock("@/db/html-css-capstone", () => ({
   getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
 }));
@@ -68,6 +73,15 @@ describe("ProjectsPage", () => {
     });
     mocks.getGuidedProject.mockResolvedValue(notStarted);
     mocks.getJavaScriptCapstone.mockResolvedValue(notStarted);
+    mocks.getJavaScriptLabs.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 55,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/judge-basics",
+      nextExerciseNumber: 1,
+      labs: [],
+    });
     mocks.getHtmlCssCapstone.mockResolvedValue(notStarted);
   });
 
@@ -82,12 +96,13 @@ describe("ProjectsPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(ProjectsPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fprojects",
     );
     expect(mocks.getCourse).not.toHaveBeenCalled();
     expect(mocks.getCssPractice).not.toHaveBeenCalled();
     expect(mocks.getGuidedProject).not.toHaveBeenCalled();
     expect(mocks.getJavaScriptCapstone).not.toHaveBeenCalled();
+    expect(mocks.getJavaScriptLabs).not.toHaveBeenCalled();
     expect(mocks.getHtmlCssCapstone).not.toHaveBeenCalled();
   });
 
@@ -112,8 +127,17 @@ describe("ProjectsPage", () => {
       screen.getByText("Available after 6 CSS challenges"),
     ).toBeInTheDocument();
     expect(
+      screen.getByText("Available after 55 guided JavaScript steps"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Continue exercise 1/ }),
+    ).toHaveAttribute("href", "/practice/judge-basics");
+    expect(
       document.querySelectorAll(".project-portfolio-primary-action"),
     ).toHaveLength(1);
+    expect(
+      screen.getByRole("link", { name: "Review saved attempts" }),
+    ).toHaveAttribute("href", "/projects/history");
   });
 
   it("resumes the saved project and exposes only bounded account summaries", async () => {
@@ -146,6 +170,15 @@ describe("ProjectsPage", () => {
       passedChecks: 6,
       css: "PRIVATE CSS",
     });
+    mocks.getJavaScriptLabs.mockResolvedValue({
+      completedCount: 12,
+      totalCount: 55,
+      nextLabSlug: "test-design",
+      nextLabTitle: "Test design",
+      nextHref: "/practice/test-design?exercise=1",
+      nextExerciseNumber: 1,
+      labs: [],
+    });
 
     render(await ProjectsPage());
 
@@ -154,10 +187,20 @@ describe("ProjectsPage", () => {
     ).toHaveAttribute("href", "/projects/javascript-expense-report");
     expect(screen.getByText("4/6 checks passed")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Open private debrief" }),
-    ).toHaveAttribute(
-      "href",
-      "/projects/html-css-resource-library/debrief",
+      screen.getAllByRole("link", { name: "Open private debrief" }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          href: expect.stringContaining(
+            "/projects/semantic-html-article/debrief",
+          ),
+        }),
+        expect.objectContaining({
+          href: expect.stringContaining(
+            "/projects/html-css-resource-library/debrief",
+          ),
+        }),
+      ]),
     );
     expect(document.body).not.toHaveTextContent("PRIVATE SEMANTIC HTML");
     expect(document.body).not.toHaveTextContent("PRIVATE JAVASCRIPT");
@@ -167,6 +210,7 @@ describe("ProjectsPage", () => {
       "semantic-html-article",
     );
     expect(mocks.getJavaScriptCapstone).toHaveBeenCalledWith("learner-1");
+    expect(mocks.getJavaScriptLabs).toHaveBeenCalledWith("learner-1");
     expect(mocks.getHtmlCssCapstone).toHaveBeenCalledWith("learner-1");
   });
 });

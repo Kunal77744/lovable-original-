@@ -10,6 +10,7 @@ import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
+import { getJavaScriptCapstoneAccess } from "@/lib/javascript-capstone";
 import { getJavaScriptFoundationsEntry } from "@/lib/javascript-lab-progress";
 import {
   CODING_PROBLEMS,
@@ -150,6 +151,10 @@ export default async function PracticePage({
     ? requestedCatalogStatus
     : "all";
   const unfinishedCount = progress.totalCount - progress.completedCount;
+  const capstoneAccess =
+    capstoneSummary && labProgress
+      ? getJavaScriptCapstoneAccess(capstoneSummary, labProgress)
+      : null;
   const catalogFilters: Array<{
     status: CatalogStatus;
     label: string;
@@ -511,7 +516,12 @@ export default async function PracticePage({
                   <h3 id="saved-problems-title">Saved for later</h3>
                   <p>Private to your account.</p>
                 </div>
-                <span>{savedProblems.length} saved</span>
+                <div className="saved-problems-collection-entry">
+                  <span>{savedProblems.length} saved</span>
+                  <Link href="/practice/bookmarks">
+                    View saved collection <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
               </div>
               {savedProblems.length > 0 ? (
                 <ul className="saved-problems-list">
@@ -635,9 +645,17 @@ export default async function PracticePage({
 
               <Link
                 className={`practice-capstone-entry ${
-                  capstoneSummary?.state === "completed" ? "is-complete" : ""
+                  capstoneSummary?.state === "completed"
+                    ? "is-complete"
+                    : capstoneAccess && !capstoneAccess.available
+                      ? "is-locked"
+                      : ""
                 }`}
-                href="/projects/javascript-expense-report"
+                href={
+                  capstoneAccess?.available
+                    ? "/projects/javascript-expense-report"
+                    : capstoneAccess?.continuationHref ?? "/practice/judge-basics"
+                }
               >
                 <span className="practice-capstone-number" aria-hidden="true">
                   02
@@ -656,15 +674,23 @@ export default async function PracticePage({
                       ? "Complete"
                       : capstoneSummary?.state === "in-progress"
                         ? "In progress"
-                        : "Not started"}
+                        : capstoneAccess && !capstoneAccess.available
+                          ? "Guided path first"
+                          : "Not started"}
                   </small>
-                  <strong>{capstoneSummary?.passedChecks ?? 0}/6 outcomes</strong>
+                  <strong>
+                    {capstoneAccess && !capstoneAccess.available
+                      ? `${labProgress?.completedCount ?? 0}/${labProgress?.totalCount ?? 55} steps saved`
+                      : `${capstoneSummary?.passedChecks ?? 0}/6 outcomes`}
+                  </strong>
                   <span>
                     {capstoneSummary?.state === "completed"
                       ? "Review project"
                       : capstoneSummary?.state === "in-progress"
                         ? "Continue project"
-                        : "Start project"}{" "}
+                        : capstoneAccess && !capstoneAccess.available
+                          ? `Continue ${labProgress?.nextLabTitle ?? "guided JavaScript"}`
+                          : "Start project"}{" "}
                     <span aria-hidden="true">→</span>
                   </span>
                 </span>

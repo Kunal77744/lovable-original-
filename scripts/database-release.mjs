@@ -16,6 +16,8 @@ const requiredTables = [
   "coding_problem_bookmark",
   "coding_practice_goal",
   "daily_coding_challenge_completion",
+  "timed_coding_challenge_result",
+  "coding_lab_exercise_draft",
   "coding_lab_exercise_progress",
   "coding_problem_progress",
   "coding_problem_test_case_set",
@@ -26,6 +28,7 @@ const requiredTables = [
   "early_access_signup",
   "guided_project",
   "guided_project_feedback",
+  "project_review_attempt",
   "interview_drill_progress",
   "javascript_mixed_review_result",
   "javascript_readiness_result",
@@ -34,6 +37,7 @@ const requiredTables = [
   "lesson_artifact",
   "lesson_note",
   "lesson_progress",
+  "lesson_quiz_attempt",
   "learner_setting",
   "playground_file",
   "practice_feedback",
@@ -43,6 +47,32 @@ const requiredTables = [
   "verification",
 ];
 const requiredColumns = {
+  coding_lab_exercise_draft: [
+    "id",
+    "user_id",
+    "lab_slug",
+    "exercise_id",
+    "source",
+    "created_at",
+    "updated_at",
+  ],
+  timed_coding_challenge_result: [
+    "id",
+    "user_id",
+    "challenge_set_id",
+    "solved_count",
+    "elapsed_seconds",
+    "completed_at",
+  ],
+  project_review_attempt: [
+    "id",
+    "user_id",
+    "project_slug",
+    "status",
+    "passed_checks",
+    "total_checks",
+    "created_at",
+  ],
   daily_coding_challenge_completion: [
     "id",
     "user_id",
@@ -148,6 +178,16 @@ const requiredColumns = {
     "completed_at",
     "updated_at",
   ],
+  lesson_quiz_attempt: [
+    "id",
+    "user_id",
+    "lesson_id",
+    "score",
+    "correct_count",
+    "total_count",
+    "passed",
+    "created_at",
+  ],
   javascript_readiness_result: [
     "id",
     "user_id",
@@ -181,6 +221,9 @@ const requiredColumns = {
   playground_file: [
     "id",
     "user_id",
+    "name",
+    "slot",
+    "is_active",
     "code",
     "quick_checks",
     "created_at",
@@ -293,9 +336,11 @@ async function run() {
       from information_schema.columns
       where table_schema = 'public'
         and table_name in (
+          'coding_lab_exercise_draft',
           'coding_lab_exercise_progress',
           'coding_practice_goal',
           'daily_coding_challenge_completion',
+          'timed_coding_challenge_result',
           'css_practice_attempt',
           'css_practice_feedback',
           'css_practice_progress',
@@ -304,8 +349,10 @@ async function run() {
           'guided_project',
           'guided_project_feedback',
           'lesson_progress',
+          'lesson_quiz_attempt',
           'javascript_mixed_review_result',
           'javascript_readiness_result',
+          'project_review_attempt',
           'web_foundations_review_result',
           'practice_feedback',
           'playground_file'

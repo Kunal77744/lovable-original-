@@ -14,4 +14,30 @@ describe("learner entry link", () => {
         "/learn/web-development-foundations/semantic-html?entry_source=founder_warm",
     });
   });
+
+  it("keeps stable privacy-safe entry paths for learner outreach channels", async () => {
+    expect(nextConfig.rewrites).toBeTypeOf("function");
+
+    const rewrites = await nextConfig.rewrites!();
+
+    expect(rewrites).toEqual(
+      expect.arrayContaining([
+        {
+          source: "/start/web-foundations/directory",
+          destination:
+            "/learn/web-development-foundations/semantic-html?entry_source=directory",
+        },
+        {
+          source: "/start/web-foundations/community",
+          destination:
+            "/learn/web-development-foundations/semantic-html?entry_source=community",
+        },
+        {
+          source: "/start/web-foundations/walkthrough",
+          destination:
+            "/learn/web-development-foundations/semantic-html?entry_source=walkthrough",
+        },
+      ]),
+    );
+  });
 });

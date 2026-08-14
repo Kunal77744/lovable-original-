@@ -394,6 +394,9 @@ describe("GuidedProjectWorkspace", () => {
       }),
     ).toHaveAttribute("href", "/practice/multiplication-table");
     expect(
+      screen.getByRole("link", { name: /Open private project debrief/ }),
+    ).toHaveAttribute("href", "/projects/semantic-html-article/debrief");
+    expect(
       screen.getByRole("heading", {
         name: "What felt confusing while you built this?",
       }),

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { SubmissionSnapshot } from "@/components/submission-history";
 import { getCodingSubmissionForStudent } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -23,15 +24,15 @@ export default async function SubmissionPage({
 }: {
   params: Promise<{ submissionId: string }>;
 }) {
+  const { submissionId } = await params;
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref(`/submissions/${submissionId}`));
   }
 
-  const { submissionId } = await params;
   const submission = await getCodingSubmissionForStudent(
     session.user.id,
     submissionId,

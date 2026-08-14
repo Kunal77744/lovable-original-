@@ -9,6 +9,7 @@ import {
   getCssPracticePathFeedbackForStudent,
 } from "@/db/css-practice";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 import {
   CSS_PRACTICE_CHALLENGE_COUNT,
   CSS_PRACTICE_CHALLENGES,
@@ -108,6 +109,9 @@ export default async function CssChallengePage({
         <CssChallengeWorkspace
           attempts={studentState.attempts}
           bestVerdict={studentState.bestVerdict}
+          browserRecoveryScope={
+            session ? createBrowserRecoveryScope(session.user.id) : null
+          }
           challenge={{
             slug: challenge.slug,
             title: challenge.title,
@@ -115,6 +119,7 @@ export default async function CssChallengePage({
             successTakeaway: challenge.successTakeaway,
           }}
           initialCss={studentState.css}
+          hasSavedDraft={studentState.hasSavedDraft}
           initialPathFeedback={pathFeedbackState.feedback}
           isSignedIn={Boolean(session)}
           isReviewSession={isReviewSession}

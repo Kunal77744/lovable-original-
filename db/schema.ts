@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -265,6 +266,33 @@ export const lessonProgress = pgTable(
   ],
 );
 
+export const lessonQuizAttempt = pgTable(
+  "lesson_quiz_attempt",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id")
+      .notNull()
+      .references(() => lesson.id, { onDelete: "cascade" }),
+    score: integer("score").notNull(),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    passed: boolean("passed").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("lesson_quiz_attempt_user_lesson_idx").on(
+      table.userId,
+      table.lessonId,
+    ),
+    index("lesson_quiz_attempt_user_id_idx").on(table.userId),
+  ],
+);
+
 export const lessonArtifact = pgTable(
   "lesson_artifact",
   {
@@ -347,6 +375,30 @@ export const guidedProject = pgTable(
       table.projectSlug,
     ),
     index("guided_project_user_id_idx").on(table.userId),
+  ],
+);
+
+export const projectReviewAttempt = pgTable(
+  "project_review_attempt",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    projectSlug: text("project_slug").notNull(),
+    status: text("status").notNull(),
+    passedChecks: integer("passed_checks").notNull(),
+    totalChecks: integer("total_checks").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("project_review_attempt_user_id_idx").on(table.userId),
+    index("project_review_attempt_user_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -518,6 +570,36 @@ export const dailyCodingChallengeCompletion = pgTable(
       table.challengeDate,
     ),
     index("daily_coding_challenge_user_id_idx").on(table.userId),
+  ],
+);
+
+export const timedCodingChallengeResult = pgTable(
+  "timed_coding_challenge_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSetId: text("challenge_set_id").notNull(),
+    solvedCount: integer("solved_count").notNull(),
+    elapsedSeconds: integer("elapsed_seconds").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("timed_coding_challenge_result_user_completed_idx").on(
+      table.userId,
+      table.completedAt,
+    ),
+    check(
+      "timed_coding_challenge_result_solved_count_check",
+      sql`${table.solvedCount} between 0 and 3`,
+    ),
+    check(
+      "timed_coding_challenge_result_elapsed_seconds_check",
+      sql`${table.elapsedSeconds} between 0 and 1800`,
+    ),
   ],
 );
 
@@ -728,6 +810,33 @@ export const codingLabExerciseProgress = pgTable(
   ],
 );
 
+export const codingLabExerciseDraft = pgTable(
+  "coding_lab_exercise_draft",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    labSlug: text("lab_slug").notNull(),
+    exerciseId: text("exercise_id").notNull(),
+    source: text("source").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_lab_draft_user_lab_exercise_unique").on(
+      table.userId,
+      table.labSlug,
+      table.exerciseId,
+    ),
+    index("coding_lab_draft_user_id_idx").on(table.userId),
+  ],
+);
+
 export const javascriptReadinessResult = pgTable(
   "javascript_readiness_result",
   {
@@ -837,6 +946,9 @@ export const playgroundFile = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull().default("playground.js"),
+    slot: integer("slot").notNull().default(1),
+    isActive: boolean("is_active").notNull().default(true),
     code: text("code").notNull(),
     quickChecks: text("quick_checks").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -847,7 +959,12 @@ export const playgroundFile = pgTable(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("playground_file_user_unique").on(table.userId),
+    uniqueIndex("playground_file_user_name_unique").on(table.userId, table.name),
+    uniqueIndex("playground_file_user_slot_unique").on(table.userId, table.slot),
+    uniqueIndex("playground_file_user_active_unique")
+      .on(table.userId)
+      .where(sql`${table.isActive} = true`),
     index("playground_file_user_id_idx").on(table.userId),
+    check("playground_file_slot_bound", sql`${table.slot} between 1 and 6`),
   ],
 );

@@ -239,6 +239,12 @@ export function LessonQuiz({
             View saved progress
           </Link>
         ) : null}
+        <Link
+          className="completion-dashboard-link"
+          href="/courses/web-development-foundations/quiz-history"
+        >
+          Review quiz attempts
+        </Link>
         <QuizAttemptReview
           review={result.review}
           questions={questions}
@@ -333,6 +339,14 @@ export function LessonQuiz({
               </>
             ) : null}
           </p>
+          {result ? (
+            <Link
+              className="completion-dashboard-link quiz-history-link"
+              href="/courses/web-development-foundations/quiz-history"
+            >
+              Review quiz attempts
+            </Link>
+          ) : null}
         </div>
       </form>
       <QuizAttemptReview

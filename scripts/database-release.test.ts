@@ -5,6 +5,115 @@ import { describe, expect, it } from "vitest";
 const root = process.cwd();
 
 describe("database release contract", () => {
+  it("orders and verifies the combined private-result, draft, and playground migrations", async () => {
+    const [
+      journalSource,
+      timedMigration,
+      projectMigration,
+      quizMigration,
+      guidedDraftMigration,
+      playgroundFilesMigration,
+      releaseScript,
+    ] = await Promise.all([
+      readFile(path.join(root, "drizzle/meta/_journal.json"), "utf8"),
+      readFile(
+        path.join(root, "drizzle/0029_timed-coding-challenge-results.sql"),
+        "utf8",
+      ),
+      readFile(path.join(root, "drizzle/0030_wooden_scarecrow.sql"), "utf8"),
+      readFile(path.join(root, "drizzle/0031_lesson-quiz-attempt.sql"), "utf8"),
+      readFile(
+        path.join(root, "drizzle/0032_private_guided_javascript_drafts.sql"),
+        "utf8",
+      ),
+      readFile(
+        path.join(root, "drizzle/0033_private_playground_files.sql"),
+        "utf8",
+      ),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+    const journal = JSON.parse(journalSource) as {
+      entries: Array<{ idx: number; tag: string }>;
+    };
+
+    expect(journal.entries.slice(-5)).toEqual([
+      expect.objectContaining({
+        idx: 29,
+        tag: "0029_timed-coding-challenge-results",
+      }),
+      expect.objectContaining({ idx: 30, tag: "0030_wooden_scarecrow" }),
+      expect.objectContaining({ idx: 31, tag: "0031_lesson-quiz-attempt" }),
+      expect.objectContaining({
+        idx: 32,
+        tag: "0032_private_guided_javascript_drafts",
+      }),
+      expect.objectContaining({
+        idx: 33,
+        tag: "0033_private_playground_files",
+      }),
+    ]);
+    expect(timedMigration).toContain(
+      'CREATE TABLE IF NOT EXISTS "timed_coding_challenge_result"',
+    );
+    expect(timedMigration).toContain(
+      'CREATE INDEX IF NOT EXISTS "timed_coding_challenge_result_user_completed_idx"',
+    );
+    expect(projectMigration).toContain('CREATE TABLE "project_review_attempt"');
+    expect(quizMigration).toContain(
+      'CREATE TABLE IF NOT EXISTS "lesson_quiz_attempt"',
+    );
+    expect(guidedDraftMigration).toContain(
+      'CREATE TABLE "coding_lab_exercise_draft"',
+    );
+    expect(playgroundFilesMigration).toContain(
+      'ADD COLUMN "name" text DEFAULT \'playground.js\' NOT NULL',
+    );
+    expect(playgroundFilesMigration).toContain(
+      'CREATE UNIQUE INDEX "playground_file_user_active_unique"',
+    );
+    expect(releaseScript).toMatch(
+      /timed_coding_challenge_result:\s*\[[\s\S]*?"challenge_set_id",[\s\S]*?"elapsed_seconds"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'timed_coding_challenge_result'[\s\S]*?\)/,
+    );
+    expect(releaseScript).toMatch(
+      /project_review_attempt:\s*\[[\s\S]*?"passed_checks",[\s\S]*?"total_checks"/,
+    );
+    expect(releaseScript).toMatch(
+      /lesson_quiz_attempt:\s*\[[\s\S]*?"correct_count",[\s\S]*?"total_count"/,
+    );
+    expect(releaseScript).toMatch(
+      /coding_lab_exercise_draft:\s*\[[\s\S]*?"lab_slug",[\s\S]*?"exercise_id",[\s\S]*?"source"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'coding_lab_exercise_draft'[\s\S]*?\)/,
+    );
+    expect(releaseScript).toMatch(
+      /playground_file:\s*\[[\s\S]*?"name",[\s\S]*?"slot",[\s\S]*?"is_active"/,
+    );
+  });
+
+  it("keeps every combined-release learning record in the private export", async () => {
+    const exportSource = await readFile(
+      path.join(root, "db/learning-data-export.ts"),
+      "utf8",
+    );
+
+    expect(exportSource).toMatch(
+      /quizAttempts:\s*withoutAccountScope\(courseQuizAttempts\)/,
+    );
+    expect(exportSource).toMatch(
+      /reviewAttempts:\s*withoutAccountScope\(projectReviewAttempts\)/,
+    );
+    expect(exportSource).toMatch(
+      /timedChallengeResults:\s*withoutAccountScope\(timedChallengeResults\)/,
+    );
+    expect(exportSource).toMatch(
+      /guidedExerciseDrafts:\s*withoutAccountScope\(guidedExerciseDrafts\)/,
+    );
+  });
+
   it("adds and verifies private daily coding challenge completion", async () => {
     const [migration, releaseScript] = await Promise.all([
       readFile(path.join(root, "drizzle/0028_daily-coding-challenge.sql"), "utf8"),

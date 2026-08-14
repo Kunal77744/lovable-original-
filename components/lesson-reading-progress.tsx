@@ -42,6 +42,7 @@ export function LessonReadingProgress({
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ section: requestedSection }),
+            keepalive: true,
           },
         );
 

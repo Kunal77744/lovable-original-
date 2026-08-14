@@ -15,6 +15,11 @@ function build(
     cssCompletedCount: 0,
     cssTotalCount: 6,
     cssNextHref: "/practice/css/class-selector",
+    javascriptLabCompletedCount: 0,
+    javascriptLabTotalCount: 55,
+    javascriptLabNextHref: "/practice/judge-basics",
+    javascriptLabNextTitle: "JavaScript foundations",
+    javascriptLabNextExerciseNumber: 1,
     semanticHtml: notStarted,
     javascript: notStarted,
     htmlCss: notStarted,
@@ -38,6 +43,11 @@ describe("buildProjectPortfolio", () => {
       href: null,
       lockedReason: "Available after 6 CSS challenges",
     });
+    expect(portfolio.projects[1]).toMatchObject({
+      href: "/practice/judge-basics",
+      actionLabel: "Continue exercise 1",
+      lockedReason: "Available after 55 guided JavaScript steps",
+    });
   });
 
   it("resumes saved work before offering a new project", () => {
@@ -47,6 +57,7 @@ describe("buildProjectPortfolio", () => {
       javascript: { state: "in-progress", passedChecks: 4 },
       htmlCss: completed,
       cssCompletedCount: 6,
+      javascriptLabCompletedCount: 4,
     });
 
     expect(portfolio.primaryAction).toMatchObject({
@@ -55,6 +66,46 @@ describe("buildProjectPortfolio", () => {
     });
     expect(portfolio.primaryAction.description).toContain("4/6 checks passed");
     expect(portfolio.completedCount).toBe(2);
+  });
+
+  it("keeps a fresh learner on the exact unfinished guided JavaScript step", () => {
+    const portfolio = build({
+      courseCompleted: true,
+      semanticHtml: completed,
+      javascriptLabCompletedCount: 18,
+      javascriptLabNextHref: "/practice/functions?exercise=3",
+      javascriptLabNextTitle: "Functions and scope",
+      javascriptLabNextExerciseNumber: 3,
+    });
+
+    expect(portfolio.primaryAction).toMatchObject({
+      kicker: "18/55 guided steps saved",
+      title: "Functions and scope",
+      href: "/practice/functions?exercise=3",
+      label: "Continue exercise 3",
+    });
+    expect(portfolio.projects[1]).toMatchObject({
+      href: "/practice/functions?exercise=3",
+      lockedReason: "Available after 55 guided JavaScript steps",
+    });
+  });
+
+  it("unlocks a new JavaScript capstone after all guided steps", () => {
+    const portfolio = build({
+      courseCompleted: true,
+      semanticHtml: completed,
+      javascriptLabCompletedCount: 55,
+    });
+
+    expect(portfolio.primaryAction).toMatchObject({
+      href: "/projects/javascript-expense-report",
+      label: "Start the expense report",
+    });
+    expect(portfolio.projects[1]).toMatchObject({
+      href: "/projects/javascript-expense-report",
+      actionLabel: "Start project",
+      lockedReason: null,
+    });
   });
 
   it("points a learner to the exact CSS prerequisite when it is the only lock left", () => {
@@ -86,5 +137,16 @@ describe("buildProjectPortfolio", () => {
       label: "Review the latest debrief",
     });
     expect(portfolio.completedCount).toBe(3);
+  });
+
+  it("offers a private debrief for a completed semantic HTML project", () => {
+    const portfolio = build({
+      courseCompleted: true,
+      semanticHtml: completed,
+    });
+
+    expect(portfolio.projects[0].debriefHref).toBe(
+      "/projects/semantic-html-article/debrief",
+    );
   });
 });

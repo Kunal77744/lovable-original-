@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "@/lib/javascript-stacks-queues";
 import {
@@ -26,16 +31,29 @@ const exerciseIds = JAVASCRIPT_STACKS_QUEUES_EXERCISES.map(
 
 export function JavaScriptStacksQueuesLab({
   completedExerciseIds = [],
+  initialDrafts = {},
 }: {
   completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
   const exercise = JAVASCRIPT_STACKS_QUEUES_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ?? JAVASCRIPT_STACKS_QUEUES_EXERCISES[0].starterCode,
-  );
+  const {
+    source: code,
+    state: draftState,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "stacks-queues",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_STACKS_QUEUES_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ??
+      JAVASCRIPT_STACKS_QUEUES_EXERCISES[0].starterCode,
+    initialDrafts,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
@@ -68,11 +86,15 @@ export function JavaScriptStacksQueuesLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("stacks-queues", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "stacks-queues",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -93,10 +115,11 @@ export function JavaScriptStacksQueuesLab({
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -114,7 +137,6 @@ export function JavaScriptStacksQueuesLab({
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -133,8 +155,8 @@ export function JavaScriptStacksQueuesLab({
             Choose the removal order before the code.
           </h2>
           <p>
-            You removed the newest stack item, matched nested delimiters,
-            served the oldest queue item, and chose a structure from its order.
+            You removed the newest stack item, matched nested delimiters, served
+            the oldest queue item, and chose a structure from its order.
           </p>
           <Link className="primary-action" href="/practice/sum-two-numbers">
             Start judged practice <span aria-hidden="true">→</span>
@@ -204,7 +226,10 @@ export function JavaScriptStacksQueuesLab({
             </div>
           </div>
 
-          <ol className="function-lab-path" aria-label="Stacks and queues concepts">
+          <ol
+            className="function-lab-path"
+            aria-label="Stacks and queues concepts"
+          >
             {JAVASCRIPT_STACKS_QUEUES_EXERCISES.map((item, index) => (
               <li
                 className={
@@ -227,7 +252,7 @@ export function JavaScriptStacksQueuesLab({
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
           <label htmlFor="stacks-queues-lab-code">
             JavaScript stacks and queues code
@@ -242,7 +267,12 @@ export function JavaScriptStacksQueuesLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
             spellCheck={false}
+          />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
           />
 
           <div className="function-lab-actions">

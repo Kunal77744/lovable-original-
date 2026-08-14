@@ -156,6 +156,20 @@ describe("public product promise", () => {
     expect(
       screen.getByRole("link", { name: /see the CSS path/i }),
     ).toHaveAttribute("href", "/practice/css");
+    expect(
+      screen.getByRole("navigation", { name: /beginner concept answers/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /why use semantic HTML/i }),
+    ).toHaveAttribute("href", "/learn/why-use-semantic-html");
+    expect(
+      screen.getByRole("link", { name: /what is the CSS box model/i }),
+    ).toHaveAttribute("href", "/learn/what-is-the-css-box-model");
+    expect(
+      screen.getByRole("link", {
+        name: /how should a beginner practice JavaScript/i,
+      }),
+    ).toHaveAttribute("href", "/learn/how-to-practice-javascript");
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
     expect(screen.queryByText(/AI tutor|certificate/i)).not.toBeInTheDocument();
   });

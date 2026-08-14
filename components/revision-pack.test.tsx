@@ -117,6 +117,81 @@ describe("RevisionPack", () => {
     ).toBeInTheDocument();
   });
 
+  it("gives the CSS lesson its own concept map, workspace return, and cards", async () => {
+    render(<RevisionPack lessonSlug="css-selectors-box-model" />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: "CSS selectors and boxes, compressed",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the card stays predictable" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", {
+        name: "Trace the card from selector to final width.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Return to your card" }),
+    ).toHaveAttribute("href", "#css-practice");
+    expect(
+      screen.getByRole("heading", { name: "What does .learning-card select?" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /semantic HTML field guide/i }),
+    ).not.toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(
+        window.localStorage.getItem(
+          "lovable-original:revision:css-selectors-box-model",
+        ),
+      ).not.toBeNull(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reveal answer" }));
+    await waitFor(() =>
+      expect(
+        JSON.parse(
+          window.localStorage.getItem(
+            "lovable-original:revision:css-selectors-box-model",
+          ) ?? "{}",
+        ),
+      ).toEqual({
+        cardIndex: 0,
+        checkedCardIds: ["class-syntax"],
+      }),
+    );
+  });
+
+  it("gives the responsive lesson its own concept map and workspace return", () => {
+    render(<RevisionPack lessonSlug="responsive-css-grid" />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Responsive CSS Grid, compressed",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "How the layout adapts" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", {
+        name: "Trace the grid from container to shrinking card.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Return to your layout" }),
+    ).toHaveAttribute("href", "#responsive-css-practice");
+    expect(
+      screen.getByRole("heading", {
+        name: "What becomes a grid item after display: grid?",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("0 checked")).toBeInTheDocument();
+  });
+
   it("connects a completed lesson to the semantic HTML field guide first", () => {
     render(
       <RevisionPack

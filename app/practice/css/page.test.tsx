@@ -68,6 +68,9 @@ describe("CssPracticePage", () => {
     expect(document.querySelector(".practice-review-entry")).toHaveTextContent(
       "1 challenge",
     );
+    expect(
+      screen.getByRole("link", { name: "Review saved CSS attempts" }),
+    ).toHaveAttribute("href", "/practice/css/history");
   });
 
   it("does not read or show private review results while signed out", async () => {
@@ -77,5 +80,8 @@ describe("CssPracticePage", () => {
 
     expect(mocks.getReviewSession).not.toHaveBeenCalled();
     expect(screen.queryByText("Private CSS review")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Review saved CSS attempts" }),
+    ).not.toBeInTheDocument();
   });
 });

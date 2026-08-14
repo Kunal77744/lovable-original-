@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptDataStructuresLab } from "@/components/javascript-data-structures-lab";
 import { auth } from "@/lib/auth";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +31,19 @@ export default async function JavaScriptDataStructuresPage() {
     redirect("/account?mode=signin&next=/practice/data-structures");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "data-structures");
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "data-structures"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "data-structures"),
+  ]);
 
   return (
     <main className="data-lab-page">
       <SiteNav currentPage="practice" studentSession />
       <div className="data-lab-shell" id="main-content" tabIndex={-1}>
-        <nav className="problem-breadcrumbs" aria-label="Data-structures navigation">
+        <nav
+          className="problem-breadcrumbs"
+          aria-label="Data-structures navigation"
+        >
           <Link href="/practice">Practice arena</Link>
           <span aria-hidden="true">/</span>
           <span>Data-structures lab</span>
@@ -52,11 +61,14 @@ export default async function JavaScriptDataStructuresPage() {
           <aside aria-label="Data-structures lab format">
             <strong>4 structures</strong>
             <span>12 local checks</span>
-            <p>Code stays local. Completed exercises save privately.</p>
+            <p>Drafts and completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptDataStructuresLab completedExerciseIds={completedExerciseIds} />
+        <JavaScriptDataStructuresLab
+          completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
+        />
       </div>
       <SiteFooter />
     </main>
