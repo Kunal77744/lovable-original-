@@ -4047,6 +4047,18 @@ h1 {
   line-height: 1.65;
 }
 
+.quiz-recovery-message {
+  width: fit-content;
+  margin: 16px 0 4px;
+  padding: 8px 10px;
+  color: var(--accent-deep);
+  border: 1px solid #c6ddcb;
+  border-radius: 8px;
+  background: #eef6ed;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .quiz-question {
   margin: 0;
   padding: 34px 0;
