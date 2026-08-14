@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CssChallengeLocalFileImport } from "@/components/css-challenge-local-file-import";
 import { CssPathFeedback } from "@/components/css-path-feedback";
 import type { CssPracticeAttempt } from "@/db/css-practice";
 import type { SavedCssPathFeedback } from "@/lib/css-path-feedback";
 import {
   buildCssChallengePreview,
+  MAX_CSS_CHALLENGE_LENGTH,
   type CssChallengeCheck,
 } from "@/lib/css-practice-challenges";
 import { captureCssPracticeCompleted } from "@/lib/product-analytics";
@@ -286,6 +288,13 @@ export function CssChallengeWorkspace({
                 : "Local only"}
             </span>
           </div>
+          {isSignedIn ? (
+            <CssChallengeLocalFileImport
+              maxLength={MAX_CSS_CHALLENGE_LENGTH}
+              onImport={updateCss}
+              titleId={`css-challenge-import-${challenge.slug}`}
+            />
+          ) : null}
           <label htmlFor="css-challenge-editor">CSS solution</label>
           <textarea
             id="css-challenge-editor"

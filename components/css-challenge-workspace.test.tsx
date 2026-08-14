@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getCssPracticeChallenge,
   gradeCssPracticeChallenge,
+  MAX_CSS_CHALLENGE_LENGTH,
 } from "@/lib/css-practice-challenges";
 import { CssChallengeWorkspace } from "./css-challenge-workspace";
 
@@ -32,6 +33,15 @@ afterEach(() => {
 });
 
 const challenge = getCssPracticeChallenge("class-selector")!;
+
+function createCssFile(name: string, source: string) {
+  const file = new File([source], name, { type: "text/css" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
+}
 
 describe("CssChallengeWorkspace", () => {
   it("keeps a signed-out attempt local and offers account creation", () => {
@@ -76,6 +86,156 @@ describe("CssChallengeWorkspace", () => {
     expect(
       screen.queryByRole("heading", { name: "Did this path make CSS clearer?" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Import .css" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Choose CSS file to import"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("imports one local CSS file through the existing private autosave", async () => {
+    vi.useFakeTimers();
+    const importedCss = `.learning-card {
+  background: #ffffff;
+  color: #17231e;
+}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution");
+    fireEvent.change(screen.getByLabelText("Choose CSS file to import"), {
+      target: { files: [createCssFile("card.css", importedCss)] },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(editor).toHaveValue(challenge.starterCss);
+    expect(screen.getByText("Import card.css?")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(editor).toHaveValue(importedCss);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "card.css imported as unsaved CSS. Normal private autosave applies.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/practice/css/class-selector",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", css: importedCss }),
+      }),
+    );
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(captureCssPracticeCompleted).not.toHaveBeenCalled();
+  });
+
+  it("keeps the editor unchanged when import is cancelled or invalid", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution");
+    const input = screen.getByLabelText("Choose CSS file to import");
+
+    fireEvent.change(input, {
+      target: { files: [createCssFile("replacement.css", "body {}")] },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Keep editor" }));
+    expect(
+      screen.getByText("Import cancelled. Your CSS editor was not changed."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { files: [] } });
+    expect(
+      screen.getByText("No file selected. Your CSS editor was not changed."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createCssFile("notes.txt", "body {}")] },
+    });
+    expect(screen.getByText("Choose a file ending in .css.")).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createCssFile("too-large.css", "x".repeat(MAX_CSS_CHALLENGE_LENGTH + 1)),
+        ],
+      },
+    });
+    expect(
+      screen.getByText(
+        `Keep imported CSS to ${MAX_CSS_CHALLENGE_LENGTH.toLocaleString()} bytes or fewer.`,
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createCssFile("empty.css", "")] },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByText("That file is empty. Choose CSS source to import."),
+    ).toBeInTheDocument();
+
+    expect(editor).toHaveValue(challenge.starterCss);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(captureCssPracticeCompleted).not.toHaveBeenCalled();
   });
 
   it("saves an attempt, renders exact checks, and continues to the next step", async () => {

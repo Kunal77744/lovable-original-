@@ -9812,6 +9812,102 @@ h1 {
   border-right: 1px solid #31423a;
 }
 
+.css-challenge-local-import {
+  min-height: 48px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid #31423a;
+  background: #15211c;
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.css-challenge-local-import-trigger,
+.css-challenge-local-import-actions button {
+  min-height: 32px;
+  color: #aebbb4;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.css-challenge-local-import-trigger {
+  flex: 0 0 auto;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-decoration-color: #52635a;
+  text-underline-offset: 3px;
+}
+
+.css-challenge-local-import-trigger:hover,
+.css-challenge-local-import-actions button:hover {
+  color: #eef4ef;
+}
+
+.css-challenge-local-import-trigger:focus-visible,
+.css-challenge-local-import-actions button:focus-visible {
+  outline: 2px solid #66dc9d;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.css-challenge-local-import-message {
+  margin: 0;
+  color: #9eada5;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.css-challenge-local-import-message.is-error {
+  color: #f6c899;
+}
+
+.css-challenge-local-import-confirmation {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.css-challenge-local-import-confirmation strong {
+  color: #eef4ef;
+  font-size: 12px;
+}
+
+.css-challenge-local-import-confirmation p {
+  max-width: 57ch;
+  margin: 4px 0 0;
+  color: #9eada5;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.css-challenge-local-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.css-challenge-local-import-actions button:last-child {
+  min-height: 38px;
+  padding: 0 12px;
+  color: #d5e9dc;
+  border: 1px solid #52635a;
+  border-radius: 7px;
+}
+
+.css-challenge-local-import-actions button:last-child:hover {
+  border-color: #91cca9;
+  background: #1d2b25;
+}
+
 .css-challenge-editor label {
   position: absolute;
   width: 1px;
@@ -12320,6 +12416,26 @@ footer {
   .css-challenge-editor {
     border-right: 0;
     border-bottom: 1px solid #31423a;
+  }
+
+  .css-challenge-local-import {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .css-challenge-local-import-trigger {
+    align-self: flex-start;
+  }
+
+  .css-challenge-local-import-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .css-challenge-local-import-actions {
+    justify-content: space-between;
   }
 
   .css-challenge-workspace-heading {
