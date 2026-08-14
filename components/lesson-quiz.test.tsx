@@ -174,6 +174,107 @@ describe("LessonQuiz analytics", () => {
     ).toHaveAttribute("href", "/practice");
   });
 
+  it("lets a completed learner retake the quiz without changing saved completion analytics", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          score: 50,
+          correctCount: 1,
+          totalCount: 2,
+          passed: false,
+          completed: true,
+          savedScore: 100,
+          review: [
+            {
+              questionId: "q1",
+              correct: true,
+              explanation: "The first concept is working.",
+            },
+            {
+              questionId: "q2",
+              correct: false,
+              explanation: "Revisit the second concept before retrying.",
+            },
+          ],
+        }),
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+        completedLessonsAfterPass={3}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Retake the quiz from memory." }),
+    ).toHaveFocus();
+    expect(
+      screen.getByText(/completed lesson and best score are safe/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Saved best:")).toHaveTextContent("Saved best: 100%");
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(
+      await screen.findByText(/this round was/i),
+    ).toHaveTextContent(
+      "This round was 50%. Your best score remains 100%, and your completed lesson stays complete.",
+    );
+    expect(screen.getByText("Revisit")).toBeInTheDocument();
+    expect(captureLearnerEventOnce).not.toHaveBeenCalled();
+    expect(captureLessonCompleted).not.toHaveBeenCalled();
+  });
+
+  it("lets a completed learner leave a retake before grading", () => {
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Back to saved result" }));
+
+    expect(
+      screen.getByRole("heading", {
+        name: "You completed Web Development Foundations.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps practice hidden when another course lesson remains", async () => {
     render(
       <LessonQuiz

@@ -4285,6 +4285,63 @@ h1 {
   outline-offset: 4px;
 }
 
+.completion-secondary-actions {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 18px;
+}
+
+.completion-secondary-actions .completion-dashboard-link {
+  margin: 0;
+}
+
+.completion-quiz-retry,
+.quiz-retake-note button {
+  padding: 0;
+  border: 0;
+  color: var(--accent-deep);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.completion-quiz-retry:hover,
+.quiz-retake-note button:hover {
+  color: var(--ink);
+}
+
+.completion-quiz-retry:focus-visible,
+.quiz-retake-note button:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 4px;
+}
+
+.quiz-retake-note {
+  margin: 24px 0 8px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f1f4ee;
+}
+
+.quiz-retake-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .revision-pack {
   margin: 64px -56px -56px;
   padding: 64px 56px 56px;
