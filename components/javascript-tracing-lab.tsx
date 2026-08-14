@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { JAVASCRIPT_TRACE_EXERCISES } from "@/lib/javascript-tracing";
 import {
   getFirstIncompleteExerciseIndex,
@@ -17,6 +18,7 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
   const [selectedOutput, setSelectedOutput] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
 
   const exercise = JAVASCRIPT_TRACE_EXERCISES[exerciseIndex] ?? null;
   const complete = exercise === null;
@@ -25,6 +27,11 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
     if (!exercise || !selectedOutput) return;
 
     if (selectedOutput === exercise.correctOutput) {
+      if (completedIds.has(exercise.id)) {
+        setResultState("correct");
+        return;
+      }
+
       setResultState("saving");
       const saveResponse = await saveJavaScriptLabExercise("tracing", exercise.id);
       if (!saveResponse?.ok) {
@@ -41,7 +48,21 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
   }
 
   function continueTracing() {
-    setExerciseIndex(getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], exerciseIndex));
+    setExerciseIndex(
+      getNextIncompleteExerciseIndex(
+        exerciseIds,
+        [...completedIds],
+        exerciseIndex,
+        reviewingCompletedLab,
+      ),
+    );
+    setSelectedOutput("");
+    setResultState("idle");
+  }
+
+  function reviewExercises() {
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
     setSelectedOutput("");
     setResultState("idle");
   }
@@ -53,7 +74,9 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
           4/4
         </div>
         <div>
-          <p className="eyebrow">Tracing lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab ? "Tracing review complete" : "Tracing lab complete"}
+          </p>
           <h2 id="tracing-complete-title">You followed the code, line by line.</h2>
           <p>
             You traced assignments, a conditional, a loop, and a function return.
@@ -66,6 +89,10 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
           <Link className="tracing-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

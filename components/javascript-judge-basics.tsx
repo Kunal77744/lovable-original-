@@ -37,6 +37,11 @@ export function JavaScriptJudgeBasics({
     setCheckedAnswer(selectedAnswer);
     if (selectedAnswer !== "57") return;
 
+    if (initialCompleted) {
+      setSaveState("saved");
+      return;
+    }
+
     setSaveState("saving");
     const response = await saveJavaScriptLabExercise(
       "foundations",
@@ -198,8 +203,8 @@ export function JavaScriptJudgeBasics({
       </section>
 
       <p className="judge-privacy-note">
-        Your answer stays in this browser. Completed steps save privately to your
-        account without creating a judged attempt.
+        Your answer stays in this browser. A first completion saves privately
+        without creating a judged attempt; reviewing it creates no new record.
       </p>
     </>
   );
