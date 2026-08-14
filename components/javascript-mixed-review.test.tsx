@@ -256,4 +256,60 @@ describe("JavaScriptMixedReview", () => {
       screen.getByLabelText("Split the input before converting values."),
     ).not.toBeChecked();
   });
+
+  it("replays saved prompts without changing the private result or due date", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <JavaScriptMixedReview
+        initialResult={{
+          correctCount: 2,
+          totalCount: 3,
+          completedAt: "2026-08-07T12:00:00.000Z",
+          nextDueAt: "2026-08-10T12:00:00.000Z",
+        }}
+        items={items}
+        nextHref="/practice/test-design?exercise=1"
+        nextLabel="Continue Test design, exercise 1"
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", {
+        name: "Continue Test design, exercise 1",
+      }),
+    ).toHaveAttribute("href", "/practice/test-design?exercise=1");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Practice these prompts now" }),
+    );
+
+    for (const [index, label] of [
+      "Split the input before converting values.",
+      "Track each value after every statement.",
+      "Isolate the first failing assumption.",
+    ].entries()) {
+      fireEvent.click(screen.getByLabelText(label));
+      fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: index === 2 ? "Finish practice" : "Next concept",
+        }),
+      );
+    }
+
+    expect(
+      screen.getByRole("heading", {
+        name: "You recalled 3 of 3 concepts in this practice round.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your saved 2 of 3 result and Aug 10 review date did not change. This round stayed in this browser.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "Practice these prompts again" }),
+    ).toBeInTheDocument();
+  });
 });
