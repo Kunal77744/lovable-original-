@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { JavaScriptCapstoneWorkspace } from "@/components/javascript-capstone-workspace";
 import { getJavaScriptCapstoneForStudent } from "@/db/javascript-capstone";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   JAVASCRIPT_CAPSTONE_SLUG,
   JAVASCRIPT_CAPSTONE_TITLE,
@@ -29,7 +30,7 @@ export default async function JavaScriptExpenseReportPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects/javascript-expense-report"));
   }
 
   const project = await getJavaScriptCapstoneForStudent(session.user.id);

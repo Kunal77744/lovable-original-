@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SubmissionHistory } from "@/components/submission-history";
 import { getCodingSubmissionHistoryForStudent } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function SubmissionsPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/submissions"));
   }
 
   const submissions = await getCodingSubmissionHistoryForStudent(

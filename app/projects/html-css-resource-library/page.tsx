@@ -6,6 +6,7 @@ import { HtmlCssCapstoneWorkspace } from "@/components/html-css-capstone-workspa
 import { getCssPracticeCatalogProgress } from "@/db/css-practice";
 import { getHtmlCssCapstoneForStudent } from "@/db/html-css-capstone";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   HTML_CSS_CAPSTONE_SLUG,
   HTML_CSS_CAPSTONE_TITLE,
@@ -23,7 +24,9 @@ export const metadata: Metadata = {
 
 export default async function HtmlCssResourceLibraryPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect("/account?mode=signin");
+  if (!session) {
+    redirect(getSignInHref("/projects/html-css-resource-library"));
+  }
 
   const progress = await getCssPracticeCatalogProgress(session.user.id);
   if (progress.completedCount !== progress.totalCount) redirect("/practice/css");

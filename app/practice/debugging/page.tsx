@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DebuggingLab } from "@/components/debugging-lab";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
 import { SiteFooter, SiteNav, SkipLink } from "@/app/site-chrome";
 
@@ -24,7 +25,7 @@ export default async function JavaScriptDebuggingLabPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/debugging"));
     return null;
   }
   const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "debugging");

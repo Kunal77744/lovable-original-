@@ -45,7 +45,7 @@ describe("SubmissionsPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(SubmissionsPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fsubmissions",
     );
     expect(mocks.getHistory).not.toHaveBeenCalled();
   });

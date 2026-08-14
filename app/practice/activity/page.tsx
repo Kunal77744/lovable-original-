@@ -7,6 +7,7 @@ import { getCodingActivityDaysForStudent } from "@/db/coding-activity";
 import { getCodingPracticeGoalForStudent } from "@/db/coding-practice-goal";
 import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { buildCodingActivity } from "@/lib/coding-activity";
 import { buildWeeklyCodingPracticeGoal } from "@/lib/coding-practice-goal";
 
@@ -28,7 +29,7 @@ export default async function CodingActivityPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/activity"));
   }
 
   const [activityDays, progress, savedGoal] = await Promise.all([

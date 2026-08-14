@@ -58,7 +58,7 @@ describe("CodingActivityPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(CodingActivityPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fpractice%2Factivity",
     );
     expect(mocks.getActivityDays).not.toHaveBeenCalled();
     expect(mocks.getProgress).not.toHaveBeenCalled();

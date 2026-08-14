@@ -48,7 +48,9 @@ describe("SubmissionPage", () => {
 
     await expect(
       SubmissionPage({ params: Promise.resolve({ submissionId: "attempt-1" }) }),
-    ).rejects.toThrow("REDIRECT:/account?mode=signin");
+    ).rejects.toThrow(
+      "REDIRECT:/account?mode=signin&next=%2Fsubmissions%2Fattempt-1",
+    );
     expect(mocks.getSubmission).not.toHaveBeenCalled();
   });
 

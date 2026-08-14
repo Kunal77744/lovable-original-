@@ -8,6 +8,7 @@ import { getGuidedProjectSummary } from "@/db/guided-project";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { buildProjectPortfolio } from "@/lib/project-portfolio";
 import { SiteFooter, SiteNav } from "../site-chrome";
@@ -30,7 +31,7 @@ export default async function ProjectsPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects"));
   }
 
   const [course, cssPractice, semanticHtml, javascript, htmlCss] =

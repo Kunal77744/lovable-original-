@@ -66,7 +66,7 @@ describe("JavaScriptExpenseReportDebriefPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(JavaScriptExpenseReportDebriefPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fprojects%2Fjavascript-expense-report%2Fdebrief",
     );
     expect(mocks.getProject).not.toHaveBeenCalled();
   });

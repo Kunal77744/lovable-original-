@@ -70,7 +70,7 @@ describe("PracticeProgressPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(PracticeProgressPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fpractice%2Fprogress",
     );
     expect(mocks.getRecord).not.toHaveBeenCalled();
     expect(mocks.getLabProgress).not.toHaveBeenCalled();

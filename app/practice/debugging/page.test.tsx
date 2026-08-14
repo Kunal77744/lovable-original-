@@ -28,7 +28,9 @@ describe("JavaScriptDebuggingLabPage", () => {
 
     await DebuggingPage();
 
-    expect(redirect).toHaveBeenCalledWith("/account?mode=signin");
+    expect(redirect).toHaveBeenCalledWith(
+      "/account?mode=signin&next=%2Fpractice%2Fdebugging",
+    );
   });
 
   it("shows the browser-only lab boundary to a signed-in learner", async () => {
