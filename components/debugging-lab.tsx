@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -180,6 +181,12 @@ export function DebuggingLab({
           <span>broken-solution.js</span>
           <span>Draft saves privately</span>
         </div>
+        <GuidedJavaScriptFileImport
+          key={drill.slug}
+          destinationName="broken-solution.js"
+          disabled={labState.kind === "running"}
+          onImport={(nextSource) => updateSource(nextSource)}
+        />
         <label htmlFor="debugging-source">
           JavaScript source for {drill.title}
         </label>

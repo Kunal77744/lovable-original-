@@ -43,6 +43,41 @@ describe("JavaScriptDataStructuresLab", () => {
     ).toHaveAttribute("aria-current", "step");
   });
 
+  it("loads a confirmed local JavaScript file as unsaved editor work", async () => {
+    render(<JavaScriptDataStructuresLab />);
+    const file = new File(
+      ["function solve(input) { return input.trim(); }"],
+      "array-answer.js",
+      { type: "text/javascript" },
+    );
+    Object.defineProperty(file, "text", {
+      configurable: true,
+      value: async () => "function solve(input) { return input.trim(); }",
+    });
+
+    fireEvent.change(
+      screen.getByLabelText<HTMLInputElement>(
+        "Choose JavaScript file to import into sum-even-values.js",
+      ),
+      { target: { files: [file] } },
+    );
+    await screen.findByText("Import array-answer.js into sum-even-values.js?");
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(
+      screen.getByRole<HTMLTextAreaElement>("textbox", {
+        name: "JavaScript data-structure code",
+      }).value,
+    ).toBe("function solve(input) { return input.trim(); }");
+    expect(
+      screen.getByText(
+        "Imported code is local. Run the three checks when it is ready.",
+      ),
+    ).toBeInTheDocument();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+  });
+
   it("runs deterministic checks through the shared isolated runner", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",

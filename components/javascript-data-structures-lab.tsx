@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -251,6 +252,18 @@ export function JavaScriptDataStructuresLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="data-lab-code">JavaScript data-structure code</label>
           <textarea
             id="data-lab-code"

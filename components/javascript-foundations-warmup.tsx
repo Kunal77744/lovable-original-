@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -232,6 +233,18 @@ export function JavaScriptFoundationsWarmup({
           <span>foundations.js</span>
           <span>Draft saves privately</span>
         </div>
+        <GuidedJavaScriptFileImport
+          key={exercise.slug}
+          destinationName="foundations.js"
+          disabled={checkState.kind === "running"}
+          onImport={(nextCode) => {
+            setCode(nextCode);
+            setCheckState({
+              kind: "idle",
+              message: "Imported code is local. Run the three checks when it is ready.",
+            });
+          }}
+        />
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
         <textarea
           id="foundations-code"
