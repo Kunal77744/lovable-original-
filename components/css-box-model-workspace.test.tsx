@@ -1,7 +1,16 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CSS_BOX_MODEL_STARTER, gradeCssBoxModel } from "@/lib/css-box-model-practice";
 import { CssBoxModelWorkspace } from "./css-box-model-workspace";
+
+function createLocalCssFile(source: string) {
+  const file = new File([source], "card.css", { type: "text/css" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
+}
 
 beforeEach(() => window.localStorage.clear());
 afterEach(() => {
@@ -68,6 +77,34 @@ describe("CssBoxModelWorkspace", () => {
     expect(await screen.findByLabelText("Card CSS")).toHaveValue(localCss);
     expect(screen.getByText(/browser draft restored after sign-in/i)).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("imports confirmed CSS through the existing unsaved browser-draft path", async () => {
+    const localCss = ".learning-card { width: 280px; padding: 20px; }";
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Choose CSS file to import"), {
+      target: { files: [createLocalCssFile(localCss)] },
+    });
+    await act(async () => Promise.resolve());
+    expect(screen.getByLabelText("Card CSS")).toHaveValue(CSS_BOX_MODEL_STARTER);
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(screen.getByLabelText("Card CSS")).toHaveValue(localCss);
+    expect(screen.getByText("Local draft")).toBeInTheDocument();
+    expect(window.localStorage).toHaveLength(1);
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();

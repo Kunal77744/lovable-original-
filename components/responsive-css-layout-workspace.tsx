@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LessonLocalFileImport } from "@/components/lesson-local-file-import";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
@@ -82,6 +83,15 @@ export function ResponsiveCssLayoutWorkspace({
   useEffect(() => {
     latestCss.current = editorCss;
   }, [editorCss]);
+
+  function updateCss(nextCss: string) {
+    latestCss.current = nextCss;
+    setCss(nextCss);
+    dismissRecoveredDraft();
+    preserveDraft(nextCss);
+    setSaveState("unsaved");
+    setMessage("You have unsaved changes.");
+  }
 
   async function savePractice() {
     if (!isSignedIn) {
@@ -202,18 +212,19 @@ export function ResponsiveCssLayoutWorkspace({
                     : "Local draft"}
             </span>
           </div>
+          <LessonLocalFileImport
+            accept=".css,text/css"
+            extension=".css"
+            fileLabel="CSS"
+            maxLength={MAX_RESPONSIVE_CSS_LENGTH}
+            onImport={updateCss}
+            titleId="responsive-css-import-title"
+          />
           <label htmlFor="responsive-css-editor">Responsive layout CSS</label>
           <textarea
             id="responsive-css-editor"
             value={editorCss}
-            onChange={(event) => {
-              latestCss.current = event.target.value;
-              setCss(latestCss.current);
-              dismissRecoveredDraft();
-              preserveDraft(latestCss.current);
-              setSaveState("unsaved");
-              setMessage("You have unsaved changes.");
-            }}
+            onChange={(event) => updateCss(event.target.value)}
             maxLength={MAX_RESPONSIVE_CSS_LENGTH}
             spellCheck={false}
           />

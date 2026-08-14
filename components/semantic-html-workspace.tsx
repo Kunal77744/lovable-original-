@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LessonLocalFileImport } from "@/components/lesson-local-file-import";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
@@ -81,6 +82,15 @@ export function SemanticHtmlWorkspace({
   useEffect(() => {
     htmlRef.current = editorHtml;
   }, [editorHtml]);
+
+  function updateHtml(nextHtml: string) {
+    htmlRef.current = nextHtml;
+    setHtml(nextHtml);
+    dismissRecoveredDraft();
+    preserveDraft(nextHtml);
+    setSaveState("unsaved");
+    setMessage("You have unsaved changes.");
+  }
 
   async function submitAssignment() {
     if (!isSignedIn) {
@@ -195,18 +205,19 @@ export function SemanticHtmlWorkspace({
                     : "Local draft"}
             </span>
           </div>
+          <LessonLocalFileImport
+            accept=".html,text/html"
+            extension=".html"
+            fileLabel="HTML"
+            maxLength={MAX_SEMANTIC_HTML_LENGTH}
+            onImport={updateHtml}
+            titleId="semantic-html-import-title"
+          />
           <label htmlFor="semantic-html-editor">Semantic HTML</label>
           <textarea
             id="semantic-html-editor"
             value={editorHtml}
-            onChange={(event) => {
-              htmlRef.current = event.target.value;
-              setHtml(htmlRef.current);
-              dismissRecoveredDraft();
-              preserveDraft(htmlRef.current);
-              setSaveState("unsaved");
-              setMessage("You have unsaved changes.");
-            }}
+            onChange={(event) => updateHtml(event.target.value)}
             maxLength={MAX_SEMANTIC_HTML_LENGTH}
             spellCheck={false}
           />
