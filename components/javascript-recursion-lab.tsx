@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "@/lib/javascript-recursion";
 import {
@@ -229,6 +230,18 @@ export function JavaScriptRecursionLab({
             <span>{exercise.slug}.js</span>
             <span>Browser-only</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="recursion-lab-code">JavaScript recursion code</label>
           <textarea
             id="recursion-lab-code"

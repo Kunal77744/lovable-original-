@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "@/lib/javascript-linked-lists";
 import {
@@ -229,6 +230,18 @@ export function JavaScriptLinkedListLab({
             <span>{exercise.slug}.js</span>
             <span>Browser-only</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={exercise.slug}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="linked-list-lab-code">JavaScript linked-list code</label>
           <textarea
             id="linked-list-lab-code"

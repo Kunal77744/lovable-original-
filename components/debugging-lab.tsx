@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -119,6 +120,12 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
           <span>broken-solution.js</span>
           <span>Browser only</span>
         </div>
+        <GuidedJavaScriptFileImport
+          key={drill.slug}
+          destinationName="broken-solution.js"
+          disabled={labState.kind === "running"}
+          onImport={(nextSource) => updateSource(nextSource)}
+        />
         <label htmlFor="debugging-source">JavaScript source for {drill.title}</label>
         <textarea
           id="debugging-source"
