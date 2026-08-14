@@ -207,7 +207,12 @@ export function getNextIncompleteExerciseIndex(
   exerciseIds: readonly string[],
   completedExerciseIds: readonly string[],
   currentIndex: number,
+  reviewCompleted = false,
 ) {
+  if (reviewCompleted) {
+    return Math.min(currentIndex + 1, exerciseIds.length);
+  }
+
   const completed = new Set(completedExerciseIds);
 
   for (let index = currentIndex + 1; index < exerciseIds.length; index += 1) {

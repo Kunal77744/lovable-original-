@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "@/lib/javascript-recursion";
 import {
@@ -43,6 +44,7 @@ export function JavaScriptRecursionLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -68,6 +70,14 @@ export function JavaScriptRecursionLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise("recursion", exercise.slug);
       if (!saveResponse?.ok) {
         setCheckState({
@@ -105,6 +115,7 @@ export function JavaScriptRecursionLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_RECURSION_EXERCISES[nextIndex];
 
@@ -118,6 +129,17 @@ export function JavaScriptRecursionLab({
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_RECURSION_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -128,7 +150,11 @@ export function JavaScriptRecursionLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">Recursion fundamentals complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Recursion fundamentals review complete"
+              : "Recursion fundamentals complete"}
+          </p>
           <h2 id="recursion-lab-complete-title">
             Every recursive call now has a way home.
           </h2>
@@ -142,6 +168,10 @@ export function JavaScriptRecursionLab({
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

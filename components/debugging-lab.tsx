@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -22,12 +23,13 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
   const drill = JAVASCRIPT_DEBUGGING_DRILLS[drillIndex] ?? null;
   const [source, setSource] = useState(drill?.starterCode ?? "");
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [labState, setLabState] = useState<LabState>({
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
   });
   const completedCount = completedIds.size;
-  const isLastDrill = completedCount === JAVASCRIPT_DEBUGGING_DRILLS.length;
+  const isLastDrill = drillIndex === JAVASCRIPT_DEBUGGING_DRILLS.length - 1;
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
@@ -63,6 +65,14 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
       return;
     }
 
+    if (completedIds.has(drill.slug)) {
+      setLabState({
+        kind: "passed",
+        message: `All ${grade.totalChecks} checks passed. Saved completion stayed unchanged.`,
+      });
+      return;
+    }
+
     const saveResponse = await saveJavaScriptLabExercise("debugging", drill.slug);
     if (!saveResponse?.ok) {
       setLabState({
@@ -80,8 +90,17 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
   }
 
   function openNextDrill() {
-    const nextIndex = getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], drillIndex);
+    const nextIndex = getNextIncompleteExerciseIndex(
+      exerciseIds,
+      [...completedIds],
+      drillIndex,
+      reviewingCompletedLab,
+    );
     const nextDrill = JAVASCRIPT_DEBUGGING_DRILLS[nextIndex];
+    if (!nextDrill) {
+      setDrillIndex(JAVASCRIPT_DEBUGGING_DRILLS.length);
+      return;
+    }
     setDrillIndex(nextIndex);
     setSource(nextDrill.starterCode);
     setLabState({
@@ -90,11 +109,29 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
     });
   }
 
+  function reviewExercises() {
+    const firstDrill = JAVASCRIPT_DEBUGGING_DRILLS[0];
+    setReviewingCompletedLab(true);
+    setDrillIndex(0);
+    setSource(firstDrill.starterCode);
+    setLabState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!drill) {
     return (
       <section className="debugging-result is-passed" aria-labelledby="debugging-complete-title">
-        <div><span>Debugging lab complete</span><strong id="debugging-complete-title">All three saved repairs are complete.</strong></div>
+        <div>
+          <span>{reviewingCompletedLab ? "Debugging review complete" : "Debugging lab complete"}</span>
+          <strong id="debugging-complete-title">All three saved repairs are complete.</strong>
+        </div>
         <Link href="/practice/sum-two-numbers">Start judged practice</Link>
+        <CompletedLabReviewButton
+          label={reviewingCompletedLab ? "Review exercises again" : undefined}
+          onReview={reviewExercises}
+        />
       </section>
     );
   }
@@ -173,7 +210,11 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
               <span>What this repair proves</span>
               <p>{drill.takeaway}</p>
             </div>
-            {isLastDrill ? (
+            {isLastDrill && reviewingCompletedLab ? (
+              <button type="button" onClick={openNextDrill}>
+                Finish review
+              </button>
+            ) : isLastDrill ? (
               <Link href="/practice">Return to JavaScript practice</Link>
             ) : (
               <button type="button" onClick={openNextDrill}>

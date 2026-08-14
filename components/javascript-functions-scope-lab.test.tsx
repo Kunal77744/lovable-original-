@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
 import { JavaScriptFunctionsScopeLab } from "./javascript-functions-scope-lab";
 
 const runCodingSolution = vi.fn();
@@ -143,5 +144,38 @@ describe("JavaScriptFunctionsScopeLab", () => {
 
     const message = await screen.findByText("Define a function named solve(input).");
     expect(message.closest('[role="status"]')).toHaveAttribute("aria-atomic", "true");
+  });
+
+  it("reopens a completed lab without writing another completion", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: [
+        "Mina is learning JavaScript.",
+        "Sam is learning CSS.",
+        "Lee is learning HTML.",
+      ],
+    });
+    render(
+      <JavaScriptFunctionsScopeLab
+        completedExerciseIds={JAVASCRIPT_FUNCTION_EXERCISES.map(
+          (exercise) => exercise.slug,
+        )}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Review exercises/ }));
+    expect(
+      screen.getByRole("heading", { name: "Pass values into a function" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "4");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(screen.getByText(/Saved completion stayed unchanged/)).toBeInTheDocument();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Continue to Return values" }));
+    expect(screen.getByText("Function idea 2 of 4")).toBeInTheDocument();
   });
 });

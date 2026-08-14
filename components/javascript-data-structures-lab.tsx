@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -29,6 +30,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     message: readyMessage,
   });
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -54,6 +56,14 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise("data-structures", exercise.slug);
       if (!saveResponse?.ok) {
         setCheckState({
@@ -91,6 +101,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_DATA_STRUCTURE_EXERCISES[nextIndex];
 
@@ -104,6 +115,17 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_DATA_STRUCTURE_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -114,7 +136,11 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
           4/4
         </div>
         <div>
-          <p className="eyebrow">Data-structures lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Data-structures review complete"
+              : "Data-structures lab complete"}
+          </p>
           <h2 id="data-lab-complete-title">
             Four structures, four different jobs.
           </h2>
@@ -129,6 +155,10 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
           <Link className="data-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

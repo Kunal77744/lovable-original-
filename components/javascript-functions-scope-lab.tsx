@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -27,6 +28,7 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     message: readyMessage,
   });
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -52,6 +54,14 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise("functions", exercise.slug);
       if (!saveResponse?.ok) {
         setCheckState({
@@ -89,6 +99,7 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_FUNCTION_EXERCISES[nextIndex];
 
@@ -102,6 +113,17 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_FUNCTION_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
   if (!exercise) {
     return (
       <section
@@ -112,7 +134,11 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
           4/4
         </div>
         <div>
-          <p className="eyebrow">Functions and scope lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Functions and scope review complete"
+              : "Functions and scope lab complete"}
+          </p>
           <h2 id="function-lab-complete-title">
             One function can do a precise job and stay reusable.
           </h2>
@@ -127,6 +153,10 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );
