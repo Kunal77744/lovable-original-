@@ -21,6 +21,8 @@ export function WebFoundationsReview({
 }) {
   const [savedResult, setSavedResult] =
     useState<SavedWebFoundationsReviewResult | null>(initialResult);
+  const [isPracticeRound, setIsPracticeRound] = useState(false);
+  const [practiceResult, setPracticeResult] = useState<number | null>(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const {
@@ -51,9 +53,25 @@ export function WebFoundationsReview({
     }
   }
 
+  function startPracticeRound() {
+    setQuestionIndex(0);
+    setSelectedOptionId(null);
+    setCheckedOptionId(null);
+    setCorrectCount(0);
+    setPracticeResult(null);
+    setSaveStatus("");
+    setIsPracticeRound(true);
+  }
+
   async function continueReview() {
     if (!checkedOptionId) return;
     if (questionIndex === WEB_FOUNDATIONS_REVIEW_ITEMS.length - 1) {
+      if (isPracticeRound) {
+        setPracticeResult(correctCount);
+        setIsPracticeRound(false);
+        return;
+      }
+
       setSaving(true);
       setSaveStatus("Saving your private review result.");
       try {
@@ -96,7 +114,9 @@ export function WebFoundationsReview({
     setCheckedOptionId(null);
   }
 
-  if (savedResult) {
+  if (savedResult && !isPracticeRound) {
+    const practiceRoundComplete = practiceResult !== null;
+
     return (
       <section
         className="mixed-review-complete foundations-review-complete"
@@ -104,25 +124,38 @@ export function WebFoundationsReview({
       >
         <div
           className="mixed-review-score"
-          aria-label={`${savedResult.correctCount} of ${savedResult.totalCount} concepts recalled`}
+          aria-label={`${practiceRoundComplete ? practiceResult : savedResult.correctCount} of ${savedResult.totalCount} concepts recalled`}
         >
-          <strong>{savedResult.correctCount}</strong>
+          <strong>
+            {practiceRoundComplete ? practiceResult : savedResult.correctCount}
+          </strong>
           <span>of {savedResult.totalCount}</span>
         </div>
         <div>
-          <p className="eyebrow">Private lesson review saved</p>
+          <p className="eyebrow">
+            {practiceRoundComplete
+              ? "Browser-only practice complete"
+              : "Private lesson review saved"}
+          </p>
           <h2 id="foundations-review-complete-title">
-            Your next foundations review is set for{" "}
-            {formatWebFoundationsReviewDueDate(savedResult.nextDueAt)}.
+            {practiceRoundComplete
+              ? `You recalled ${practiceResult} of ${savedResult.totalCount} concepts in this practice round.`
+              : `Your next foundations review is set for ${formatWebFoundationsReviewDueDate(savedResult.nextDueAt)}.`}
           </h2>
           <p>
-            Only this result and next review date belong to your account. Your
-            choices stayed in this browser, and course completion did not change.
+            {practiceRoundComplete
+              ? `Your saved ${savedResult.correctCount} of ${savedResult.totalCount} result and ${formatWebFoundationsReviewDueDate(savedResult.nextDueAt)} review date did not change. Course completion did not change, and this round stayed in this browser.`
+              : "Only this result and next review date belong to your account. Your choices stayed in this browser, and course completion did not change."}
           </p>
           <div className="mixed-review-complete-actions">
             <Link className="primary-action" href={continuation.href}>
               {continuation.label} <span aria-hidden="true">→</span>
             </Link>
+            <button type="button" onClick={startPracticeRound}>
+              {practiceRoundComplete
+                ? "Practice these concepts again"
+                : "Practice these concepts now"}
+            </button>
             <Link className="mixed-review-record-link" href="/dashboard">
               Return to dashboard
             </Link>
@@ -216,9 +249,11 @@ export function WebFoundationsReview({
               ? questionIndex === WEB_FOUNDATIONS_REVIEW_ITEMS.length - 1
                 ? saving
                   ? "Saving result"
-                  : saveStatus
-                    ? "Retry saving result"
-                    : "Finish and save"
+                  : isPracticeRound
+                    ? "Finish practice"
+                    : saveStatus
+                      ? "Retry saving result"
+                      : "Finish and save"
                 : "Next concept"
               : "Check my recall"}
             <span aria-hidden="true">→</span>

@@ -149,4 +149,59 @@ describe("WebFoundationsReview", () => {
     expect(screen.getByText("One more pass")).toBeInTheDocument();
     expect(screen.getByLabelText(secondWrongChoice.label)).toBeChecked();
   });
+
+  it("replays saved concepts without changing the private result or due date", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <WebFoundationsReview
+        initialResult={{
+          correctCount: 3,
+          totalCount: 4,
+          completedAt: "2026-08-07T12:00:00.000Z",
+          nextDueAt: "2026-08-14T12:00:00.000Z",
+        }}
+        continuation={continuation}
+        studentScope="student-one"
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Solve problem 03" }),
+    ).toHaveAttribute("href", "/practice/array-sum");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Practice these concepts now" }),
+    );
+
+    for (const [index, item] of WEB_FOUNDATIONS_REVIEW_ITEMS.entries()) {
+      const choice = item.options.find(
+        (option) => option.id === item.correctOptionId,
+      )!;
+      fireEvent.click(screen.getByLabelText(choice.label));
+      fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: index === 3 ? "Finish practice" : "Next concept",
+        }),
+      );
+    }
+
+    expect(
+      screen.getByRole("heading", {
+        name: "You recalled 4 of 4 concepts in this practice round.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your saved 3 of 4 result and Aug 14 review date did not change. Course completion did not change, and this round stayed in this browser.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "Practice these concepts again" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Solve problem 03" }),
+    ).toHaveAttribute("href", "/practice/array-sum");
+  });
 });
