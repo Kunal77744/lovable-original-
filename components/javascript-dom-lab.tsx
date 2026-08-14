@@ -44,6 +44,7 @@ export function JavaScriptDomLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
@@ -254,6 +255,8 @@ export function JavaScriptDomLab({
             state={draftState}
             onRetry={retrySave}
             browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="dom-lab-actions">

@@ -58,6 +58,20 @@ describe("DebuggingLab", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers the account-backed debugging source as a saved JavaScript file", () => {
+    render(
+      <DebuggingLab
+        initialDrafts={{
+          "repair-a-condition": "function solve(input) { return 'Even'; }",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows only bounded concept guidance after a failed run", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",

@@ -49,6 +49,7 @@ export function JavaScriptFoundationsWarmup({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter,
     retrySave,
@@ -264,6 +265,8 @@ export function JavaScriptFoundationsWarmup({
           state={draftState}
           onRetry={retrySave}
           browserRecovery={browserRecovery}
+          savedSource={savedSource}
+          fileName="foundations.js"
         />
 
         <div className="foundations-actions">

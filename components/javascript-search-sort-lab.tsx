@@ -46,6 +46,7 @@ export function JavaScriptSearchSortLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
@@ -290,6 +291,8 @@ export function JavaScriptSearchSortLab({
             state={draftState}
             onRetry={retrySave}
             browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
           />
 
           <div className="function-lab-actions">

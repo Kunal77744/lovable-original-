@@ -8,6 +8,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PrivateJavaScriptLabDraftStatus,
+  savedJavaScriptLabSourceFileContents,
   usePrivateJavaScriptLabDraft,
 } from "./private-javascript-lab-draft";
 import {
@@ -48,6 +49,8 @@ function DraftHarness({
         browserRecovery={draft.browserRecovery}
         state={draft.state}
         onRetry={draft.retrySave}
+        savedSource={draft.savedSource}
+        fileName="base-case.js"
       />
     </>
   );
@@ -88,6 +91,71 @@ describe("private guided JavaScript drafts", () => {
     expect(
       screen.getByText("Saved privately to your account"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
+  });
+
+  it("downloads the exact saved bytes with the authored exercise filename", () => {
+    const source = "function solve() {\n  return 'exact';\n}";
+    let downloadedFile = "";
+    const createObjectURL = vi.fn().mockReturnValue("blob:guided-draft");
+    const revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      function (this: HTMLAnchorElement) {
+        downloadedFile = this.download;
+      },
+    );
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectURL,
+    });
+    vi.stubGlobal("fetch", vi.fn());
+
+    render(<DraftHarness initialDrafts={{ "base-case": source }} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    );
+
+    expect(savedJavaScriptLabSourceFileContents(source)).toBe(source);
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(createObjectURL.mock.calls[0]?.[0]).toBeInstanceOf(Blob);
+    expect(downloadedFile).toBe("base-case.js");
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:guided-draft");
+    expect(screen.getByText("base-case.js downloaded.")).toBeInTheDocument();
+  });
+
+  it("keeps downloads absent before a private save and hides them after an edit", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(null, { status: 200 })),
+    );
+    render(<DraftHarness />);
+
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
+
+    cleanup();
+    render(
+      <DraftHarness
+        initialDrafts={{ "base-case": "function solve() { return 1; }" }}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "newer browser-only revision" },
+    });
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps newer code unsaved until its exact revision finishes saving", async () => {
@@ -137,6 +205,9 @@ describe("private guided JavaScript drafts", () => {
     expect(window.localStorage.getItem(recoveryKey)).toContain(
       "newest revision",
     );
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       second.resolve(new Response(null, { status: 200 }));
@@ -148,6 +219,9 @@ describe("private guided JavaScript drafts", () => {
       screen.getByText("Saved privately to your account"),
     ).toBeInTheDocument();
     expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
   });
 
   it("offers a newer browser copy without replacing private saved source", async () => {
@@ -169,6 +243,9 @@ describe("private guided JavaScript drafts", () => {
     expect(screen.getByRole("textbox")).toHaveValue("private saved revision");
     expect(
       screen.getByText("Newer exercise code is available."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
     ).toBeInTheDocument();
   });
 
@@ -195,6 +272,9 @@ describe("private guided JavaScript drafts", () => {
     );
     expect(screen.getByRole("textbox")).toHaveValue("newer browser revision");
     expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .js" }),
+    ).not.toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(700);

@@ -45,6 +45,7 @@ export function DebuggingLab({
   const {
     source,
     state: draftState,
+    savedSource,
     updateSource: setSource,
     retrySave,
     browserRecovery,
@@ -201,6 +202,8 @@ export function DebuggingLab({
           state={draftState}
           onRetry={retrySave}
           browserRecovery={browserRecovery}
+          savedSource={savedSource}
+          fileName="broken-solution.js"
         />
       </div>
 
