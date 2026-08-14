@@ -461,6 +461,7 @@ export function CodingWorkspace({
   const hasPendingDraft = useRef(false);
   const draftRevision = useRef(0);
   const lastQueuedDraftRevision = useRef(-1);
+  const queuedDraftSaveCount = useRef(0);
   const draftSaveChain = useRef<Promise<void>>(Promise.resolve());
   const showAcceptedExplanation =
     (runState.kind === "verdict" && runState.verdict === "Accepted") ||
@@ -587,6 +588,9 @@ export function CodingWorkspace({
         draftTimer.current = null;
       }
 
+      // Browser recovery already holds the newest source. Avoid racing it
+      // against an older account-backed save that can finish afterward.
+      if (queuedDraftSaveCount.current > 0) return;
       if (typeof navigator.sendBeacon !== "function") return;
 
       const queued = navigator.sendBeacon(
@@ -613,6 +617,7 @@ export function CodingWorkspace({
 
     setSaveState("saving");
     lastQueuedDraftRevision.current = revision;
+    queuedDraftSaveCount.current += 1;
     const request = draftSaveChain.current.then(async () => {
       try {
         const response = await fetch(`/api/practice/${problem.slug}`, {
@@ -646,6 +651,8 @@ export function CodingWorkspace({
           lastQueuedDraftRevision.current = -1;
           setSaveState("error");
         }
+      } finally {
+        queuedDraftSaveCount.current -= 1;
       }
     });
     draftSaveChain.current = request;

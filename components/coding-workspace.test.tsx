@@ -1409,6 +1409,65 @@ describe("CodingWorkspace", () => {
     expect(screen.getByText("Unsaved")).toBeInTheDocument();
   });
 
+  it("does not race a newer exit draft against an older private save", async () => {
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    let resolveOlderSave: (response: Response) => void = () => undefined;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveOlderSave = resolve;
+        }),
+    );
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    const olderCode = "function solve(input) { return input.trim(); }";
+    const newerCode =
+      "function solve(input) { return input.trim().toUpperCase(); }";
+
+    try {
+      renderWorkspace();
+      const editor = screen.getByLabelText("JavaScript solution");
+
+      fireEvent.change(editor, { target: { value: olderCode } });
+      fireEvent.blur(editor);
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+
+      fireEvent.change(editor, { target: { value: newerCode } });
+      fireEvent(window, new Event("pagehide"));
+
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(
+        parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+      ).toEqual(expect.objectContaining({ code: newerCode }));
+
+      resolveOlderSave(new Response(JSON.stringify({ savedAt: "now" })));
+
+      await waitFor(() =>
+        expect(screen.getByText("Unsaved")).toBeInTheDocument(),
+      );
+      expect(
+        parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+      ).toEqual(expect.objectContaining({ code: newerCode }));
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
+  });
+
   it("queues the exact pending draft when the learner leaves immediately", async () => {
     const originalSendBeacon = navigator.sendBeacon;
     const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
