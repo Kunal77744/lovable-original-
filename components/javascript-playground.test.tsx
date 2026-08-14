@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MAX_PLAYGROUND_CODE_LENGTH } from "@/lib/javascript-playground";
 import { JavaScriptPlayground } from "./javascript-playground";
 
 const runPlaygroundCode = vi.fn();
@@ -32,6 +33,15 @@ function playgroundFiles(
       isActive: true,
     },
   ];
+}
+
+function createJavaScriptFile(name: string, source: string) {
+  const file = new File([source], name, { type: "text/javascript" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
 }
 
 describe("JavaScriptPlayground", () => {
@@ -97,6 +107,217 @@ describe("JavaScriptPlayground", () => {
     expect(actions).toContainElement(
       screen.getByRole("button", { name: "Run code" }),
     );
+  });
+
+  it("imports one local JavaScript file into only the open editor as unsaved work", async () => {
+    const importedCode = "const imported = [1, 2, 3].map((value) => value * 2);";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          file: {
+            ...playgroundFiles(importedCode, "imported.length === 3")[0],
+            updatedAt: "2026-08-14T02:00:00.000Z",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('saved source');",
+          "imported.length === 3",
+          "2026-08-14T01:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(
+        "Choose JavaScript file to import into the open playground file",
+      ),
+      {
+        target: {
+          files: [createJavaScriptFile("array-notes.js", importedCode)],
+        },
+      },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const editor = screen.getByRole("textbox", { name: "JavaScript file" });
+    expect(editor).toHaveValue("console.log('saved source');");
+    expect(
+      screen.getByText("Import array-notes.js into playground.js?"),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(editor).toHaveValue(importedCode);
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("imported.length === 3");
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "array-notes.js is now unsaved work in playground.js. Quick checks and the saved file are unchanged.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runPlaygroundCode).not.toHaveBeenCalled();
+    expect(runPlaygroundChecks).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/playground",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            fileId: "file-1",
+            code: importedCode,
+            quickChecks: "imported.length === 3",
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("keeps the open editor and Quick checks untouched when import is cancelled", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('keep source');",
+          "true",
+          "2026-08-14T01:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(
+        "Choose JavaScript file to import into the open playground file",
+      ),
+      {
+        target: {
+          files: [
+            createJavaScriptFile(
+              "replacement.js",
+              "console.log('replacement');",
+            ),
+          ],
+        },
+      },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Keep editor" }));
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('keep source');",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("true");
+    expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+    expect(
+      screen.getByText("Import cancelled. playground.js was not changed."),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects multiple, wrong-type, oversized, empty, and unreadable imports", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('keep exact source');",
+          "true",
+          "2026-08-14T01:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+      />,
+    );
+    const input = screen.getByLabelText(
+      "Choose JavaScript file to import into the open playground file",
+    );
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createJavaScriptFile("one.js", "return 1;"),
+          createJavaScriptFile("two.js", "return 2;"),
+        ],
+      },
+    });
+    expect(
+      screen.getByText("Choose one JavaScript file at a time."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createJavaScriptFile("notes.txt", "return 1;")] },
+    });
+    expect(screen.getByText("Choose a file ending in .js.")).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createJavaScriptFile(
+            "too-large.js",
+            "x".repeat(MAX_PLAYGROUND_CODE_LENGTH + 1),
+          ),
+        ],
+      },
+    });
+    expect(
+      screen.getByText(
+        `Keep imported files to ${MAX_PLAYGROUND_CODE_LENGTH.toLocaleString()} bytes or fewer.`,
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createJavaScriptFile("empty.js", "")] },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByText(
+        "That file is empty. Choose a .js file with source code.",
+      ),
+    ).toBeInTheDocument();
+
+    const unreadableFile = createJavaScriptFile("unreadable.js", "source");
+    Object.defineProperty(unreadableFile, "text", {
+      configurable: true,
+      value: vi.fn().mockRejectedValue(new Error("File read failed")),
+    });
+    fireEvent.change(input, { target: { files: [unreadableFile] } });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByText(
+        "That file could not be read. The open editor was not changed.",
+      ),
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('keep exact source');",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("true");
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runPlaygroundCode).not.toHaveBeenCalled();
+    expect(runPlaygroundChecks).not.toHaveBeenCalled();
   });
 
   it("creates the first private file without leaving a duplicate starter tab", async () => {

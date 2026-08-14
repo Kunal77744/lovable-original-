@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
 import {
   type PlaygroundCheckResult,
   runPlaygroundChecks,
@@ -36,6 +36,19 @@ type CheckState =
   | { kind: "running"; checks: PlaygroundCheckResult[]; message: string }
   | { kind: "finished"; checks: PlaygroundCheckResult[]; message: string }
   | { kind: "error"; checks: PlaygroundCheckResult[]; message: string };
+
+type ImportState =
+  | { kind: "idle"; message: string }
+  | { kind: "reading"; message: string }
+  | { kind: "success"; message: string }
+  | { kind: "error"; message: string };
+
+type PendingImport = {
+  fileName: string;
+  code: string;
+  targetFileId: string | null;
+  targetFileName: string;
+};
 
 export function JavaScriptPlayground({
   initialFiles,
@@ -76,6 +89,14 @@ export function JavaScriptPlayground({
   const [transferState, setTransferState] = useState<
     "offered" | "loaded" | "dismissed"
   >(acceptedTransfer ? "offered" : "dismissed");
+  const [importState, setImportState] = useState<ImportState>({
+    kind: "idle",
+    message: "Import one local .js file into the open editor.",
+  });
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const importRevision = useRef(0);
 
   async function runCode() {
     setRunState({
@@ -165,6 +186,12 @@ export function JavaScriptPlayground({
   }
 
   function showFile(file: PlaygroundWorkspaceFile) {
+    importRevision.current += 1;
+    setPendingImport(null);
+    setImportState({
+      kind: "idle",
+      message: "Import one local .js file into the open editor.",
+    });
     setActiveFileId(file.id);
     setCode(file.code);
     setCheckSource(file.quickChecks);
@@ -407,6 +434,127 @@ export function JavaScriptPlayground({
     setSaveState("unsaved");
   }
 
+  async function prepareImport(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    importRevision.current += 1;
+    const selectedRevision = importRevision.current;
+    setPendingImport(null);
+
+    if (selectedFiles.length === 0) {
+      setImportState({
+        kind: "idle",
+        message: "No file selected. The open editor was not changed.",
+      });
+      return;
+    }
+
+    if (selectedFiles.length !== 1) {
+      setImportState({
+        kind: "error",
+        message: "Choose one JavaScript file at a time.",
+      });
+      return;
+    }
+
+    const selectedFile = selectedFiles[0];
+    if (!selectedFile.name.toLowerCase().endsWith(".js")) {
+      setImportState({
+        kind: "error",
+        message: "Choose a file ending in .js.",
+      });
+      return;
+    }
+
+    if (selectedFile.size > MAX_PLAYGROUND_CODE_LENGTH) {
+      setImportState({
+        kind: "error",
+        message: `Keep imported files to ${MAX_PLAYGROUND_CODE_LENGTH.toLocaleString()} bytes or fewer.`,
+      });
+      return;
+    }
+
+    const targetFileName =
+      files.find((file) => file.id === activeFileId)?.name ?? "playground.js";
+    const targetFileId = activeFileId;
+    setImportState({
+      kind: "reading",
+      message: `Reading ${selectedFile.name}…`,
+    });
+
+    let importedCode: string;
+    try {
+      importedCode = await selectedFile.text();
+    } catch {
+      if (selectedRevision !== importRevision.current) return;
+      setImportState({
+        kind: "error",
+        message: "That file could not be read. The open editor was not changed.",
+      });
+      return;
+    }
+
+    if (selectedRevision !== importRevision.current) return;
+    if (importedCode.length === 0) {
+      setImportState({
+        kind: "error",
+        message: "That file is empty. Choose a .js file with source code.",
+      });
+      return;
+    }
+
+    if (importedCode.length > MAX_PLAYGROUND_CODE_LENGTH) {
+      setImportState({
+        kind: "error",
+        message: `Keep imported source to ${MAX_PLAYGROUND_CODE_LENGTH.toLocaleString()} characters or fewer.`,
+      });
+      return;
+    }
+
+    setPendingImport({
+      fileName: selectedFile.name,
+      code: importedCode,
+      targetFileId,
+      targetFileName,
+    });
+    setImportState({
+      kind: "idle",
+      message: `${selectedFile.name} is ready to import.`,
+    });
+  }
+
+  function cancelImport() {
+    const targetFileName = pendingImport?.targetFileName ?? "the open file";
+    importRevision.current += 1;
+    setPendingImport(null);
+    setImportState({
+      kind: "idle",
+      message: `Import cancelled. ${targetFileName} was not changed.`,
+    });
+  }
+
+  function confirmImport() {
+    if (!pendingImport) return;
+
+    if (pendingImport.targetFileId !== activeFileId) {
+      importRevision.current += 1;
+      setPendingImport(null);
+      setImportState({
+        kind: "error",
+        message: "The open file changed. Choose the local file again.",
+      });
+      return;
+    }
+
+    updateCode(pendingImport.code);
+    setPendingImport(null);
+    setImportState({
+      kind: "success",
+      message: `${pendingImport.fileName} is now unsaved work in ${pendingImport.targetFileName}. Quick checks and the saved file are unchanged.`,
+    });
+    requestAnimationFrame(() => editorRef.current?.focus());
+  }
+
   function loadAcceptedCopy() {
     if (!acceptedTransfer) return;
     if (!confirmDiscard("load the Accepted copy")) return;
@@ -557,11 +705,28 @@ export function JavaScriptPlayground({
         </div>
       ) : null}
       <header className="playground-filebar">
-        <div>
+        <div className="playground-filebar-main">
           <span className="playground-file-dot" aria-hidden="true" />
           <strong id="playground-editor-title">
             {files.find((file) => file.id === activeFileId)?.name ?? "playground.js"}
           </strong>
+          <input
+            ref={importInputRef}
+            className="sr-only"
+            type="file"
+            accept=".js,text/javascript,application/javascript"
+            aria-label="Choose JavaScript file to import into the open playground file"
+            onChange={(event) => void prepareImport(event)}
+            disabled={isManagingFiles || importState.kind === "reading"}
+          />
+          <button
+            className="playground-import-trigger"
+            type="button"
+            onClick={() => importInputRef.current?.click()}
+            disabled={isManagingFiles || importState.kind === "reading"}
+          >
+            {importState.kind === "reading" ? "Reading…" : "Import .js"}
+          </button>
         </div>
         <span
           className={
@@ -585,9 +750,51 @@ export function JavaScriptPlayground({
         </span>
       </header>
 
+      <div
+        className={
+          importState.kind === "error"
+            ? "playground-import-message is-error"
+            : importState.kind === "success"
+              ? "playground-import-message is-success"
+              : "playground-import-message"
+        }
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {importState.message}
+      </div>
+
+      {pendingImport ? (
+        <aside
+          className="playground-import-confirmation"
+          aria-labelledby="playground-import-confirmation-title"
+        >
+          <div>
+            <span>Local file</span>
+            <strong id="playground-import-confirmation-title">
+              Import {pendingImport.fileName} into {pendingImport.targetFileName}?
+            </strong>
+          </div>
+          <p>
+            This replaces only the open editor. Its Quick checks and private
+            saved file stay unchanged until you choose Save file.
+          </p>
+          <div className="playground-import-actions">
+            <button type="button" onClick={cancelImport}>
+              Keep editor
+            </button>
+            <button type="button" onClick={confirmImport}>
+              Import file
+            </button>
+          </div>
+        </aside>
+      ) : null}
+
       <div className="playground-editor">
         <label htmlFor="playground-code">JavaScript file</label>
         <textarea
+          ref={editorRef}
           id="playground-code"
           aria-label="JavaScript file"
           value={code}
