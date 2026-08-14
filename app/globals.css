@@ -9269,6 +9269,67 @@ h1 {
   color: #e8efeb;
 }
 
+.output-difference-tools {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.output-whitespace-toggle {
+  min-height: 34px;
+  padding: 0 11px;
+  color: #b9c7bf;
+  border: 1px solid #52635a;
+  border-radius: 7px;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.output-whitespace-toggle:hover {
+  color: #e8efeb;
+  border-color: #83dda8;
+}
+
+.output-whitespace-toggle:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+}
+
+.output-whitespace-toggle[aria-pressed="true"] {
+  color: #dff5e7;
+  border-color: #659978;
+  background: rgba(131, 221, 168, 0.08);
+}
+
+.output-whitespace-legend {
+  color: #91a098;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.sample-output.is-comparison {
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #34443c;
+}
+
+.sample-output.is-comparison > div {
+  min-width: 0;
+  padding: 13px;
+}
+
+.sample-output.is-comparison > div + div {
+  border-left: 1px solid #34443c;
+}
+
 .private-test-suite-results {
   margin: 15px 0 0;
   padding: 0;
@@ -12778,6 +12839,15 @@ footer {
 
   .private-test-suite-results li > div + div {
     grid-column: 2;
+    border-top: 1px solid #34443c;
+    border-left: 0;
+  }
+
+  .sample-output.is-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .sample-output.is-comparison > div + div {
     border-top: 1px solid #34443c;
     border-left: 0;
   }

@@ -314,11 +314,51 @@ describe("CodingWorkspace", () => {
     );
     expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
     expect(screen.getByText(/input 4 9\s+numbers \[4,9\]/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show whitespace" }),
+    ).not.toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Sign in to submit" })).toHaveAttribute(
       "href",
       expect.stringContaining("/account?mode=signin"),
     );
+  });
+
+  it("reveals invisible characters only when the example output differs", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["1 3\t\n"],
+      debugOutput: [],
+    });
+
+    renderWorkspace({ isSignedIn: false });
+    fireEvent.click(screen.getByRole("button", { name: "Run example" }));
+
+    expect(await screen.findByText("Example differs")).toBeInTheDocument();
+    expect(screen.getByText("Expected")).toBeInTheDocument();
+    const whitespaceButton = screen.getByRole("button", {
+      name: "Show whitespace",
+    });
+    expect(whitespaceButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(whitespaceButton);
+
+    expect(
+      screen.getByRole("button", { name: "Hide whitespace" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByText(
+        "Space = · • tab = → • return = [CR] • line break = ↵",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "PRE" && element.textContent === "1·3→↵\n",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("saves the exact latest draft when the editor loses focus", async () => {
@@ -479,7 +519,7 @@ describe("CodingWorkspace", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     runCodingSolution.mockResolvedValue({
       status: "finished",
-      outputs: ["42", "3", ""],
+      outputs: ["42", "3 \tX\n", ""],
       debugOutput: ["checking 19 23", "checking -5 8", "checking 0 0"],
     });
     renderWorkspace({
@@ -504,11 +544,18 @@ describe("CodingWorkspace", () => {
     ).toHaveTextContent("Case 1Input19 23Output42Expected42Matched");
     expect(
       screen.getByRole("list", { name: "Private test suite outputs" }),
-    ).toHaveTextContent("Case 2Input-5 8Output3Expected4Mismatch");
+    ).toHaveTextContent(/Case 2Input-5 8Output3 X\s+Expected4Mismatch/);
     expect(
       screen.getByRole("list", { name: "Private test suite outputs" }),
     ).toHaveTextContent("Case 3Input0 0Output(empty)Expected(empty)Matched");
     expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show whitespace" }));
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === "PRE" && element.textContent === "3·→X↵\n",
+      ),
+    ).toBeInTheDocument();
     expect(runCodingSolution).toHaveBeenCalledWith(
       "function solve(input) { return input; }",
       ["19 23", "-5 8", "0 0"],

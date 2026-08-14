@@ -81,6 +81,7 @@ type RunState =
       kind: "sample";
       message: string;
       output: string;
+      expectedOutput: string;
       debugOutput: string[];
       passed: boolean;
     }
@@ -114,6 +115,18 @@ type RunnerRecovery = {
   label: string;
   guidance: string;
 };
+
+function showOutputWhitespace(value: string) {
+  if (value.length === 0) return "(empty)";
+
+  return Array.from(value, (character) => {
+    if (character === " ") return "·";
+    if (character === "\t") return "→";
+    if (character === "\r") return "[CR]";
+    if (character === "\n") return "↵\n";
+    return character;
+  }).join("");
+}
 
 function getRunnerRecovery(runState: RunState): RunnerRecovery | null {
   if (runState.kind === "timeout") {
@@ -212,6 +225,7 @@ export function CodingWorkspace({
           : "Run the example, then submit against all four checks."
         : "You can run the example now. Sign in to submit and save progress.",
   });
+  const [isWhitespaceVisible, setIsWhitespaceVisible] = useState(false);
   const [revealedRecoveryHintCount, setRevealedRecoveryHintCount] =
     useState(0);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -225,6 +239,10 @@ export function CodingWorkspace({
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
   const runnerRecovery = getRunnerRecovery(runState);
+  const hasOutputMismatch =
+    (runState.kind === "sample" && !runState.passed) ||
+    (runState.kind === "test-suite" &&
+      runState.results.some((result) => result.passed === false));
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
@@ -344,6 +362,7 @@ export function CodingWorkspace({
     setRunState({
       kind: "sample",
       output,
+      expectedOutput: problem.example.expectedOutput,
       debugOutput: result.debugOutput,
       passed,
       message: passed
@@ -991,7 +1010,43 @@ export function CodingWorkspace({
           ) : null}
         </div>
         <p>{runState.message}</p>
-        {runState.kind === "sample" || runState.kind === "custom" ? (
+        {hasOutputMismatch ? (
+          <div className="output-difference-tools">
+            <button
+              type="button"
+              className="output-whitespace-toggle"
+              aria-pressed={isWhitespaceVisible}
+              onClick={() => setIsWhitespaceVisible((visible) => !visible)}
+            >
+              {isWhitespaceVisible ? "Hide whitespace" : "Show whitespace"}
+            </button>
+            {isWhitespaceVisible ? (
+              <span className="output-whitespace-legend">
+                Space = · • tab = → • return = [CR] • line break = ↵
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {runState.kind === "sample" && !runState.passed ? (
+          <div className="sample-output is-comparison">
+            <div>
+              <span>Your output</span>
+              <pre>
+                {isWhitespaceVisible
+                  ? showOutputWhitespace(runState.output)
+                  : runState.output || "(empty)"}
+              </pre>
+            </div>
+            <div>
+              <span>Expected</span>
+              <pre>
+                {isWhitespaceVisible
+                  ? showOutputWhitespace(runState.expectedOutput)
+                  : runState.expectedOutput || "(empty)"}
+              </pre>
+            </div>
+          </div>
+        ) : runState.kind === "sample" || runState.kind === "custom" ? (
           <div className="sample-output">
             <span>Your output</span>
             <pre>{runState.output || "(empty)"}</pre>
@@ -1011,14 +1066,20 @@ export function CodingWorkspace({
                 </div>
                 <div>
                   <p>Output</p>
-                  <pre>{result.output || "(empty)"}</pre>
+                  <pre>
+                    {isWhitespaceVisible && result.passed === false
+                      ? showOutputWhitespace(result.output)
+                      : result.output || "(empty)"}
+                  </pre>
                 </div>
                 <div className={`private-test-suite-check is-${result.passed === null ? "unchecked" : result.passed ? "matched" : "mismatch"}`}>
                   <p>Expected</p>
                   <pre>
                     {result.expectedOutput === null
                       ? "Not checked"
-                      : result.expectedOutput || "(empty)"}
+                      : isWhitespaceVisible && result.passed === false
+                        ? showOutputWhitespace(result.expectedOutput)
+                        : result.expectedOutput || "(empty)"}
                   </pre>
                   <span>
                     {result.passed === null
