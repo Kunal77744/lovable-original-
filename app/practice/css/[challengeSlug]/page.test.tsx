@@ -32,6 +32,7 @@ vi.mock("@/db/css-practice", () => ({
 
 vi.mock("@/components/css-challenge-workspace", () => ({
   CssChallengeWorkspace: (props: {
+    browserRecoveryScope: string | null;
     hasSavedDraft: boolean;
     isReviewSession: boolean;
   }) => {
@@ -49,7 +50,6 @@ describe("CssChallengePage review context", () => {
     vi.clearAllMocks();
     mocks.getStudentState.mockResolvedValue({
       css: ".learning-card {}",
-      hasSavedDraft: false,
       bestVerdict: "Needs revision",
       attempts: [],
     });
@@ -82,7 +82,7 @@ describe("CssChallengePage review context", () => {
     );
     expect(mocks.workspace).toHaveBeenCalledWith(
       expect.objectContaining({
-        hasSavedDraft: false,
+        browserRecoveryScope: expect.stringMatching(/^[a-f0-9]{24}$/),
         isReviewSession: true,
         isSignedIn: true,
       }),
@@ -126,7 +126,11 @@ describe("CssChallengePage review context", () => {
     expect(screen.queryByText("Private CSS review")).not.toBeInTheDocument();
     expect(mocks.getFeedback).not.toHaveBeenCalled();
     expect(mocks.workspace).toHaveBeenCalledWith(
-      expect.objectContaining({ isReviewSession: false, isSignedIn: false }),
+      expect.objectContaining({
+        browserRecoveryScope: null,
+        isReviewSession: false,
+        isSignedIn: false,
+      }),
     );
   });
 });
