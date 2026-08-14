@@ -6,6 +6,12 @@ import { CssPathFeedback } from "@/components/css-path-feedback";
 import type { CssPracticeAttempt } from "@/db/css-practice";
 import type { SavedCssPathFeedback } from "@/lib/css-path-feedback";
 import {
+  getCssChallengeDraftRecoveryKey,
+  parseCssChallengeDraftRecovery,
+  serializeCssChallengeDraftRecovery,
+  type CssChallengeDraftRecovery,
+} from "@/lib/css-challenge-draft-recovery";
+import {
   buildCssChallengePreview,
   type CssChallengeCheck,
 } from "@/lib/css-practice-challenges";
@@ -14,6 +20,7 @@ import { captureCssPracticeCompleted } from "@/lib/product-analytics";
 type CssChallengeWorkspaceProps = {
   attempts: CssPracticeAttempt[];
   bestVerdict: string | null;
+  browserRecoveryScope?: string | null;
   challenge: {
     slug: string;
     title: string;
@@ -49,6 +56,7 @@ type AttemptResponse = {
 export function CssChallengeWorkspace({
   attempts: initialAttempts,
   bestVerdict: initialBestVerdict,
+  browserRecoveryScope = null,
   challenge,
   initialCss,
   initialPathFeedback = null,
@@ -80,6 +88,8 @@ export function CssChallengeWorkspace({
       : "Try the challenge now. Sign in to save drafts, attempts, and completion.",
   );
   const [submitting, setSubmitting] = useState(false);
+  const [recoverableBrowserDraft, setRecoverableBrowserDraft] =
+    useState<CssChallengeDraftRecovery | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestCss = useRef(initialCss);
   const draftSaveInFlight = useRef(false);
@@ -88,12 +98,64 @@ export function CssChallengeWorkspace({
   const previewDocument = useMemo(() => buildCssChallengePreview(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
   const hasSavedAttempt = attempts.length > 0;
+  const browserRecoveryKey =
+    isSignedIn && browserRecoveryScope
+      ? getCssChallengeDraftRecoveryKey(browserRecoveryScope, challenge.slug)
+      : null;
+
+  useEffect(() => {
+    if (!browserRecoveryKey) return;
+
+    try {
+      const storedValue = window.localStorage.getItem(browserRecoveryKey);
+      const browserDraft = parseCssChallengeDraftRecovery(storedValue);
+
+      if (!browserDraft || browserDraft.css === initialCss) {
+        if (storedValue) window.localStorage.removeItem(browserRecoveryKey);
+        return;
+      }
+
+      setRecoverableBrowserDraft(browserDraft);
+    } catch {
+      // Private server saving remains available when browser storage is blocked.
+    }
+  }, [browserRecoveryKey, initialCss]);
 
   useEffect(() => {
     return () => {
       if (draftTimer.current) clearTimeout(draftTimer.current);
     };
   }, []);
+
+  function persistBrowserRecovery(nextCss: string) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.setItem(
+        browserRecoveryKey,
+        serializeCssChallengeDraftRecovery(nextCss),
+      );
+      setRecoverableBrowserDraft(null);
+    } catch {
+      // The existing private autosave remains the fallback when storage is blocked.
+    }
+  }
+
+  function clearBrowserRecoveryIfMatches(savedCss: string) {
+    if (!browserRecoveryKey) return;
+
+    try {
+      const browserDraft = parseCssChallengeDraftRecovery(
+        window.localStorage.getItem(browserRecoveryKey),
+      );
+
+      if (browserDraft?.css === savedCss) {
+        window.localStorage.removeItem(browserRecoveryKey);
+      }
+    } catch {
+      // A blocked cleanup does not change the truth of the private save.
+    }
+  }
 
   async function saveDraft(nextCss: string) {
     if (!isSignedIn) return;
@@ -117,6 +179,8 @@ export function CssChallengeWorkspace({
         return;
       }
 
+      clearBrowserRecoveryIfMatches(nextCss);
+
       if (latestCss.current === nextCss) {
         setSaveState("saved");
         setStatus("Draft saved. Submit to refresh the checks.");
@@ -136,6 +200,7 @@ export function CssChallengeWorkspace({
 
   function updateCss(nextCss: string) {
     latestCss.current = nextCss;
+    persistBrowserRecovery(nextCss);
     setCss(nextCss);
     setSaveState("unsaved");
     setStatus(
@@ -148,6 +213,26 @@ export function CssChallengeWorkspace({
     draftTimer.current = setTimeout(() => {
       void saveDraft(nextCss);
     }, 700);
+  }
+
+  function restoreBrowserDraft() {
+    if (!recoverableBrowserDraft) return;
+
+    updateCss(recoverableBrowserDraft.css);
+    setStatus(
+      "Browser CSS restored as unsaved work. Your private saved draft stays unchanged until this exact CSS saves.",
+    );
+  }
+
+  function keepPrivateSavedDraft() {
+    if (!browserRecoveryKey) return;
+
+    try {
+      window.localStorage.removeItem(browserRecoveryKey);
+    } catch {
+      // Hiding the offer is still safe when browser storage cleanup is blocked.
+    }
+    setRecoverableBrowserDraft(null);
   }
 
   async function submitAttempt() {
@@ -184,6 +269,7 @@ export function CssChallengeWorkspace({
         return;
       }
 
+      clearBrowserRecoveryIfMatches(submittedCss);
       setChecks(payload.checks);
       setBestVerdict(payload.bestVerdict);
       setNextChallengeSlug(payload.nextChallengeSlug);
@@ -286,6 +372,31 @@ export function CssChallengeWorkspace({
                 : "Local only"}
             </span>
           </div>
+          {recoverableBrowserDraft ? (
+            <aside
+              className="css-browser-draft-recovery"
+              aria-labelledby={`css-browser-draft-recovery-${challenge.slug}`}
+            >
+              <div>
+                <span>Browser recovery</span>
+                <h3 id={`css-browser-draft-recovery-${challenge.slug}`}>
+                  Unfinished CSS is available on this browser.
+                </h3>
+              </div>
+              <p>
+                Your private saved CSS is still loaded. Restore the browser copy
+                as unsaved work, or keep the account-backed version.
+              </p>
+              <div className="css-browser-draft-recovery-actions">
+                <button type="button" onClick={keepPrivateSavedDraft}>
+                  Keep saved CSS
+                </button>
+                <button type="button" onClick={restoreBrowserDraft}>
+                  Restore browser CSS
+                </button>
+              </div>
+            </aside>
+          ) : null}
           <label htmlFor="css-challenge-editor">CSS solution</label>
           <textarea
             id="css-challenge-editor"

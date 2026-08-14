@@ -31,7 +31,10 @@ vi.mock("@/db/css-practice", () => ({
 }));
 
 vi.mock("@/components/css-challenge-workspace", () => ({
-  CssChallengeWorkspace: (props: { isReviewSession: boolean }) => {
+  CssChallengeWorkspace: (props: {
+    browserRecoveryScope: string | null;
+    isReviewSession: boolean;
+  }) => {
     mocks.workspace(props);
     return (
       <div data-testid="workspace">
@@ -77,7 +80,11 @@ describe("CssChallengePage review context", () => {
       "review context",
     );
     expect(mocks.workspace).toHaveBeenCalledWith(
-      expect.objectContaining({ isReviewSession: true, isSignedIn: true }),
+      expect.objectContaining({
+        browserRecoveryScope: expect.stringMatching(/^[a-f0-9]{24}$/),
+        isReviewSession: true,
+        isSignedIn: true,
+      }),
     );
   });
 
@@ -98,7 +105,11 @@ describe("CssChallengePage review context", () => {
     expect(screen.queryByText("Private CSS review")).not.toBeInTheDocument();
     expect(mocks.getFeedback).not.toHaveBeenCalled();
     expect(mocks.workspace).toHaveBeenCalledWith(
-      expect.objectContaining({ isReviewSession: false, isSignedIn: false }),
+      expect.objectContaining({
+        browserRecoveryScope: null,
+        isReviewSession: false,
+        isSignedIn: false,
+      }),
     );
   });
 });

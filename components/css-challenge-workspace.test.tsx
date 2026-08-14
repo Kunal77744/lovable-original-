@@ -11,6 +11,11 @@ import {
   getCssPracticeChallenge,
   gradeCssPracticeChallenge,
 } from "@/lib/css-practice-challenges";
+import {
+  getCssChallengeDraftRecoveryKey,
+  parseCssChallengeDraftRecovery,
+  serializeCssChallengeDraftRecovery,
+} from "@/lib/css-challenge-draft-recovery";
 import { CssChallengeWorkspace } from "./css-challenge-workspace";
 
 const captureCssPracticeCompleted = vi.fn();
@@ -25,6 +30,7 @@ vi.mock("@/lib/product-analytics", () => ({
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.useRealTimers();
   captureCssPracticeCompleted.mockReset();
   captureCssPathFeedbackSubmitted.mockReset();
@@ -34,6 +40,395 @@ afterEach(() => {
 const challenge = getCssPracticeChallenge("class-selector")!;
 
 describe("CssChallengeWorkspace", () => {
+  it("keeps the private draft loaded until browser CSS is explicitly restored", async () => {
+    const browserRecoveryScope = "account-scope-a";
+    const browserCss = ".learning-card { color: #287652; }";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCssChallengeDraftRecovery(browserCss),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Unfinished CSS is available on this browser.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(
+      challenge.starterCss,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser CSS" }),
+    );
+
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(browserCss);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(
+      screen.getByText(/browser CSS restored as unsaved work/i),
+    ).toBeInTheDocument();
+    expect(parseCssChallengeDraftRecovery(localStorage.getItem(recoveryKey)))
+      .toMatchObject({ css: browserCss });
+  });
+
+  it("keeps account and challenge recovery copies isolated", async () => {
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      "other-account-scope",
+      challenge.slug,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCssChallengeDraftRecovery(".learning-card { color: red; }"),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope="current-account-scope"
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Restore browser CSS" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(
+      challenge.starterCss,
+    );
+  });
+
+  it("clears a browser copy that already matches the private draft", async () => {
+    const browserRecoveryScope = "account-scope-a";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCssChallengeDraftRecovery(challenge.starterCss),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem(recoveryKey)).toBeNull(),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Restore browser CSS" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("discards browser CSS only when the learner keeps the private draft", async () => {
+    const browserRecoveryScope = "account-scope-a";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCssChallengeDraftRecovery(".learning-card { color: red; }"),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep saved CSS" }),
+    );
+
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Restore browser CSS" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("CSS solution")).toHaveValue(
+      challenge.starterCss,
+    );
+  });
+
+  it("clears browser CSS after the exact private draft saves", async () => {
+    vi.useFakeTimers();
+    const browserRecoveryScope = "account-scope-a";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ saved: true }))),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("CSS solution"), {
+      target: { value: ".learning-card { color: #287652; }" },
+    });
+    expect(window.localStorage.getItem(recoveryKey)).not.toBeNull();
+
+    await vi.advanceTimersByTimeAsync(700);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+  });
+
+  it("keeps browser CSS available when its private draft save fails", async () => {
+    vi.useFakeTimers();
+    const browserRecoveryScope = "account-scope-a";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("CSS solution"), {
+      target: { value: ".learning-card { color: #287652; }" },
+    });
+    await vi.advanceTimersByTimeAsync(700);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(parseCssChallengeDraftRecovery(localStorage.getItem(recoveryKey)))
+      .toMatchObject({ css: ".learning-card { color: #287652; }" });
+    expect(screen.getByText("Save failed")).toBeInTheDocument();
+  });
+
+  it("clears browser CSS after the exact attempt is reviewed and saved", async () => {
+    const browserRecoveryScope = "account-scope-a";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    const completedCss = `.learning-card {
+      background: #ffffff;
+      color: #17231e;
+    }`;
+    const checks = gradeCssPracticeChallenge(challenge.slug, completedCss)!;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          id: "attempt-recovery",
+          verdict: "Completed",
+          bestVerdict: "Completed",
+          checks,
+          passedChecks: 3,
+          totalChecks: 3,
+          completedCount: 1,
+          totalCount: 6,
+          nextChallengeSlug: "descendant-selector",
+          createdAt: "2026-08-14T10:00:00.000Z",
+          isFirstCompletedResult: true,
+        }),
+      }),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("CSS solution"), {
+      target: { value: completedCss },
+    });
+    expect(window.localStorage.getItem(recoveryKey)).not.toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check and save attempt" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/CSS and result are saved/i)).toBeInTheDocument(),
+    );
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+  });
+
+  it("does not clear newer browser CSS when an older private save finishes", async () => {
+    vi.useFakeTimers();
+    const browserRecoveryScope = "account-scope-a";
+    const recoveryKey = getCssChallengeDraftRecoveryKey(
+      browserRecoveryScope,
+      challenge.slug,
+    );
+    const firstCss = ".learning-card { color: #17231e; }";
+    const latestCss = ".learning-card { color: #287652; }";
+    let resolveFirst!: (value: Response) => void;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockReturnValue(
+        new Promise<Response>((resolve) => {
+          resolveFirst = resolve;
+        }),
+      ),
+    );
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[]}
+        bestVerdict={null}
+        browserRecoveryScope={browserRecoveryScope}
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(
+            challenge.slug,
+            challenge.starterCss,
+          )!,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={challenge.starterCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution");
+    fireEvent.change(editor, { target: { value: firstCss } });
+    await vi.advanceTimersByTimeAsync(700);
+    fireEvent.change(editor, { target: { value: latestCss } });
+
+    await act(async () => {
+      resolveFirst(new Response(JSON.stringify({ saved: true })));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(parseCssChallengeDraftRecovery(localStorage.getItem(recoveryKey)))
+      .toMatchObject({ css: latestCss });
+    expect(editor).toHaveValue(latestCss);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+  });
+
   it("keeps a signed-out attempt local and offers account creation", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -42,6 +437,7 @@ describe("CssChallengeWorkspace", () => {
       <CssChallengeWorkspace
         attempts={[]}
         bestVerdict={null}
+        browserRecoveryScope="signed-out-scope"
         challenge={{
           slug: challenge.slug,
           title: challenge.title,
@@ -57,11 +453,16 @@ describe("CssChallengeWorkspace", () => {
       />,
     );
 
+    fireEvent.change(screen.getByLabelText("CSS solution"), {
+      target: { value: ".learning-card { color: #287652; }" },
+    });
+
     fireEvent.click(
       screen.getByRole("button", { name: "Check and save attempt" }),
     );
 
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(window.localStorage).toHaveLength(0);
     expect(
       screen.getByText(/create a free account to check and save/i),
     ).toBeInTheDocument();

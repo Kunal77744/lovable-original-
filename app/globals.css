@@ -9820,6 +9820,77 @@ h1 {
   clip: rect(0 0 0 0);
 }
 
+.css-browser-draft-recovery {
+  margin: 18px 20px 0;
+  padding: 18px;
+  display: grid;
+  gap: 13px;
+  color: #17231e;
+  border: 1px solid #b9d7c5;
+  border-radius: 13px;
+  background: #edf5ef;
+  box-shadow: 0 12px 28px rgba(10, 24, 17, 0.16);
+}
+
+.css-browser-draft-recovery > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.css-browser-draft-recovery span {
+  color: #287652;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.css-browser-draft-recovery h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 19px;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.css-browser-draft-recovery p {
+  max-width: 52ch;
+  margin: 0;
+  color: #52635a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.css-browser-draft-recovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.css-browser-draft-recovery-actions button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #97b7a4;
+  border-radius: 9px;
+  color: #17231e;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.css-browser-draft-recovery-actions button:last-child {
+  color: #ffffff;
+  border-color: #287652;
+  background: #287652;
+}
+
+.css-browser-draft-recovery-actions button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 2px;
+}
+
 .css-challenge-editor textarea,
 .css-challenge-preview iframe {
   width: 100%;
