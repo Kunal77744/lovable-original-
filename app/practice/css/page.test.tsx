@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getProgress: vi.fn(),
   getReviewSession: vi.fn(),
   getHtmlCssCapstone: vi.fn(),
+  getSpacedReview: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -26,6 +27,10 @@ vi.mock("@/db/html-css-capstone", () => ({
   getHtmlCssCapstoneSummary: mocks.getHtmlCssCapstone,
 }));
 
+vi.mock("@/db/css-spaced-review", () => ({
+  getCssSpacedReviewResultForStudent: mocks.getSpacedReview,
+}));
+
 describe("CssPracticePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,6 +45,7 @@ describe("CssPracticePage", () => {
       state: "not-started",
       passedChecks: 0,
     });
+    mocks.getSpacedReview.mockResolvedValue(null);
   });
 
   afterEach(() => cleanup());
@@ -76,6 +82,25 @@ describe("CssPracticePage", () => {
     render(await CssPracticePage());
 
     expect(mocks.getReviewSession).not.toHaveBeenCalled();
+    expect(mocks.getSpacedReview).not.toHaveBeenCalled();
     expect(screen.queryByText("Private CSS review")).not.toBeInTheDocument();
+  });
+
+  it("replaces repair review with spaced recall after all six challenges", async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: "learner-a" } });
+    mocks.getProgress.mockResolvedValue({
+      completedCount: 6,
+      totalCount: 6,
+      completedSlugs: [],
+      nextChallengeSlug: null,
+    });
+
+    render(await CssPracticePage());
+
+    expect(
+      screen.getByRole("link", { name: "Start spaced review" }),
+    ).toHaveAttribute("href", "/practice/css/spaced-review");
+    expect(screen.getByText("4 concepts")).toBeInTheDocument();
+    expect(screen.queryByText("Repair up to three saved weak spots.")).not.toBeInTheDocument();
   });
 });
