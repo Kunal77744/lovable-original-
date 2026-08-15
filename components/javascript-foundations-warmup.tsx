@@ -14,6 +14,7 @@ import {
   GuidedCheckResults,
   type GuidedCheckResult,
 } from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_FOUNDATION_EXERCISES,
@@ -318,15 +319,14 @@ export function JavaScriptFoundationsWarmup({
           fileName="foundations.js"
         />
 
+        <GuidedStarterRestore
+          key={exercise.slug}
+          disabled={checkState.kind === "running"}
+          isStarterLoaded={code === exercise.starterCode}
+          onRestore={resetExercise}
+        />
+
         <div className="foundations-actions">
-          <button
-            type="button"
-            className="foundations-reset"
-            onClick={resetExercise}
-            disabled={checkState.kind === "running"}
-          >
-            Restore starter
-          </button>
           {!isPassed ? (
             <button
               type="button"

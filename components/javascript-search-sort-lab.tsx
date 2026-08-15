@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import {
   buildGuidedCheckResults,
   GuidedCheckResults,
@@ -337,15 +338,14 @@ export function JavaScriptSearchSortLab({
             fileName={`${exercise.slug}.js`}
           />
 
+          <GuidedStarterRestore
+            key={exercise.slug}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
           <div className="function-lab-actions">
-            <button
-              className="function-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="function-lab-run"

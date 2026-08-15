@@ -9566,6 +9566,174 @@ h1 {
   background: #1d2b25;
 }
 
+.guided-starter-restore {
+  margin-top: 18px;
+  padding: 10px 14px;
+  border: 1px solid #d8dfd8;
+  border-radius: 10px;
+  background: #f8faf7;
+}
+
+.guided-starter-restore-trigger,
+.guided-starter-restore-cancel {
+  min-height: 44px;
+  padding: 6px 0;
+  color: var(--muted);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-color: #aab7ad;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.guided-starter-restore-trigger:hover:not(:disabled),
+.guided-starter-restore-cancel:hover {
+  color: var(--accent-deep);
+  text-decoration-color: var(--accent);
+}
+
+.guided-starter-restore-trigger:disabled {
+  color: #89968e;
+  text-decoration: none;
+  cursor: default;
+}
+
+.guided-starter-restore-confirmation {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.guided-starter-restore-confirmation strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.guided-starter-restore-confirmation p {
+  max-width: 62ch;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.guided-starter-restore-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.guided-starter-restore-confirm {
+  min-height: 44px;
+  padding: 0 14px;
+  color: white;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.guided-starter-restore-confirm:hover:not(:disabled) {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.guided-starter-restore-confirm:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.guided-starter-restore-trigger:focus-visible,
+.guided-starter-restore-cancel:focus-visible,
+.guided-starter-restore-confirm:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 3px;
+}
+
+.foundations-editor > .guided-starter-restore,
+.dom-lab-editor > .guided-starter-restore {
+  margin-top: 0;
+  border-color: #31423a;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: #15211c;
+}
+
+.data-lab-editor > .guided-starter-restore {
+  border-color: #35483e;
+  background: #15211c;
+}
+
+.foundations-editor .guided-starter-restore-trigger,
+.foundations-editor .guided-starter-restore-cancel,
+.dom-lab-editor .guided-starter-restore-trigger,
+.dom-lab-editor .guided-starter-restore-cancel,
+.data-lab-editor .guided-starter-restore-trigger,
+.data-lab-editor .guided-starter-restore-cancel {
+  color: #aebbb4;
+  text-decoration-color: #52635a;
+}
+
+.foundations-editor .guided-starter-restore-trigger:hover:not(:disabled),
+.foundations-editor .guided-starter-restore-cancel:hover,
+.dom-lab-editor .guided-starter-restore-trigger:hover:not(:disabled),
+.dom-lab-editor .guided-starter-restore-cancel:hover,
+.data-lab-editor .guided-starter-restore-trigger:hover:not(:disabled),
+.data-lab-editor .guided-starter-restore-cancel:hover {
+  color: #eef4ef;
+  text-decoration-color: #91cca9;
+}
+
+.foundations-editor .guided-starter-restore-confirmation strong,
+.dom-lab-editor .guided-starter-restore-confirmation strong,
+.data-lab-editor .guided-starter-restore-confirmation strong {
+  color: #eef4ef;
+}
+
+.foundations-editor .guided-starter-restore-confirmation p,
+.dom-lab-editor .guided-starter-restore-confirmation p,
+.data-lab-editor .guided-starter-restore-confirmation p {
+  color: #9eada5;
+}
+
+.foundations-editor .guided-starter-restore-confirm,
+.dom-lab-editor .guided-starter-restore-confirm,
+.data-lab-editor .guided-starter-restore-confirm {
+  color: #d5e9dc;
+  border-color: #52635a;
+  background: transparent;
+}
+
+.foundations-editor .guided-starter-restore-confirm:hover:not(:disabled),
+.dom-lab-editor .guided-starter-restore-confirm:hover:not(:disabled),
+.data-lab-editor .guided-starter-restore-confirm:hover:not(:disabled) {
+  border-color: #91cca9;
+  background: #1d2b25;
+}
+
+@media (max-width: 720px) {
+  .guided-starter-restore-confirmation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .guided-starter-restore-actions {
+    justify-content: flex-end;
+  }
+}
+
 .coding-actions {
   padding: 18px 22px;
   display: flex;

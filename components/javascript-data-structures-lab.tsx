@@ -14,6 +14,7 @@ import {
   GuidedCheckResults,
   type GuidedCheckResult,
 } from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
 import {
@@ -330,15 +331,14 @@ export function JavaScriptDataStructuresLab({
             fileName={`${exercise.slug}.js`}
           />
 
+          <GuidedStarterRestore
+            key={exercise.slug}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
           <div className="data-lab-actions">
-            <button
-              className="data-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="data-lab-run"

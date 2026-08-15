@@ -14,6 +14,7 @@ import {
   GuidedCheckResults,
   type GuidedCheckResult,
 } from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -177,6 +178,15 @@ export function DebuggingLab({
     });
   }
 
+  function restoreStarter() {
+    if (!drill) return;
+    setSource(drill.starterCode);
+    setLabState({
+      kind: "idle",
+      message: "Starter restored locally. No learner record was changed.",
+    });
+  }
+
   if (!drill) {
     return (
       <section
@@ -256,6 +266,13 @@ export function DebuggingLab({
           fileName="broken-solution.js"
         />
       </div>
+
+      <GuidedStarterRestore
+        key={drill.slug}
+        disabled={labState.kind === "running"}
+        isStarterLoaded={source === drill.starterCode}
+        onRestore={restoreStarter}
+      />
 
       <div className="debugging-action-row">
         <p>Fix the smallest thing that makes the behavior match the brief.</p>
