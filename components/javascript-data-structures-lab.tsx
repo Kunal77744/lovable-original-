@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -225,15 +226,14 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
             spellCheck={false}
           />
 
+          <GuidedStarterRestore
+            key={exercise.slug}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
           <div className="data-lab-actions">
-            <button
-              className="data-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="data-lab-run"

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -193,15 +194,14 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
             spellCheck={false}
           />
 
+          <GuidedStarterRestore
+            key={exercise.slug}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
           <div className="dom-lab-actions">
-            <button
-              className="dom-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button className="dom-lab-run" onClick={continueLab} type="button">
                 {exercise.number === JAVASCRIPT_DOM_EXERCISES.length
