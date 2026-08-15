@@ -34,6 +34,72 @@ afterEach(() => {
 const challenge = getCssPracticeChallenge("class-selector")!;
 
 describe("CssChallengeWorkspace", () => {
+  it("restores the authored CSS after confirmation without changing saved attempts", async () => {
+    vi.useFakeTimers();
+    const revisedCss = ".learning-card { color: tomato; }";
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssChallengeWorkspace
+        attempts={[
+          {
+            id: "attempt-kept",
+            verdict: "Needs revision",
+            passedChecks: 1,
+            totalChecks: 3,
+            createdAt: "2026-08-15T00:00:00.000Z",
+          },
+        ]}
+        bestVerdict="Needs revision"
+        challenge={{
+          slug: challenge.slug,
+          title: challenge.title,
+          checks: gradeCssPracticeChallenge(challenge.slug, revisedCss)!,
+          starterCss: challenge.starterCss,
+          successTakeaway: challenge.successTakeaway,
+        }}
+        initialCss={revisedCss}
+        isSignedIn
+        nextChallengeSlug="class-selector"
+      />,
+    );
+
+    const editor = screen.getByLabelText("CSS solution");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore starter CSS" }),
+    );
+    expect(
+      screen.getByRole("group", { name: "Restore the authored starter?" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep my CSS" }));
+    expect(editor).toHaveValue(revisedCss);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore starter CSS" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Restore starter" }));
+
+    expect(editor).toHaveValue(challenge.starterCss);
+    expect(screen.getAllByText("Needs revision")).toHaveLength(2);
+    expect(screen.getByText("1/3 checks")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Starter CSS restored. Your saved attempts and completion stay unchanged.",
+      ),
+    ).toBeInTheDocument();
+
+    await vi.advanceTimersByTimeAsync(700);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/practice/css/class-selector",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", css: challenge.starterCss }),
+      }),
+    );
+  });
+
   it("keeps a signed-out attempt local and offers account creation", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

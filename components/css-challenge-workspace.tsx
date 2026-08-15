@@ -18,6 +18,7 @@ type CssChallengeWorkspaceProps = {
     slug: string;
     title: string;
     checks: CssChallengeCheck[];
+    starterCss?: string;
     successTakeaway: {
       concept: string;
       explanation: string;
@@ -67,6 +68,8 @@ export function CssChallengeWorkspace({
   const [showPathFeedback, setShowPathFeedback] = useState(
     isPathFeedbackEligible,
   );
+  const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] =
+    useState(false);
   const [saveState, setSaveState] = useState<
     "saved" | "unsaved" | "saving" | "error"
   >(isSignedIn && initialAttempts.length > 0 ? "saved" : "unsaved");
@@ -88,6 +91,7 @@ export function CssChallengeWorkspace({
   const previewDocument = useMemo(() => buildCssChallengePreview(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
   const hasSavedAttempt = attempts.length > 0;
+  const authoredStarterCss = challenge.starterCss ?? initialCss;
 
   useEffect(() => {
     return () => {
@@ -148,6 +152,19 @@ export function CssChallengeWorkspace({
     draftTimer.current = setTimeout(() => {
       void saveDraft(nextCss);
     }, 700);
+  }
+
+  function restoreStarter() {
+    setIsRestoreConfirmationOpen(false);
+
+    if (latestCss.current === authoredStarterCss) return;
+
+    updateCss(authoredStarterCss);
+    setStatus(
+      isSignedIn
+        ? "Starter CSS restored. Your saved attempts and completion stay unchanged."
+        : "Starter CSS restored locally. Sign in before leaving to keep it.",
+    );
   }
 
   async function submitAttempt() {
@@ -294,6 +311,52 @@ export function CssChallengeWorkspace({
             onChange={(event) => updateCss(event.target.value)}
             spellCheck={false}
           />
+          <div className="starter-restore">
+            {isRestoreConfirmationOpen ? (
+              <div
+                className="starter-restore-confirmation"
+                role="group"
+                aria-labelledby="css-starter-restore-title"
+              >
+                <div>
+                  <strong id="css-starter-restore-title">
+                    Restore the authored starter?
+                  </strong>
+                  <p>
+                    This replaces only the editor. Your saved attempts,
+                    completion, and latest checks stay unchanged.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    className="starter-restore-cancel"
+                    type="button"
+                    onClick={() => setIsRestoreConfirmationOpen(false)}
+                  >
+                    Keep my CSS
+                  </button>
+                  <button
+                    className="starter-restore-confirm"
+                    type="button"
+                    onClick={restoreStarter}
+                  >
+                    Restore starter
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="starter-restore-trigger"
+                type="button"
+                onClick={() => setIsRestoreConfirmationOpen(true)}
+                disabled={css === authoredStarterCss || submitting}
+              >
+                {css === authoredStarterCss
+                  ? "Starter CSS loaded"
+                  : "Restore starter CSS"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="css-challenge-preview">
