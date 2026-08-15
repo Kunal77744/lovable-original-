@@ -940,6 +940,32 @@ export const webFoundationsReviewResult = pgTable(
   ],
 );
 
+export const cssSpacedReviewResult = pgTable(
+  "css_spaced_review_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    nextDueAt: timestamp("next_due_at", { withTimezone: true }).notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_spaced_review_result_user_unique").on(table.userId),
+    index("css_spaced_review_result_user_id_idx").on(table.userId),
+  ],
+);
+
 export const courseCertificate = pgTable(
   "course_certificate",
   {

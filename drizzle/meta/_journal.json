@@ -246,6 +246,13 @@
       "when": 1786752000000,
       "tag": "0034_css-practice-notes",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1786759200000,
+      "tag": "0035_css-spaced-review",
+      "breakpoints": true
     }
   ]
 }
