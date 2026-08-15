@@ -46,6 +46,10 @@ export function LearnerProfile({
             View private projects
             <span aria-hidden="true">→</span>
           </Link>
+          <Link className="profile-review-link" href="/review">
+            Open private review
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </header>
 

@@ -173,7 +173,10 @@ describe("LearnerProfile", () => {
     );
     expect(freshState.getByText("Not started")).toBeInTheDocument();
     expect(freshState.getByText("Not attempted")).toBeInTheDocument();
-    expect(freshState.getAllByRole("link")).toHaveLength(2);
+    expect(freshState.getAllByRole("link")).toHaveLength(3);
+    expect(
+      freshState.getByRole("link", { name: /Open private review/ }),
+    ).toHaveAttribute("href", "/review");
     expect(
       freshState.getByRole("link", { name: /Start the course/ }),
     ).toHaveAttribute(
