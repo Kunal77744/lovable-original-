@@ -56,6 +56,10 @@ describe("guided check result coverage", () => {
       expect(source, component).toContain(
         "<GuidedCheckResults results={checkResults} />",
       );
+      expect(source, component).toContain("GuidedJavaScriptFileImport");
+      expect(source, component).toContain("GuidedStarterRestore");
+      expect(source, component).toContain("CompletedLabReviewButton");
+      expect(source, component).toContain("usePrivateJavaScriptLabDraft");
     }
   });
 });

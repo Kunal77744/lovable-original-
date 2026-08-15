@@ -181,6 +181,7 @@ export function DebuggingLab({
   function restoreStarter() {
     if (!drill) return;
     setSource(drill.starterCode);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -243,7 +244,7 @@ export function DebuggingLab({
           <span>Draft saves privately</span>
         </div>
         <GuidedJavaScriptFileImport
-          key={drill.slug}
+          key={`import-${drill.slug}`}
           destinationName="broken-solution.js"
           disabled={labState.kind === "running"}
           onImport={(nextSource) => updateSource(nextSource)}
@@ -268,7 +269,7 @@ export function DebuggingLab({
       </div>
 
       <GuidedStarterRestore
-        key={drill.slug}
+        key={`restore-${drill.slug}`}
         disabled={labState.kind === "running"}
         isStarterLoaded={source === drill.starterCode}
         onRestore={restoreStarter}

@@ -297,11 +297,12 @@ export function JavaScriptDataStructuresLab({
             <span>Draft saves privately</span>
           </div>
           <GuidedJavaScriptFileImport
-            key={exercise.slug}
+            key={`import-${exercise.slug}`}
             destinationName={`${exercise.slug}.js`}
             disabled={checkState.kind === "running"}
             onImport={(nextCode) => {
               setCode(nextCode);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -332,7 +333,7 @@ export function JavaScriptDataStructuresLab({
           />
 
           <GuidedStarterRestore
-            key={exercise.slug}
+            key={`restore-${exercise.slug}`}
             disabled={checkState.kind === "running"}
             isStarterLoaded={code === exercise.starterCode}
             onRestore={restoreStarter}

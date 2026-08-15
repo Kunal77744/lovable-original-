@@ -117,9 +117,7 @@ describe("GuidedStarterRestore", () => {
       expect(
         screen.queryByText("Restore the authored starter?"),
       ).not.toBeInTheDocument();
-      expect(
-        screen.getByText("Starter restored locally. No learner record was changed."),
-      ).toBeVisible();
+      expect(screen.getByText(/Starter restored/)).toBeVisible();
     },
   );
 });

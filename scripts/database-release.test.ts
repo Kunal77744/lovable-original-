@@ -36,7 +36,7 @@ describe("database release contract", () => {
       entries: Array<{ idx: number; tag: string }>;
     };
 
-    expect(journal.entries.slice(-6)).toEqual([
+    expect(journal.entries.slice(-7)).toEqual([
       expect.objectContaining({
         idx: 29,
         tag: "0029_timed-coding-challenge-results",
@@ -54,6 +54,10 @@ describe("database release contract", () => {
       expect.objectContaining({
         idx: 34,
         tag: "0034_css-practice-notes",
+      }),
+      expect.objectContaining({
+        idx: 35,
+        tag: "0035_css-spaced-review",
       }),
     ]);
     expect(timedMigration).toContain(
@@ -257,7 +261,7 @@ describe("database release contract", () => {
 
   it("adds and verifies private CSS spaced-review results", async () => {
     const [migration, releaseScript] = await Promise.all([
-      readFile(path.join(root, "drizzle/0034_css-spaced-review.sql"), "utf8"),
+      readFile(path.join(root, "drizzle/0035_css-spaced-review.sql"), "utf8"),
       readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
     ]);
 
