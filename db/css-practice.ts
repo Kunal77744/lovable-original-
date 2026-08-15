@@ -13,10 +13,12 @@ import {
   buildCssReviewSession,
   type CssReviewSessionItem,
 } from "@/lib/css-review-session";
+import type { SavedCssAttemptNote } from "@/lib/css-attempt-notes";
 import { getDatabase } from "./index";
 import {
   cssPracticeAttempt,
   cssPracticeFeedback,
+  cssPracticeNote,
   cssPracticeProgress,
 } from "./schema";
 
@@ -244,6 +246,56 @@ export async function getCssPracticePathFeedbackForStudent(userId: string) {
         }
       : null,
   };
+}
+
+export async function getCssPracticeAttemptNoteForStudent(
+  userId: string,
+  challengeSlug: string,
+): Promise<SavedCssAttemptNote | null> {
+  if (!getCssPracticeChallenge(challengeSlug)) return null;
+
+  const [note] = await getDatabase()
+    .select({
+      content: cssPracticeNote.content,
+      updatedAt: cssPracticeNote.updatedAt,
+    })
+    .from(cssPracticeNote)
+    .where(
+      and(
+        eq(cssPracticeNote.userId, userId),
+        eq(cssPracticeNote.challengeSlug, challengeSlug),
+      ),
+    )
+    .limit(1);
+
+  return note
+    ? { content: note.content, updatedAt: note.updatedAt.toISOString() }
+    : null;
+}
+
+export async function saveCssPracticeAttemptNote(
+  userId: string,
+  challengeSlug: string,
+  content: string,
+): Promise<SavedCssAttemptNote | null> {
+  if (!getCssPracticeChallenge(challengeSlug)) return null;
+
+  const now = new Date();
+  await getDatabase()
+    .insert(cssPracticeNote)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      challengeSlug,
+      content,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [cssPracticeNote.userId, cssPracticeNote.challengeSlug],
+      set: { content, updatedAt: now },
+    });
+
+  return { content, updatedAt: now.toISOString() };
 }
 
 export async function saveCssPracticePathFeedbackForStudent(

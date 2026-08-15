@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -31,9 +39,11 @@ const exerciseIds = JAVASCRIPT_DEBUGGING_DRILLS.map(
 export function DebuggingLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [drillIndex, setDrillIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -42,27 +52,33 @@ export function DebuggingLab({
   const {
     source,
     state: draftState,
+    savedSource,
     updateSource: setSource,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "debugging",
     exerciseId: drill?.slug ?? JAVASCRIPT_DEBUGGING_DRILLS[0].slug,
     starterCode:
       drill?.starterCode ?? JAVASCRIPT_DEBUGGING_DRILLS[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [labState, setLabState] = useState<LabState>({
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
-  const isLastDrill = completedCount === JAVASCRIPT_DEBUGGING_DRILLS.length;
+  const isLastDrill = drillIndex === JAVASCRIPT_DEBUGGING_DRILLS.length - 1;
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message: "Draft changed. Run the three checks when you’re ready.",
@@ -75,6 +91,7 @@ export function DebuggingLab({
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       source,
       drill.tests.map((test) => test.input),
@@ -85,12 +102,25 @@ export function DebuggingLab({
       return;
     }
 
+    const nextCheckResults = buildGuidedCheckResults(
+      drill.tests,
+      result.outputs,
+    );
+    setCheckResults(nextCheckResults);
     const grade = gradeDebuggingDrill(drill, result.outputs);
     if (!grade.passed) {
       setLabState({
         kind: "failed",
         passedChecks: grade.passedChecks,
         message: `${grade.passedChecks} of ${grade.totalChecks} checks passed. Use the cue, then inspect the code again.`,
+      });
+      return;
+    }
+
+    if (completedIds.has(drill.slug)) {
+      setLabState({
+        kind: "passed",
+        message: `All ${grade.totalChecks} checks passed. Saved completion stayed unchanged.`,
       });
       return;
     }
@@ -120,12 +150,41 @@ export function DebuggingLab({
       exerciseIds,
       [...completedIds],
       drillIndex,
+      reviewingCompletedLab,
     );
+    const nextDrill = JAVASCRIPT_DEBUGGING_DRILLS[nextIndex];
+    if (!nextDrill) {
+      setDrillIndex(JAVASCRIPT_DEBUGGING_DRILLS.length);
+      return;
+    }
     setDrillIndex(nextIndex);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message:
         "Read the new brief, inspect the code, then run all three checks.",
+    });
+  }
+
+  function reviewExercises() {
+    const firstDrill = JAVASCRIPT_DEBUGGING_DRILLS[0];
+    setReviewingCompletedLab(true);
+    setDrillIndex(0);
+    setSource(firstDrill.starterCode);
+    setCheckResults([]);
+    setLabState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
+  }
+
+  function restoreStarter() {
+    if (!drill) return;
+    setSource(drill.starterCode);
+    setCheckResults([]);
+    setLabState({
+      kind: "idle",
+      message: "Starter restored locally. No learner record was changed.",
     });
   }
 
@@ -136,12 +195,20 @@ export function DebuggingLab({
         aria-labelledby="debugging-complete-title"
       >
         <div>
-          <span>Debugging lab complete</span>
+          <span>
+            {reviewingCompletedLab
+              ? "Debugging review complete"
+              : "Debugging lab complete"}
+          </span>
           <strong id="debugging-complete-title">
             All three saved repairs are complete.
           </strong>
         </div>
         <Link href="/practice/sum-two-numbers">Start judged practice</Link>
+        <CompletedLabReviewButton
+          label={reviewingCompletedLab ? "Review exercises again" : undefined}
+          onReview={reviewExercises}
+        />
       </section>
     );
   }
@@ -176,6 +243,12 @@ export function DebuggingLab({
           <span>broken-solution.js</span>
           <span>Draft saves privately</span>
         </div>
+        <GuidedJavaScriptFileImport
+          key={`import-${drill.slug}`}
+          destinationName="broken-solution.js"
+          disabled={labState.kind === "running"}
+          onImport={(nextSource) => updateSource(nextSource)}
+        />
         <label htmlFor="debugging-source">
           JavaScript source for {drill.title}
         </label>
@@ -189,8 +262,18 @@ export function DebuggingLab({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          browserRecovery={browserRecovery}
+          savedSource={savedSource}
+          fileName="broken-solution.js"
         />
       </div>
+
+      <GuidedStarterRestore
+        key={`restore-${drill.slug}`}
+        disabled={labState.kind === "running"}
+        isStarterLoaded={source === drill.starterCode}
+        onRestore={restoreStarter}
+      />
 
       <div className="debugging-action-row">
         <p>Fix the smallest thing that makes the behavior match the brief.</p>
@@ -237,7 +320,11 @@ export function DebuggingLab({
               <span>What this repair proves</span>
               <p>{drill.takeaway}</p>
             </div>
-            {isLastDrill ? (
+            {isLastDrill && reviewingCompletedLab ? (
+              <button type="button" onClick={openNextDrill}>
+                Finish review
+              </button>
+            ) : isLastDrill ? (
               <Link href="/practice">Return to JavaScript practice</Link>
             ) : (
               <button type="button" onClick={openNextDrill}>
@@ -246,6 +333,7 @@ export function DebuggingLab({
             )}
           </div>
         ) : null}
+        <GuidedCheckResults results={checkResults} />
       </div>
     </section>
   );

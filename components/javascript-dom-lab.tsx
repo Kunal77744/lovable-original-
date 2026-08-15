@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import {
@@ -30,9 +37,11 @@ const exerciseIds = JAVASCRIPT_DOM_EXERCISES.map((exercise) => exercise.slug);
 export function JavaScriptDomLab({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
@@ -41,15 +50,18 @@ export function JavaScriptDomLab({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter: restorePrivateStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "dom",
     exerciseId: exercise?.slug ?? JAVASCRIPT_DOM_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_DOM_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
@@ -58,6 +70,8 @@ export function JavaScriptDomLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -67,6 +81,7 @@ export function JavaScriptDomLab({
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runDomLabCode(code, exercise.slug);
 
     if (result.status !== "finished") {
@@ -74,8 +89,21 @@ export function JavaScriptDomLab({
       return;
     }
 
+    const nextCheckResults = result.checks.map((passed, index) => ({
+      label: `Scenario ${String(index + 1).padStart(2, "0")}`,
+      passed,
+    }));
+    setCheckResults(nextCheckResults);
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${result.checks.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const saveResponse = await saveJavaScriptLabExercise(
         "dom",
         exercise.slug,
@@ -106,6 +134,7 @@ export function JavaScriptDomLab({
   function restoreStarter() {
     if (!exercise) return;
     restorePrivateStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -118,6 +147,7 @@ export function JavaScriptDomLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_DOM_EXERCISES[nextIndex];
     if (!nextExercise) {
@@ -126,7 +156,20 @@ export function JavaScriptDomLab({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
+  }
+
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_DOM_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckResults([]);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
   }
 
   if (!exercise) {
@@ -139,7 +182,9 @@ export function JavaScriptDomLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">DOM lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab ? "DOM review complete" : "DOM lab complete"}
+          </p>
           <h2 id="dom-lab-complete-title">
             JavaScript can now change the page.
           </h2>
@@ -154,6 +199,10 @@ export function JavaScriptDomLab({
           <Link className="dom-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );
@@ -219,12 +268,26 @@ export function JavaScriptDomLab({
             <span>{exercise.slug}.js</span>
             <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={`import-${exercise.slug}`}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckResults([]);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="dom-lab-code">JavaScript DOM code</label>
           <textarea
             id="dom-lab-code"
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -236,17 +299,19 @@ export function JavaScriptDomLab({
           <PrivateJavaScriptLabDraftStatus
             state={draftState}
             onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
+          />
+
+          <GuidedStarterRestore
+            key={`restore-${exercise.slug}`}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
           />
 
           <div className="dom-lab-actions">
-            <button
-              className="dom-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="dom-lab-run"
@@ -298,6 +363,7 @@ export function JavaScriptDomLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="dom-lab-privacy">

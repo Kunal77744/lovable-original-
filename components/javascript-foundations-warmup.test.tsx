@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { JAVASCRIPT_FOUNDATION_EXERCISES } from "@/lib/javascript-foundations";
 import { JavaScriptFoundationsWarmup } from "./javascript-foundations-warmup";
 
 const runCodingSolution = vi.fn();
@@ -52,6 +53,21 @@ describe("JavaScriptFoundationsWarmup", () => {
         .getByRole("list", { name: "Foundations unit steps" })
         .querySelectorAll("li")[1],
     ).toHaveAttribute("aria-current", "step");
+  });
+
+  it("offers a saved foundations exercise as a JavaScript file", () => {
+    render(
+      <JavaScriptFoundationsWarmup
+        completedExerciseIds={["understand-the-judge"]}
+        initialDrafts={{
+          "parse-and-sum": "function solve(input) { return 13; }",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Download saved .js" }),
+    ).toBeInTheDocument();
   });
 
   it("resumes at the first exercise not completed by this account", () => {
@@ -157,5 +173,33 @@ describe("JavaScriptFoundationsWarmup", () => {
     expect(
       screen.queryByRole("button", { name: "Continue to step 3" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("separates the judge review from repeat coding practice", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "3", "60"],
+    });
+    render(
+      <JavaScriptFoundationsWarmup
+        completedExerciseIds={JAVASCRIPT_FOUNDATION_EXERCISES.map(
+          (exercise) => exercise.slug,
+        )}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Review the judge checkpoint" })).toHaveAttribute(
+      "href",
+      "/practice/judge-basics",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Review coding exercises" }));
+    expect(screen.getByText("Unit step 2 of 4")).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(screen.getByText(/Saved completion stayed unchanged/)).toBeInTheDocument();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
   });
 });

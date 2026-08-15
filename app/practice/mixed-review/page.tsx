@@ -94,6 +94,7 @@ export default async function JavaScriptMixedReviewPage() {
             items={reviewItems}
             nextHref={nextHref}
             nextLabel={nextLabel}
+            studentScope={session.user.id}
           />
         ) : (
           <section className="mixed-review-locked" aria-labelledby="mixed-review-locked-title">

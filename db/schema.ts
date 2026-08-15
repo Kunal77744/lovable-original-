@@ -732,6 +732,31 @@ export const cssPracticeAttempt = pgTable(
   ],
 );
 
+export const cssPracticeNote = pgTable(
+  "css_practice_note",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    challengeSlug: text("challenge_slug").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_practice_note_user_challenge_unique").on(
+      table.userId,
+      table.challengeSlug,
+    ),
+    index("css_practice_note_user_id_idx").on(table.userId),
+  ],
+);
+
 export const cssPracticeFeedback = pgTable(
   "css_practice_feedback",
   {
@@ -912,6 +937,32 @@ export const webFoundationsReviewResult = pgTable(
   (table) => [
     uniqueIndex("web_foundations_review_result_user_unique").on(table.userId),
     index("web_foundations_review_result_user_id_idx").on(table.userId),
+  ],
+);
+
+export const cssSpacedReviewResult = pgTable(
+  "css_spaced_review_result",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    correctCount: integer("correct_count").notNull(),
+    totalCount: integer("total_count").notNull(),
+    nextDueAt: timestamp("next_due_at", { withTimezone: true }).notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("css_spaced_review_result_user_unique").on(table.userId),
+    index("css_spaced_review_result_user_id_idx").on(table.userId),
   ],
 );
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptDomLab } from "@/components/javascript-dom-lab";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 import {
   getCompletedJavaScriptLabExerciseIds,
   getJavaScriptLabExerciseDrafts,
@@ -64,6 +65,7 @@ export default async function JavaScriptDomPage() {
         </header>
 
         <JavaScriptDomLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
           initialDrafts={initialDrafts}
         />

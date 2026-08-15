@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_FOUNDATION_EXERCISES,
@@ -28,6 +36,7 @@ type CheckState =
 type JavaScriptFoundationsWarmupProps = {
   completedExerciseIds?: string[];
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 };
 
 const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
@@ -37,8 +46,10 @@ const exerciseIds = JAVASCRIPT_FOUNDATION_EXERCISES.map(
 export function JavaScriptFoundationsWarmup({
   completedExerciseIds = [],
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: JavaScriptFoundationsWarmupProps) {
   const [completedIds, setCompletedIds] = useState(completedExerciseIds);
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
@@ -46,21 +57,25 @@ export function JavaScriptFoundationsWarmup({
   const {
     source: code,
     state: draftState,
+    savedSource,
     updateSource: setCode,
     restoreStarter,
     retrySave,
+    browserRecovery,
   } = usePrivateJavaScriptLabDraft({
     labSlug: "foundations",
     exerciseId: exercise?.slug ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].slug,
     starterCode:
       exercise?.starterCode ?? JAVASCRIPT_FOUNDATION_EXERCISES[0].starterCode,
     initialDrafts,
+    browserRecoveryScope,
   });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message:
       "Complete the missing logic, then run three private browser checks.",
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
 
   async function runChecks() {
     if (!exercise) return;
@@ -68,6 +83,7 @@ export function JavaScriptFoundationsWarmup({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
@@ -78,12 +94,22 @@ export function JavaScriptFoundationsWarmup({
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
+      if (completedIds.includes(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
       const response = await saveJavaScriptLabExercise(
         "foundations",
         exercise.slug,
@@ -116,6 +142,7 @@ export function JavaScriptFoundationsWarmup({
   function resetExercise() {
     if (!exercise) return;
     restoreStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -132,6 +159,7 @@ export function JavaScriptFoundationsWarmup({
       exerciseIds,
       nextCompletedIds,
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_FOUNDATION_EXERCISES[nextIndex];
     if (!nextExercise) {
@@ -140,10 +168,22 @@ export function JavaScriptFoundationsWarmup({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
         "Complete the missing logic, then run three private browser checks.",
+    });
+  }
+
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_FOUNDATION_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
     });
   }
 
@@ -153,7 +193,11 @@ export function JavaScriptFoundationsWarmup({
         className="foundations-complete"
         aria-label="Foundations warm-up complete"
       >
-        <p className="eyebrow">Foundations complete · saved to your account</p>
+        <p className="eyebrow">
+          {reviewingCompletedLab
+            ? "Foundations coding review complete"
+            : "Foundations complete · saved to your account"}
+        </p>
         <h2>Four steps ready for judged practice.</h2>
         <p>
           Your judge, parsing, branching, and loop steps will remain complete
@@ -162,6 +206,17 @@ export function JavaScriptFoundationsWarmup({
         <Link className="foundations-run" href="/practice/sum-two-numbers">
           Start problem 01 <span aria-hidden="true">→</span>
         </Link>
+        <Link className="foundations-review-link" href="/practice/judge-basics">
+          Review the judge checkpoint
+        </Link>
+        <CompletedLabReviewButton
+          label={
+            reviewingCompletedLab
+              ? "Review coding exercises again"
+              : "Review coding exercises"
+          }
+          onReview={reviewExercises}
+        />
       </section>
     );
   }
@@ -228,12 +283,26 @@ export function JavaScriptFoundationsWarmup({
           <span>foundations.js</span>
           <span>Draft saves privately</span>
         </div>
+        <GuidedJavaScriptFileImport
+          key={`import-${exercise.slug}`}
+          destinationName="foundations.js"
+          disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckResults([]);
+              setCheckState({
+              kind: "idle",
+              message: "Imported code is local. Run the three checks when it is ready.",
+            });
+          }}
+        />
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
         <textarea
           id="foundations-code"
           value={code}
           onChange={(event) => {
             setCode(event.target.value);
+            setCheckResults([]);
             setCheckState({
               kind: "idle",
               message:
@@ -246,17 +315,19 @@ export function JavaScriptFoundationsWarmup({
         <PrivateJavaScriptLabDraftStatus
           state={draftState}
           onRetry={retrySave}
+          browserRecovery={browserRecovery}
+          savedSource={savedSource}
+          fileName="foundations.js"
+        />
+
+        <GuidedStarterRestore
+          key={`restore-${exercise.slug}`}
+          disabled={checkState.kind === "running"}
+          isStarterLoaded={code === exercise.starterCode}
+          onRestore={resetExercise}
         />
 
         <div className="foundations-actions">
-          <button
-            type="button"
-            className="foundations-reset"
-            onClick={resetExercise}
-            disabled={checkState.kind === "running"}
-          >
-            Restore starter
-          </button>
           {!isPassed ? (
             <button
               type="button"
@@ -307,6 +378,7 @@ export function JavaScriptFoundationsWarmup({
               <span>Keep this:</span> {exercise.takeaway}
             </p>
           ) : null}
+          <GuidedCheckResults results={checkResults} />
         </div>
       </div>
     </section>

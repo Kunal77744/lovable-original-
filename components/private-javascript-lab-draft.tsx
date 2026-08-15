@@ -1,6 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  getJavaScriptLabDraftRecoveryKey,
+  parseJavaScriptLabDraftRecovery,
+  serializeJavaScriptLabDraftRecovery,
+  type JavaScriptLabDraftRecovery,
+} from "@/lib/javascript-lab-draft-recovery";
 import type { JavaScriptCodeLabSlug } from "@/lib/javascript-lab-progress";
 
 export const PRIVATE_LAB_DRAFT_MAX_LENGTH = 20_000;
@@ -37,47 +50,104 @@ export function usePrivateJavaScriptLabDraft({
   exerciseId,
   starterCode,
   initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   labSlug: JavaScriptCodeLabSlug;
   exerciseId: string;
   starterCode: string;
   initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [sources, setSources] = useState<Record<string, string>>(() => ({
     ...initialDrafts,
   }));
+  const sourcesRef = useRef<Record<string, string>>({ ...initialDrafts });
   const [states, setStates] = useState<Record<string, PrivateLabDraftState>>(
     () =>
       Object.fromEntries(
         Object.keys(initialDrafts).map((id) => [id, "saved" as const]),
       ),
   );
+  const [recoverableBrowserDrafts, setRecoverableBrowserDrafts] = useState<
+    Record<string, JavaScriptLabDraftRecovery | null>
+  >({});
   const pendingRef = useRef(new Map<string, PendingDraft>());
   const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const revisionsRef = useRef(new Map<string, number>());
   const saveChainRef = useRef(Promise.resolve());
+  const queuedSaveCountsRef = useRef(new Map<string, number>());
+
+  const getBrowserRecoveryKey = useCallback(
+    (nextExerciseId: string) =>
+      browserRecoveryScope
+        ? getJavaScriptLabDraftRecoveryKey(
+            browserRecoveryScope,
+            labSlug,
+            nextExerciseId,
+          )
+        : null,
+    [browserRecoveryScope, labSlug],
+  );
+
+  const clearBrowserRecoveryIfMatches = useCallback(
+    (nextExerciseId: string, savedSource: string) => {
+      const key = getBrowserRecoveryKey(nextExerciseId);
+      if (!key) return;
+
+      try {
+        const browserDraft = parseJavaScriptLabDraftRecovery(
+          window.localStorage.getItem(key),
+          PRIVATE_LAB_DRAFT_MAX_LENGTH,
+        );
+        if (browserDraft?.source === savedSource) {
+          window.localStorage.removeItem(key);
+        }
+      } catch {
+        // A blocked cleanup does not change the truth of the private save.
+      }
+    },
+    [getBrowserRecoveryKey],
+  );
 
   const persist = useCallback(
     (draft: PendingDraft) => {
       setStates((current) => ({ ...current, [draft.exerciseId]: "saving" }));
+      queuedSaveCountsRef.current.set(
+        draft.exerciseId,
+        (queuedSaveCountsRef.current.get(draft.exerciseId) ?? 0) + 1,
+      );
       saveChainRef.current = saveChainRef.current.then(async () => {
-        const response = await saveDraft(labSlug, draft);
-        const latest = pendingRef.current.get(draft.exerciseId);
-        const isLatest =
-          latest?.revision === draft.revision && latest.source === draft.source;
+        try {
+          const response = await saveDraft(labSlug, draft);
+          const latest = pendingRef.current.get(draft.exerciseId);
+          const isLatest =
+            latest?.revision === draft.revision && latest.source === draft.source;
 
-        if (!isLatest) return;
+          if (!isLatest) return;
 
-        if (response?.ok) {
-          pendingRef.current.delete(draft.exerciseId);
-          setStates((current) => ({ ...current, [draft.exerciseId]: "saved" }));
-          return;
+          if (response?.ok) {
+            pendingRef.current.delete(draft.exerciseId);
+            clearBrowserRecoveryIfMatches(draft.exerciseId, draft.source);
+            setStates((current) => ({
+              ...current,
+              [draft.exerciseId]: "saved",
+            }));
+            return;
+          }
+
+          setStates((current) => ({ ...current, [draft.exerciseId]: "error" }));
+        } finally {
+          const remaining =
+            (queuedSaveCountsRef.current.get(draft.exerciseId) ?? 1) - 1;
+          if (remaining > 0) {
+            queuedSaveCountsRef.current.set(draft.exerciseId, remaining);
+          } else {
+            queuedSaveCountsRef.current.delete(draft.exerciseId);
+          }
         }
-
-        setStates((current) => ({ ...current, [draft.exerciseId]: "error" }));
       });
     },
-    [labSlug],
+    [clearBrowserRecoveryIfMatches, labSlug],
   );
 
   const scheduleSave = useCallback(
@@ -103,12 +173,82 @@ export function usePrivateJavaScriptLabDraft({
   const updateSource = useCallback(
     (source: string) => {
       if (source.length > PRIVATE_LAB_DRAFT_MAX_LENGTH) return;
+      const recoveryKey = getBrowserRecoveryKey(exerciseId);
+      if (recoveryKey) {
+        try {
+          window.localStorage.setItem(
+            recoveryKey,
+            serializeJavaScriptLabDraftRecovery(source),
+          );
+        } catch {
+          // Private server autosave remains available when storage is blocked.
+        }
+      }
+      setRecoverableBrowserDrafts((current) => ({
+        ...current,
+        [exerciseId]: null,
+      }));
       setSources((current) => ({ ...current, [exerciseId]: source }));
+      sourcesRef.current[exerciseId] = source;
       setStates((current) => ({ ...current, [exerciseId]: "unsaved" }));
       scheduleSave(exerciseId, source);
     },
-    [exerciseId, scheduleSave],
+    [exerciseId, getBrowserRecoveryKey, scheduleSave],
   );
+
+  useEffect(() => {
+    const recoveryKey = getBrowserRecoveryKey(exerciseId);
+    if (!recoveryKey) return;
+
+    let recoveryTimer: number | null = null;
+
+    try {
+      const storedValue = window.localStorage.getItem(recoveryKey);
+      const browserDraft = parseJavaScriptLabDraftRecovery(
+        storedValue,
+        PRIVATE_LAB_DRAFT_MAX_LENGTH,
+      );
+      const loadedSource = sourcesRef.current[exerciseId] ?? starterCode;
+      if (!browserDraft || browserDraft.source === loadedSource) {
+        if (storedValue) window.localStorage.removeItem(recoveryKey);
+        return;
+      }
+
+      recoveryTimer = window.setTimeout(() => {
+        setRecoverableBrowserDrafts((current) => ({
+          ...current,
+          [exerciseId]: browserDraft,
+        }));
+      }, 0);
+    } catch {
+      // Private server recovery remains available when storage is blocked.
+    }
+
+    return () => {
+      if (recoveryTimer !== null) window.clearTimeout(recoveryTimer);
+    };
+  }, [exerciseId, getBrowserRecoveryKey, starterCode]);
+
+  const keepPrivateSavedDraft = useCallback(() => {
+    const recoveryKey = getBrowserRecoveryKey(exerciseId);
+    if (recoveryKey) {
+      try {
+        window.localStorage.removeItem(recoveryKey);
+      } catch {
+        // Hiding the offer is safe when browser cleanup is blocked.
+      }
+    }
+    setRecoverableBrowserDrafts((current) => ({
+      ...current,
+      [exerciseId]: null,
+    }));
+  }, [exerciseId, getBrowserRecoveryKey]);
+
+  const restoreBrowserDraft = useCallback(() => {
+    const browserDraft = recoverableBrowserDrafts[exerciseId];
+    if (!browserDraft) return;
+    updateSource(browserDraft.source);
+  }, [exerciseId, recoverableBrowserDrafts, updateSource]);
 
   const retrySave = useCallback(() => {
     const draft = pendingRef.current.get(exerciseId);
@@ -120,6 +260,7 @@ export function usePrivateJavaScriptLabDraft({
 
     function flushPending() {
       for (const draft of pendingRef.current.values()) {
+        if (queuedSaveCountsRef.current.has(draft.exerciseId)) continue;
         void saveDraft(labSlug, draft, true);
       }
     }
@@ -134,26 +275,96 @@ export function usePrivateJavaScriptLabDraft({
 
   const source = sources[exerciseId] ?? starterCode;
   const state = states[exerciseId] ?? "starter";
+  const hasRecoverableBrowserDraft = Boolean(
+    recoverableBrowserDrafts[exerciseId],
+  );
+  const savedSource = state === "saved" ? source : null;
 
   return useMemo(
     () => ({
       source,
       state,
+      savedSource,
       updateSource,
       restoreStarter: () => updateSource(starterCode),
       retrySave,
+      browserRecovery: hasRecoverableBrowserDraft
+        ? {
+            onKeepSaved: keepPrivateSavedDraft,
+            onRestore: restoreBrowserDraft,
+          }
+        : null,
     }),
-    [retrySave, source, starterCode, state, updateSource],
+    [
+      hasRecoverableBrowserDraft,
+      keepPrivateSavedDraft,
+      savedSource,
+      restoreBrowserDraft,
+      retrySave,
+      source,
+      starterCode,
+      state,
+      updateSource,
+    ],
   );
+}
+
+export function PrivateJavaScriptLabDraftRecovery({
+  titleId,
+  onKeepSaved,
+  onRestore,
+}: {
+  titleId: string;
+  onKeepSaved: () => void;
+  onRestore: () => void;
+}) {
+  return (
+    <aside
+      className="browser-draft-recovery project-browser-draft-recovery"
+      aria-labelledby={titleId}
+    >
+      <div>
+        <span>Browser recovery</span>
+        <strong id={titleId}>Newer exercise code is available.</strong>
+      </div>
+      <p>
+        Your private saved exercise is still loaded. Restore this browser copy
+        as unsaved work, or keep the account-backed version.
+      </p>
+      <div className="browser-draft-recovery-actions">
+        <button type="button" onClick={onKeepSaved}>
+          Keep saved exercise
+        </button>
+        <button type="button" onClick={onRestore}>
+          Restore browser draft
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+export function savedJavaScriptLabSourceFileContents(source: string) {
+  return source;
 }
 
 export function PrivateJavaScriptLabDraftStatus({
   state,
   onRetry,
+  browserRecovery = null,
+  savedSource,
+  fileName,
 }: {
   state: PrivateLabDraftState;
   onRetry: () => void;
+  browserRecovery?: {
+    onKeepSaved: () => void;
+    onRestore: () => void;
+  } | null;
+  savedSource: string | null;
+  fileName: string;
 }) {
+  const recoveryTitleId = useId();
+  const [downloadedFile, setDownloadedFile] = useState<string | null>(null);
   const message = {
     starter: "Starter ready. Your edits will save privately.",
     unsaved: "Unsaved changes",
@@ -162,20 +373,58 @@ export function PrivateJavaScriptLabDraftStatus({
     error: "Couldn’t save this draft. Your code is still here.",
   }[state];
 
+  function downloadSavedSource() {
+    if (savedSource === null) return;
+
+    const blob = new Blob([savedJavaScriptLabSourceFileContents(savedSource)], {
+      type: "text/javascript;charset=utf-8",
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    anchor.hidden = true;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+    setDownloadedFile(fileName);
+  }
+
   return (
-    <div
-      className={`private-lab-draft-status is-${state}`}
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      <span aria-hidden="true" />
-      <p>{message}</p>
-      {state === "error" ? (
-        <button type="button" onClick={onRetry}>
-          Retry save
-        </button>
+    <>
+      {browserRecovery ? (
+        <PrivateJavaScriptLabDraftRecovery
+          titleId={recoveryTitleId}
+          onKeepSaved={browserRecovery.onKeepSaved}
+          onRestore={browserRecovery.onRestore}
+        />
       ) : null}
-    </div>
+      <div
+        className={`private-lab-draft-status is-${state}`}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span aria-hidden="true" />
+        <p>{message}</p>
+        {state === "error" ? (
+          <button type="button" onClick={onRetry}>
+            Retry save
+          </button>
+        ) : null}
+        {state === "saved" && savedSource !== null ? (
+          <div className="private-lab-draft-download">
+            <button type="button" onClick={downloadSavedSource}>
+              Download saved .js
+            </button>
+            <span aria-live="polite">
+              {downloadedFile ? `${downloadedFile} downloaded.` : ""}
+            </span>
+          </div>
+        ) : null}
+      </div>
+    </>
   );
 }
