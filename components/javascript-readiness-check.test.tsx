@@ -72,6 +72,7 @@ const recommendationLabs = [
 describe("JavaScriptReadinessCheck", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
+    window.localStorage.clear();
   });
 
   afterEach(() => {
@@ -89,6 +90,7 @@ describe("JavaScriptReadinessCheck", () => {
           completedAt: "2026-08-07T12:00:00.000Z",
         }}
         recommendationLabs={recommendationLabs}
+        studentScope="student-1"
       />,
     );
 
@@ -119,6 +121,7 @@ describe("JavaScriptReadinessCheck", () => {
               }
             : lab,
         )}
+        studentScope="student-1"
       />,
     );
 
@@ -155,6 +158,7 @@ describe("JavaScriptReadinessCheck", () => {
       <JavaScriptReadinessCheck
         initialResult={null}
         recommendationLabs={recommendationLabs}
+        studentScope="student-1"
       />,
     );
 
@@ -187,6 +191,7 @@ describe("JavaScriptReadinessCheck", () => {
       <JavaScriptReadinessCheck
         initialResult={null}
         recommendationLabs={recommendationLabs}
+        studentScope="student-1"
       />,
     );
 
@@ -223,6 +228,7 @@ describe("JavaScriptReadinessCheck", () => {
       <JavaScriptReadinessCheck
         initialResult={null}
         recommendationLabs={recommendationLabs}
+        studentScope="student-1"
       />,
     );
 
@@ -249,5 +255,155 @@ describe("JavaScriptReadinessCheck", () => {
     expect(
       screen.getByRole("button", { name: "Save my result" }),
     ).toBeEnabled();
+  });
+
+  it("restores the exact unfinished question and choices after reload", async () => {
+    const firstView = render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+        studentScope="student-1"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByLabelText(
+        "Split the text and convert both values to numbers",
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Next concept" }));
+    fireEvent.click(screen.getByLabelText("10"));
+
+    await waitFor(() => {
+      expect(window.localStorage.length).toBe(1);
+    });
+    firstView.unmount();
+
+    render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+        studentScope="student-1"
+      />,
+    );
+
+    expect(await screen.findByText("Question 2 of 6")).toBeInTheDocument();
+    expect(screen.getByLabelText("10")).toBeChecked();
+    expect(
+      screen.getByText(/Unfinished check restored from this browser/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    expect(
+      screen.getByLabelText("Split the text and convert both values to numbers"),
+    ).toBeChecked();
+  });
+
+  it("keeps unfinished choices isolated to the signed-in account", async () => {
+    const firstView = render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+        studentScope="student-1"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByLabelText(
+        "Split the text and convert both values to numbers",
+      ),
+    );
+    await waitFor(() => {
+      expect(window.localStorage.length).toBe(1);
+    });
+    firstView.unmount();
+
+    render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+        studentScope="student-2"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(/Unfinished check restored from this browser/),
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByLabelText("Split the text and convert both values to numbers"),
+    ).not.toBeChecked();
+  });
+
+  it("rejects a checkpoint from a changed question set", async () => {
+    window.localStorage.setItem(
+      "lovable-original:private-javascript-readiness:v1:student-1",
+      JSON.stringify({
+        version: 1,
+        questionSignature: "stale-question-set",
+        questionIndex: 1,
+        answers: { "trace-values": "ten" },
+      }),
+    );
+
+    render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(window.localStorage.length).toBe(0);
+    });
+    expect(screen.getByText("Question 1 of 6")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Unfinished check restored from this browser/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears browser choices after the private result saves", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          correctCount: 6,
+          totalCount: 6,
+          recommendedLabSlug: "algorithm-patterns",
+          completedAt: "2026-08-15T20:00:00.000Z",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    render(
+      <JavaScriptReadinessCheck
+        initialResult={null}
+        recommendationLabs={recommendationLabs}
+        studentScope="student-1"
+      />,
+    );
+
+    for (const [index, question] of JAVASCRIPT_READINESS_QUESTIONS.entries()) {
+      const option = question.options.find(
+        (candidate) => candidate.id === question.correctOptionId,
+      )!;
+      fireEvent.click(screen.getByLabelText(option.label));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name:
+            index === JAVASCRIPT_READINESS_QUESTIONS.length - 1
+              ? "Save my result"
+              : "Next concept",
+        }),
+      );
+    }
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Continue with algorithm patterns"),
+      ).toBeInTheDocument();
+      expect(window.localStorage.length).toBe(0);
+    });
   });
 });

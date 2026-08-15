@@ -27,9 +27,11 @@ export const metadata: Metadata = {
 function ReadinessContent({
   initialResult,
   recommendationLabs,
+  studentScope,
 }: {
   initialResult: SavedJavaScriptReadinessResult | null;
   recommendationLabs: JavaScriptLabCatalogProgress["labs"];
+  studentScope: string;
 }) {
   return (
     <main>
@@ -61,6 +63,7 @@ function ReadinessContent({
         <JavaScriptReadinessCheck
           initialResult={initialResult}
           recommendationLabs={recommendationLabs}
+          studentScope={studentScope}
         />
       </div>
       <SiteFooter />
@@ -84,6 +87,7 @@ export default async function JavaScriptReadinessPage() {
     <ReadinessContent
       initialResult={initialResult}
       recommendationLabs={labProgress.labs}
+      studentScope={session.user.id}
     />
   );
 }

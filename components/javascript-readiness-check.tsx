@@ -8,30 +8,42 @@ import {
   getJavaScriptReadinessRecommendation,
   JAVASCRIPT_READINESS_QUESTIONS,
 } from "@/lib/javascript-readiness";
+import { useBrowserReadinessProgress } from "@/components/use-browser-readiness-progress";
 
 type JavaScriptReadinessCheckProps = {
   initialResult: SavedJavaScriptReadinessResult | null;
   recommendationLabs: JavaScriptLabCatalogProgress["labs"];
+  studentScope: string;
 };
 
 export function JavaScriptReadinessCheck({
   initialResult,
   recommendationLabs,
+  studentScope,
 }: JavaScriptReadinessCheckProps) {
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [savedResult, setSavedResult] = useState(initialResult);
   const [isRetaking, setIsRetaking] = useState(!initialResult);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState("");
+  const {
+    answers,
+    questionIndex,
+    recovered,
+    resetProgress,
+    setAnswers,
+    setQuestionIndex,
+  } = useBrowserReadinessProgress({
+    active: isRetaking,
+    questions: JAVASCRIPT_READINESS_QUESTIONS,
+    studentScope,
+  });
   const progressByLab = useMemo(
     () => new Map(recommendationLabs.map((item) => [item.slug, item])),
     [recommendationLabs],
   );
 
   function startRetake() {
-    setAnswers({});
-    setQuestionIndex(0);
+    resetProgress();
     setStatus("");
     setIsRetaking(true);
   }
@@ -164,6 +176,12 @@ export function JavaScriptReadinessCheck({
 
   return (
     <section className="readiness-workspace" aria-labelledby="readiness-question-title">
+      {recovered ? (
+        <p className="readiness-recovery-note" role="status">
+          Unfinished check restored from this browser. Your choices are still
+          private and will clear after the result saves.
+        </p>
+      ) : null}
       <div className="readiness-progress" aria-label={`Question ${questionIndex + 1} of ${JAVASCRIPT_READINESS_QUESTIONS.length}`}>
         <span>
           Question {questionIndex + 1} of {JAVASCRIPT_READINESS_QUESTIONS.length}
