@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "@/lib/javascript-algorithm-patterns";
 import {
@@ -45,6 +50,13 @@ export function JavaScriptAlgorithmPatternsLab({
     () => new Set(completedExerciseIds),
   );
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -235,6 +247,7 @@ export function JavaScriptAlgorithmPatternsLab({
           </label>
           <textarea
             id="algorithm-patterns-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
@@ -243,8 +256,10 @@ export function JavaScriptAlgorithmPatternsLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
+          <GuidedLabExecutionHint />
 
           <div className="function-lab-actions">
             <button

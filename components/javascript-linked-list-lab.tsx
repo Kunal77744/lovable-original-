@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "@/lib/javascript-linked-lists";
 import {
@@ -44,6 +49,13 @@ export function JavaScriptLinkedListLab({
     () => new Set(completedExerciseIds),
   );
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -232,6 +244,7 @@ export function JavaScriptLinkedListLab({
           <label htmlFor="linked-list-lab-code">JavaScript linked-list code</label>
           <textarea
             id="linked-list-lab-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
@@ -240,8 +253,10 @@ export function JavaScriptLinkedListLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
+          <GuidedLabExecutionHint />
 
           <div className="function-lab-actions">
             <button

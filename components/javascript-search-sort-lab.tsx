@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_SEARCH_SORT_EXERCISES,
@@ -46,6 +51,13 @@ export function JavaScriptSearchSortLab({
     () => new Set(completedExerciseIds),
   );
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -239,6 +251,7 @@ export function JavaScriptSearchSortLab({
           </label>
           <textarea
             id="search-sort-lab-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
@@ -247,8 +260,10 @@ export function JavaScriptSearchSortLab({
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
+          <GuidedLabExecutionHint />
 
           <div className="function-lab-actions">
             <button
