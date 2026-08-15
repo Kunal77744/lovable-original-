@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_FOUNDATION_EXERCISES,
@@ -224,15 +225,14 @@ export function JavaScriptFoundationsWarmup({
           spellCheck={false}
         />
 
+        <GuidedStarterRestore
+          key={exercise.slug}
+          disabled={checkState.kind === "running"}
+          isStarterLoaded={code === exercise.starterCode}
+          onRestore={resetExercise}
+        />
+
         <div className="foundations-actions">
-          <button
-            type="button"
-            className="foundations-reset"
-            onClick={resetExercise}
-            disabled={checkState.kind === "running"}
-          >
-            Restore starter
-          </button>
           {!isPassed ? (
             <button
               type="button"

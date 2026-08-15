@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "@/lib/javascript-algorithm-patterns";
 import {
@@ -246,15 +247,14 @@ export function JavaScriptAlgorithmPatternsLab({
             spellCheck={false}
           />
 
+          <GuidedStarterRestore
+            key={exercise.slug}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
           <div className="function-lab-actions">
-            <button
-              className="function-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="function-lab-run"

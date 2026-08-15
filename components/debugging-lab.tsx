@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -90,6 +91,15 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
     });
   }
 
+  function restoreStarter() {
+    if (!drill) return;
+    setSource(drill.starterCode);
+    setLabState({
+      kind: "idle",
+      message: "Starter restored locally. No learner record was changed.",
+    });
+  }
+
   if (!drill) {
     return (
       <section className="debugging-result is-passed" aria-labelledby="debugging-complete-title">
@@ -127,6 +137,13 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
           spellCheck={false}
         />
       </div>
+
+      <GuidedStarterRestore
+        key={drill.slug}
+        disabled={labState.kind === "running"}
+        isStarterLoaded={source === drill.starterCode}
+        onRestore={restoreStarter}
+      />
 
       <div className="debugging-action-row">
         <p>Fix the smallest thing that makes the behavior match the brief.</p>
