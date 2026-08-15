@@ -5866,6 +5866,13 @@ h1 {
   padding-inline: 24px;
 }
 
+.practice-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 22px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
