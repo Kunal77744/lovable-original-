@@ -16,15 +16,19 @@ const guidedLabComponents = [
   ["javascript-trees-graphs-lab.tsx", "currentSource={code}", "starterSource={exercise.starterCode}"],
 ] as const;
 
-describe("guided source change review wiring", () => {
+describe("guided workspace review and editor wiring", () => {
   it.each(guidedLabComponents)(
-    "connects %s to the active authored starter",
+    "connects %s to the numbered editor and active authored starter",
     (fileName, currentSource, starterSource) => {
       const source = readFileSync(join(process.cwd(), "components", fileName), "utf8");
 
       expect(source).toContain(
         'import { GuidedSourceChangeReview } from "./guided-source-change-review";',
       );
+      expect(source).toContain(
+        'import { GuidedCodeEditor } from "@/components/guided-code-editor";',
+      );
+      expect(source).toContain("<GuidedCodeEditor");
       expect(source).toContain("<GuidedSourceChangeReview");
       expect(source).toContain(currentSource);
       expect(source).toContain(starterSource);
