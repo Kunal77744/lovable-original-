@@ -6,6 +6,7 @@ import { ProjectFeedback } from "@/components/project-feedback";
 import { SemanticHtmlRepairDrill } from "@/components/semantic-html-repair-drill";
 import {
   getEmptyGuidedProjectChecks,
+  getGuidedProjectStructure,
   type GuidedProjectRecord,
 } from "@/lib/guided-project";
 import { captureProjectCompleted } from "@/lib/product-analytics";
@@ -49,6 +50,8 @@ export function GuidedProjectWorkspace({
     () => buildSandboxedPreviewDocument(html),
     [html],
   );
+  const pageStructure = useMemo(() => getGuidedProjectStructure(html), [html]);
+  const structureCountLabel = `${pageStructure.landmarkCount} ${pageStructure.landmarkCount === 1 ? "landmark" : "landmarks"} and ${pageStructure.headingCount} ${pageStructure.headingCount === 1 ? "heading" : "headings"}`;
   const checks = project.submission?.checks ?? getEmptyGuidedProjectChecks();
   const passedCount = project.submission?.passedChecks ?? 0;
   const isWorking =
@@ -213,6 +216,54 @@ export function GuidedProjectWorkspace({
           />
         </div>
       </div>
+
+      <section
+        className="project-structure-preview"
+        aria-labelledby="project-structure-title"
+      >
+        <header className="project-structure-heading">
+          <div>
+            <p className="quiz-kicker">Structure preview</p>
+            <h3 id="project-structure-title">Read the page you are building.</h3>
+            <p>
+              Landmarks divide the page into regions. Headings give those
+              regions a readable outline. This browser-only view follows your
+              current HTML and does not change the six saved checks.
+            </p>
+          </div>
+          <p className="project-structure-counts" aria-label={structureCountLabel}>
+            <strong>{pageStructure.landmarkCount}</strong> landmarks
+            <span aria-hidden="true">·</span>
+            <strong>{pageStructure.headingCount}</strong> headings
+          </p>
+        </header>
+
+        {pageStructure.items.length > 0 ? (
+          <ol className="project-structure-tree" aria-label="Current page structure">
+            {pageStructure.items.map((item, index) => (
+              <li
+                className={`project-structure-item is-${item.kind} depth-${Math.min(item.depth, 4)}`}
+                key={`${item.tag}-${index}`}
+              >
+                <code>{`<${item.tag}>`}</code>
+                <span>
+                  <strong>{item.description}</strong>
+                  {item.label ? <small>{item.label}</small> : null}
+                </span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="project-structure-empty">
+            Add a landmark or heading to start the page structure.
+          </p>
+        )}
+        {pageStructure.truncated ? (
+          <p className="project-structure-note">
+            Showing the first 24 landmarks and headings in source order.
+          </p>
+        ) : null}
+      </section>
 
       <div className="project-review">
         <div className="project-rubric">
