@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
@@ -80,6 +85,13 @@ export function JavaScriptDataStructuresLab({
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -315,6 +327,7 @@ export function JavaScriptDataStructuresLab({
           <label htmlFor="data-lab-code">JavaScript data-structure code</label>
         <GuidedCodeEditor
             id="data-lab-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
@@ -325,6 +338,7 @@ export function JavaScriptDataStructuresLab({
               });
             }}
             maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
           <PrivateJavaScriptLabDraftStatus
@@ -346,6 +360,7 @@ export function JavaScriptDataStructuresLab({
             currentSource={code}
             starterSource={exercise.starterCode}
           />
+          <GuidedLabExecutionHint />
 
           <div className="data-lab-actions">
             {isPassed ? (
