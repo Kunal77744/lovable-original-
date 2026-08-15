@@ -52,6 +52,37 @@ export type ProjectPortfolioViewModel = {
   projects: ProjectPortfolioCard[];
 };
 
+export function buildPortableProjectEvidence(
+  portfolio: ProjectPortfolioViewModel,
+) {
+  const completedProjects = portfolio.projects.filter(
+    (project) => project.state === "completed",
+  );
+
+  if (completedProjects.length === 0) return null;
+
+  const projectLabel =
+    completedProjects.length === 1 ? "completed project" : "completed projects";
+  const sections = completedProjects.map((project) =>
+    [
+      `## ${project.title}`,
+      `- Stack: ${project.stack}`,
+      `- Artifact: ${project.artifact}`,
+      `- Review result: ${project.progressLabel}`,
+    ].join("\n"),
+  );
+
+  return [
+    "# Coding project evidence",
+    "",
+    `${completedProjects.length} ${projectLabel} reviewed in Lovable Original.`,
+    "",
+    ...sections.flatMap((section, index) =>
+      index === sections.length - 1 ? [section] : [section, ""],
+    ),
+  ].join("\n");
+}
+
 type PortfolioInput = {
   courseCompleted: boolean;
   courseNextHref: string;

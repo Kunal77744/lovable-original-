@@ -1,11 +1,33 @@
+"use client";
+
 import Link from "next/link";
-import type { ProjectPortfolioViewModel } from "@/lib/project-portfolio";
+import { useState } from "react";
+import {
+  buildPortableProjectEvidence,
+  type ProjectPortfolioViewModel,
+} from "@/lib/project-portfolio";
 
 export function ProjectPortfolio({
   portfolio,
 }: {
   portfolio: ProjectPortfolioViewModel;
 }) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">(
+    "idle",
+  );
+  const portableEvidence = buildPortableProjectEvidence(portfolio);
+
+  async function copyProjectEvidence() {
+    if (!portableEvidence) return;
+
+    try {
+      await navigator.clipboard.writeText(portableEvidence);
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
+  }
+
   return (
     <section
       className="project-portfolio-shell"
@@ -103,6 +125,38 @@ export function ProjectPortfolio({
           ))}
         </ol>
       </section>
+
+      {portableEvidence ? (
+        <section
+          className="project-portfolio-export"
+          aria-labelledby="project-portfolio-export-title"
+        >
+          <div>
+            <p className="eyebrow">Portable evidence</p>
+            <h2 id="project-portfolio-export-title">
+              Take completed work into your README.
+            </h2>
+            <p>
+              Copy a clean Markdown summary of completed projects and saved
+              review totals. Private code, feedback, and identity stay out.
+            </p>
+          </div>
+          <div className="project-portfolio-export-action">
+            <button type="button" onClick={copyProjectEvidence}>
+              {copyState === "copied"
+                ? "Project summary copied"
+                : "Copy completed-project summary"}
+            </button>
+            <p aria-live="polite">
+              {copyState === "copied"
+                ? `${portfolio.completedCount} completed ${portfolio.completedCount === 1 ? "project is" : "projects are"} ready to paste.`
+                : copyState === "error"
+                  ? "The summary could not be copied. Try again."
+                  : "Copies Markdown to this browser's clipboard."}
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       <aside className="project-portfolio-privacy">
         <span aria-hidden="true">●</span>

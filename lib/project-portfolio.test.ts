@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildProjectPortfolio } from "./project-portfolio";
+import {
+  buildPortableProjectEvidence,
+  buildProjectPortfolio,
+} from "./project-portfolio";
 
 const notStarted = { state: "not-started" as const, passedChecks: 0 };
 const completed = { state: "completed" as const, passedChecks: 6 };
@@ -86,5 +89,30 @@ describe("buildProjectPortfolio", () => {
       label: "Review the latest debrief",
     });
     expect(portfolio.completedCount).toBe(3);
+  });
+
+  it("builds portable evidence from completed projects only", () => {
+    const portfolio = build({
+      courseCompleted: true,
+      semanticHtml: completed,
+      javascript: { state: "in-progress", passedChecks: 4 },
+    });
+
+    expect(buildPortableProjectEvidence(portfolio)).toBe(
+      [
+        "# Coding project evidence",
+        "",
+        "1 completed project reviewed in Lovable Original.",
+        "",
+        "## Semantic HTML field guide",
+        "- Stack: Semantic HTML",
+        "- Artifact: index.html",
+        "- Review result: 6/6 checks passed",
+      ].join("\n"),
+    );
+  });
+
+  it("does not create portable evidence before a project is complete", () => {
+    expect(buildPortableProjectEvidence(build())).toBeNull();
   });
 });
