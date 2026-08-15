@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -191,6 +192,10 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
               });
             }}
             spellCheck={false}
+          />
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
           />
 
           <div className="dom-lab-actions">

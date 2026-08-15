@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "@/lib/javascript-recursion";
 import {
@@ -241,6 +242,10 @@ export function JavaScriptRecursionLab({
               });
             }}
             spellCheck={false}
+          />
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
           />
 
           <div className="function-lab-actions">

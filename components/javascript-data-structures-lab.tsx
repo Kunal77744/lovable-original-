@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -223,6 +224,10 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
               });
             }}
             spellCheck={false}
+          />
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
           />
 
           <div className="data-lab-actions">
