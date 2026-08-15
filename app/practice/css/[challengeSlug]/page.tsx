@@ -112,6 +112,7 @@ export default async function CssChallengePage({
             slug: challenge.slug,
             title: challenge.title,
             checks,
+            starterCss: challenge.starterCss,
             successTakeaway: challenge.successTakeaway,
           }}
           initialCss={studentState.css}
