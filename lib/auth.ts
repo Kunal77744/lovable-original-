@@ -39,6 +39,10 @@ export const auth = betterAuth({
         window: 60,
         max: 5,
       },
+      "/change-password": {
+        window: 60,
+        max: 5,
+      },
     },
   },
   trustedOrigins: [
