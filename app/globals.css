@@ -1166,6 +1166,158 @@ h1 {
   border-radius: 4px;
 }
 
+.guided-source-change-review {
+  margin: 14px 18px 0;
+  overflow: hidden;
+  border: 1px solid #34443c;
+  border-radius: 10px;
+  background: #111b17;
+}
+
+.guided-source-change-review summary {
+  min-height: 58px;
+  padding: 11px 16px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  color: #dce6e0;
+  cursor: pointer;
+}
+
+.guided-source-change-review summary::marker {
+  color: #83dda8;
+}
+
+.guided-source-change-review summary span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.guided-source-change-review summary small {
+  color: #94a39b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.guided-source-change-review summary:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: -3px;
+}
+
+.guided-source-change-review-body {
+  padding: 16px;
+  border-top: 1px solid #31423a;
+}
+
+.guided-source-change-review-body > p {
+  margin: 0;
+  color: #b7c6bd;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.guided-source-change-review-heading {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.guided-source-change-review-heading p {
+  margin: 0;
+  color: #9eada5;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.guided-source-change-review-heading p:first-child {
+  flex: 0 0 auto;
+  color: #dce8df;
+  font-variant-numeric: tabular-nums;
+}
+
+.guided-source-change-review-heading strong:first-child {
+  color: #83dda8;
+}
+
+.guided-source-change-review-heading strong:last-child {
+  color: #e3b0a6;
+}
+
+.guided-source-change-review ol {
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid #34443c;
+  border-radius: 8px;
+  background: #0d1612;
+  list-style: none;
+}
+
+.guided-source-change-review li {
+  min-height: 34px;
+  padding: 7px 12px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  border-bottom: 1px solid rgba(65, 81, 73, 0.55);
+}
+
+.guided-source-change-review li:last-child {
+  border-bottom: 0;
+}
+
+.guided-source-change-review li.is-added {
+  background: rgba(40, 118, 82, 0.13);
+}
+
+.guided-source-change-review li.is-removed {
+  background: rgba(139, 74, 64, 0.12);
+}
+
+.guided-source-change-review li > span {
+  color: #718078;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.guided-source-change-review li.is-added > span {
+  color: #83dda8;
+}
+
+.guided-source-change-review li.is-removed > span {
+  color: #e3b0a6;
+}
+
+.guided-source-change-review code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #dce8df;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.guided-source-change-review-more {
+  margin-top: 12px !important;
+}
+
+@media (max-width: 640px) {
+  .guided-source-change-review {
+    margin-inline: 12px;
+  }
+
+  .guided-source-change-review-heading {
+    display: grid;
+    gap: 5px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .course-step-link svg {
     transition: none;

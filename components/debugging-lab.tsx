@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -273,6 +274,11 @@ export function DebuggingLab({
         disabled={labState.kind === "running"}
         isStarterLoaded={source === drill.starterCode}
         onRestore={restoreStarter}
+      />
+
+      <GuidedSourceChangeReview
+        currentSource={source}
+        starterSource={drill.starterCode}
       />
 
       <div className="debugging-action-row">

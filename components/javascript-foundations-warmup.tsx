@@ -14,6 +14,7 @@ import {
   GuidedCheckResults,
   type GuidedCheckResult,
 } from "./guided-check-results";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
@@ -325,6 +326,11 @@ export function JavaScriptFoundationsWarmup({
           disabled={checkState.kind === "running"}
           isStarterLoaded={code === exercise.starterCode}
           onRestore={resetExercise}
+        />
+
+        <GuidedSourceChangeReview
+          currentSource={code}
+          starterSource={exercise.starterCode}
         />
 
         <div className="foundations-actions">

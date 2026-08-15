@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -341,6 +342,11 @@ export function JavaScriptFunctionsScopeLab({
             disabled={checkState.kind === "running"}
             isStarterLoaded={code === exercise.starterCode}
             onRestore={restoreStarter}
+          />
+
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
           />
 
           <div className="function-lab-actions">
