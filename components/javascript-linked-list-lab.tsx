@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "@/lib/javascript-linked-lists";
 import {
@@ -241,6 +242,10 @@ export function JavaScriptLinkedListLab({
               });
             }}
             spellCheck={false}
+          />
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
           />
 
           <div className="function-lab-actions">

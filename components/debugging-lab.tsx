@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -125,6 +126,10 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
           value={source}
           onChange={(event) => updateSource(event.target.value)}
           spellCheck={false}
+        />
+        <GuidedSourceChangeReview
+          currentSource={source}
+          starterSource={drill.starterCode}
         />
       </div>
 

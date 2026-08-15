@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "@/lib/javascript-stacks-queues";
 import {
@@ -243,6 +244,10 @@ export function JavaScriptStacksQueuesLab({
               });
             }}
             spellCheck={false}
+          />
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
           />
 
           <div className="function-lab-actions">
