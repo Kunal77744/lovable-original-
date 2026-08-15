@@ -198,6 +198,9 @@ describe("ProfilePage", () => {
     expect(
       screen.getByRole("link", { name: /View private projects/ }),
     ).toHaveAttribute("href", "/projects");
+    expect(
+      screen.getByRole("link", { name: /Open private review/ }),
+    ).toHaveAttribute("href", "/review");
   });
 
   it("restores distinct JavaScript and CSS totals for a returning learner", async () => {
