@@ -22,6 +22,34 @@ const completedCss = `.resource-grid {
 .resource-card { min-width: 0; }`;
 
 describe("ResponsiveCssLayoutWorkspace", () => {
+  it("previews the same CSS at phone, tablet, and wide widths", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={RESPONSIVE_CSS_STARTER}
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved={false}
+      />,
+    );
+
+    const preview = screen.getByTitle("Responsive CSS Grid live preview");
+    expect(preview).toHaveAttribute("data-preview-width", "wide");
+    expect(preview).toHaveStyle({ width: "100%" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Phone" }));
+    expect(preview).toHaveAttribute("data-preview-width", "phone");
+    expect(preview).toHaveStyle({ width: "360px" });
+    expect(screen.getByText("Phone", { selector: "strong" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tablet" }));
+    expect(preview).toHaveAttribute("data-preview-width", "tablet");
+    expect(preview).toHaveStyle({ width: "560px" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("keeps signed-out work in the browser", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

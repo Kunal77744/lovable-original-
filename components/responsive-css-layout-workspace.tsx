@@ -29,6 +29,14 @@ type WorkspaceResponse = {
   error?: string;
 };
 
+const previewWidths = [
+  { id: "phone", label: "Phone", width: "360px" },
+  { id: "tablet", label: "Tablet", width: "560px" },
+  { id: "wide", label: "Wide", width: "100%" },
+] as const;
+
+type PreviewWidthId = (typeof previewWidths)[number]["id"];
+
 export function ResponsiveCssLayoutWorkspace({
   lessonSlug,
   initialCss,
@@ -51,8 +59,13 @@ export function ResponsiveCssLayoutWorkspace({
         : "Saved practice restored. Revise the open checks and save again."
       : "Starter CSS is ready. Save when the cards adapt cleanly.",
   );
+  const [previewWidth, setPreviewWidth] =
+    useState<PreviewWidthId>("wide");
   const previewDocument = useMemo(() => buildResponsiveCssPreview(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
+  const activePreviewWidth = previewWidths.find(
+    (option) => option.id === previewWidth,
+  )!;
 
   async function savePractice() {
     if (!isSignedIn) {
@@ -111,7 +124,7 @@ export function ResponsiveCssLayoutWorkspace({
 
   return (
     <section
-      className="lesson-workspace css-practice-workspace"
+      className="lesson-workspace css-practice-workspace responsive-css-layout-workspace"
       id="responsive-css-practice"
     >
       <header className="workspace-heading">
@@ -189,12 +202,40 @@ export function ResponsiveCssLayoutWorkspace({
             <span>Live preview</span>
             <span>Network blocked</span>
           </div>
-          <iframe
-            sandbox=""
-            referrerPolicy="no-referrer"
-            srcDoc={previewDocument}
-            title="Responsive CSS Grid live preview"
-          />
+          <div className="responsive-preview-stage">
+            <div className="responsive-preview-toolbar">
+              <p>
+                <span>Preview width</span>
+                <strong>{activePreviewWidth.label}</strong>
+              </p>
+              <div
+                className="responsive-preview-options"
+                role="group"
+                aria-label="Choose preview width"
+              >
+                {previewWidths.map((option) => (
+                  <button
+                    aria-pressed={previewWidth === option.id}
+                    key={option.id}
+                    onClick={() => setPreviewWidth(option.id)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="responsive-preview-canvas">
+              <iframe
+                data-preview-width={previewWidth}
+                sandbox=""
+                referrerPolicy="no-referrer"
+                srcDoc={previewDocument}
+                style={{ width: activePreviewWidth.width }}
+                title="Responsive CSS Grid live preview"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
