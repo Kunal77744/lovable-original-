@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -319,7 +320,7 @@ export function JavaScriptSearchSortLab({
           <label htmlFor="search-sort-lab-code">
             JavaScript searching and sorting code
           </label>
-          <textarea
+        <GuidedCodeEditor
             id="search-sort-lab-code"
             value={code}
             onChange={(event) => {

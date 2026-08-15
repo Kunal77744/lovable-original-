@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -253,7 +254,7 @@ export function DebuggingLab({
         <label htmlFor="debugging-source">
           JavaScript source for {drill.title}
         </label>
-        <textarea
+        <GuidedCodeEditor
           id="debugging-source"
           value={source}
           onChange={(event) => updateSource(event.target.value)}

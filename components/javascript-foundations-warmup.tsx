@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -298,7 +299,7 @@ export function JavaScriptFoundationsWarmup({
           }}
         />
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
-        <textarea
+        <GuidedCodeEditor
           id="foundations-code"
           value={code}
           onChange={(event) => {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -312,7 +313,7 @@ export function JavaScriptDataStructuresLab({
             }}
           />
           <label htmlFor="data-lab-code">JavaScript data-structure code</label>
-          <textarea
+        <GuidedCodeEditor
             id="data-lab-code"
             value={code}
             onChange={(event) => {
