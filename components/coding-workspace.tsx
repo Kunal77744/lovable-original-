@@ -12,6 +12,7 @@ import {
 } from "@/lib/coding-test-cases";
 import { normalizeCodingOutput } from "@/lib/coding-problems";
 import { getCodingSolutionReview } from "@/lib/coding-solution-review";
+import { getSourceChangeReview } from "@/lib/source-change-review";
 import {
   captureJavaScriptPracticeCompleted,
   capturePracticeProblemAccepted,
@@ -225,6 +226,7 @@ export function CodingWorkspace({
       ? getCodingSolutionReview(problem.slug, acceptedCode)
       : null;
   const runnerRecovery = getRunnerRecovery(runState);
+  const sourceChangeReview = getSourceChangeReview(problem.starterCode, code);
 
   useEffect(() => {
     function savePendingDraftBeforeLeave() {
@@ -754,6 +756,53 @@ export function CodingWorkspace({
               </button>
             )}
           </div>
+        ) : null}
+        {isSignedIn && code !== problem.starterCode ? (
+          <details className="source-change-review">
+            <summary>
+              <span>Review changes from starter</span>
+              <small>Browser-only. Your code stays unchanged.</small>
+            </summary>
+            <div className="source-change-review-body">
+              {sourceChangeReview.tooLarge ? (
+                <p>
+                  This solution is too long for the line review. Your editor and
+                  saved work are unchanged.
+                </p>
+              ) : (
+                <>
+                  <div className="source-change-review-heading">
+                    <p>
+                      <strong>{sourceChangeReview.additions} added</strong>
+                      <span aria-hidden="true"> · </span>
+                      <strong>{sourceChangeReview.removals} removed</strong>
+                    </p>
+                    <p>Can you explain why each change is needed before you submit?</p>
+                  </div>
+                  <ol aria-label="Changes from the authored starter">
+                    {sourceChangeReview.changes.map((change, index) => (
+                      <li
+                        className={`is-${change.kind}`}
+                        key={`${change.kind}-${change.lineNumber}-${index}`}
+                      >
+                        <span>
+                          {change.kind === "added" ? "+" : "−"}
+                          {change.lineNumber}
+                        </span>
+                        <code>{change.content || " "}</code>
+                      </li>
+                    ))}
+                  </ol>
+                  {sourceChangeReview.hiddenChangeCount > 0 ? (
+                    <p className="source-change-review-more">
+                      {sourceChangeReview.hiddenChangeCount} more changed lines are
+                      kept in the editor.
+                    </p>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </details>
         ) : null}
       </div>
 

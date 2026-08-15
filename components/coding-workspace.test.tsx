@@ -259,6 +259,26 @@ describe("CodingWorkspace", () => {
         name: "Plan the behavior before the syntax.",
       }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Review changes from starter"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("reviews the active solution against the authored starter without changing code", () => {
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+
+    fireEvent.click(screen.getByText("Review changes from starter"));
+
+    expect(screen.getByText("1 added")).toBeInTheDocument();
+    expect(screen.getByText("4 removed")).toBeInTheDocument();
+    expect(
+      screen.getByText("Can you explain why each change is needed before you submit?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Changes from the authored starter" }),
+    ).toBeInTheDocument();
+    expect(editor).toHaveValue("function solve(input) { return input; }");
   });
 
   it("opens the structured private planning stage before submission", () => {
