@@ -395,6 +395,59 @@ describe("LessonQuiz analytics", () => {
     expect(captureLessonCompleted).not.toHaveBeenCalled();
   });
 
+  it("keeps a completed retake separate from stale unfinished recovery", async () => {
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        version: 1,
+        questionSignature: JSON.stringify(
+          questions.map((question) => ({
+            id: question.id,
+            choiceIds: question.choices.map((choice) => choice.id),
+          })),
+        ),
+        answers: { q1: "b" },
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).toBeNull(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    );
+
+    expect(screen.getByLabelText("Second answer")).not.toBeChecked();
+    expect(
+      screen.queryByText(
+        "Recovered your unfinished quiz choices in this browser.",
+      ),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).toContain('"q1":"a"'),
+    );
+  });
+
   it("lets a completed learner leave a retake before grading", () => {
     render(
       <LessonQuiz

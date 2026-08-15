@@ -270,6 +270,7 @@ describe("JavaScriptMixedReview", () => {
         items={items}
         nextHref="/practice/test-design?exercise=1"
         nextLabel="Continue Test design, exercise 1"
+        studentScope="student-one"
       />,
     );
 
@@ -308,6 +309,10 @@ describe("JavaScriptMixedReview", () => {
       ),
     ).toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
+    expect(window.localStorage.length).toBe(0);
+    expect(
+      screen.queryByText("Recovered your unfinished review in this browser."),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Practice these prompts again" }),
     ).toBeInTheDocument();
