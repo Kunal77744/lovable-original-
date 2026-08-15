@@ -434,4 +434,49 @@ describe("GuidedProjectWorkspace", () => {
     expect(preview.getAttribute("srcdoc")).not.toContain("https://example.com");
     expect(preview.getAttribute("srcdoc")).not.toContain("<script");
   });
+
+  it("turns the learner's current HTML into a browser-only structure preview", () => {
+    const html = `
+      <header>Field guide</header>
+      <main>
+        <article>
+          <h1>How a browser reads this page</h1>
+          <section><h2>Landmarks</h2></section>
+          <aside>One useful note</aside>
+        </article>
+      </main>
+      <footer>Built in Web Foundations</footer>
+    `;
+
+    render(
+      <GuidedProjectWorkspace
+        projectSlug="semantic-html-article"
+        initialProject={{ ...starterProject, html }}
+        initialFeedback={null}
+        practiceContinuation={{
+          href: "/practice/sum-two-numbers",
+          label: "Continue to JavaScript step 01: Sum two numbers",
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Read the page you are building." }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("6 landmarks and 2 headings")).toBeInTheDocument();
+    const structure = screen.getByRole("list", { name: "Current page structure" });
+    expect(structure).toHaveTextContent("<header>Page header");
+    expect(structure).toHaveTextContent(
+      "<h1>Heading level 1How a browser reads this page",
+    );
+    expect(structure).toHaveTextContent("<h2>Heading level 2Landmarks");
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML project"), {
+      target: { value: "<main><article><h1>Revised outline</h1></article></main>" },
+    });
+
+    expect(screen.getByLabelText("2 landmarks and 1 heading")).toBeInTheDocument();
+    expect(structure).toHaveTextContent("Revised outline");
+    expect(structure).not.toHaveTextContent("Landmarks");
+  });
 });
