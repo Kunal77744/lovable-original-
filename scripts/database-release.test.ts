@@ -122,6 +122,26 @@ describe("database release contract", () => {
     );
   });
 
+  it("adds and verifies private CSS spaced-review results", async () => {
+    const [migration, releaseScript] = await Promise.all([
+      readFile(path.join(root, "drizzle/0034_css-spaced-review.sql"), "utf8"),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+
+    expect(migration).toContain(
+      'CREATE TABLE IF NOT EXISTS "css_spaced_review_result"',
+    );
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX IF NOT EXISTS "css_spaced_review_result_user_unique"',
+    );
+    expect(releaseScript).toMatch(
+      /css_spaced_review_result:\s*\[[\s\S]*?"correct_count",[\s\S]*?"next_due_at"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'css_spaced_review_result'[\s\S]*?\)/,
+    );
+  });
+
   it("adds and verifies the saved lesson reading checkpoint", async () => {
     const [migration, releaseScript] = await Promise.all([
       readFile(path.join(root, "drizzle/0026_lesson-reading-progress.sql"), "utf8"),
