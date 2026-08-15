@@ -365,6 +365,7 @@ async function run() {
           'css_practice_feedback',
           'css_practice_note',
           'css_practice_progress',
+          'css_spaced_review_result',
           'coding_problem_test_case_set',
           'coding_submission',
           'guided_project',
