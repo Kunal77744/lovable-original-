@@ -19566,6 +19566,127 @@ footer {
   border-top: 1px solid #cbdccb;
 }
 
+.guided-custom-run {
+  margin-top: 18px;
+  border: 1px solid #d5ded6;
+  border-radius: 11px;
+  background: #fbfcf9;
+}
+
+.guided-custom-run summary {
+  padding: 15px 18px;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.guided-custom-run summary:focus-visible {
+  border-radius: 9px;
+  outline: 3px solid rgba(40, 118, 82, 0.29);
+  outline-offset: 3px;
+}
+
+.guided-custom-run-body {
+  padding: 0 18px 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.guided-custom-run-body > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.guided-custom-run-body label {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.guided-custom-run-body > div:first-child span,
+.guided-custom-run-actions p,
+.guided-custom-run-result p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.guided-custom-run-body > textarea {
+  min-height: 76px;
+  padding: 12px 14px;
+  resize: vertical;
+  color: var(--ink);
+  border: 1px solid #cfd9d0;
+  border-radius: 8px;
+  outline: 0;
+  background: white;
+  font: 12px/1.55 "SFMono-Regular", Consolas, monospace;
+}
+
+.guided-custom-run-body > textarea:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(40, 118, 82, 0.18);
+}
+
+.guided-custom-run-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.guided-custom-run-actions button {
+  min-height: 38px;
+  flex: 0 0 auto;
+  padding: 0 14px;
+  color: var(--ink);
+  border: 1px solid #b8c9bb;
+  border-radius: 8px;
+  background: #edf4ea;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.guided-custom-run-actions button:disabled {
+  opacity: 0.58;
+  cursor: wait;
+}
+
+.guided-custom-run-actions button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.29);
+  outline-offset: 3px;
+}
+
+.guided-custom-run-result {
+  min-height: 48px;
+  padding: 11px 13px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  border-left: 3px solid #b7ccba;
+  background: #f4f7f1;
+}
+
+.guided-custom-run-result span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.guided-custom-run-result pre {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font: 12px/1.5 "SFMono-Regular", Consolas, monospace;
+}
+
 .function-lab-privacy {
   margin: 18px 3px 0;
   color: #748079;
