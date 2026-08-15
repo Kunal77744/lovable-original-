@@ -23111,6 +23111,18 @@ footer {
   padding: 36px 42px 30px;
 }
 
+.readiness-recovery-note {
+  max-width: 68ch;
+  margin: 0 0 24px;
+  padding: 12px 14px;
+  border: 1px solid rgba(40, 118, 82, 0.18);
+  border-radius: 10px;
+  background: rgba(40, 118, 82, 0.07);
+  color: var(--accent-deep);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .readiness-progress {
   display: grid;
   grid-template-columns: auto minmax(180px, 340px);
