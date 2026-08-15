@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -180,7 +181,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
             <span>Isolated worker</span>
           </div>
           <label htmlFor="dom-lab-code">JavaScript DOM code</label>
-          <textarea
+          <GuidedCodeEditor
             id="dom-lab-code"
             value={code}
             onChange={(event) => {

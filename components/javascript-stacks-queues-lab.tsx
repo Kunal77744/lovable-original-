@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "@/lib/javascript-stacks-queues";
 import {
@@ -232,7 +233,7 @@ export function JavaScriptStacksQueuesLab({
           <label htmlFor="stacks-queues-lab-code">
             JavaScript stacks and queues code
           </label>
-          <textarea
+          <GuidedCodeEditor
             id="stacks-queues-lab-code"
             value={code}
             onChange={(event) => {

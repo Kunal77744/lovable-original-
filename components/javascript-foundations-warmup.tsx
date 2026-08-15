@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_FOUNDATION_EXERCISES,
@@ -210,7 +211,7 @@ export function JavaScriptFoundationsWarmup({
             <span>Completion saves privately</span>
         </div>
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
-        <textarea
+        <GuidedCodeEditor
           id="foundations-code"
           value={code}
           onChange={(event) => {

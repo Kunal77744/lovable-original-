@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "@/lib/javascript-algorithm-patterns";
 import {
@@ -233,7 +234,7 @@ export function JavaScriptAlgorithmPatternsLab({
           <label htmlFor="algorithm-patterns-code">
             JavaScript algorithm pattern code
           </label>
-          <textarea
+          <GuidedCodeEditor
             id="algorithm-patterns-code"
             value={code}
             onChange={(event) => {
