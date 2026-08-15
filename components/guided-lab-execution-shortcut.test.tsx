@@ -6,9 +6,11 @@ import {
   GuidedLabExecutionHint,
   useGuidedLabExecutionShortcut,
 } from "./guided-lab-execution-shortcut";
+import { DebuggingLab } from "./debugging-lab";
 import { JavaScriptAlgorithmPatternsLab } from "./javascript-algorithm-patterns-lab";
 import { JavaScriptDataStructuresLab } from "./javascript-data-structures-lab";
 import { JavaScriptDomLab } from "./javascript-dom-lab";
+import { JavaScriptFoundationsWarmup } from "./javascript-foundations-warmup";
 import { JavaScriptFunctionsScopeLab } from "./javascript-functions-scope-lab";
 import { JavaScriptLinkedListLab } from "./javascript-linked-list-lab";
 import { JavaScriptRecursionLab } from "./javascript-recursion-lab";
@@ -32,9 +34,21 @@ type LabComponent = ComponentType<{ completedExerciseIds?: string[] }>;
 const guidedCodeLabs: Array<{
   name: string;
   Component: LabComponent;
-  editorName: string;
+  editorName: string | RegExp;
   runner: "coding" | "dom";
 }> = [
+  {
+    name: "foundations warm-up",
+    Component: JavaScriptFoundationsWarmup,
+    editorName: "JavaScript warm-up code",
+    runner: "coding",
+  },
+  {
+    name: "debugging",
+    Component: DebuggingLab,
+    editorName: /JavaScript source for Repair the condition/,
+    runner: "coding",
+  },
   {
     name: "algorithm patterns",
     Component: JavaScriptAlgorithmPatternsLab,
@@ -197,4 +211,8 @@ describe("guided lab execution shortcut", () => {
       expect(selectedRunner).toHaveBeenCalledTimes(1);
     },
   );
+
+  it("covers every code-writing guided lab", () => {
+    expect(guidedCodeLabs).toHaveLength(11);
+  });
 });

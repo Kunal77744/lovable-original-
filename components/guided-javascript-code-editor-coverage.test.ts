@@ -71,4 +71,22 @@ describe("guided JavaScript browser recovery coverage", () => {
       expect(source).toContain("createBrowserRecoveryScope(session.user.id)");
     }
   });
+
+  it("keeps keyboard execution on all 42 code-writing exercises", () => {
+    expect(codeLabs).toHaveLength(11);
+    expect(
+      codeLabs.reduce((total, [, exercises]) => total + exercises.length, 0),
+    ).toBe(42);
+
+    for (const [fileName] of codeLabs) {
+      const source = readFileSync(
+        join(process.cwd(), "components", fileName),
+        "utf8",
+      );
+
+      expect(source).toContain("useGuidedLabExecutionShortcut");
+      expect(source).toContain("GUIDED_LAB_EXECUTION_HINT_ID");
+      expect(source).toContain("<GuidedLabExecutionHint />");
+    }
+  });
 });
