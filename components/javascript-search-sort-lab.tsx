@@ -5,6 +5,7 @@ import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import {
   buildGuidedCheckResults,
   GuidedCheckResults,
@@ -396,6 +397,13 @@ export function JavaScriptSearchSortLab({
             ) : null}
             <GuidedCheckResults results={checkResults} />
           </div>
+
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save

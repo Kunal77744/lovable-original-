@@ -15,6 +15,7 @@ import {
   type GuidedCheckResult,
 } from "./guided-check-results";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getFirstIncompleteExerciseIndex,
@@ -396,6 +397,13 @@ export function JavaScriptTreesGraphsLab({
             ) : null}
             <GuidedCheckResults results={checkResults} />
           </div>
+
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save

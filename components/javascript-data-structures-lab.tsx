@@ -15,6 +15,7 @@ import {
   type GuidedCheckResult,
 } from "./guided-check-results";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
 import {
@@ -396,6 +397,13 @@ export function JavaScriptDataStructuresLab({
             ) : null}
             <GuidedCheckResults results={checkResults} />
           </div>
+
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
 
           <p className="data-lab-privacy">
             Your draft and completion save privately to your account. Check

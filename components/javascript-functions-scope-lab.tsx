@@ -15,6 +15,7 @@ import {
   type GuidedCheckResult,
 } from "./guided-check-results";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
 import {
@@ -396,6 +397,13 @@ export function JavaScriptFunctionsScopeLab({
             ) : null}
             <GuidedCheckResults results={checkResults} />
           </div>
+
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
 
           <p className="function-lab-privacy">
             Your draft and completion save privately to your account. Check
