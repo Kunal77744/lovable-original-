@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -26,11 +31,13 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
   const isLastDrill = completedCount === JAVASCRIPT_DEBUGGING_DRILLS.length;
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message: "Your edit is local. Run the three checks when you’re ready.",
@@ -43,6 +50,7 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       source,
       drill.tests.map((test) => test.input),
@@ -53,6 +61,11 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
       return;
     }
 
+    const nextCheckResults = buildGuidedCheckResults(
+      drill.tests,
+      result.outputs,
+    );
+    setCheckResults(nextCheckResults);
     const grade = gradeDebuggingDrill(drill, result.outputs);
     if (!grade.passed) {
       setLabState({
@@ -84,6 +97,7 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
     const nextDrill = JAVASCRIPT_DEBUGGING_DRILLS[nextIndex];
     setDrillIndex(nextIndex);
     setSource(nextDrill.starterCode);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message: "Read the new brief, inspect the code, then run all three checks.",
@@ -182,6 +196,7 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
             )}
           </div>
         ) : null}
+        <GuidedCheckResults results={checkResults} />
       </div>
     </section>
   );

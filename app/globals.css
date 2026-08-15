@@ -16146,6 +16146,131 @@ footer {
   background: rgba(255, 255, 255, 0.52);
 }
 
+.guided-check-results {
+  margin-top: 18px;
+  padding-top: 17px;
+  border-top: 1px solid rgba(23, 35, 30, 0.24);
+}
+
+.guided-check-results > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.guided-check-results > header strong,
+.guided-check-results > header span {
+  color: #17231e;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.guided-check-results > header span {
+  color: #617168;
+  font-weight: 600;
+}
+
+.guided-check-results ol {
+  margin: 13px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.guided-check-results li {
+  padding: 12px 13px;
+  border: 1px solid rgba(23, 35, 30, 0.18);
+  border-radius: 8px 8px 3px 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.guided-check-results li.is-matched {
+  border-color: rgba(40, 118, 82, 0.46);
+}
+
+.guided-check-results li.is-revisit {
+  border-color: rgba(157, 69, 53, 0.44);
+}
+
+.guided-check-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.guided-check-heading span,
+.guided-check-heading strong {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.guided-check-heading span {
+  color: #42534a;
+}
+
+.guided-check-results .is-matched .guided-check-heading strong {
+  color: #1d6b43;
+}
+
+.guided-check-results .is-revisit .guided-check-heading strong {
+  color: #9d4535;
+}
+
+.guided-check-results dl {
+  margin: 11px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 35, 30, 0.18);
+  border-radius: 6px;
+  background: rgba(23, 35, 30, 0.12);
+}
+
+.guided-check-results dl > div {
+  min-width: 0;
+  padding: 9px 10px;
+  background: #f6f7f2;
+}
+
+.guided-check-results dt {
+  color: #617168;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.guided-check-results dd {
+  margin: 5px 0 0;
+  color: #17231e;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.guided-check-results code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+
+@media (max-width: 640px) {
+  .guided-check-results > header,
+  .guided-check-heading {
+    align-items: flex-start;
+  }
+
+  .guided-check-results dl {
+    grid-template-columns: 1fr;
+  }
+}
+
 .foundations-boundary > div {
   padding: 25px;
 }
