@@ -8,6 +8,11 @@ import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES } from "@/lib/javascript-algorithm-patterns";
 import {
@@ -66,6 +71,7 @@ export function JavaScriptAlgorithmPatternsLab({
     kind: "idle",
     message: readyMessage,
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
@@ -79,6 +85,7 @@ export function JavaScriptAlgorithmPatternsLab({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
@@ -89,10 +96,12 @@ export function JavaScriptAlgorithmPatternsLab({
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
@@ -133,6 +142,7 @@ export function JavaScriptAlgorithmPatternsLab({
   function restoreStarter() {
     if (!exercise) return;
     restoreDraftStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -155,6 +165,7 @@ export function JavaScriptAlgorithmPatternsLab({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -163,6 +174,7 @@ export function JavaScriptAlgorithmPatternsLab({
     setReviewingCompletedLab(true);
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -308,6 +320,7 @@ export function JavaScriptAlgorithmPatternsLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -381,6 +394,7 @@ export function JavaScriptAlgorithmPatternsLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="function-lab-privacy">

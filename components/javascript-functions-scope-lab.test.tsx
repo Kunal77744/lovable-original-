@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
 import { JavaScriptFunctionsScopeLab } from "./javascript-functions-scope-lab";
@@ -105,7 +105,38 @@ describe("JavaScriptFunctionsScopeLab", () => {
     expect(
       screen.getByText(/A parameter is a local name for an incoming value/),
     ).toBeInTheDocument();
+    const details = screen.getByRole("region", { name: "Check details" });
+    expect(within(details).getByText("Browser only · not saved")).toBeInTheDocument();
+    expect(within(details).getAllByText("Revisit")).toHaveLength(3);
+    expect(within(details).getByText("Mina|JavaScript")).toBeInTheDocument();
+    expect(
+      within(details).getByText("Mina is learning JavaScript."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+  });
+
+  it("clears stale check details as soon as the learner edits", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["", "", ""],
+    });
+    render(<JavaScriptFunctionsScopeLab />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    expect(
+      await screen.findByRole("region", { name: "Check details" }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByRole("textbox", {
+        name: "JavaScript functions and scope code",
+      }),
+      { target: { value: "function solve() {}" } },
+    );
+
+    expect(
+      screen.queryByRole("region", { name: "Check details" }),
+    ).not.toBeInTheDocument();
   });
 
   it("reveals teaching only after passing and advances in order", async () => {

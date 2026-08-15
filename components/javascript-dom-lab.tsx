@@ -9,6 +9,10 @@ import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import {
@@ -66,6 +70,7 @@ export function JavaScriptDomLab({
     () => new Set(completedExerciseIds),
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -75,6 +80,7 @@ export function JavaScriptDomLab({
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runDomLabCode(code, exercise.slug);
 
     if (result.status !== "finished") {
@@ -82,6 +88,11 @@ export function JavaScriptDomLab({
       return;
     }
 
+    const nextCheckResults = result.checks.map((passed, index) => ({
+      label: `Scenario ${String(index + 1).padStart(2, "0")}`,
+      passed,
+    }));
+    setCheckResults(nextCheckResults);
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
       if (completedIds.has(exercise.slug)) {
@@ -122,6 +133,7 @@ export function JavaScriptDomLab({
   function restoreStarter() {
     if (!exercise) return;
     restorePrivateStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -143,6 +155,7 @@ export function JavaScriptDomLab({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -151,6 +164,7 @@ export function JavaScriptDomLab({
     setReviewingCompletedLab(true);
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -271,6 +285,7 @@ export function JavaScriptDomLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -347,6 +362,7 @@ export function JavaScriptDomLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="dom-lab-privacy">

@@ -9,6 +9,11 @@ import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -66,11 +71,13 @@ export function DebuggingLab({
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
   const isLastDrill = drillIndex === JAVASCRIPT_DEBUGGING_DRILLS.length - 1;
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message: "Draft changed. Run the three checks when you’re ready.",
@@ -83,6 +90,7 @@ export function DebuggingLab({
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       source,
       drill.tests.map((test) => test.input),
@@ -93,6 +101,11 @@ export function DebuggingLab({
       return;
     }
 
+    const nextCheckResults = buildGuidedCheckResults(
+      drill.tests,
+      result.outputs,
+    );
+    setCheckResults(nextCheckResults);
     const grade = gradeDebuggingDrill(drill, result.outputs);
     if (!grade.passed) {
       setLabState({
@@ -144,6 +157,7 @@ export function DebuggingLab({
       return;
     }
     setDrillIndex(nextIndex);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message:
@@ -156,6 +170,7 @@ export function DebuggingLab({
     setReviewingCompletedLab(true);
     setDrillIndex(0);
     setSource(firstDrill.starterCode);
+    setCheckResults([]);
     setLabState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -300,6 +315,7 @@ export function DebuggingLab({
             )}
           </div>
         ) : null}
+        <GuidedCheckResults results={checkResults} />
       </div>
     </section>
   );

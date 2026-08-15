@@ -9,6 +9,11 @@ import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "@/lib/javascript-recursion";
 import {
@@ -64,6 +69,7 @@ export function JavaScriptRecursionLab({
     kind: "idle",
     message: readyMessage,
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
@@ -77,6 +83,7 @@ export function JavaScriptRecursionLab({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
@@ -87,10 +94,12 @@ export function JavaScriptRecursionLab({
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
@@ -131,6 +140,7 @@ export function JavaScriptRecursionLab({
   function restoreStarter() {
     if (!exercise) return;
     restorePrivateStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -153,6 +163,7 @@ export function JavaScriptRecursionLab({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -304,6 +315,7 @@ export function JavaScriptRecursionLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -376,6 +388,7 @@ export function JavaScriptRecursionLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="function-lab-privacy">

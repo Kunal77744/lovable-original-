@@ -9,6 +9,11 @@ import {
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
 } from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
 import {
@@ -68,6 +73,7 @@ export function JavaScriptFunctionsScopeLab({
     () => new Set(completedExerciseIds),
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -77,6 +83,7 @@ export function JavaScriptFunctionsScopeLab({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
@@ -87,10 +94,12 @@ export function JavaScriptFunctionsScopeLab({
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
@@ -131,6 +140,7 @@ export function JavaScriptFunctionsScopeLab({
   function restoreStarter() {
     if (!exercise) return;
     restorePrivateStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -153,6 +163,7 @@ export function JavaScriptFunctionsScopeLab({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -305,6 +316,7 @@ export function JavaScriptFunctionsScopeLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -381,6 +393,7 @@ export function JavaScriptFunctionsScopeLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="function-lab-privacy">

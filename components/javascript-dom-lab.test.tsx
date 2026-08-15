@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptDomLab } from "./javascript-dom-lab";
 
@@ -85,18 +85,23 @@ describe("JavaScriptDomLab", () => {
   it("shows one code-free recovery cue only after a failed run", async () => {
     runDomLabCode.mockResolvedValue({
       status: "finished",
-      checks: [false, false, false],
+      checks: [true, false, true],
     });
     render(<JavaScriptDomLab />);
 
     fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
 
-    expect(await screen.findByText("0 of 3 checks passed.")).toBeInTheDocument();
+    expect(await screen.findByText("2 of 3 checks passed.")).toBeInTheDocument();
     expect(
       screen.getByText(
         'Ask document for the selector "#lesson-title", then return the element it gives you.',
       ),
     ).toBeInTheDocument();
+    const details = screen.getByRole("region", { name: "Check details" });
+    expect(within(details).getByText("Scenario 01")).toBeInTheDocument();
+    expect(within(details).getByText("Scenario 02")).toBeInTheDocument();
+    expect(within(details).getAllByText("Matched")).toHaveLength(2);
+    expect(within(details).getByText("Revisit")).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 

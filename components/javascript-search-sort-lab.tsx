@@ -5,6 +5,11 @@ import { useState } from "react";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
+import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
   usePrivateJavaScriptLabDraft,
@@ -64,6 +69,7 @@ export function JavaScriptSearchSortLab({
     kind: "idle",
     message: readyMessage,
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
@@ -77,6 +83,7 @@ export function JavaScriptSearchSortLab({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
@@ -87,10 +94,12 @@ export function JavaScriptSearchSortLab({
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
@@ -131,6 +140,7 @@ export function JavaScriptSearchSortLab({
   function restoreStarter() {
     if (!exercise) return;
     restorePrivateStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message:
@@ -153,6 +163,7 @@ export function JavaScriptSearchSortLab({
     }
 
     setExerciseIndex(nextIndex);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -309,6 +320,7 @@ export function JavaScriptSearchSortLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -381,6 +393,7 @@ export function JavaScriptSearchSortLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="function-lab-privacy">
