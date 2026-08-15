@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -209,7 +210,7 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
             <span>Browser-only</span>
           </div>
           <label htmlFor="function-lab-code">JavaScript functions and scope code</label>
-          <textarea
+          <GuidedCodeEditor
             id="function-lab-code"
             value={code}
             onChange={(event) => {

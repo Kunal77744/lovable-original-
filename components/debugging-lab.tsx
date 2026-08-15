@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   gradeDebuggingDrill,
@@ -120,7 +121,7 @@ export function DebuggingLab({ completedExerciseIds = [] }: { completedExerciseI
           <span>Browser only</span>
         </div>
         <label htmlFor="debugging-source">JavaScript source for {drill.title}</label>
-        <textarea
+        <GuidedCodeEditor
           id="debugging-source"
           value={source}
           onChange={(event) => updateSource(event.target.value)}

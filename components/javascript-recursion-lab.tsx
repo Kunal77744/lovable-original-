@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_RECURSION_EXERCISES } from "@/lib/javascript-recursion";
 import {
@@ -230,7 +231,7 @@ export function JavaScriptRecursionLab({
             <span>Browser-only</span>
           </div>
           <label htmlFor="recursion-lab-code">JavaScript recursion code</label>
-          <textarea
+          <GuidedCodeEditor
             id="recursion-lab-code"
             value={code}
             onChange={(event) => {

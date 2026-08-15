@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   getFirstIncompleteExerciseIndex,
@@ -232,7 +233,7 @@ export function JavaScriptTreesGraphsLab({
           <label htmlFor="trees-graphs-lab-code">
             JavaScript trees and graphs code
           </label>
-          <textarea
+          <GuidedCodeEditor
             id="trees-graphs-lab-code"
             value={code}
             onChange={(event) => {

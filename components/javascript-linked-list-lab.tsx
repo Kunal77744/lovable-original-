@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "@/lib/javascript-linked-lists";
 import {
@@ -230,7 +231,7 @@ export function JavaScriptLinkedListLab({
             <span>Browser-only</span>
           </div>
           <label htmlFor="linked-list-lab-code">JavaScript linked-list code</label>
-          <textarea
+          <GuidedCodeEditor
             id="linked-list-lab-code"
             value={code}
             onChange={(event) => {
