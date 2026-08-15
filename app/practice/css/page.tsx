@@ -5,12 +5,17 @@ import {
   getCssPracticeCatalogProgress,
   getCssReviewSessionForStudent,
 } from "@/db/css-practice";
+import { getCssSpacedReviewResultForStudent } from "@/db/css-spaced-review";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { auth } from "@/lib/auth";
 import {
   CSS_PRACTICE_CHALLENGE_COUNT,
   CSS_PRACTICE_CHALLENGES,
 } from "@/lib/css-practice-challenges";
+import {
+  formatCssSpacedReviewDueDate,
+  isCssSpacedReviewDue,
+} from "@/lib/css-spaced-review";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +29,7 @@ export const metadata: Metadata = {
 
 export default async function CssPracticePage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const [progress, reviewSession, capstone] = await Promise.all([
+  const [progress, reviewSession, capstone, spacedReviewResult] = await Promise.all([
     getCssPracticeCatalogProgress(session?.user.id ?? null),
     session
       ? getCssReviewSessionForStudent(session.user.id)
@@ -32,6 +37,9 @@ export default async function CssPracticePage() {
     session
       ? getHtmlCssCapstoneSummary(session.user.id)
       : Promise.resolve({ state: "not-started" as const, passedChecks: 0 }),
+    session
+      ? getCssSpacedReviewResultForStudent(session.user.id)
+      : Promise.resolve(null),
   ]);
   const completed = new Set(progress.completedSlugs);
   const cssComplete = progress.completedCount === progress.totalCount;
@@ -147,24 +155,44 @@ export default async function CssPracticePage() {
             aria-labelledby="css-review-entry-title"
           >
             <div>
-              <p className="eyebrow">Private CSS review</p>
+              <p className="eyebrow">
+                {cssComplete ? "Private CSS spaced review" : "Private CSS review"}
+              </p>
               <h3 id="css-review-entry-title">
-                Repair up to three saved weak spots.
+                {cssComplete
+                  ? spacedReviewResult && !isCssSpacedReviewDue(spacedReviewResult)
+                    ? "Your next CSS recall is scheduled."
+                    : "Bring the six CSS decisions back."
+                  : "Repair up to three saved weak spots."}
               </h3>
               <p>
-                Your latest saved result decides what stays. Completing a
-                challenge clears it from the session automatically.
+                {cssComplete
+                  ? "Recall four authored concepts without changing your completed challenges or capstone continuation."
+                  : "Your latest saved result decides what stays. Completing a challenge clears it from the session automatically."}
               </p>
             </div>
             <div className="practice-review-entry-action">
               <span>
-                {reviewSession.length}{" "}
-                {reviewSession.length === 1 ? "challenge" : "challenges"}
+                {cssComplete
+                  ? spacedReviewResult && !isCssSpacedReviewDue(spacedReviewResult)
+                    ? `Next review ${formatCssSpacedReviewDueDate(spacedReviewResult.nextDueAt)}`
+                    : "4 concepts"
+                  : `${reviewSession.length} ${reviewSession.length === 1 ? "challenge" : "challenges"}`}
               </span>
-              <Link href="/practice/css/review">
-                {reviewSession.length > 0
-                  ? "Open CSS review"
-                  : "Check review status"}{" "}
+              <Link
+                href={
+                  cssComplete
+                    ? "/practice/css/spaced-review"
+                    : "/practice/css/review"
+                }
+              >
+                {cssComplete
+                  ? spacedReviewResult && !isCssSpacedReviewDue(spacedReviewResult)
+                    ? "View review schedule"
+                    : "Start spaced review"
+                  : reviewSession.length > 0
+                    ? "Open CSS review"
+                    : "Check review status"}{" "}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
