@@ -78,4 +78,21 @@ describe("JavaScriptJudgeBasics", () => {
     );
     expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
   });
+
+  it("lets a completed learner retry the reasoning without another record", async () => {
+    render(<JavaScriptJudgeBasics initialCompleted />);
+
+    fireEvent.click(screen.getByLabelText('It returns "12"'));
+    fireEvent.click(screen.getByRole("button", { name: "Check my reasoning" }));
+    expect(screen.getByText("Look at the values before the plus sign.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('It returns "57"'));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Check my reasoning" }));
+    });
+
+    expect(screen.getByText("Strings join. Numbers add.")).toBeInTheDocument();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+    expect(screen.getByText(/reviewing it creates no new record/i)).toBeInTheDocument();
+  });
 });

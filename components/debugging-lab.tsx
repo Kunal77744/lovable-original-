@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
   PRIVATE_LAB_DRAFT_MAX_LENGTH,
   PrivateJavaScriptLabDraftStatus,
@@ -54,12 +55,13 @@ export function DebuggingLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [labState, setLabState] = useState<LabState>({
     kind: "idle",
     message: "Read the brief, inspect the code, then run all three checks.",
   });
   const completedCount = completedIds.size;
-  const isLastDrill = completedCount === JAVASCRIPT_DEBUGGING_DRILLS.length;
+  const isLastDrill = drillIndex === JAVASCRIPT_DEBUGGING_DRILLS.length - 1;
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
@@ -95,6 +97,14 @@ export function DebuggingLab({
       return;
     }
 
+    if (completedIds.has(drill.slug)) {
+      setLabState({
+        kind: "passed",
+        message: `All ${grade.totalChecks} checks passed. Saved completion stayed unchanged.`,
+      });
+      return;
+    }
+
     const saveResponse = await saveJavaScriptLabExercise(
       "debugging",
       drill.slug,
@@ -120,12 +130,29 @@ export function DebuggingLab({
       exerciseIds,
       [...completedIds],
       drillIndex,
+      reviewingCompletedLab,
     );
+    const nextDrill = JAVASCRIPT_DEBUGGING_DRILLS[nextIndex];
+    if (!nextDrill) {
+      setDrillIndex(JAVASCRIPT_DEBUGGING_DRILLS.length);
+      return;
+    }
     setDrillIndex(nextIndex);
     setLabState({
       kind: "idle",
       message:
         "Read the new brief, inspect the code, then run all three checks.",
+    });
+  }
+
+  function reviewExercises() {
+    const firstDrill = JAVASCRIPT_DEBUGGING_DRILLS[0];
+    setReviewingCompletedLab(true);
+    setDrillIndex(0);
+    setSource(firstDrill.starterCode);
+    setLabState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
     });
   }
 
@@ -136,12 +163,20 @@ export function DebuggingLab({
         aria-labelledby="debugging-complete-title"
       >
         <div>
-          <span>Debugging lab complete</span>
+          <span>
+            {reviewingCompletedLab
+              ? "Debugging review complete"
+              : "Debugging lab complete"}
+          </span>
           <strong id="debugging-complete-title">
             All three saved repairs are complete.
           </strong>
         </div>
         <Link href="/practice/sum-two-numbers">Start judged practice</Link>
+        <CompletedLabReviewButton
+          label={reviewingCompletedLab ? "Review exercises again" : undefined}
+          onReview={reviewExercises}
+        />
       </section>
     );
   }
@@ -237,7 +272,11 @@ export function DebuggingLab({
               <span>What this repair proves</span>
               <p>{drill.takeaway}</p>
             </div>
-            {isLastDrill ? (
+            {isLastDrill && reviewingCompletedLab ? (
+              <button type="button" onClick={openNextDrill}>
+                Finish review
+              </button>
+            ) : isLastDrill ? (
               <Link href="/practice">Return to JavaScript practice</Link>
             ) : (
               <button type="button" onClick={openNextDrill}>

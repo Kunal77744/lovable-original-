@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import type {
   QuizAttemptReviewItem,
   QuizQuestion,
@@ -13,6 +13,7 @@ import {
 import { announceLessonProgress } from "@/lib/lesson-progress-events";
 import { CourseFeedback } from "@/components/course-feedback";
 import { RevisionPack } from "@/components/revision-pack";
+import { useBrowserLessonQuizProgress } from "@/components/use-browser-lesson-quiz-progress";
 
 type QuizResult = {
   score: number;
@@ -40,6 +41,7 @@ type LessonQuizProps = {
     updatedAt: string;
   } | null;
   isSignedIn?: boolean;
+  studentScope?: string | null;
   completedLessonsAfterPass?: number;
   nextLesson?: { title: string; href: string } | null;
   showRevisionPack?: boolean;
@@ -120,11 +122,11 @@ export function LessonQuiz({
   initialScore,
   initialFeedback,
   isSignedIn = true,
+  studentScope = null,
   completedLessonsAfterPass = courseLessonCount,
   nextLesson = null,
   showRevisionPack = lessonSlug === "semantic-html",
 }: LessonQuizProps) {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(
     initialCompleted && initialScore !== null
       ? {
@@ -139,6 +141,37 @@ export function LessonQuiz({
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRetakingCompletedQuiz, setIsRetakingCompletedQuiz] = useState(false);
+  const [isRetakeResult, setIsRetakeResult] = useState(false);
+  const quizTitleRef = useRef<HTMLHeadingElement>(null);
+  const retakeButtonRef = useRef<HTMLButtonElement>(null);
+  const { answers, recovered, setAnswers } = useBrowserLessonQuizProgress({
+    courseSlug,
+    lessonSlug,
+    questions,
+    studentScope: isSignedIn ? studentScope : null,
+    hasGradedResult: result !== null && !isRetakingCompletedQuiz,
+  });
+
+  useEffect(() => {
+    if (isRetakingCompletedQuiz) {
+      quizTitleRef.current?.focus();
+    }
+  }, [isRetakingCompletedQuiz]);
+
+  function startCompletedQuizRetake() {
+    setAnswers({});
+    setError(null);
+    setIsRetakeResult(false);
+    setIsRetakingCompletedQuiz(true);
+  }
+
+  function cancelCompletedQuizRetake() {
+    setAnswers({});
+    setError(null);
+    setIsRetakingCompletedQuiz(false);
+    window.requestAnimationFrame(() => retakeButtonRef.current?.focus());
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -156,6 +189,7 @@ export function LessonQuiz({
       return;
     }
 
+    const wasAlreadyCompleted = result?.completed ?? initialCompleted;
     setIsSubmitting(true);
 
     try {
@@ -174,13 +208,15 @@ export function LessonQuiz({
       }
 
       setResult(payload);
+      setIsRetakingCompletedQuiz(false);
+      setIsRetakeResult(wasAlreadyCompleted);
       announceLessonProgress({
         lessonSlug,
         completed: payload.completed,
         savedScore: payload.savedScore,
       });
 
-      if (payload.completed) {
+      if (payload.completed && !wasAlreadyCompleted) {
         captureLearnerEventOnce("quiz_completed", {
           course_slug: courseSlug,
           lesson_slug: lessonSlug,
@@ -198,7 +234,7 @@ export function LessonQuiz({
     }
   }
 
-  if (result?.completed) {
+  if (result?.completed && !isRetakingCompletedQuiz) {
     const lessonCountLabel =
       courseLessonCount === 1 ? "lesson" : "lessons";
 
@@ -216,9 +252,20 @@ export function LessonQuiz({
             : "You built the foundation."}
         </h2>
         <p>
-          Your best score is <strong>{result.savedScore}%</strong>. Your result
-          is saved and the dashboard now shows {completedLessonsAfterPass} of{" "}
-          {courseLessonCount} {lessonCountLabel} complete.
+          {isRetakeResult ? (
+            <>
+              This round was <strong>{result.score}%</strong>. Your best score
+              remains <strong>{result.savedScore}%</strong>, and your completed
+              lesson stays complete.
+            </>
+          ) : (
+            <>
+              Your best score is <strong>{result.savedScore}%</strong>. Your
+              result is saved and the dashboard now shows{" "}
+              {completedLessonsAfterPass} of {courseLessonCount}{" "}
+              {lessonCountLabel} complete.
+            </>
+          )}
         </p>
         <Link
           className="lesson-primary-action"
@@ -234,17 +281,27 @@ export function LessonQuiz({
               : "View saved progress"}
           <span aria-hidden="true">→</span>
         </Link>
-        {nextLesson || showRevisionPack ? (
-          <Link className="completion-dashboard-link" href="/dashboard">
-            View saved progress
+        <div className="completion-secondary-actions">
+          {nextLesson || showRevisionPack ? (
+            <Link className="completion-dashboard-link" href="/dashboard">
+              View saved progress
+            </Link>
+          ) : null}
+          <Link
+            className="completion-dashboard-link"
+            href="/courses/web-development-foundations/quiz-history"
+          >
+            Review quiz attempts
           </Link>
-        ) : null}
-        <Link
-          className="completion-dashboard-link"
-          href="/courses/web-development-foundations/quiz-history"
-        >
-          Review quiz attempts
-        </Link>
+          <button
+            className="completion-quiz-retry"
+            type="button"
+            onClick={startCompletedQuizRetake}
+            ref={retakeButtonRef}
+          >
+            Retake quiz from memory
+          </button>
+        </div>
         <QuizAttemptReview
           review={result.review}
           questions={questions}
@@ -269,19 +326,47 @@ export function LessonQuiz({
   }
 
   return (
-    <section className="lesson-quiz" id="knowledge-check" aria-labelledby="quiz-title">
+    <section
+      className="lesson-quiz"
+      id="knowledge-check"
+      aria-labelledby="quiz-title"
+    >
       <div className="quiz-heading">
         <div>
-          <p className="quiz-kicker">Active recall</p>
-          <h2 id="quiz-title">Check your mental model.</h2>
+          <p className="quiz-kicker">
+            {isRetakingCompletedQuiz ? "Recall round" : "Active recall"}
+          </p>
+          <h2 id="quiz-title" ref={quizTitleRef} tabIndex={-1}>
+            {isRetakingCompletedQuiz
+              ? "Retake the quiz from memory."
+              : "Check your mental model."}
+          </h2>
         </div>
         <span>{passPercent}% to complete</span>
       </div>
       <p className="quiz-intro">
-        {isSignedIn
+        {isRetakingCompletedQuiz
+          ? "Your completed lesson and best score are safe. This round checks what you can recall now."
+          : isSignedIn
           ? "Answer from memory. A wrong attempt is saved as progress, and you can retry immediately."
           : "Answer from memory. You can choose all four answers before deciding whether to check them."}
       </p>
+      {recovered ? (
+        <p className="quiz-recovery-message" role="status">
+          Recovered your unfinished quiz choices in this browser.
+        </p>
+      ) : null}
+
+      {isRetakingCompletedQuiz ? (
+        <div className="quiz-retake-note">
+          <p>
+            Saved best: <strong>{result?.savedScore}%</strong>
+          </p>
+          <button type="button" onClick={cancelCompletedQuizRetake}>
+            Back to saved result
+          </button>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit}>
         {questions.map((question, questionIndex) => (
