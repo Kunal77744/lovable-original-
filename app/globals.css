@@ -22841,6 +22841,78 @@ footer {
   font-weight: 650;
 }
 
+.project-portfolio-export {
+  margin-top: 56px;
+  padding: 32px 34px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 48px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 12px 12px 4px 12px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 18px 46px rgba(23, 35, 30, 0.07);
+}
+
+.project-portfolio-export h2 {
+  max-width: 16ch;
+  margin: 12px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(31px, 3.5vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.project-portfolio-export > div:first-child > p:last-child {
+  max-width: 61ch;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.project-portfolio-export-action {
+  width: min(100%, 290px);
+}
+
+.project-portfolio-export-action button {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 17px;
+  color: white;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease-out, background-color 160ms ease-out;
+}
+
+.project-portfolio-export-action button:hover {
+  background: var(--accent-deep);
+  transform: translateY(-1px);
+}
+
+.project-portfolio-export-action button:active {
+  transform: translateY(1px);
+}
+
+.project-portfolio-export-action button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 4px;
+}
+
+.project-portfolio-export-action p {
+  min-height: 18px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .project-portfolio-privacy {
   max-width: 700px;
   margin: 50px 0 0 auto;
@@ -22906,6 +22978,11 @@ footer {
   .project-portfolio-row-links {
     margin-top: 10px;
   }
+
+  .project-portfolio-export {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -22962,10 +23039,24 @@ footer {
   .project-portfolio-privacy {
     margin-top: 38px;
   }
+
+  .project-portfolio-export {
+    margin-top: 40px;
+    padding: 26px 22px;
+  }
+
+  .project-portfolio-export h2 {
+    font-size: 34px;
+  }
+
+  .project-portfolio-export-action {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-portfolio-primary-action {
+  .project-portfolio-primary-action,
+  .project-portfolio-export-action button {
     transition: none;
   }
 }
