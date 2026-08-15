@@ -3251,6 +3251,114 @@ h1 {
   min-height: 380px;
 }
 
+.responsive-css-layout-workspace .workspace-panels {
+  grid-template-columns: 1fr;
+}
+
+.responsive-css-layout-workspace .workspace-editor {
+  border-right: 0;
+  border-bottom: 1px solid #31423a;
+}
+
+.responsive-preview-stage {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: #e8ece6;
+}
+
+.responsive-preview-toolbar {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #d5ddd5;
+  background: #f7f8f5;
+}
+
+.responsive-preview-toolbar p {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  color: #536159;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.responsive-preview-toolbar strong {
+  color: var(--ink);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.responsive-preview-options {
+  padding: 3px;
+  display: flex;
+  gap: 3px;
+  border: 1px solid #cbd5cc;
+  border-radius: 999px;
+  background: white;
+}
+
+.responsive-preview-options button {
+  min-height: 28px;
+  padding: 0 10px;
+  color: #536159;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.responsive-preview-options button[aria-pressed="true"] {
+  color: white;
+  background: var(--accent);
+}
+
+.responsive-preview-options button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 2px;
+}
+
+.responsive-preview-canvas {
+  min-width: 0;
+  padding: 16px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: auto;
+}
+
+.css-practice-workspace .responsive-preview-canvas iframe {
+  max-width: 100%;
+  border: 1px solid #cbd5cc;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(23, 35, 30, 0.1);
+  transition: width 180ms ease;
+}
+
+@media (max-width: 560px) {
+  .responsive-preview-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .responsive-preview-options {
+    width: 100%;
+  }
+
+  .responsive-preview-options button {
+    flex: 1;
+  }
+}
+
 .lesson-practice {
   color: white;
   border-color: var(--ink);
