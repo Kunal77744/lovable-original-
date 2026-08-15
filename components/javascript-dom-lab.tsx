@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runDomLabCode } from "@/lib/dom-lab-runner";
 import { JAVASCRIPT_DOM_EXERCISES } from "@/lib/javascript-dom-exercises";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
@@ -26,6 +30,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
     kind: "idle",
     message: readyMessage,
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
   const completedCount = completedIds.size;
 
@@ -36,6 +41,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
       kind: "running",
       message: "Running three checks in an isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runDomLabCode(code, exercise.slug);
 
     if (result.status !== "finished") {
@@ -43,6 +49,11 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
       return;
     }
 
+    const nextCheckResults = result.checks.map((passed, index) => ({
+      label: `Scenario ${String(index + 1).padStart(2, "0")}`,
+      passed,
+    }));
+    setCheckResults(nextCheckResults);
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
       const saveResponse = await saveJavaScriptLabExercise("dom", exercise.slug);
@@ -71,6 +82,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
   function restoreStarter() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -91,6 +103,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -185,6 +198,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -245,6 +259,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
           </div>
 
           <p className="dom-lab-privacy">

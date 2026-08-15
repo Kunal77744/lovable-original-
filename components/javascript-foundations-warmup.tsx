@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
   JAVASCRIPT_FOUNDATION_EXERCISES,
@@ -43,6 +48,7 @@ export function JavaScriptFoundationsWarmup({
     kind: "idle",
     message: "Complete the missing logic, then run three private browser checks.",
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
 
   async function runChecks() {
     if (!exercise) return;
@@ -50,6 +56,7 @@ export function JavaScriptFoundationsWarmup({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
@@ -60,10 +67,12 @@ export function JavaScriptFoundationsWarmup({
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
       const response = await saveJavaScriptLabExercise(
@@ -98,6 +107,7 @@ export function JavaScriptFoundationsWarmup({
   function resetExercise() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -122,6 +132,7 @@ export function JavaScriptFoundationsWarmup({
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
       message: "Complete the missing logic, then run three private browser checks.",
@@ -215,6 +226,7 @@ export function JavaScriptFoundationsWarmup({
           value={code}
           onChange={(event) => {
             setCode(event.target.value);
+            setCheckResults([]);
             setCheckState({
               kind: "idle",
               message:
@@ -283,6 +295,7 @@ export function JavaScriptFoundationsWarmup({
               <span>Keep this:</span> {exercise.takeaway}
             </p>
           ) : null}
+          <GuidedCheckResults results={checkResults} />
         </div>
       </div>
     </section>
