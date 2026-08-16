@@ -21089,6 +21089,169 @@ footer {
   font-weight: 800;
 }
 
+.complexity-growth-explorer {
+  margin-top: 20px;
+  padding: 26px;
+  border: 1px solid rgba(23, 35, 30, 0.15);
+  border-radius: 12px;
+  background: #fbfcf9;
+}
+
+.complexity-growth-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(280px, 1fr);
+  align-items: end;
+  gap: 36px;
+}
+
+.complexity-growth-heading .eyebrow {
+  margin: 0 0 7px;
+}
+
+.complexity-growth-heading h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.complexity-growth-heading > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.complexity-size-options {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.complexity-size-options > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.complexity-size-options > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.complexity-size-options button {
+  min-height: 34px;
+  padding: 0 12px;
+  color: var(--ink);
+  border: 1px solid #cdd6cf;
+  border-radius: 8px;
+  background: var(--surface);
+  font: inherit;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.complexity-size-options button:hover {
+  border-color: var(--accent);
+}
+
+.complexity-size-options button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.28);
+  outline-offset: 2px;
+}
+
+.complexity-size-options button[aria-pressed="true"] {
+  color: white;
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.complexity-growth-chart {
+  margin-top: 18px;
+  padding-top: 7px;
+  display: grid;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.complexity-growth-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(150px, 1.2fr) minmax(130px, auto);
+  align-items: center;
+  gap: 18px;
+}
+
+.complexity-growth-label {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+}
+
+.complexity-growth-label strong,
+.complexity-growth-row output {
+  font-family: "SFMono-Regular", Consolas, monospace;
+}
+
+.complexity-growth-label strong {
+  color: var(--accent-deep);
+  font-size: 12px;
+}
+
+.complexity-growth-label span {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.complexity-growth-measure {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e2e9e1;
+}
+
+.complexity-growth-measure span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 220ms ease-out;
+}
+
+.complexity-growth-row output {
+  justify-self: end;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.complexity-growth-row output span {
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.complexity-growth-note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .efficiency-action-row {
   margin-top: 22px;
   display: flex;
@@ -21179,7 +21342,8 @@ footer {
 @media (max-width: 860px) {
   .practice-learning-entries,
   .efficiency-hero,
-  .efficiency-prompt {
+  .efficiency-prompt,
+  .complexity-growth-heading {
     grid-template-columns: 1fr;
   }
 
@@ -21189,6 +21353,10 @@ footer {
 
   .efficiency-prompt {
     gap: 20px;
+  }
+
+  .complexity-growth-heading {
+    gap: 12px;
   }
 
   .efficiency-approach-card {
@@ -21252,9 +21420,32 @@ footer {
   }
 
   .efficiency-action-row,
-  .practice-efficiency-entry {
+  .practice-efficiency-entry,
+  .complexity-size-options {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .complexity-growth-explorer {
+    padding: 22px 18px;
+  }
+
+  .complexity-size-options > div {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .complexity-growth-row {
+    grid-template-columns: 1fr auto;
+    gap: 8px 14px;
+  }
+
+  .complexity-growth-label {
+    grid-column: 1 / -1;
+  }
+
+  .complexity-growth-row output {
+    min-width: 112px;
   }
 
   .efficiency-action-row button,
