@@ -17,6 +17,17 @@ export type JavaScriptStacksQueuesExercise = {
   }[];
   recoveryCue: string;
   takeaway: string;
+  operationWalkthrough: {
+    title: string;
+    structure: "stack" | "queue";
+    itemOrder: string;
+    steps: {
+      operation: string;
+      explanation: string;
+      items: string[];
+      removedItem?: string;
+    }[];
+  };
 };
 
 export const JAVASCRIPT_STACKS_QUEUES_EXERCISES: JavaScriptStacksQueuesExercise[] = [
@@ -60,6 +71,29 @@ function solve(input) {
       "Treat one end of the array as the top of the stack. A removal should use that same end so the newest value leaves first.",
     takeaway:
       "A stack is last in, first out: adding and removing at one end makes the most recently added value the first one available.",
+    operationWalkthrough: {
+      title: "Watch the newest item leave first",
+      structure: "stack",
+      itemOrder: "Stack shown from top to bottom",
+      steps: [
+        {
+          operation: 'push("red")',
+          explanation: '"red" becomes the first item and the top of the stack.',
+          items: ["red"],
+        },
+        {
+          operation: 'push("blue")',
+          explanation: '"blue" is newer, so it takes the top position.',
+          items: ["red", "blue"],
+        },
+        {
+          operation: "pop()",
+          explanation: 'The top item, "blue", leaves. "red" remains.',
+          items: ["red"],
+          removedItem: "blue",
+        },
+      ],
+    },
   },
   {
     slug: "balance-delimiter-pairs",
@@ -100,6 +134,46 @@ function solve(input) {
       "Keep each opener until a closer arrives. The closer must match the newest unmatched opener, and an empty stack is required after the final character.",
     takeaway:
       "A stack fits nested delimiters because the latest opener must close first; one mismatch or leftover opener makes the whole sequence invalid.",
+    operationWalkthrough: {
+      title: "Match each closer to the latest opener",
+      structure: "stack",
+      itemOrder: "Unmatched openers from top to bottom",
+      steps: [
+        {
+          operation: 'Read "("',
+          explanation: "An opener waits on the stack for its matching closer.",
+          items: ["("],
+        },
+        {
+          operation: 'Read "["',
+          explanation: '"[" is now the latest unmatched opener.',
+          items: ["(", "["],
+        },
+        {
+          operation: 'Read "]"',
+          explanation: '"]" matches and removes the latest opener, "[".',
+          items: ["("],
+          removedItem: "[",
+        },
+        {
+          operation: 'Read "{"',
+          explanation: '"{" becomes the latest unmatched opener.',
+          items: ["(", "{"],
+        },
+        {
+          operation: 'Read "}"',
+          explanation: '"}" matches and removes "{" from the top.',
+          items: ["("],
+          removedItem: "{",
+        },
+        {
+          operation: 'Read ")"',
+          explanation: '")" removes "(". The empty stack proves the sequence is balanced.',
+          items: [],
+          removedItem: "(",
+        },
+      ],
+    },
   },
   {
     slug: "serve-the-oldest-item",
@@ -135,6 +209,40 @@ function solve(input) {
       "The front of the queue holds the oldest arrival. Each service step should remove from the front while new arrivals would join at the back.",
     takeaway:
       "A queue is first in, first out: removing from the front preserves arrival order while new values join at the back.",
+    operationWalkthrough: {
+      title: "Watch the oldest arrival leave first",
+      structure: "queue",
+      itemOrder: "Queue shown from front to back",
+      steps: [
+        {
+          operation: 'enqueue("Ada")',
+          explanation: 'Ada arrives first and stands at the front.',
+          items: ["Ada"],
+        },
+        {
+          operation: 'enqueue("Ben")',
+          explanation: 'Ben joins at the back, behind Ada.',
+          items: ["Ada", "Ben"],
+        },
+        {
+          operation: 'enqueue("Cleo")',
+          explanation: 'Cleo joins at the back, preserving arrival order.',
+          items: ["Ada", "Ben", "Cleo"],
+        },
+        {
+          operation: "dequeue()",
+          explanation: 'Ada has waited longest, so Ada leaves from the front.',
+          items: ["Ben", "Cleo"],
+          removedItem: "Ada",
+        },
+        {
+          operation: "dequeue()",
+          explanation: 'Ben is now the oldest arrival and leaves next.',
+          items: ["Cleo"],
+          removedItem: "Ben",
+        },
+      ],
+    },
   },
   {
     slug: "choose-stack-or-queue",
@@ -162,5 +270,28 @@ function solve(input) {
       "Ask which item must come out first. Undo and backtracking revisit the newest step; a checkout line serves the oldest arrival.",
     takeaway:
       "Choose a stack for newest-first work and a queue for oldest-first work; the required removal order matters more than the item type.",
+    operationWalkthrough: {
+      title: "See why undo needs a stack",
+      structure: "stack",
+      itemOrder: "Saved changes from newest to oldest",
+      steps: [
+        {
+          operation: 'push("Rename heading")',
+          explanation: "The first change starts the undo history.",
+          items: ["Rename heading"],
+        },
+        {
+          operation: 'push("Change color")',
+          explanation: "The newest change sits on top of the older one.",
+          items: ["Rename heading", "Change color"],
+        },
+        {
+          operation: "undo → pop()",
+          explanation: 'Undo removes the newest change, "Change color", first.',
+          items: ["Rename heading"],
+          removedItem: "Change color",
+        },
+      ],
+    },
   },
 ];

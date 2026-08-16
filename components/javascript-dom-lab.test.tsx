@@ -125,6 +125,32 @@ describe("JavaScriptDomLab", () => {
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
+  it("reveals an interactive DOM replay only after a correct result saves", async () => {
+    runDomLabCode.mockResolvedValue({
+      status: "finished",
+      checks: [true, true, true],
+    });
+    render(<JavaScriptDomLab />);
+
+    expect(screen.queryByText("DOM replay")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Watch the selector find its match" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 3")).toBeInTheDocument();
+    expect(screen.getByText("No element selected")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next DOM state" }));
+
+    expect(screen.getByText("Step 2 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Checking id: lesson-title")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous state" })).toBeEnabled();
+  });
+
   it("keeps runtime failures in one polite status region", async () => {
     runDomLabCode.mockResolvedValue({
       status: "error",

@@ -21,7 +21,51 @@ describe("JavaScript stacks and queues fundamentals", () => {
       expect(exercise.recoveryCue.length).toBeGreaterThan(50);
       expect(exercise.takeaway.length).toBeGreaterThan(50);
       expect(exercise.recoveryCue).not.toContain("return ");
+      expect(exercise.operationWalkthrough.steps.length).toBeGreaterThanOrEqual(3);
+      expect(exercise.operationWalkthrough.itemOrder.length).toBeGreaterThan(20);
+      for (const step of exercise.operationWalkthrough.steps) {
+        expect(step.operation.length).toBeGreaterThan(3);
+        expect(step.explanation.length).toBeGreaterThan(20);
+      }
     }
+  });
+
+  it("authors truthful walkthroughs for every stack and queue outcome", () => {
+    expect(
+      JAVASCRIPT_STACKS_QUEUES_EXERCISES.map((exercise) => ({
+        slug: exercise.slug,
+        structure: exercise.operationWalkthrough.structure,
+        finalItems:
+          exercise.operationWalkthrough.steps.at(-1)?.items ?? [],
+        removedItem:
+          exercise.operationWalkthrough.steps.at(-1)?.removedItem ?? null,
+      })),
+    ).toEqual([
+      {
+        slug: "remove-the-newest-item",
+        structure: "stack",
+        finalItems: ["red"],
+        removedItem: "blue",
+      },
+      {
+        slug: "balance-delimiter-pairs",
+        structure: "stack",
+        finalItems: [],
+        removedItem: "(",
+      },
+      {
+        slug: "serve-the-oldest-item",
+        structure: "queue",
+        finalItems: ["Cleo"],
+        removedItem: "Ben",
+      },
+      {
+        slug: "choose-stack-or-queue",
+        structure: "stack",
+        finalItems: ["Rename heading"],
+        removedItem: "Change color",
+      },
+    ]);
   });
 
   it("uses unique exercise slugs", () => {

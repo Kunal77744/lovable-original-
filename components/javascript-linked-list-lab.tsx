@@ -25,7 +25,10 @@ import {
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import { runCodingSolution } from "@/lib/coding-runner";
-import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "@/lib/javascript-linked-lists";
+import {
+  JAVASCRIPT_LINKED_LIST_EXERCISES,
+  type JavaScriptLinkedListExercise,
+} from "@/lib/javascript-linked-lists";
 import {
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
@@ -45,6 +48,112 @@ const readyMessage =
 const exerciseIds = JAVASCRIPT_LINKED_LIST_EXERCISES.map(
   (exercise) => exercise.slug,
 );
+
+function PointerWalkthrough({
+  exercise,
+  stepIndex,
+  onStepChange,
+}: {
+  exercise: JavaScriptLinkedListExercise;
+  stepIndex: number;
+  onStepChange: (nextStep: number) => void;
+}) {
+  const walkthrough = exercise.pointerWalkthrough;
+  const step = walkthrough.steps[stepIndex];
+  const displayTarget = (target: string | null) =>
+    target === null
+      ? "null"
+      : (step.nodes.find((node) => node.id === target)?.value ?? target);
+  const nodeState = step.nodes
+    .map((node) => `${node.value}.next is ${displayTarget(node.next)}`)
+    .join(", ");
+  const pointerState = step.pointers
+    .map(
+      (pointer) => `${pointer.name} points to ${displayTarget(pointer.target)}`,
+    )
+    .join(", ");
+
+  return (
+    <section
+      className="linked-list-walkthrough"
+      aria-labelledby={`${exercise.slug}-walkthrough-title`}
+    >
+      <header>
+        <div>
+          <span>Saved pointer walkthrough</span>
+          <h3 id={`${exercise.slug}-walkthrough-title`}>{walkthrough.title}</h3>
+        </div>
+        <strong>
+          Step {stepIndex + 1} of {walkthrough.steps.length}
+        </strong>
+      </header>
+
+      <div className="linked-list-walkthrough-grid">
+        <div
+          className="linked-list-pointer-canvas"
+          role="img"
+          aria-label={`Nodes: ${nodeState}. References: ${pointerState}.`}
+        >
+          <div className="linked-list-node-row" aria-hidden="true">
+            {step.nodes.map((node) => (
+              <div
+                className={`linked-list-node${
+                  node.state ? ` is-${node.state}` : ""
+                }`}
+                key={node.id}
+              >
+                <strong>{node.value}</strong>
+                <span>
+                  next <b>→ {displayTarget(node.next)}</b>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="linked-list-pointer-row" aria-hidden="true">
+            {step.pointers.map((pointer) => (
+              <span key={pointer.name}>
+                {pointer.name} <b>→ {displayTarget(pointer.target)}</b>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="linked-list-pointer-copy" aria-live="polite">
+          <span>Reference move {stepIndex + 1}</span>
+          <h4>{step.action}</h4>
+          <p>{step.explanation}</p>
+          <ul>
+            {step.facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div
+        className="linked-list-walkthrough-controls"
+        role="group"
+        aria-label="Pointer walkthrough controls"
+      >
+        <button
+          disabled={stepIndex === 0}
+          onClick={() => onStepChange(stepIndex - 1)}
+          type="button"
+        >
+          <span aria-hidden="true">←</span> Previous step
+        </button>
+        <button
+          disabled={stepIndex === walkthrough.steps.length - 1}
+          onClick={() => onStepChange(stepIndex + 1)}
+          type="button"
+        >
+          Next step <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export function JavaScriptLinkedListLab({
   completedExerciseIds = [],
@@ -84,6 +193,7 @@ export function JavaScriptLinkedListLab({
     () => new Set(completedExerciseIds),
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
   const handleEditorKeyDown = useGuidedLabExecutionShortcut({
     disabled:
@@ -120,13 +230,13 @@ export function JavaScriptLinkedListLab({
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
+        setWalkthroughStep(0);
         setCheckState({
           kind: "passed",
           message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
         });
         return;
       }
-
       const saveResponse = await saveJavaScriptLabExercise(
         "linked-lists",
         exercise.slug,
@@ -141,6 +251,7 @@ export function JavaScriptLinkedListLab({
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setWalkthroughStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -158,6 +269,7 @@ export function JavaScriptLinkedListLab({
     if (!exercise) return;
     restorePrivateStarter();
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message:
@@ -181,6 +293,7 @@ export function JavaScriptLinkedListLab({
 
     setExerciseIndex(nextIndex);
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -189,6 +302,8 @@ export function JavaScriptLinkedListLab({
     setReviewingCompletedLab(true);
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
+    setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -321,6 +436,7 @@ export function JavaScriptLinkedListLab({
             onImport={(nextCode) => {
               setCode(nextCode);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -330,13 +446,14 @@ export function JavaScriptLinkedListLab({
           <label htmlFor="linked-list-lab-code">
             JavaScript linked-list code
           </label>
-        <GuidedCodeEditor
+          <GuidedCodeEditor
             id="linked-list-lab-code"
             aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -432,6 +549,14 @@ export function JavaScriptLinkedListLab({
             inputDescription={exercise.inputFormat}
             sampleInput={exercise.example.input}
           />
+
+          {checkState.kind === "passed" ? (
+            <PointerWalkthrough
+              exercise={exercise}
+              stepIndex={walkthroughStep}
+              onStepChange={setWalkthroughStep}
+            />
+          ) : null}
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save
