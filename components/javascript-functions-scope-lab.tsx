@@ -84,6 +84,7 @@ export function JavaScriptFunctionsScopeLab({
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
+  const [replayStep, setReplayStep] = useState(0);
   const completedCount = completedIds.size;
   const handleEditorKeyDown = useGuidedLabExecutionShortcut({
     disabled:
@@ -120,13 +121,13 @@ export function JavaScriptFunctionsScopeLab({
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
+        setReplayStep(0);
         setCheckState({
           kind: "passed",
           message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
         });
         return;
       }
-
       const saveResponse = await saveJavaScriptLabExercise(
         "functions",
         exercise.slug,
@@ -141,6 +142,7 @@ export function JavaScriptFunctionsScopeLab({
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setReplayStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -158,6 +160,7 @@ export function JavaScriptFunctionsScopeLab({
     if (!exercise) return;
     restorePrivateStarter();
     setCheckResults([]);
+    setReplayStep(0);
     setCheckState({
       kind: "idle",
       message:
@@ -181,6 +184,7 @@ export function JavaScriptFunctionsScopeLab({
 
     setExerciseIndex(nextIndex);
     setCheckResults([]);
+    setReplayStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -189,6 +193,8 @@ export function JavaScriptFunctionsScopeLab({
     setReviewingCompletedLab(true);
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
+    setCheckResults([]);
+    setReplayStep(0);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -320,6 +326,7 @@ export function JavaScriptFunctionsScopeLab({
             onImport={(nextCode) => {
               setCode(nextCode);
               setCheckResults([]);
+              setReplayStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -329,13 +336,14 @@ export function JavaScriptFunctionsScopeLab({
           <label htmlFor="function-lab-code">
             JavaScript functions and scope code
           </label>
-        <GuidedCodeEditor
+          <GuidedCodeEditor
             id="function-lab-code"
             aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
               setCheckResults([]);
+              setReplayStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -435,6 +443,94 @@ export function JavaScriptFunctionsScopeLab({
             inputDescription={exercise.inputFormat}
             sampleInput={exercise.example.input}
           />
+
+          {isPassed ? (
+            <section
+              className="function-call-replay"
+              aria-labelledby="function-call-replay-title"
+            >
+              <header>
+                <div>
+                  <span>Call-frame replay</span>
+                  <h3 id="function-call-replay-title">
+                    Follow where each value lives
+                  </h3>
+                </div>
+                <span aria-live="polite">
+                  Step {replayStep + 1} of{" "}
+                  {exercise.callFrameReplay.steps.length}
+                </span>
+              </header>
+
+              <div className="function-call-replay-input">
+                <span>Example input</span>
+                <code>{exercise.callFrameReplay.input}</code>
+              </div>
+
+              <ol
+                className="function-call-replay-path"
+                aria-label="Current JavaScript call path"
+              >
+                {exercise.callFrameReplay.steps[replayStep].callPath.map(
+                  (call, index) => (
+                    <li key={`${call}-${index}`}>
+                      <code>{call}</code>
+                    </li>
+                  ),
+                )}
+              </ol>
+
+              <div className="function-call-replay-stage">
+                <div className="function-call-replay-frame">
+                  <span>
+                    {exercise.callFrameReplay.steps[replayStep].frameLabel}
+                  </span>
+                  <dl>
+                    {exercise.callFrameReplay.steps[replayStep].bindings.map(
+                      (binding) => (
+                        <div key={binding.name}>
+                          <dt>{binding.name}</dt>
+                          <dd>
+                            <code>{binding.value}</code>
+                          </dd>
+                        </div>
+                      ),
+                    )}
+                  </dl>
+                </div>
+                <div className="function-call-replay-explanation">
+                  <strong>
+                    {exercise.callFrameReplay.steps[replayStep].title}
+                  </strong>
+                  <p>{exercise.callFrameReplay.steps[replayStep].detail}</p>
+                  {exercise.callFrameReplay.steps[replayStep].returnedValue ? (
+                    <p className="function-call-replay-return">
+                      {exercise.callFrameReplay.steps[replayStep].returnedValue}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="function-call-replay-controls">
+                <button
+                  disabled={replayStep === 0}
+                  onClick={() => setReplayStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous frame
+                </button>
+                <button
+                  disabled={
+                    replayStep === exercise.callFrameReplay.steps.length - 1
+                  }
+                  onClick={() => setReplayStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next frame
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <p className="function-lab-privacy">
             Your draft and completion save privately to your account. Check

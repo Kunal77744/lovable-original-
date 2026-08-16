@@ -11,10 +11,12 @@ vi.mock("@/lib/coding-runner", () => ({
 }));
 
 vi.mock("@/lib/javascript-lab-progress", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
+  const actual =
+    await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
   return {
     ...actual,
-    saveJavaScriptLabExercise: (...args: unknown[]) => saveJavaScriptLabExercise(...args),
+    saveJavaScriptLabExercise: (...args: unknown[]) =>
+      saveJavaScriptLabExercise(...args),
   };
 });
 
@@ -40,7 +42,9 @@ describe("JavaScriptFunctionsScopeLab", () => {
       }).value,
     ).toContain("function describeLearner");
     expect(
-      screen.getByRole("list", { name: "Function concepts" }).querySelector("li"),
+      screen
+        .getByRole("list", { name: "Function concepts" })
+        .querySelector("li"),
     ).toHaveAttribute("aria-current", "step");
   });
 
@@ -160,7 +164,9 @@ describe("JavaScriptFunctionsScopeLab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
 
-    expect(await screen.findByText("0 of 3 checks passed.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("0 of 3 checks passed."),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/A parameter is a local name for an incoming value/),
     ).toBeInTheDocument();
@@ -214,13 +220,48 @@ describe("JavaScriptFunctionsScopeLab", () => {
     });
 
     expect(screen.getByText("Keep this:")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Continue to Return values" }));
+    expect(
+      screen.getByRole("heading", { name: "Follow where each value lives" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 4")).toBeInTheDocument();
+    expect(screen.getByText('"Mina|JavaScript"')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next frame" }));
+
+    expect(screen.getByText("Step 2 of 4")).toBeInTheDocument();
+    expect(
+      screen.getByText("solve prepares two arguments"),
+    ).toBeInTheDocument();
+    expect(screen.getByText('"Mina"')).toBeInTheDocument();
+    expect(screen.getByText('"JavaScript"')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to Return values" }),
+    );
 
     expect(
       screen.getByRole("heading", { name: "Send a result back to the caller" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Function idea 2 of 4")).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Follow where each value lives" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("authors a four-frame replay for every function concept", () => {
+    for (const exercise of JAVASCRIPT_FUNCTION_EXERCISES) {
+      expect(exercise.callFrameReplay.steps).toHaveLength(4);
+      expect(exercise.callFrameReplay.input).not.toHaveLength(0);
+      expect(
+        exercise.callFrameReplay.steps.every(
+          (step) =>
+            step.callPath.length > 0 &&
+            step.bindings.length > 0 &&
+            step.title.length > 0 &&
+            step.detail.length > 0,
+        ),
+      ).toBe(true);
+    }
   });
 
   it("keeps runtime failures in one polite status region", async () => {
@@ -232,8 +273,13 @@ describe("JavaScriptFunctionsScopeLab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
 
-    const message = await screen.findByText("Define a function named solve(input).");
-    expect(message.closest('[role="status"]')).toHaveAttribute("aria-atomic", "true");
+    const message = await screen.findByText(
+      "Define a function named solve(input).",
+    );
+    expect(message.closest('[role="status"]')).toHaveAttribute(
+      "aria-atomic",
+      "true",
+    );
   });
 
   it("reopens a completed lab without writing another completion", async () => {
