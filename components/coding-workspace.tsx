@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { CodingRepairDrill } from "@/components/coding-repair-drill";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import { runCodingSolution } from "@/lib/coding-runner";
@@ -17,6 +18,7 @@ import {
   capturePracticeProblemAccepted,
 } from "@/lib/product-analytics";
 import type { CodingProblemAttempt } from "@/db/coding-practice";
+import type { CodingRepairDrill as CodingRepairDrillModel } from "@/lib/coding-repair-drills";
 import type { SavedPracticeFeedback } from "@/lib/practice-feedback";
 import type { SavedPracticeSolutionNote } from "@/lib/practice-solution-note";
 
@@ -43,6 +45,7 @@ type CodingWorkspaceProps = {
     title: string;
     recoveryHint: string;
     recoveryHints: [string, string];
+    repairDrill: CodingRepairDrillModel;
     acceptedExplanation: {
       concept: string;
       whyItWorks: string;
@@ -215,6 +218,7 @@ export function CodingWorkspace({
   const [revealedRecoveryHintCount, setRevealedRecoveryHintCount] =
     useState(0);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const latestCode = useRef(initialCode);
   const hasPendingDraft = useRef(false);
   const showAcceptedExplanation =
@@ -700,6 +704,7 @@ export function CodingWorkspace({
         ) : null}
         <label htmlFor="coding-solution">JavaScript solution</label>
         <textarea
+          ref={editorRef}
           id="coding-solution"
           aria-label="JavaScript solution"
           value={code}
@@ -1124,10 +1129,17 @@ export function CodingWorkspace({
                   : "Show final hint"}
               </button>
             ) : (
-              <p className="recovery-hint-complete">
-                All hints shown. Return to your code and try one change at a
-                time.
-              </p>
+              <>
+                <p className="recovery-hint-complete">
+                  All hints shown. Test the repair plan before changing your
+                  code.
+                </p>
+                <CodingRepairDrill
+                  drill={problem.repairDrill}
+                  problemSlug={problem.slug}
+                  onReturnToEditor={() => editorRef.current?.focus()}
+                />
+              </>
             )}
           </div>
         ) : null}

@@ -6,6 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getCodingRepairDrill } from "@/lib/coding-repair-drills";
 import type { CodingTestCase } from "@/lib/coding-test-cases";
 import { CodingWorkspace } from "./coding-workspace";
 
@@ -27,6 +28,12 @@ vi.mock("@/lib/product-analytics", () => ({
     capturePracticeFeedbackSubmitted(...args),
 }));
 
+const repairDrill = getCodingRepairDrill("sum-two-numbers");
+
+if (!repairDrill) {
+  throw new Error("Expected a repair drill for sum-two-numbers.");
+}
+
 const problem = {
   slug: "sum-two-numbers",
   title: "Sum two numbers",
@@ -36,6 +43,7 @@ const problem = {
     "Inspect the two input tokens before you add them. If either still behaves like text, arithmetic will not produce the intended total.",
     "Use one negative case and the zero case from your private tests. The same conversion and return path should handle both without a special branch.",
   ] as [string, string],
+  repairDrill,
   acceptedExplanation: {
     concept: "Parse text before arithmetic",
     whyItWorks:
@@ -1056,8 +1064,36 @@ describe("CodingWorkspace", () => {
       screen.queryByRole("button", { name: /show .*hint/i }),
     ).not.toBeInTheDocument();
     expect(status).toHaveTextContent(
-      "All hints shown. Return to your code and try one change at a time.",
+      "All hints shown. Test the repair plan before changing your code.",
     );
+    expect(
+      screen.getByRole("heading", {
+        name: "Choose the behavior before editing the syntax.",
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: "Join the tokens into one piece of text",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(status).toHaveTextContent(
+      "Not yet.Focus on the type of each token, not their order.",
+    );
+
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: "Convert both tokens into numbers",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(status).toHaveTextContent(
+      "Repair plan ready.Converting both tokens makes + perform arithmetic for positive, negative, and zero values.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Return to editor" }));
+    expect(screen.getByLabelText("JavaScript solution")).toHaveFocus();
 
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
@@ -1068,6 +1104,11 @@ describe("CodingWorkspace", () => {
     );
     expect(screen.queryByText(problem.recoveryHints[0])).not.toBeInTheDocument();
     expect(screen.queryByText(problem.recoveryHints[1])).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Choose the behavior before editing the syntax.",
+      }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
