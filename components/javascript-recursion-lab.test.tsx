@@ -1,4 +1,10 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptRecursionLab } from "./javascript-recursion-lab";
 
@@ -10,9 +16,8 @@ vi.mock("@/lib/coding-runner", () => ({
 }));
 
 vi.mock("@/lib/javascript-lab-progress", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("@/lib/javascript-lab-progress")
-  >();
+  const actual =
+    await importOriginal<typeof import("@/lib/javascript-lab-progress")>();
   return {
     ...actual,
     saveJavaScriptLabExercise: (...args: unknown[]) =>
@@ -36,7 +41,9 @@ describe("JavaScriptRecursionLab", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Hand the function a smaller problem" }),
+      screen.getByRole("heading", {
+        name: "Hand the function a smaller problem",
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("Recursion idea 2 of 4")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
@@ -95,19 +102,52 @@ describe("JavaScriptRecursionLab", () => {
     });
     render(<JavaScriptRecursionLab />);
 
+    expect(
+      screen.queryByRole("heading", {
+        name: "Watch countDown(3) build and unwind.",
+      }),
+    ).not.toBeInTheDocument();
+
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
     });
 
     expect(screen.getByText("Keep this:")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Watch countDown(3) build and unwind.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Current recursive call stack" }),
+    ).toHaveTextContent("countDown(3)");
+
+    fireEvent.click(screen.getByRole("button", { name: "Next stack step" }));
+
+    expect(screen.getByText("Step 2 of 7")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Current recursive call stack" }),
+    ).toHaveTextContent("countDown(2)");
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous step" }));
+    expect(screen.getByText("Step 1 of 7")).toBeInTheDocument();
+
     fireEvent.click(
       screen.getByRole("button", { name: "Continue to Smaller input" }),
     );
 
     expect(
-      screen.getByRole("heading", { name: "Hand the function a smaller problem" }),
+      screen.getByRole("heading", {
+        name: "Hand the function a smaller problem",
+      }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Watch countDown(3) build and unwind.",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the completion state when all four saved exercises return", () => {
@@ -122,7 +162,9 @@ describe("JavaScriptRecursionLab", () => {
       />,
     );
 
-    expect(screen.getByText("Recursion fundamentals complete")).toBeInTheDocument();
+    expect(
+      screen.getByText("Recursion fundamentals complete"),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start judged practice" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");
@@ -143,7 +185,10 @@ describe("JavaScriptRecursionLab", () => {
         "The checks passed, but completion could not be saved. Run them again to retry.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 });

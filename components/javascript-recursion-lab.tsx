@@ -43,6 +43,7 @@ export function JavaScriptRecursionLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [stackStepIndex, setStackStepIndex] = useState(0);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -68,16 +69,21 @@ export function JavaScriptRecursionLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("recursion", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "recursion",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setStackStepIndex(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -94,6 +100,7 @@ export function JavaScriptRecursionLab({
   function restoreStarter() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setStackStepIndex(0);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -115,6 +122,7 @@ export function JavaScriptRecursionLab({
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setStackStepIndex(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -152,6 +160,7 @@ export function JavaScriptRecursionLab({
     checkState.kind === "failed" || checkState.kind === "error";
   const progress =
     (completedCount / JAVASCRIPT_RECURSION_EXERCISES.length) * 100;
+  const stackStep = exercise.stackTrace.steps[stackStepIndex];
 
   return (
     <section
@@ -235,6 +244,7 @@ export function JavaScriptRecursionLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setStackStepIndex(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -300,6 +310,88 @@ export function JavaScriptRecursionLab({
               </p>
             ) : null}
           </div>
+
+          {isPassed ? (
+            <section
+              className="recursion-stack-practice"
+              aria-labelledby="recursion-stack-title"
+            >
+              <header>
+                <div>
+                  <p className="eyebrow">Step through the solved example</p>
+                  <h3 id="recursion-stack-title">
+                    {exercise.stackTrace.title}
+                  </h3>
+                </div>
+                <span>
+                  Step {stackStepIndex + 1} of{" "}
+                  {exercise.stackTrace.steps.length}
+                </span>
+              </header>
+
+              <div className="recursion-stack-stage">
+                <ol aria-label="Current recursive call stack">
+                  {stackStep.frames.map((frame, index) => (
+                    <li
+                      className={
+                        index === stackStep.frames.length - 1
+                          ? "is-active"
+                          : undefined
+                      }
+                      key={`${frame}-${index}`}
+                      style={{ marginLeft: `${Math.min(index, 4) * 14}px` }}
+                    >
+                      <span>Frame {index + 1}</span>
+                      <code>{frame}</code>
+                      {index === stackStep.frames.length - 1 ? (
+                        <strong>Current</strong>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="recursion-stack-explanation" aria-live="polite">
+                  <span>{stackStep.phase}</span>
+                  <h4>{stackStep.label}</h4>
+                  <p>{stackStep.explanation}</p>
+                  {stackStep.result ? (
+                    <p className="recursion-stack-result">
+                      <span>Result so far</span>
+                      <code>{stackStep.result}</code>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="recursion-stack-controls">
+                <button
+                  disabled={stackStepIndex === 0}
+                  onClick={() =>
+                    setStackStepIndex((current) => Math.max(0, current - 1))
+                  }
+                  type="button"
+                >
+                  Previous step
+                </button>
+                <button
+                  disabled={
+                    stackStepIndex === exercise.stackTrace.steps.length - 1
+                  }
+                  onClick={() =>
+                    setStackStepIndex((current) =>
+                      Math.min(
+                        exercise.stackTrace.steps.length - 1,
+                        current + 1,
+                      ),
+                    )
+                  }
+                  type="button"
+                >
+                  Next stack step <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save
