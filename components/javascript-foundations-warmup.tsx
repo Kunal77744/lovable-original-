@@ -8,6 +8,7 @@ import {
   useGuidedLabExecutionShortcut,
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -38,7 +39,7 @@ type CheckState =
   | { kind: "running"; message: string }
   | { kind: "passed"; message: string }
   | { kind: "failed"; message: string; passedChecks: number }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; source?: string };
 
 type JavaScriptFoundationsWarmupProps = {
   completedExerciseIds?: string[];
@@ -102,7 +103,7 @@ export function JavaScriptFoundationsWarmup({
     );
 
     if (result.status !== "finished") {
-      setCheckState({ kind: "error", message: result.message });
+      setCheckState({ kind: "error", message: result.message, source: code });
       return;
     }
 
@@ -399,6 +400,14 @@ export function JavaScriptFoundationsWarmup({
             </p>
           ) : null}
           <GuidedCheckResults results={checkResults} />
+          <GuidedRuntimeErrorNavigation
+            currentSource={code}
+            editorId="foundations-code"
+            failedSource={
+              checkState.kind === "error" ? checkState.source : undefined
+            }
+            message={checkState.message}
+          />
         </div>
       </div>
     </section>

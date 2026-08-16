@@ -8,6 +8,7 @@ import {
   useGuidedLabExecutionShortcut,
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -38,7 +39,7 @@ type LabState =
   | { kind: "running"; message: string }
   | { kind: "failed"; message: string; passedChecks: number }
   | { kind: "passed"; message: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; source?: string };
 const exerciseIds = JAVASCRIPT_DEBUGGING_DRILLS.map(
   (exercise) => exercise.slug,
 );
@@ -110,7 +111,7 @@ export function DebuggingLab({
     );
 
     if (result.status !== "finished") {
-      setLabState({ kind: "error", message: result.message });
+      setLabState({ kind: "error", message: result.message, source });
       return;
     }
 
@@ -354,6 +355,14 @@ export function DebuggingLab({
           </div>
         ) : null}
         <GuidedCheckResults results={checkResults} />
+        <GuidedRuntimeErrorNavigation
+          currentSource={source}
+          editorId="debugging-source"
+          failedSource={
+            labState.kind === "error" ? labState.source : undefined
+          }
+          message={labState.message}
+        />
       </div>
     </section>
   );

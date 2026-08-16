@@ -8,6 +8,7 @@ import {
   useGuidedLabExecutionShortcut,
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -35,7 +36,7 @@ type CheckState =
   | { kind: "running"; message: string }
   | { kind: "passed"; message: string }
   | { kind: "failed"; message: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; source?: string };
 
 const readyMessage =
   "Finish the pattern, then run three private browser checks.";
@@ -108,7 +109,7 @@ export function JavaScriptAlgorithmPatternsLab({
     );
 
     if (result.status !== "finished") {
-      setCheckState({ kind: "error", message: result.message });
+      setCheckState({ kind: "error", message: result.message, source: code });
       return;
     }
 
@@ -419,6 +420,14 @@ export function JavaScriptAlgorithmPatternsLab({
               </p>
             ) : null}
             <GuidedCheckResults results={checkResults} />
+            <GuidedRuntimeErrorNavigation
+              currentSource={code}
+              editorId="algorithm-patterns-code"
+              failedSource={
+                checkState.kind === "error" ? checkState.source : undefined
+              }
+              message={checkState.message}
+            />
           </div>
 
           <GuidedJavaScriptCustomRun
