@@ -9,6 +9,7 @@ import {
   saveJavaScriptLabExercise,
 } from "@/lib/javascript-lab-progress";
 import { JAVASCRIPT_TREES_GRAPHS_EXERCISES } from "@/lib/javascript-trees-graphs";
+import type { JavaScriptTreesGraphsExercise } from "@/lib/javascript-trees-graphs";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -23,6 +24,99 @@ const readyMessage =
 const exerciseIds = JAVASCRIPT_TREES_GRAPHS_EXERCISES.map(
   (exercise) => exercise.slug,
 );
+
+export function TreesGraphsWalkthrough({
+  exercise,
+}: {
+  exercise: JavaScriptTreesGraphsExercise;
+}) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const step = exercise.walkthrough.steps[stepIndex];
+  const isFirst = stepIndex === 0;
+  const isLast = stepIndex === exercise.walkthrough.steps.length - 1;
+  const walkthroughTitleId = `${exercise.slug}-walkthrough-title`;
+
+  return (
+    <section
+      className="trees-graphs-walkthrough"
+      aria-labelledby={walkthroughTitleId}
+    >
+      <div className="trees-graphs-walkthrough-heading">
+        <div>
+          <span>Saved-example explorer</span>
+          <h3 id={walkthroughTitleId}>{exercise.walkthrough.title}</h3>
+        </div>
+        <strong>
+          {String(stepIndex + 1).padStart(2, "0")} /{" "}
+          {String(exercise.walkthrough.steps.length).padStart(2, "0")}
+        </strong>
+      </div>
+      <p className="trees-graphs-walkthrough-intro">
+        {exercise.walkthrough.intro}
+      </p>
+
+      <div
+        className="trees-graphs-walkthrough-stage"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div className="trees-graphs-walkthrough-focus">
+          <span>{step.focusLabel}</span>
+          <strong>{step.focusValue}</strong>
+        </div>
+        <div className="trees-graphs-walkthrough-copy">
+          <span>Step {stepIndex + 1}</span>
+          <h4>{step.title}</h4>
+          <p>{step.description}</p>
+        </div>
+      </div>
+
+      <div className="trees-graphs-walkthrough-state">
+        <div>
+          <span>{step.visitedLabel}</span>
+          <ol aria-label={step.visitedLabel}>
+            {step.visited.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+        </div>
+        <div>
+          <span>{step.frontierLabel}</span>
+          {step.frontier.length > 0 ? (
+            <ol aria-label={step.frontierLabel}>
+              {step.frontier.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ol>
+          ) : (
+            <strong className="trees-graphs-walkthrough-empty">None</strong>
+          )}
+        </div>
+      </div>
+
+      <div className="trees-graphs-walkthrough-controls">
+        <button
+          disabled={isFirst}
+          onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
+          type="button"
+        >
+          <span aria-hidden="true">←</span> Previous
+        </button>
+        <button
+          disabled={isLast}
+          onClick={() =>
+            setStepIndex((current) =>
+              Math.min(exercise.walkthrough.steps.length - 1, current + 1),
+            )
+          }
+          type="button"
+        >
+          Next step <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export function JavaScriptTreesGraphsLab({
   completedExerciseIds = [],
@@ -68,11 +162,15 @@ export function JavaScriptTreesGraphsLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("trees-graphs", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "trees-graphs",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -204,7 +302,10 @@ export function JavaScriptTreesGraphsLab({
             </div>
           </div>
 
-          <ol className="function-lab-path" aria-label="Trees and graphs concepts">
+          <ol
+            className="function-lab-path"
+            aria-label="Trees and graphs concepts"
+          >
             {JAVASCRIPT_TREES_GRAPHS_EXERCISES.map((item, index) => (
               <li
                 className={
@@ -302,6 +403,10 @@ export function JavaScriptTreesGraphsLab({
               </p>
             ) : null}
           </div>
+
+          {isPassed ? (
+            <TreesGraphsWalkthrough key={exercise.slug} exercise={exercise} />
+          ) : null}
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save
