@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CodingWorkspace } from "@/components/coding-workspace";
+import { CodingInputInspector } from "@/components/coding-input-inspector";
 import { ProblemBookmarkButton } from "@/components/problem-bookmark-button";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
 import {
@@ -202,6 +203,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
                   </div>
                 ))}
               </div>
+              <CodingInputInspector input={problem.examples[0].input} />
             </section>
           </article>
 
