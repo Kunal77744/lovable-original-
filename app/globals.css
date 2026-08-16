@@ -21412,6 +21412,30 @@ footer {
     width: 100%;
   }
 
+  .recursion-stack-practice > header,
+  .recursion-stack-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recursion-stack-practice > header > span {
+    width: fit-content;
+  }
+
+  .recursion-stack-stage {
+    padding: 22px 20px;
+    grid-template-columns: 1fr;
+  }
+
+  .recursion-stack-controls {
+    padding: 0 20px 22px;
+  }
+
+  .recursion-stack-controls button {
+    width: 100%;
+    justify-content: center;
+  }
+
   .function-lab-complete {
     padding: 40px 25px;
     grid-template-columns: 1fr;
@@ -23814,6 +23838,191 @@ footer {
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   font: 12px/1.5 "SFMono-Regular", Consolas, monospace;
+}
+
+.recursion-stack-practice {
+  margin-top: 22px;
+  overflow: hidden;
+  border: 1px solid #cbd8cd;
+  border-radius: 13px 13px 4px 13px;
+  background: #f5f8f2;
+}
+
+.recursion-stack-practice > header {
+  padding: 22px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #d7e0d7;
+}
+
+.recursion-stack-practice h3 {
+  max-width: 22ch;
+  margin: 8px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.recursion-stack-practice > header > span {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  color: var(--accent-deep);
+  border: 1px solid #bad0bf;
+  border-radius: 99px;
+  background: white;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.recursion-stack-stage {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.86fr) minmax(0, 1.14fr);
+  gap: 24px;
+}
+
+.recursion-stack-stage ol {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 7px;
+  list-style: none;
+}
+
+.recursion-stack-stage li {
+  min-height: 52px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 10px;
+  color: #526159;
+  border: 1px solid #d0d9d1;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 5px 12px rgba(23, 35, 30, 0.045);
+}
+
+.recursion-stack-stage li.is-active {
+  color: white;
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.recursion-stack-stage li > span {
+  grid-column: 1 / -1;
+  color: #89958e;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.recursion-stack-stage li.is-active > span {
+  color: #9fddb9;
+}
+
+.recursion-stack-stage li code {
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+
+.recursion-stack-stage li strong {
+  color: #9fddb9;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recursion-stack-explanation {
+  padding: 20px;
+  align-self: stretch;
+  border: 1px solid #d7e0d7;
+  border-radius: 10px;
+  background: white;
+}
+
+.recursion-stack-explanation > span,
+.recursion-stack-result span {
+  color: var(--accent-deep);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.recursion-stack-explanation h4 {
+  margin: 10px 0 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.recursion-stack-explanation > p:not(.recursion-stack-result) {
+  margin: 13px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.58;
+}
+
+.recursion-stack-result {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid #e0e6df;
+}
+
+.recursion-stack-result code {
+  color: var(--ink);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.recursion-stack-controls {
+  padding: 0 24px 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recursion-stack-controls button {
+  min-height: 40px;
+  padding: 0 14px;
+  color: var(--muted);
+  border: 1px solid #c7d2c9;
+  border-radius: 8px;
+  background: white;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.recursion-stack-controls button:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-deep);
+  border-color: #a9c9b1;
+}
+
+.recursion-stack-controls button:disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+.recursion-stack-controls button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.29);
+  outline-offset: 3px;
 }
 
 .function-lab-privacy {
