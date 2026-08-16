@@ -44,6 +44,7 @@ export function JavaScriptAlgorithmPatternsLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -95,6 +96,7 @@ export function JavaScriptAlgorithmPatternsLab({
   function restoreStarter() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -116,6 +118,7 @@ export function JavaScriptAlgorithmPatternsLab({
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -238,6 +241,7 @@ export function JavaScriptAlgorithmPatternsLab({
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -304,6 +308,81 @@ export function JavaScriptAlgorithmPatternsLab({
               </p>
             ) : null}
           </div>
+
+          {isPassed ? (
+            <section
+              className="algorithm-pattern-walkthrough"
+              aria-labelledby="algorithm-pattern-walkthrough-title"
+            >
+              <header>
+                <div>
+                  <span>Pattern walkthrough</span>
+                  <strong id="algorithm-pattern-walkthrough-title">
+                    Watch {exercise.concept.toLowerCase()} change state
+                  </strong>
+                </div>
+                <span aria-live="polite">
+                  Step {walkthroughStep + 1} of{" "}
+                  {exercise.walkthrough.steps.length}
+                </span>
+              </header>
+
+              <p className="algorithm-pattern-walkthrough-input">
+                <span>Example input</span>
+                <code>{exercise.walkthrough.input}</code>
+              </p>
+
+              <div className="algorithm-pattern-walkthrough-stage">
+                <div>
+                  <span>
+                    {exercise.walkthrough.steps[walkthroughStep].stateLabel}
+                  </span>
+                  <div
+                    className="algorithm-pattern-walkthrough-state"
+                    aria-label={
+                      exercise.walkthrough.steps[walkthroughStep].stateLabel
+                    }
+                  >
+                    {exercise.walkthrough.steps[walkthroughStep].state.map(
+                      (item) => (
+                        <code key={item}>{item}</code>
+                      ),
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <strong>
+                    {exercise.walkthrough.steps[walkthroughStep].title}
+                  </strong>
+                  <p>{exercise.walkthrough.steps[walkthroughStep].detail}</p>
+                  {exercise.walkthrough.steps[walkthroughStep].result ? (
+                    <p className="algorithm-pattern-walkthrough-result">
+                      {exercise.walkthrough.steps[walkthroughStep].result}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="algorithm-pattern-walkthrough-controls">
+                <button
+                  disabled={walkthroughStep === 0}
+                  onClick={() => setWalkthroughStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous step
+                </button>
+                <button
+                  disabled={
+                    walkthroughStep === exercise.walkthrough.steps.length - 1
+                  }
+                  onClick={() => setWalkthroughStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next step
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <p className="function-lab-privacy">
             Your code and check output stay in this browser. Only completed
