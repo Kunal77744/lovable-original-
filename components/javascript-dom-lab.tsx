@@ -27,6 +27,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
     message: readyMessage,
   });
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -71,6 +72,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
   function restoreStarter() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setWalkthroughStepIndex(0);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -91,6 +93,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setWalkthroughStepIndex(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -121,6 +124,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
 
   const isPassed = checkState.kind === "passed";
   const progress = (completedCount / JAVASCRIPT_DOM_EXERCISES.length) * 100;
+  const walkthroughStep = exercise.walkthrough.steps[walkthroughStepIndex];
 
   return (
     <section className="dom-lab-workbench" aria-labelledby="dom-lab-title">
@@ -185,6 +189,7 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setWalkthroughStepIndex(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -241,9 +246,70 @@ export function JavaScriptDomLab({ completedExerciseIds = [] }: { completedExerc
             </div>
             {checkState.kind === "failed" ? <p>{exercise.recoveryCue}</p> : null}
             {checkState.kind === "passed" ? (
-              <p className="dom-lab-takeaway">
-                <span>Keep this:</span> {exercise.takeaway}
-              </p>
+              <>
+                <p className="dom-lab-takeaway">
+                  <span>Keep this:</span> {exercise.takeaway}
+                </p>
+                <section
+                  className="dom-lab-walkthrough"
+                  aria-labelledby={`${exercise.slug}-walkthrough-title`}
+                >
+                  <header>
+                    <div>
+                      <span>DOM replay</span>
+                      <h3 id={`${exercise.slug}-walkthrough-title`}>
+                        {exercise.walkthrough.title}
+                      </h3>
+                    </div>
+                    <strong>
+                      Step {walkthroughStepIndex + 1} of {exercise.walkthrough.steps.length}
+                    </strong>
+                  </header>
+
+                  <div className="dom-lab-walkthrough-stage" aria-live="polite">
+                    <div className="dom-lab-walkthrough-browser">
+                      <div aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <span>lesson.local</span>
+                      </div>
+                      <code>{walkthroughStep.pageMarkup}</code>
+                      <strong>{walkthroughStep.browserState}</strong>
+                    </div>
+                    <div className="dom-lab-walkthrough-copy">
+                      <span>{walkthroughStep.label}</span>
+                      <code>{walkthroughStep.command}</code>
+                      <p>{walkthroughStep.explanation}</p>
+                    </div>
+                  </div>
+
+                  <div className="dom-lab-walkthrough-controls">
+                    <button
+                      disabled={walkthroughStepIndex === 0}
+                      onClick={() => setWalkthroughStepIndex((current) => current - 1)}
+                      type="button"
+                    >
+                      Previous state
+                    </button>
+                    <div aria-hidden="true">
+                      {exercise.walkthrough.steps.map((step, index) => (
+                        <span
+                          className={index === walkthroughStepIndex ? "is-current" : undefined}
+                          key={step.label}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      disabled={walkthroughStepIndex === exercise.walkthrough.steps.length - 1}
+                      onClick={() => setWalkthroughStepIndex((current) => current + 1)}
+                      type="button"
+                    >
+                      Next DOM state
+                    </button>
+                  </div>
+                </section>
+              </>
             ) : null}
           </div>
 
