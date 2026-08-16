@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import {
   buildCssBoxModelPreview,
+  explainCssBoxModel,
   type CssPracticeCheck,
 } from "@/lib/css-box-model-practice";
 
@@ -52,7 +53,20 @@ export function CssBoxModelWorkspace({
       : "Starter CSS is ready. Save when the card feels predictable.",
   );
   const previewDocument = useMemo(() => buildCssBoxModelPreview(css), [css]);
+  const boxModel = useMemo(() => explainCssBoxModel(css), [css]);
   const passedCount = checks.filter((check) => check.passed).length;
+  const hasExactWidth = boxModel.renderedWidthPx !== null;
+  const addedWidth =
+    boxModel.paddingInlinePx !== null && boxModel.borderInlinePx !== null
+      ? boxModel.paddingInlinePx + boxModel.borderInlinePx
+      : null;
+  const widthStatus = !hasExactWidth
+    ? "Use px for an exact width total."
+    : boxModel.boxSizing === "border-box"
+      ? `Padding and border stay inside ${boxModel.renderedWidthPx}px.`
+      : addedWidth !== null && addedWidth > 0
+        ? `The card is ${addedWidth}px wider than its declared width.`
+        : "No horizontal padding or border is added outside this width.";
 
   async function savePractice() {
     if (!isSignedIn) {
@@ -193,6 +207,115 @@ export function CssBoxModelWorkspace({
           />
         </div>
       </div>
+
+      <section
+        className="css-box-model-inspector"
+        aria-labelledby="css-box-model-inspector-title"
+      >
+        <header className="css-box-model-inspector-heading">
+          <div>
+            <p className="quiz-kicker">Live box model</p>
+            <h3 id="css-box-model-inspector-title">
+              See where the card&apos;s width goes.
+            </h3>
+            <p>
+              This browser-only view reads your <code>.learning-card</code> rule as
+              you type. It does not change your code or saved result.
+            </p>
+          </div>
+          <output
+            className={
+              boxModel.boxSizing === "border-box"
+                ? "css-box-model-total is-contained"
+                : "css-box-model-total"
+            }
+            aria-live="polite"
+          >
+            <span>Rendered width</span>
+            <strong>
+              {boxModel.renderedWidthPx === null
+                ? "Not exact"
+                : `${boxModel.renderedWidthPx}px`}
+            </strong>
+            <small>{boxModel.boxSizing}</small>
+          </output>
+        </header>
+
+        <div className="css-box-model-inspector-body">
+          <div
+            className="css-box-model-live-diagram"
+            aria-label={`The card uses ${boxModel.borderInline} horizontal border, ${boxModel.paddingInline} horizontal padding, and ${boxModel.contentWidthPx === null ? "an unknown" : `${boxModel.contentWidthPx}px`} content width.`}
+          >
+            <div className="css-box-model-live-border">
+              <span>
+                Border
+                <strong>
+                  {boxModel.borderInlinePx === null
+                    ? boxModel.borderInline
+                    : `${boxModel.borderInlinePx}px total`}
+                </strong>
+              </span>
+              <div className="css-box-model-live-padding">
+                <span>
+                  Padding
+                  <strong>
+                    {boxModel.paddingInlinePx === null
+                      ? boxModel.paddingInline
+                      : `${boxModel.paddingInlinePx}px total`}
+                  </strong>
+                </span>
+                <div className="css-box-model-live-content">
+                  <span>Content</span>
+                  <strong>
+                    {boxModel.contentWidthPx === null
+                      ? "Not exact"
+                      : `${boxModel.contentWidthPx}px`}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="css-box-model-math">
+            <p className="quiz-kicker">Width check</p>
+            {hasExactWidth &&
+            boxModel.widthPx !== null &&
+            boxModel.paddingInlinePx !== null &&
+            boxModel.borderInlinePx !== null ? (
+              boxModel.boxSizing === "border-box" ? (
+                <p className="css-box-model-equation">
+                  <strong>{boxModel.widthPx}px total</strong>
+                  <span>=</span>
+                  <span>{boxModel.contentWidthPx}px content</span>
+                  <span>+</span>
+                  <span>{boxModel.paddingInlinePx}px padding</span>
+                  <span>+</span>
+                  <span>{boxModel.borderInlinePx}px border</span>
+                </p>
+              ) : (
+                <p className="css-box-model-equation">
+                  <span>{boxModel.widthPx}px content</span>
+                  <span>+</span>
+                  <span>{boxModel.paddingInlinePx}px padding</span>
+                  <span>+</span>
+                  <span>{boxModel.borderInlinePx}px border</span>
+                  <span>=</span>
+                  <strong>{boxModel.renderedWidthPx}px total</strong>
+                </p>
+              )
+            ) : (
+              <p className="css-box-model-equation">
+                <span>{boxModel.width} width</span>
+                <span>+</span>
+                <span>{boxModel.paddingInline} padding</span>
+                <span>+</span>
+                <span>{boxModel.borderInline} border</span>
+              </p>
+            )}
+            <p className="css-box-model-explanation">{widthStatus}</p>
+          </div>
+        </div>
+      </section>
 
       <div className="workspace-review">
         <div className="workspace-rubric">
