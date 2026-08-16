@@ -32,6 +32,50 @@ describe("CssBoxModelWorkspace", () => {
     );
   });
 
+  it("explains the live rendered width as the learner changes box sizing", () => {
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+        isSignedIn={false}
+      />,
+    );
+
+    const editor = screen.getByLabelText("Card CSS");
+    fireEvent.change(editor, {
+      target: {
+        value: `.learning-card {
+          width: 280px;
+          padding: 24px;
+          border: 2px solid #287652;
+        }`,
+      },
+    });
+
+    expect(screen.getByText("332px")).toBeInTheDocument();
+    expect(
+      screen.getByText("The card is 52px wider than its declared width."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(editor, {
+      target: {
+        value: `.learning-card {
+          width: 280px;
+          box-sizing: border-box;
+          padding: 24px;
+          border: 2px solid #287652;
+        }`,
+      },
+    });
+
+    expect(screen.getByText("280px")).toBeInTheDocument();
+    expect(screen.getByText("280px total")).toBeInTheDocument();
+    expect(screen.getByText("Padding and border stay inside 280px.")).toBeInTheDocument();
+    expect(screen.getByText("228px")).toBeInTheDocument();
+  });
+
   it("saves the exact CSS and restores the server checks", async () => {
     const completedCss = `.learning-card {
       width: 280px;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCssBoxModelPreview,
+  explainCssBoxModel,
   gradeCssBoxModel,
   hasValidCssPracticeLength,
   MAX_CSS_PRACTICE_LENGTH,
@@ -56,5 +57,75 @@ describe("CSS practice safety", () => {
     expect(preview).toContain("default-src 'none'");
     expect(preview).not.toContain("example.com");
     expect(preview).not.toMatch(/@import|url\s*\(/i);
+  });
+
+  it("keeps the preview on the browser's content-box default", () => {
+    const preview = buildCssBoxModelPreview(passingCss);
+
+    expect(preview).not.toContain("* { box-sizing: border-box; }");
+    expect(preview).toContain("body { box-sizing: border-box; }");
+  });
+});
+
+describe("explainCssBoxModel", () => {
+  it("shows padding and border expanding a content-box card", () => {
+    const explanation = explainCssBoxModel(`.learning-card {
+      width: 280px;
+      padding: 24px;
+      border: 2px solid #287652;
+    }`);
+
+    expect(explanation).toMatchObject({
+      boxSizing: "content-box",
+      widthPx: 280,
+      paddingInlinePx: 48,
+      borderInlinePx: 4,
+      contentWidthPx: 280,
+      renderedWidthPx: 332,
+    });
+  });
+
+  it("shows border-box keeping padding and border inside the declared width", () => {
+    const explanation = explainCssBoxModel(passingCss);
+
+    expect(explanation).toMatchObject({
+      boxSizing: "border-box",
+      widthPx: 280,
+      paddingInlinePx: 48,
+      borderInlinePx: 4,
+      contentWidthPx: 228,
+      renderedWidthPx: 280,
+    });
+  });
+
+  it("handles horizontal overrides and reports unsupported percentages honestly", () => {
+    expect(
+      explainCssBoxModel(`.learning-card {
+        width: 320px;
+        padding: 8px 12px;
+        padding-left: 20px;
+        border-width: 1px 3px;
+        border-style: solid;
+      }`),
+    ).toMatchObject({
+      widthPx: 320,
+      paddingInlinePx: 32,
+      borderInlinePx: 6,
+      renderedWidthPx: 358,
+    });
+
+    expect(
+      explainCssBoxModel(`.learning-card {
+        width: 80%;
+        padding: 24px;
+      }`).renderedWidthPx,
+    ).toBeNull();
+
+    expect(
+      explainCssBoxModel(`.learning-card {
+        width: 280;
+        padding: 24px;
+      }`).renderedWidthPx,
+    ).toBeNull();
   });
 });

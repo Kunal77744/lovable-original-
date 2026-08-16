@@ -3251,6 +3251,215 @@ h1 {
   min-height: 380px;
 }
 
+.css-box-model-inspector {
+  margin-top: 18px;
+  padding: 26px;
+  border: 1px solid #b9c6bc;
+  border-radius: 14px;
+  background: #f7f8f4;
+}
+
+.css-box-model-inspector-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.css-box-model-inspector-heading > div {
+  max-width: 640px;
+}
+
+.css-box-model-inspector-heading h3 {
+  margin: 5px 0 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: clamp(25px, 3vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.css-box-model-inspector-heading > div > p:last-child {
+  margin: 10px 0 0;
+  color: #5f6e66;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.css-box-model-inspector-heading code {
+  color: var(--accent-deep);
+  font-weight: 750;
+}
+
+.css-box-model-total {
+  min-width: 146px;
+  padding: 13px 15px;
+  display: grid;
+  gap: 2px;
+  color: #715b2c;
+  border: 1px solid #d8c99d;
+  border-radius: 10px;
+  background: #f4ecd4;
+  text-align: right;
+}
+
+.css-box-model-total.is-contained {
+  color: var(--accent-deep);
+  border-color: #a9cbb1;
+  background: #e8f2e6;
+}
+
+.css-box-model-total span,
+.css-box-model-total small {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.css-box-model-total strong {
+  font-size: 24px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.css-box-model-total small {
+  color: inherit;
+}
+
+.css-box-model-inspector-body {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 14px;
+}
+
+.css-box-model-live-diagram {
+  padding: 18px;
+  border: 1px solid #d8d7c9;
+  border-radius: 11px;
+  background: #eee4ca;
+}
+
+.css-box-model-live-border,
+.css-box-model-live-padding,
+.css-box-model-live-content {
+  border-radius: 8px;
+}
+
+.css-box-model-live-border {
+  padding: 15px;
+  color: white;
+  background: #3f7458;
+}
+
+.css-box-model-live-padding {
+  margin-top: 12px;
+  padding: 15px;
+  color: #23412f;
+  background: #d9eadb;
+}
+
+.css-box-model-live-content {
+  min-height: 86px;
+  margin-top: 12px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  color: white;
+  background: var(--ink);
+  text-align: center;
+}
+
+.css-box-model-live-border > span,
+.css-box-model-live-padding > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.css-box-model-live-content span {
+  color: #afc0b6;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.css-box-model-live-content strong {
+  font-size: 25px;
+  font-variant-numeric: tabular-nums;
+}
+
+.css-box-model-math {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 11px;
+  color: white;
+  background: var(--ink);
+}
+
+.css-box-model-math .quiz-kicker {
+  color: #9fd9b8;
+}
+
+.css-box-model-equation {
+  margin: 13px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.css-box-model-equation span,
+.css-box-model-equation strong {
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.css-box-model-equation strong {
+  color: #baf0ce;
+  background: rgba(102, 220, 157, 0.14);
+}
+
+.css-box-model-explanation {
+  margin: 15px 0 0;
+  color: #bdc9c2;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+  .css-box-model-inspector-heading,
+  .css-box-model-live-border > span,
+  .css-box-model-live-padding > span {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .css-box-model-total {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .css-box-model-inspector-body {
+    grid-template-columns: 1fr;
+  }
+}
+
 .lesson-practice {
   color: white;
   border-color: var(--ink);
