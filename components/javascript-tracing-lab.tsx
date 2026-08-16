@@ -64,6 +64,7 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
     );
     setSelectedOutput("");
     setResultState("idle");
+    resetTracePractice();
   }
 
   function reviewExercises() {

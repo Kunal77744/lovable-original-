@@ -181,7 +181,22 @@ describe("JavaScriptTracingLab", () => {
     fireEvent.click(screen.getByRole("radio", { name: "14" }));
     fireEvent.click(screen.getByRole("button", { name: "Check prediction" }));
 
-    expect(await screen.findByText("Correct. Here is the exact trace.")).toBeInTheDocument();
+    expect(await screen.findByText("Trace it yourself")).toBeInTheDocument();
+    for (const [index, value] of ["4", "7", "14"].entries()) {
+      const practiceGroup = screen.getAllByRole("group").at(-1);
+      expect(practiceGroup).toBeDefined();
+      fireEvent.click(within(practiceGroup!).getByRole("radio", { name: value }));
+      fireEvent.click(screen.getByRole("button", { name: "Check step" }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: index === 2 ? "Reveal exact trace" : "Next step",
+        }),
+      );
+    }
+
+    expect(
+      screen.getByText("Trace rebuilt. Here is the exact path."),
+    ).toBeInTheDocument();
     expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Next trace" }));
     expect(screen.getByText("Trace 2 of 4")).toBeInTheDocument();
