@@ -23062,6 +23062,228 @@ footer {
   font-weight: 800;
 }
 
+.dom-lab-walkthrough {
+  margin-top: 5px;
+  padding-top: 20px;
+  display: grid;
+  gap: 18px;
+  border-top: 1px solid #355040;
+}
+
+.dom-lab-walkthrough > header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.dom-lab-walkthrough > header > div {
+  display: grid;
+  gap: 5px;
+}
+
+.dom-lab-walkthrough > header span,
+.dom-lab-walkthrough-copy > span {
+  color: #91dfae;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dom-lab-walkthrough h3 {
+  margin: 0;
+  color: #f1f6f3;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.dom-lab-walkthrough > header > strong {
+  flex: 0 0 auto;
+  color: #9caca3;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.dom-lab-walkthrough-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  overflow: hidden;
+  border: 1px solid #3a5144;
+  border-radius: 10px 10px 3px 10px;
+  background: #101a14;
+}
+
+.dom-lab-walkthrough-browser {
+  min-width: 0;
+  padding: 0 18px 19px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  color: #263d31;
+  border-right: 1px solid #d3ddd5;
+  background: #f6f7f2;
+}
+
+.dom-lab-walkthrough-browser > div {
+  min-height: 34px;
+  margin: 0 -18px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #728078;
+  border-bottom: 1px solid #d7dfd8;
+  background: #edf1eb;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+}
+
+.dom-lab-walkthrough-browser i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #aebbb2;
+}
+
+.dom-lab-walkthrough-browser > div span {
+  margin-left: 5px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.dom-lab-walkthrough-browser code,
+.dom-lab-walkthrough-copy code {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.dom-lab-walkthrough-browser code {
+  min-height: 42px;
+  padding: 12px;
+  color: #284334;
+  border: 1px solid #cad5cc;
+  border-radius: 6px;
+  background: white;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.dom-lab-walkthrough-browser > strong {
+  color: #287652;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.dom-lab-walkthrough-copy {
+  min-width: 0;
+  padding: 21px;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.dom-lab-walkthrough-copy code {
+  color: #e5f2e9;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.dom-lab-walkthrough-copy p {
+  margin: 0;
+  color: #acbbb2;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.dom-lab-walkthrough-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.dom-lab-walkthrough-controls button {
+  min-height: 34px;
+  padding: 0;
+  color: #b9c8c0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.dom-lab-walkthrough-controls button:hover:not(:disabled) {
+  color: #f2f7f4;
+}
+
+.dom-lab-walkthrough-controls button:focus-visible {
+  outline: 3px solid rgba(145, 223, 174, 0.34);
+  outline-offset: 3px;
+}
+
+.dom-lab-walkthrough-controls button:disabled {
+  color: #617067;
+  cursor: default;
+}
+
+.dom-lab-walkthrough-controls > div {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dom-lab-walkthrough-controls > div span {
+  width: 16px;
+  height: 3px;
+  border-radius: 99px;
+  background: #3a4e42;
+}
+
+.dom-lab-walkthrough-controls > div span.is-current {
+  background: #91dfae;
+}
+
+@media (max-width: 640px) {
+  .dom-lab-walkthrough > header {
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dom-lab-walkthrough-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .dom-lab-walkthrough-browser {
+    border-right: 0;
+    border-bottom: 1px solid #d3ddd5;
+  }
+
+  .dom-lab-walkthrough-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dom-lab-walkthrough-controls > div {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .dom-lab-walkthrough-controls button:first-child {
+    justify-self: start;
+  }
+
+  .dom-lab-walkthrough-controls button:last-child {
+    justify-self: end;
+  }
+}
+
 .dom-lab-privacy {
   margin: 0 24px 25px;
   color: #84958b;

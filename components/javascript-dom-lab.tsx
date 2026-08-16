@@ -80,6 +80,7 @@ export function JavaScriptDomLab({
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
+  const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0);
   const completedCount = completedIds.size;
   const handleEditorKeyDown = useGuidedLabExecutionShortcut({
     disabled:
@@ -112,6 +113,7 @@ export function JavaScriptDomLab({
     const passedChecks = result.checks.filter(Boolean).length;
     if (passedChecks === result.checks.length) {
       if (completedIds.has(exercise.slug)) {
+        setWalkthroughStepIndex(0);
         setCheckState({
           kind: "passed",
           message: `Passed ${passedChecks} of ${result.checks.length} checks. Saved completion stayed unchanged.`,
@@ -133,6 +135,7 @@ export function JavaScriptDomLab({
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setWalkthroughStepIndex(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${result.checks.length} checks.`,
@@ -150,6 +153,7 @@ export function JavaScriptDomLab({
     if (!exercise) return;
     restorePrivateStarter();
     setCheckResults([]);
+    setWalkthroughStepIndex(0);
     setCheckState({
       kind: "idle",
       message:
@@ -172,6 +176,7 @@ export function JavaScriptDomLab({
 
     setExerciseIndex(nextIndex);
     setCheckResults([]);
+    setWalkthroughStepIndex(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -181,6 +186,7 @@ export function JavaScriptDomLab({
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
     setCheckResults([]);
+    setWalkthroughStepIndex(0);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -225,6 +231,7 @@ export function JavaScriptDomLab({
 
   const isPassed = checkState.kind === "passed";
   const progress = (completedCount / JAVASCRIPT_DOM_EXERCISES.length) * 100;
+  const walkthroughStep = exercise.walkthrough.steps[walkthroughStepIndex];
 
   return (
     <section className="dom-lab-workbench" aria-labelledby="dom-lab-title">
@@ -290,6 +297,7 @@ export function JavaScriptDomLab({
             onImport={(nextCode) => {
               setCode(nextCode);
               setCheckResults([]);
+              setWalkthroughStepIndex(0);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -297,13 +305,14 @@ export function JavaScriptDomLab({
             }}
           />
           <label htmlFor="dom-lab-code">JavaScript DOM code</label>
-        <GuidedCodeEditor
+          <GuidedCodeEditor
             id="dom-lab-code"
             aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
               setCheckResults([]);
+              setWalkthroughStepIndex(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -382,9 +391,70 @@ export function JavaScriptDomLab({
               <p>{exercise.recoveryCue}</p>
             ) : null}
             {checkState.kind === "passed" ? (
-              <p className="dom-lab-takeaway">
-                <span>Keep this:</span> {exercise.takeaway}
-              </p>
+              <>
+                <p className="dom-lab-takeaway">
+                  <span>Keep this:</span> {exercise.takeaway}
+                </p>
+                <section
+                  className="dom-lab-walkthrough"
+                  aria-labelledby={`${exercise.slug}-walkthrough-title`}
+                >
+                  <header>
+                    <div>
+                      <span>DOM replay</span>
+                      <h3 id={`${exercise.slug}-walkthrough-title`}>
+                        {exercise.walkthrough.title}
+                      </h3>
+                    </div>
+                    <strong>
+                      Step {walkthroughStepIndex + 1} of {exercise.walkthrough.steps.length}
+                    </strong>
+                  </header>
+
+                  <div className="dom-lab-walkthrough-stage" aria-live="polite">
+                    <div className="dom-lab-walkthrough-browser">
+                      <div aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <span>lesson.local</span>
+                      </div>
+                      <code>{walkthroughStep.pageMarkup}</code>
+                      <strong>{walkthroughStep.browserState}</strong>
+                    </div>
+                    <div className="dom-lab-walkthrough-copy">
+                      <span>{walkthroughStep.label}</span>
+                      <code>{walkthroughStep.command}</code>
+                      <p>{walkthroughStep.explanation}</p>
+                    </div>
+                  </div>
+
+                  <div className="dom-lab-walkthrough-controls">
+                    <button
+                      disabled={walkthroughStepIndex === 0}
+                      onClick={() => setWalkthroughStepIndex((current) => current - 1)}
+                      type="button"
+                    >
+                      Previous state
+                    </button>
+                    <div aria-hidden="true">
+                      {exercise.walkthrough.steps.map((step, index) => (
+                        <span
+                          className={index === walkthroughStepIndex ? "is-current" : undefined}
+                          key={step.label}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      disabled={walkthroughStepIndex === exercise.walkthrough.steps.length - 1}
+                      onClick={() => setWalkthroughStepIndex((current) => current + 1)}
+                      type="button"
+                    >
+                      Next DOM state
+                    </button>
+                  </div>
+                </section>
+              </>
             ) : null}
             <GuidedCheckResults results={checkResults} />
             <GuidedRuntimeErrorNavigation
