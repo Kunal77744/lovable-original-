@@ -25,7 +25,10 @@ import {
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import { runCodingSolution } from "@/lib/coding-runner";
-import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "@/lib/javascript-stacks-queues";
+import {
+  JAVASCRIPT_STACKS_QUEUES_EXERCISES,
+  type JavaScriptStacksQueuesExercise,
+} from "@/lib/javascript-stacks-queues";
 import {
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
@@ -45,6 +48,111 @@ const readyMessage =
 const exerciseIds = JAVASCRIPT_STACKS_QUEUES_EXERCISES.map(
   (exercise) => exercise.slug,
 );
+
+function OperationWalkthrough({
+  exercise,
+  stepIndex,
+  onStepChange,
+}: {
+  exercise: JavaScriptStacksQueuesExercise;
+  stepIndex: number;
+  onStepChange: (nextStep: number) => void;
+}) {
+  const walkthrough = exercise.operationWalkthrough;
+  const step = walkthrough.steps[stepIndex];
+  const visibleItems =
+    walkthrough.structure === "stack" ? [...step.items].reverse() : step.items;
+  const structureState =
+    visibleItems.length === 0
+      ? "empty"
+      : visibleItems
+          .map((item, index) => {
+            if (walkthrough.structure === "stack") {
+              return `${item}${index === 0 ? " at top" : ""}`;
+            }
+
+            return `${item}${index === 0 ? " at front" : index === visibleItems.length - 1 ? " at back" : ""}`;
+          })
+          .join(", ");
+
+  return (
+    <section
+      className="stack-queue-walkthrough"
+      aria-labelledby={`${exercise.slug}-walkthrough-title`}
+    >
+      <header>
+        <div>
+          <span>Saved result walkthrough</span>
+          <h3 id={`${exercise.slug}-walkthrough-title`}>{walkthrough.title}</h3>
+        </div>
+        <strong>
+          Step {stepIndex + 1} of {walkthrough.steps.length}
+        </strong>
+      </header>
+
+      <div className="stack-queue-walkthrough-grid">
+        <div
+          className={`stack-queue-structure is-${walkthrough.structure}`}
+          role="img"
+          aria-label={`${walkthrough.itemOrder}: ${structureState}.`}
+        >
+          <span className="stack-queue-order-label">
+            {walkthrough.structure === "stack" ? "Top" : "Front"}
+          </span>
+          <ol>
+            {visibleItems.length > 0 ? (
+              visibleItems.map((item, index) => (
+                <li
+                  className={index === 0 ? "is-next" : undefined}
+                  key={`${item}-${index}`}
+                >
+                  {item}
+                </li>
+              ))
+            ) : (
+              <li className="is-empty">Empty</li>
+            )}
+          </ol>
+          {walkthrough.structure === "queue" ? (
+            <span className="stack-queue-order-label">Back</span>
+          ) : null}
+        </div>
+
+        <div className="stack-queue-operation-copy" aria-live="polite">
+          <span>Operation {stepIndex + 1}</span>
+          <code>{step.operation}</code>
+          <p>{step.explanation}</p>
+          {step.removedItem ? (
+            <p className="stack-queue-removed">
+              Removed <strong>{step.removedItem}</strong>
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div
+        className="stack-queue-walkthrough-controls"
+        role="group"
+        aria-label="Operation walkthrough controls"
+      >
+        <button
+          disabled={stepIndex === 0}
+          onClick={() => onStepChange(stepIndex - 1)}
+          type="button"
+        >
+          <span aria-hidden="true">←</span> Previous step
+        </button>
+        <button
+          disabled={stepIndex === walkthrough.steps.length - 1}
+          onClick={() => onStepChange(stepIndex + 1)}
+          type="button"
+        >
+          Next step <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export function JavaScriptStacksQueuesLab({
   completedExerciseIds = [],
@@ -85,6 +193,7 @@ export function JavaScriptStacksQueuesLab({
     () => new Set(completedExerciseIds),
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
   const handleEditorKeyDown = useGuidedLabExecutionShortcut({
     disabled:
@@ -121,6 +230,7 @@ export function JavaScriptStacksQueuesLab({
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
+        setWalkthroughStep(0);
         setCheckState({
           kind: "passed",
           message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
@@ -142,6 +252,7 @@ export function JavaScriptStacksQueuesLab({
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setWalkthroughStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -159,6 +270,7 @@ export function JavaScriptStacksQueuesLab({
     if (!exercise) return;
     restorePrivateStarter();
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message:
@@ -182,6 +294,7 @@ export function JavaScriptStacksQueuesLab({
 
     setExerciseIndex(nextIndex);
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -190,6 +303,8 @@ export function JavaScriptStacksQueuesLab({
     setReviewingCompletedLab(true);
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
+    setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -325,6 +440,7 @@ export function JavaScriptStacksQueuesLab({
             onImport={(nextCode) => {
               setCode(nextCode);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -334,13 +450,14 @@ export function JavaScriptStacksQueuesLab({
           <label htmlFor="stacks-queues-lab-code">
             JavaScript stacks and queues code
           </label>
-        <GuidedCodeEditor
+          <GuidedCodeEditor
             id="stacks-queues-lab-code"
             aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -436,6 +553,14 @@ export function JavaScriptStacksQueuesLab({
             inputDescription={exercise.inputFormat}
             sampleInput={exercise.example.input}
           />
+
+          {checkState.kind === "passed" ? (
+            <OperationWalkthrough
+              exercise={exercise}
+              stepIndex={walkthroughStep}
+              onStepChange={setWalkthroughStep}
+            />
+          ) : null}
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save
