@@ -21,21 +21,36 @@ export type JavaScriptTreesGraphsExercise = {
   }[];
   recoveryCue: string;
   takeaway: string;
+  walkthrough: {
+    title: string;
+    intro: string;
+    steps: {
+      title: string;
+      description: string;
+      focusLabel: string;
+      focusValue: string;
+      visitedLabel: string;
+      visited: string[];
+      frontierLabel: string;
+      frontier: string[];
+    }[];
+  };
 };
 
-export const JAVASCRIPT_TREES_GRAPHS_EXERCISES: JavaScriptTreesGraphsExercise[] = [
-  {
-    slug: "walk-a-tree-depth-first",
-    number: 1,
-    concept: "Depth-first traversal",
-    title: "Visit a branch before its sibling",
-    prompt:
-      "Complete preorder so it records the current node, then explores the left subtree and the right subtree. Null children should stop that branch.",
-    inputFormat:
-      "Comma-separated values in level order. A dash marks a missing child.",
-    outputFormat: "The preorder traversal, separated by spaces.",
-    example: { input: "A,B,C,D,E", output: "A B D E C" },
-    starterCode: `function preorder(node, visited) {
+export const JAVASCRIPT_TREES_GRAPHS_EXERCISES: JavaScriptTreesGraphsExercise[] =
+  [
+    {
+      slug: "walk-a-tree-depth-first",
+      number: 1,
+      concept: "Depth-first traversal",
+      title: "Visit a branch before its sibling",
+      prompt:
+        "Complete preorder so it records the current node, then explores the left subtree and the right subtree. Null children should stop that branch.",
+      inputFormat:
+        "Comma-separated values in level order. A dash marks a missing child.",
+      outputFormat: "The preorder traversal, separated by spaces.",
+      example: { input: "A,B,C,D,E", output: "A B D E C" },
+      starterCode: `function preorder(node, visited) {
   if (node === null) return;
 
   // Record this node, then visit its left and right subtrees.
@@ -62,28 +77,88 @@ function solve(input) {
   preorder(buildTree(input), visited);
   return visited.join(" ");
 }`,
-    tests: [
-      { input: "A,B,C,D,E", expectedOutput: "A B D E C" },
-      { input: "1,2,3,-,4", expectedOutput: "1 2 4 3" },
-      { input: "root", expectedOutput: "root" },
-    ],
-    recoveryCue:
-      "Give each recursive call one smaller subtree. Add the current value before calling the same function for the left child and then the right child.",
-    takeaway:
-      "Depth-first traversal follows one branch as far as it can before returning to a sibling, which makes recursion a natural fit for trees.",
-  },
-  {
-    slug: "walk-a-tree-by-level",
-    number: 2,
-    concept: "Breadth-first traversal",
-    title: "Visit the tree one level at a time",
-    prompt:
-      "Complete levelOrder with a queue. Remove one node, record it, then add its existing children so earlier levels stay ahead of later levels.",
-    inputFormat:
-      "Comma-separated values in level order. A dash marks a missing child.",
-    outputFormat: "The breadth-first traversal, separated by spaces.",
-    example: { input: "A,B,C,D,E", output: "A B C D E" },
-    starterCode: `function levelOrder(root) {
+      tests: [
+        { input: "A,B,C,D,E", expectedOutput: "A B D E C" },
+        { input: "1,2,3,-,4", expectedOutput: "1 2 4 3" },
+        { input: "root", expectedOutput: "root" },
+      ],
+      recoveryCue:
+        "Give each recursive call one smaller subtree. Add the current value before calling the same function for the left child and then the right child.",
+      takeaway:
+        "Depth-first traversal follows one branch as far as it can before returning to a sibling, which makes recursion a natural fit for trees.",
+      walkthrough: {
+        title: "Follow preorder down one branch",
+        intro:
+          "Step through the saved example and watch recursion finish the left branch before it returns for C.",
+        steps: [
+          {
+            title: "Start at the root",
+            description:
+              "Record A before asking either child to do the same work.",
+            focusLabel: "Current node",
+            focusValue: "A",
+            visitedLabel: "Preorder",
+            visited: ["A"],
+            frontierLabel: "Calls waiting",
+            frontier: ["B", "C"],
+          },
+          {
+            title: "Enter the left subtree",
+            description:
+              "B becomes current. Its own children now come before C.",
+            focusLabel: "Current node",
+            focusValue: "B",
+            visitedLabel: "Preorder",
+            visited: ["A", "B"],
+            frontierLabel: "Calls waiting",
+            frontier: ["D", "E", "C"],
+          },
+          {
+            title: "Reach the left leaf",
+            description: "D has no children, so this branch returns to B.",
+            focusLabel: "Current node",
+            focusValue: "D",
+            visitedLabel: "Preorder",
+            visited: ["A", "B", "D"],
+            frontierLabel: "Calls waiting",
+            frontier: ["E", "C"],
+          },
+          {
+            title: "Finish B's branch",
+            description: "Visit E before returning through B and A.",
+            focusLabel: "Current node",
+            focusValue: "E",
+            visitedLabel: "Preorder",
+            visited: ["A", "B", "D", "E"],
+            frontierLabel: "Calls waiting",
+            frontier: ["C"],
+          },
+          {
+            title: "Return for the right subtree",
+            description:
+              "Only after the left branch is complete does C become current.",
+            focusLabel: "Current node",
+            focusValue: "C",
+            visitedLabel: "Preorder complete",
+            visited: ["A", "B", "D", "E", "C"],
+            frontierLabel: "Calls waiting",
+            frontier: [],
+          },
+        ],
+      },
+    },
+    {
+      slug: "walk-a-tree-by-level",
+      number: 2,
+      concept: "Breadth-first traversal",
+      title: "Visit the tree one level at a time",
+      prompt:
+        "Complete levelOrder with a queue. Remove one node, record it, then add its existing children so earlier levels stay ahead of later levels.",
+      inputFormat:
+        "Comma-separated values in level order. A dash marks a missing child.",
+      outputFormat: "The breadth-first traversal, separated by spaces.",
+      example: { input: "A,B,C,D,E", output: "A B C D E" },
+      starterCode: `function levelOrder(root) {
   if (root === null) return [];
 
   const visited = [];
@@ -114,28 +189,88 @@ function buildTree(input) {
 function solve(input) {
   return levelOrder(buildTree(input)).join(" ");
 }`,
-    tests: [
-      { input: "A,B,C,D,E", expectedOutput: "A B C D E" },
-      { input: "1,2,3,-,4", expectedOutput: "1 2 3 4" },
-      { input: "root", expectedOutput: "root" },
-    ],
-    recoveryCue:
-      "Use an index to read each queued node exactly once. After recording that node, append its non-null left child and non-null right child.",
-    takeaway:
-      "Breadth-first traversal uses a queue so every node already waiting at the current level is visited before nodes from the next level.",
-  },
-  {
-    slug: "find-a-path-through-a-graph",
-    number: 3,
-    concept: "Graph reachability",
-    title: "Find whether one node can reach another",
-    prompt:
-      "Complete canReach so it explores connected neighbors without revisiting a node. Return true as soon as the target is found.",
-    inputFormat:
-      'A start and target followed by directed edges, such as "A D;A:B,C;B:D;C:E".',
-    outputFormat: 'Exactly "reachable" or "not reachable".',
-    example: { input: "A D;A:B,C;B:D;C:E", output: "reachable" },
-    starterCode: `function canReach(graph, start, target) {
+      tests: [
+        { input: "A,B,C,D,E", expectedOutput: "A B C D E" },
+        { input: "1,2,3,-,4", expectedOutput: "1 2 3 4" },
+        { input: "root", expectedOutput: "root" },
+      ],
+      recoveryCue:
+        "Use an index to read each queued node exactly once. After recording that node, append its non-null left child and non-null right child.",
+      takeaway:
+        "Breadth-first traversal uses a queue so every node already waiting at the current level is visited before nodes from the next level.",
+      walkthrough: {
+        title: "Watch the queue preserve each level",
+        intro:
+          "Remove one node at a time, then add its children behind everything already waiting.",
+        steps: [
+          {
+            title: "Remove the root",
+            description:
+              "A leaves the front. B and C join the back in that order.",
+            focusLabel: "Removed",
+            focusValue: "A",
+            visitedLabel: "Visited",
+            visited: ["A"],
+            frontierLabel: "Queue next",
+            frontier: ["B", "C"],
+          },
+          {
+            title: "Read the first node on level two",
+            description: "B leaves the front. D and E wait behind C.",
+            focusLabel: "Removed",
+            focusValue: "B",
+            visitedLabel: "Visited",
+            visited: ["A", "B"],
+            frontierLabel: "Queue next",
+            frontier: ["C", "D", "E"],
+          },
+          {
+            title: "Finish level two",
+            description:
+              "C leaves before either of B's children because it was already waiting.",
+            focusLabel: "Removed",
+            focusValue: "C",
+            visitedLabel: "Visited",
+            visited: ["A", "B", "C"],
+            frontierLabel: "Queue next",
+            frontier: ["D", "E"],
+          },
+          {
+            title: "Move to level three",
+            description:
+              "D is now first because the complete earlier level is gone.",
+            focusLabel: "Removed",
+            focusValue: "D",
+            visitedLabel: "Visited",
+            visited: ["A", "B", "C", "D"],
+            frontierLabel: "Queue next",
+            frontier: ["E"],
+          },
+          {
+            title: "Empty the queue",
+            description: "E completes the traversal, leaving nothing waiting.",
+            focusLabel: "Removed",
+            focusValue: "E",
+            visitedLabel: "Visited complete",
+            visited: ["A", "B", "C", "D", "E"],
+            frontierLabel: "Queue next",
+            frontier: [],
+          },
+        ],
+      },
+    },
+    {
+      slug: "find-a-path-through-a-graph",
+      number: 3,
+      concept: "Graph reachability",
+      title: "Find whether one node can reach another",
+      prompt:
+        "Complete canReach so it explores connected neighbors without revisiting a node. Return true as soon as the target is found.",
+      inputFormat:
+        'A start and target followed by directed edges, such as "A D;A:B,C;B:D;C:E".',
+      outputFormat: 'Exactly "reachable" or "not reachable".',
+      example: { input: "A D;A:B,C;B:D;C:E", output: "reachable" },
+      starterCode: `function canReach(graph, start, target) {
   const pending = [start];
   const visited = new Set();
 
@@ -154,48 +289,138 @@ function solve(input) {
 
   return canReach(graph, start, target) ? "reachable" : "not reachable";
 }`,
-    tests: [
-      { input: "A D;A:B,C;B:D;C:E;D:;E:", expectedOutput: "reachable" },
-      { input: "A Z;A:B;B:C;C:A;Z:", expectedOutput: "not reachable" },
-      { input: "node node;node:", expectedOutput: "reachable" },
-    ],
-    recoveryCue:
-      "Take one pending node at a time. Check it against the target, mark it visited, then add only neighbors that have not already been visited.",
-    takeaway:
-      "Graph search needs a visited set because cycles can lead back to an earlier node; recording visits keeps the search finite and avoids repeated work.",
-  },
-  {
-    slug: "choose-the-traversal",
-    number: 4,
-    concept: "Choose a traversal",
-    title: "Match the traversal to the goal",
-    prompt:
-      "Complete chooseTraversal: shortest paths in an unweighted graph and level-order visits need breadth-first search, while exploring one branch first needs depth-first search.",
-    inputFormat:
-      'Exactly "shortest-unweighted-path", "visit-by-level", or "explore-one-branch".',
-    outputFormat: 'Exactly "breadth-first" or "depth-first".',
-    example: {
-      input: "shortest-unweighted-path",
-      output: "breadth-first",
+      tests: [
+        { input: "A D;A:B,C;B:D;C:E;D:;E:", expectedOutput: "reachable" },
+        { input: "A Z;A:B;B:C;C:A;Z:", expectedOutput: "not reachable" },
+        { input: "node node;node:", expectedOutput: "reachable" },
+      ],
+      recoveryCue:
+        "Take one pending node at a time. Check it against the target, mark it visited, then add only neighbors that have not already been visited.",
+      takeaway:
+        "Graph search needs a visited set because cycles can lead back to an earlier node; recording visits keeps the search finite and avoids repeated work.",
+      walkthrough: {
+        title: "Search the example without revisiting",
+        intro:
+          "Use one valid breadth-first route through the graph and stop as soon as D is found.",
+        steps: [
+          {
+            title: "Begin with A",
+            description:
+              "Mark A visited, then add its unvisited neighbors B and C.",
+            focusLabel: "Checking",
+            focusValue: "A",
+            visitedLabel: "Visited set",
+            visited: ["A"],
+            frontierLabel: "Pending",
+            frontier: ["B", "C"],
+          },
+          {
+            title: "Expand B",
+            description: "B is new, so mark it visited and add its neighbor D.",
+            focusLabel: "Checking",
+            focusValue: "B",
+            visitedLabel: "Visited set",
+            visited: ["A", "B"],
+            frontierLabel: "Pending",
+            frontier: ["C", "D"],
+          },
+          {
+            title: "Expand C once",
+            description:
+              "C adds E. The visited set prevents any later edge from restarting A or B.",
+            focusLabel: "Checking",
+            focusValue: "C",
+            visitedLabel: "Visited set",
+            visited: ["A", "B", "C"],
+            frontierLabel: "Pending",
+            frontier: ["D", "E"],
+          },
+          {
+            title: "Find the target",
+            description:
+              "D matches the target, so the search returns reachable immediately.",
+            focusLabel: "Target found",
+            focusValue: "D",
+            visitedLabel: "Checked before success",
+            visited: ["A", "B", "C", "D"],
+            frontierLabel: "No longer needed",
+            frontier: ["E"],
+          },
+        ],
+      },
     },
-    starterCode: `function chooseTraversal(goal) {
+    {
+      slug: "choose-the-traversal",
+      number: 4,
+      concept: "Choose a traversal",
+      title: "Match the traversal to the goal",
+      prompt:
+        "Complete chooseTraversal: shortest paths in an unweighted graph and level-order visits need breadth-first search, while exploring one branch first needs depth-first search.",
+      inputFormat:
+        'Exactly "shortest-unweighted-path", "visit-by-level", or "explore-one-branch".',
+      outputFormat: 'Exactly "breadth-first" or "depth-first".',
+      example: {
+        input: "shortest-unweighted-path",
+        output: "breadth-first",
+      },
+      starterCode: `function chooseTraversal(goal) {
   // Match the goal to the order in which nodes should be visited.
 }
 
 function solve(input) {
   return chooseTraversal(input.trim());
 }`,
-    tests: [
-      {
-        input: "shortest-unweighted-path",
-        expectedOutput: "breadth-first",
+      tests: [
+        {
+          input: "shortest-unweighted-path",
+          expectedOutput: "breadth-first",
+        },
+        { input: "visit-by-level", expectedOutput: "breadth-first" },
+        { input: "explore-one-branch", expectedOutput: "depth-first" },
+      ],
+      recoveryCue:
+        "Ask which order matters. A queue preserves distance and levels, while a stack or recursion keeps following the current branch before its siblings.",
+      takeaway:
+        "Choose breadth-first search when distance or levels matter and depth-first search when the work naturally follows one branch before backtracking.",
+      walkthrough: {
+        title: "Match order to the goal",
+        intro:
+          "Compare all three authored goals and name the ordering property that decides the traversal.",
+        steps: [
+          {
+            title: "Shortest unweighted path",
+            description:
+              "A queue visits every distance-1 node before any distance-2 node, so the first route found is shortest.",
+            focusLabel: "Choose",
+            focusValue: "Breadth-first",
+            visitedLabel: "Order that matters",
+            visited: ["distance 0", "distance 1", "distance 2"],
+            frontierLabel: "Structure",
+            frontier: ["queue"],
+          },
+          {
+            title: "Visit by level",
+            description:
+              "Keeping siblings ahead of their children preserves one complete tree level at a time.",
+            focusLabel: "Choose",
+            focusValue: "Breadth-first",
+            visitedLabel: "Order that matters",
+            visited: ["root", "level 1", "level 2"],
+            frontierLabel: "Structure",
+            frontier: ["queue"],
+          },
+          {
+            title: "Explore one branch",
+            description:
+              "Recursion or a stack keeps the newest branch ahead of its waiting siblings.",
+            focusLabel: "Choose",
+            focusValue: "Depth-first",
+            visitedLabel: "Order that matters",
+            visited: ["root", "child", "grandchild"],
+            frontierLabel: "Structure",
+            frontier: ["stack", "recursion"],
+          },
+        ],
       },
-      { input: "visit-by-level", expectedOutput: "breadth-first" },
-      { input: "explore-one-branch", expectedOutput: "depth-first" },
-    ],
-    recoveryCue:
-      "Ask which order matters. A queue preserves distance and levels, while a stack or recursion keeps following the current branch before its siblings.",
-    takeaway:
-      "Choose breadth-first search when distance or levels matter and depth-first search when the work naturally follows one branch before backtracking.",
-  },
-];
+    },
+  ];
