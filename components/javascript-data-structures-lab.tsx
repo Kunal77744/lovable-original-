@@ -85,6 +85,7 @@ export function JavaScriptDataStructuresLab({
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
   const handleEditorKeyDown = useGuidedLabExecutionShortcut({
     disabled:
@@ -121,6 +122,7 @@ export function JavaScriptDataStructuresLab({
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
+        setWalkthroughStep(0);
         setCheckState({
           kind: "passed",
           message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
@@ -142,6 +144,7 @@ export function JavaScriptDataStructuresLab({
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setWalkthroughStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -159,6 +162,7 @@ export function JavaScriptDataStructuresLab({
     if (!exercise) return;
     restorePrivateStarter();
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message:
@@ -182,6 +186,7 @@ export function JavaScriptDataStructuresLab({
 
     setExerciseIndex(nextIndex);
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -191,6 +196,7 @@ export function JavaScriptDataStructuresLab({
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -319,6 +325,7 @@ export function JavaScriptDataStructuresLab({
             onImport={(nextCode) => {
               setCode(nextCode);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -326,13 +333,14 @@ export function JavaScriptDataStructuresLab({
             }}
           />
           <label htmlFor="data-lab-code">JavaScript data-structure code</label>
-        <GuidedCodeEditor
+          <GuidedCodeEditor
             id="data-lab-code"
             aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -435,6 +443,93 @@ export function JavaScriptDataStructuresLab({
             inputDescription={exercise.inputFormat}
             sampleInput={exercise.example.input}
           />
+
+          {isPassed ? (
+            <section
+              className="data-structure-walkthrough"
+              aria-labelledby="data-structure-walkthrough-title"
+            >
+              <header>
+                <div>
+                  <span>Structure walkthrough</span>
+                  <h3 id="data-structure-walkthrough-title">
+                    Watch {exercise.structure.toLowerCase()} change state
+                  </h3>
+                </div>
+                <span>
+                  Step {walkthroughStep + 1} of {exercise.walkthrough.steps.length}
+                </span>
+              </header>
+
+              <p className="data-structure-walkthrough-input">
+                <span>Example input</span>
+                <code>{exercise.walkthrough.input}</code>
+              </p>
+
+              <div
+                className="data-structure-walkthrough-stage"
+                aria-atomic="true"
+                aria-live="polite"
+              >
+                <div>
+                  <dl className="data-structure-walkthrough-decision">
+                    <div>
+                      <dt>Current item</dt>
+                      <dd>
+                        <code>
+                          {exercise.walkthrough.steps[walkthroughStep].currentItem}
+                        </code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Decision</dt>
+                      <dd>{exercise.walkthrough.steps[walkthroughStep].decision}</dd>
+                    </div>
+                  </dl>
+                  <span>{exercise.walkthrough.stateLabel}</span>
+                  <div
+                    className="data-structure-walkthrough-state"
+                    aria-label={`${exercise.walkthrough.stateLabel}: ${exercise.walkthrough.steps[walkthroughStep].state.join(", ")}`}
+                    role="group"
+                  >
+                    {exercise.walkthrough.steps[walkthroughStep].state.map(
+                      (item) => <code key={item}>{item}</code>,
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <strong>
+                    {exercise.walkthrough.steps[walkthroughStep].title}
+                  </strong>
+                  <p>{exercise.walkthrough.steps[walkthroughStep].detail}</p>
+                  {exercise.walkthrough.steps[walkthroughStep].result ? (
+                    <p className="data-structure-walkthrough-result">
+                      {exercise.walkthrough.steps[walkthroughStep].result}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="data-structure-walkthrough-controls">
+                <button
+                  disabled={walkthroughStep === 0}
+                  onClick={() => setWalkthroughStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous step
+                </button>
+                <button
+                  disabled={
+                    walkthroughStep === exercise.walkthrough.steps.length - 1
+                  }
+                  onClick={() => setWalkthroughStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next step
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <p className="data-lab-privacy">
             Your draft and completion save privately to your account. Check
