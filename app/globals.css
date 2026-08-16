@@ -24935,6 +24935,194 @@ footer {
   line-height: 1.55;
 }
 
+.algorithm-pattern-walkthrough {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid #c8d8ca;
+  border-radius: 14px 14px 5px 14px;
+  background: #f7faf5;
+}
+
+.algorithm-pattern-walkthrough > header {
+  min-height: 72px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: white;
+  background: var(--ink);
+}
+
+.algorithm-pattern-walkthrough > header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.algorithm-pattern-walkthrough > header span,
+.algorithm-pattern-walkthrough-input span,
+.algorithm-pattern-walkthrough-stage > div:first-child > span {
+  color: #8ed0a8;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.algorithm-pattern-walkthrough > header strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.algorithm-pattern-walkthrough > header > span {
+  color: #c2d1c8;
+  white-space: nowrap;
+}
+
+.algorithm-pattern-walkthrough-input {
+  margin: 0;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid #d8e1d8;
+  background: #eef4eb;
+}
+
+.algorithm-pattern-walkthrough-input span,
+.algorithm-pattern-walkthrough-stage > div:first-child > span {
+  color: var(--accent-deep);
+}
+
+.algorithm-pattern-walkthrough-input code {
+  color: var(--ink);
+  font: 11px/1.5 "SFMono-Regular", Consolas, monospace;
+}
+
+.algorithm-pattern-walkthrough-stage {
+  min-height: 176px;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.algorithm-pattern-walkthrough-stage > div {
+  padding: 22px;
+}
+
+.algorithm-pattern-walkthrough-stage > div:first-child {
+  border-right: 1px solid #d8e1d8;
+  background: white;
+}
+
+.algorithm-pattern-walkthrough-state {
+  margin-top: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.algorithm-pattern-walkthrough-state code {
+  min-height: 34px;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink);
+  border: 1px solid #c5d6c7;
+  border-radius: 7px;
+  background: #eef5eb;
+  font: 10px/1.4 "SFMono-Regular", Consolas, monospace;
+}
+
+.algorithm-pattern-walkthrough-stage > div:last-child > strong {
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.algorithm-pattern-walkthrough-stage > div:last-child > p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.algorithm-pattern-walkthrough-stage .algorithm-pattern-walkthrough-result {
+  color: var(--accent-deep);
+  font-weight: 800;
+}
+
+.algorithm-pattern-walkthrough-controls {
+  padding: 14px 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  border-top: 1px solid #d8e1d8;
+  background: white;
+}
+
+.algorithm-pattern-walkthrough-controls button {
+  min-height: 38px;
+  padding: 0 14px;
+  color: var(--ink);
+  border: 1px solid #bdcbbf;
+  border-radius: 8px;
+  background: white;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.algorithm-pattern-walkthrough-controls button:last-child {
+  color: white;
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.algorithm-pattern-walkthrough-controls button:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.algorithm-pattern-walkthrough-controls button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.29);
+  outline-offset: 2px;
+}
+
+.algorithm-pattern-walkthrough-controls button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .algorithm-pattern-walkthrough > header,
+  .algorithm-pattern-walkthrough-input {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .algorithm-pattern-walkthrough-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .algorithm-pattern-walkthrough-stage > div:first-child {
+    border-right: 0;
+    border-bottom: 1px solid #d8e1d8;
+  }
+
+  .algorithm-pattern-walkthrough-controls {
+    justify-content: stretch;
+  }
+
+  .algorithm-pattern-walkthrough-controls button {
+    flex: 1;
+  }
+}
+
 .function-lab-complete {
   padding: 58px;
   display: grid;

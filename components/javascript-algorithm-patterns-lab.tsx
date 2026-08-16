@@ -86,6 +86,7 @@ export function JavaScriptAlgorithmPatternsLab({
     () => new Set(completedExerciseIds),
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
   const handleEditorKeyDown = useGuidedLabExecutionShortcut({
     disabled:
@@ -122,6 +123,7 @@ export function JavaScriptAlgorithmPatternsLab({
 
     if (passedChecks === exercise.tests.length) {
       if (completedIds.has(exercise.slug)) {
+        setWalkthroughStep(0);
         setCheckState({
           kind: "passed",
           message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
@@ -143,6 +145,7 @@ export function JavaScriptAlgorithmPatternsLab({
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setWalkthroughStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -160,6 +163,7 @@ export function JavaScriptAlgorithmPatternsLab({
     if (!exercise) return;
     restoreDraftStarter();
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message:
@@ -183,6 +187,7 @@ export function JavaScriptAlgorithmPatternsLab({
 
     setExerciseIndex(nextIndex);
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -192,6 +197,7 @@ export function JavaScriptAlgorithmPatternsLab({
     setExerciseIndex(0);
     setCode(firstExercise.starterCode);
     setCheckResults([]);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message: "Review mode. Run the checks without changing saved completion.",
@@ -324,6 +330,7 @@ export function JavaScriptAlgorithmPatternsLab({
             onImport={(nextCode) => {
               setCode(nextCode);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Imported code is local. Run the three checks when it is ready.",
@@ -333,13 +340,14 @@ export function JavaScriptAlgorithmPatternsLab({
           <label htmlFor="algorithm-patterns-code">
             JavaScript algorithm pattern code
           </label>
-        <GuidedCodeEditor
+          <GuidedCodeEditor
             id="algorithm-patterns-code"
             aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
               setCheckResults([]);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -436,6 +444,81 @@ export function JavaScriptAlgorithmPatternsLab({
             inputDescription={exercise.inputFormat}
             sampleInput={exercise.example.input}
           />
+
+          {isPassed ? (
+            <section
+              className="algorithm-pattern-walkthrough"
+              aria-labelledby="algorithm-pattern-walkthrough-title"
+            >
+              <header>
+                <div>
+                  <span>Pattern walkthrough</span>
+                  <strong id="algorithm-pattern-walkthrough-title">
+                    Watch {exercise.concept.toLowerCase()} change state
+                  </strong>
+                </div>
+                <span aria-live="polite">
+                  Step {walkthroughStep + 1} of{" "}
+                  {exercise.walkthrough.steps.length}
+                </span>
+              </header>
+
+              <p className="algorithm-pattern-walkthrough-input">
+                <span>Example input</span>
+                <code>{exercise.walkthrough.input}</code>
+              </p>
+
+              <div className="algorithm-pattern-walkthrough-stage">
+                <div>
+                  <span>
+                    {exercise.walkthrough.steps[walkthroughStep].stateLabel}
+                  </span>
+                  <div
+                    className="algorithm-pattern-walkthrough-state"
+                    aria-label={
+                      exercise.walkthrough.steps[walkthroughStep].stateLabel
+                    }
+                  >
+                    {exercise.walkthrough.steps[walkthroughStep].state.map(
+                      (item) => (
+                        <code key={item}>{item}</code>
+                      ),
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <strong>
+                    {exercise.walkthrough.steps[walkthroughStep].title}
+                  </strong>
+                  <p>{exercise.walkthrough.steps[walkthroughStep].detail}</p>
+                  {exercise.walkthrough.steps[walkthroughStep].result ? (
+                    <p className="algorithm-pattern-walkthrough-result">
+                      {exercise.walkthrough.steps[walkthroughStep].result}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="algorithm-pattern-walkthrough-controls">
+                <button
+                  disabled={walkthroughStep === 0}
+                  onClick={() => setWalkthroughStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous step
+                </button>
+                <button
+                  disabled={
+                    walkthroughStep === exercise.walkthrough.steps.length - 1
+                  }
+                  onClick={() => setWalkthroughStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next step
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <p className="function-lab-privacy">
             Your draft and completion save privately to your account. Check
