@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptDataStructuresLab } from "./javascript-data-structures-lab";
+import { JAVASCRIPT_DATA_STRUCTURE_EXERCISES } from "@/lib/javascript-data-structures";
 
 const runCodingSolution = vi.fn();
 const saveJavaScriptLabExercise = vi.fn();
@@ -81,6 +82,9 @@ describe("JavaScriptDataStructuresLab", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /change state/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows one code-free recovery cue only after a failed run", async () => {
@@ -100,6 +104,92 @@ describe("JavaScriptDataStructuresLab", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
+
+  it.each([
+    {
+      name: "arrays",
+      completedExerciseIds: [],
+      outputs: ["6", "0", "6"],
+      heading: "Watch arrays change state",
+      firstDecision: "Keep and add",
+      finalResult: "Return 6 after visiting every array item once.",
+    },
+    {
+      name: "strings",
+      completedExerciseIds: ["sum-even-values"],
+      outputs: ["3", "0", "5"],
+      heading: "Watch strings change state",
+      firstDecision: "Not a vowel",
+      finalResult: "Return 2 after inspecting all four characters.",
+    },
+    {
+      name: "objects",
+      completedExerciseIds: ["sum-even-values", "count-vowels"],
+      outputs: ["apple:2 banana:1", "red:3 blue:1", "one:1"],
+      heading: "Watch objects change state",
+      firstDecision: "Create key",
+      finalResult:
+        "Object.entries preserves first-seen order: apple:2 banana:1.",
+    },
+    {
+      name: "sets",
+      completedExerciseIds: [
+        "sum-even-values",
+        "count-vowels",
+        "word-frequency",
+      ],
+      outputs: ["3", "1", "3"],
+      heading: "Watch sets change state",
+      firstDecision: "Add",
+      finalResult:
+        "The set size is 3 even though the input contains four tags.",
+    },
+  ])(
+    "reveals the authored $name walkthrough only after a correct result saves",
+    async ({
+      completedExerciseIds,
+      outputs,
+      heading,
+      firstDecision,
+      finalResult,
+    }) => {
+      runCodingSolution.mockResolvedValue({
+        status: "finished",
+        outputs,
+      });
+      render(
+        <JavaScriptDataStructuresLab
+          completedExerciseIds={completedExerciseIds}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("heading", { name: heading }),
+      ).not.toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+      });
+
+      expect(saveJavaScriptLabExercise).toHaveBeenCalledWith(
+        "data-structures",
+        JAVASCRIPT_DATA_STRUCTURE_EXERCISES[completedExerciseIds.length].slug,
+      );
+      expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument();
+      expect(screen.getByText(firstDecision)).toBeInTheDocument();
+
+      const stepCount =
+        JAVASCRIPT_DATA_STRUCTURE_EXERCISES[completedExerciseIds.length]
+          .walkthrough.steps.length;
+      for (let step = 1; step < stepCount; step += 1) {
+        fireEvent.click(screen.getByRole("button", { name: "Next step" }));
+      }
+
+      expect(screen.getByText(finalResult)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Next step" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Previous step" })).toBeEnabled();
+    },
+  );
 
   it("reveals the takeaway only after passing and advances in order", async () => {
     runCodingSolution.mockResolvedValue({

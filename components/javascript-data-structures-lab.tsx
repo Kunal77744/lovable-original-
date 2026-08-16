@@ -29,6 +29,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
     message: readyMessage,
   });
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -80,6 +81,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
   function restoreStarter() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setWalkthroughStep(0);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -101,6 +103,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -217,6 +220,7 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setWalkthroughStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -290,6 +294,93 @@ export function JavaScriptDataStructuresLab({ completedExerciseIds = [] }: { com
               </p>
             ) : null}
           </div>
+
+          {isPassed ? (
+            <section
+              className="data-structure-walkthrough"
+              aria-labelledby="data-structure-walkthrough-title"
+            >
+              <header>
+                <div>
+                  <span>Structure walkthrough</span>
+                  <h3 id="data-structure-walkthrough-title">
+                    Watch {exercise.structure.toLowerCase()} change state
+                  </h3>
+                </div>
+                <span>
+                  Step {walkthroughStep + 1} of {exercise.walkthrough.steps.length}
+                </span>
+              </header>
+
+              <p className="data-structure-walkthrough-input">
+                <span>Example input</span>
+                <code>{exercise.walkthrough.input}</code>
+              </p>
+
+              <div
+                className="data-structure-walkthrough-stage"
+                aria-atomic="true"
+                aria-live="polite"
+              >
+                <div>
+                  <dl className="data-structure-walkthrough-decision">
+                    <div>
+                      <dt>Current item</dt>
+                      <dd>
+                        <code>
+                          {exercise.walkthrough.steps[walkthroughStep].currentItem}
+                        </code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Decision</dt>
+                      <dd>{exercise.walkthrough.steps[walkthroughStep].decision}</dd>
+                    </div>
+                  </dl>
+                  <span>{exercise.walkthrough.stateLabel}</span>
+                  <div
+                    className="data-structure-walkthrough-state"
+                    aria-label={`${exercise.walkthrough.stateLabel}: ${exercise.walkthrough.steps[walkthroughStep].state.join(", ")}`}
+                    role="group"
+                  >
+                    {exercise.walkthrough.steps[walkthroughStep].state.map(
+                      (item) => <code key={item}>{item}</code>,
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <strong>
+                    {exercise.walkthrough.steps[walkthroughStep].title}
+                  </strong>
+                  <p>{exercise.walkthrough.steps[walkthroughStep].detail}</p>
+                  {exercise.walkthrough.steps[walkthroughStep].result ? (
+                    <p className="data-structure-walkthrough-result">
+                      {exercise.walkthrough.steps[walkthroughStep].result}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="data-structure-walkthrough-controls">
+                <button
+                  disabled={walkthroughStep === 0}
+                  onClick={() => setWalkthroughStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous step
+                </button>
+                <button
+                  disabled={
+                    walkthroughStep === exercise.walkthrough.steps.length - 1
+                  }
+                  onClick={() => setWalkthroughStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next step
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           <p className="data-lab-privacy">
             Code, checks, answers, and progress stay in this browser tab. No
