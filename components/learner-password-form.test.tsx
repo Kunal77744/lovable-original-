@@ -16,6 +16,10 @@ function fillPasswordForm({
   current = "current-password",
   next = "a-new-safe-password",
   confirmation = next,
+}: {
+  current?: string;
+  next?: string;
+  confirmation?: string;
 } = {}) {
   fireEvent.change(screen.getByLabelText("Current password"), {
     target: { value: current },

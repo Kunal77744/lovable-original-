@@ -67,6 +67,65 @@ describe("JavaScriptFunctionsScopeLab", () => {
     expect(screen.getByText("Passed 3 of 3 checks.")).toBeInTheDocument();
   });
 
+  it("reviews edits against the active starter without changing the editor", () => {
+    render(<JavaScriptFunctionsScopeLab />);
+
+    const editor = screen.getByRole<HTMLTextAreaElement>("textbox", {
+      name: "JavaScript functions and scope code",
+    });
+    const revisedSource = `${editor.value}\n// explain this change`;
+    fireEvent.change(editor, { target: { value: revisedSource } });
+
+    fireEvent.click(screen.getByText("Review changes from starter"));
+
+    expect(screen.getByText("1 added")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Changes from the authored starter" }),
+    ).toHaveTextContent("// explain this change");
+    expect(editor).toHaveValue(revisedSource);
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+  });
+
+  it("keeps line numbers, starter review, and custom input practice together", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["Nora is learning React."],
+      debugOutput: [],
+    });
+    const { container } = render(<JavaScriptFunctionsScopeLab />);
+
+    const editor = screen.getByRole<HTMLTextAreaElement>("textbox", {
+      name: "JavaScript functions and scope code",
+    });
+    const revisedSource = `${editor.value}\n// keep the explanation close`;
+    fireEvent.change(editor, { target: { value: revisedSource } });
+
+    const gutter = container.querySelector(
+      ".guided-code-editor-line-numbers",
+    );
+    expect(gutter).toHaveAttribute("aria-hidden", "true");
+    expect(gutter?.querySelectorAll("span")).toHaveLength(
+      revisedSource.split("\n").length,
+    );
+
+    fireEvent.click(screen.getByText("Review changes from starter"));
+    expect(screen.getByText("1 added")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Your input" }), {
+      target: { value: "Nora|React" },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run this input" }));
+    });
+
+    expect(runCodingSolution).toHaveBeenCalledWith(revisedSource, ["Nora|React"]);
+    expect(screen.getByText("Nora is learning React.")).toBeInTheDocument();
+    expect(editor).toHaveValue(revisedSource);
+    expect(saveJavaScriptLabExercise).not.toHaveBeenCalled();
+  });
+
   it("keeps the exercise retryable when completion cannot be saved", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",

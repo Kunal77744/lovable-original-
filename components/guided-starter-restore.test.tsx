@@ -99,7 +99,9 @@ describe("GuidedStarterRestore", () => {
     "restores the authored starter only after confirmation in the %s lab",
     (_name, Lab, starterCode) => {
       render(<Lab />);
-      const editor = screen.getByRole<HTMLTextAreaElement>("textbox");
+      const editor = screen.getByRole<HTMLTextAreaElement>("textbox", {
+        name: /JavaScript/i,
+      });
 
       fireEvent.change(editor, { target: { value: "const learnerWork = true;" } });
       fireEvent.click(

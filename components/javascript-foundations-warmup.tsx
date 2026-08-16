@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -14,6 +20,7 @@ import {
   GuidedCheckResults,
   type GuidedCheckResult,
 } from "./guided-check-results";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
 import { runCodingSolution } from "@/lib/coding-runner";
 import {
@@ -76,6 +83,11 @@ export function JavaScriptFoundationsWarmup({
       "Complete the missing logic, then run three private browser checks.",
   });
   const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise || checkState.kind === "running" || checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -297,8 +309,9 @@ export function JavaScriptFoundationsWarmup({
           }}
         />
         <label htmlFor="foundations-code">JavaScript warm-up code</label>
-        <textarea
+        <GuidedCodeEditor
           id="foundations-code"
+          aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
           value={code}
           onChange={(event) => {
             setCode(event.target.value);
@@ -310,6 +323,7 @@ export function JavaScriptFoundationsWarmup({
             });
           }}
           maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
+          onKeyDown={handleEditorKeyDown}
           spellCheck={false}
         />
         <PrivateJavaScriptLabDraftStatus
@@ -326,6 +340,12 @@ export function JavaScriptFoundationsWarmup({
           isStarterLoaded={code === exercise.starterCode}
           onRestore={resetExercise}
         />
+
+        <GuidedSourceChangeReview
+          currentSource={code}
+          starterSource={exercise.starterCode}
+        />
+        <GuidedLabExecutionHint />
 
         <div className="foundations-actions">
           {!isPassed ? (

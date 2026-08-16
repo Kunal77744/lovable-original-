@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import {
   buildGuidedCheckResults,
   GuidedCheckResults,
@@ -76,6 +84,13 @@ export function JavaScriptSearchSortLab({
   );
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -317,8 +332,9 @@ export function JavaScriptSearchSortLab({
           <label htmlFor="search-sort-lab-code">
             JavaScript searching and sorting code
           </label>
-          <textarea
+        <GuidedCodeEditor
             id="search-sort-lab-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
@@ -329,6 +345,7 @@ export function JavaScriptSearchSortLab({
               });
             }}
             maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
           <PrivateJavaScriptLabDraftStatus
@@ -345,6 +362,12 @@ export function JavaScriptSearchSortLab({
             isStarterLoaded={code === exercise.starterCode}
             onRestore={restoreStarter}
           />
+
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
+          />
+          <GuidedLabExecutionHint />
 
           <div className="function-lab-actions">
             {isPassed ? (
@@ -396,6 +419,13 @@ export function JavaScriptSearchSortLab({
             ) : null}
             <GuidedCheckResults results={checkResults} />
           </div>
+
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save

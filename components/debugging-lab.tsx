@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -75,6 +82,11 @@ export function DebuggingLab({
   const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const completedCount = completedIds.size;
   const isLastDrill = drillIndex === JAVASCRIPT_DEBUGGING_DRILLS.length - 1;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !drill || labState.kind === "running" || labState.kind === "passed",
+    onRun: runChecks,
+  });
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
@@ -252,11 +264,13 @@ export function DebuggingLab({
         <label htmlFor="debugging-source">
           JavaScript source for {drill.title}
         </label>
-        <textarea
+        <GuidedCodeEditor
           id="debugging-source"
+          aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
           value={source}
           onChange={(event) => updateSource(event.target.value)}
           maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
+          onKeyDown={handleEditorKeyDown}
           spellCheck={false}
         />
         <PrivateJavaScriptLabDraftStatus
@@ -274,6 +288,12 @@ export function DebuggingLab({
         isStarterLoaded={source === drill.starterCode}
         onRestore={restoreStarter}
       />
+
+      <GuidedSourceChangeReview
+        currentSource={source}
+        starterSource={drill.starterCode}
+      />
+      <GuidedLabExecutionHint />
 
       <div className="debugging-action-row">
         <p>Fix the smallest thing that makes the behavior match the brief.</p>
