@@ -17905,6 +17905,93 @@ footer {
   background: #eef6ed;
 }
 
+.tracing-self-check-heading {
+  margin-bottom: 17px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tracing-self-check-heading > div:first-child > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tracing-self-check-heading strong {
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.tracing-self-check-progress {
+  min-width: 86px;
+  padding-top: 7px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(20px, 1fr));
+  gap: 5px;
+}
+
+.tracing-self-check-progress span {
+  height: 4px;
+  border-radius: 999px;
+  background: #cdddcf;
+}
+
+.tracing-self-check-progress span.is-complete {
+  background: var(--accent);
+}
+
+.tracing-self-check fieldset {
+  padding-top: 16px;
+  border-top: 1px solid rgba(40, 118, 82, 0.16);
+}
+
+.tracing-self-check fieldset legend {
+  max-width: 58ch;
+  margin-bottom: 12px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.tracing-choices.is-compact label,
+.tracing-choices.is-compact span {
+  min-height: 45px;
+}
+
+.tracing-choices.is-compact span {
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.tracing-self-check-result {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 7px;
+}
+
+.tracing-self-check-result.is-wrong {
+  color: #794615;
+  background: #fff4e5;
+}
+
+.tracing-self-check-result.is-correct {
+  color: var(--accent-deep);
+  background: #deeddf;
+  font-weight: 700;
+}
+
+.tracing-self-check-result.is-correct span {
+  color: var(--accent-deep);
+}
+
 .tracing-action-row {
   margin-top: 24px;
   display: flex;
@@ -18032,6 +18119,16 @@ footer {
 
   .tracing-action-row > span {
     text-align: center;
+  }
+
+  .tracing-self-check-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tracing-self-check-progress {
+    width: 100%;
   }
 
   .tracing-complete {
