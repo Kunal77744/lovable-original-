@@ -14,17 +14,72 @@ import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "@/lib/javascript-stacks-queu
 import { JAVASCRIPT_TREES_GRAPHS_EXERCISES } from "@/lib/javascript-trees-graphs";
 
 const codeLabs = [
-  ["javascript-foundations-warmup.tsx", JAVASCRIPT_FOUNDATION_EXERCISES],
-  ["debugging-lab.tsx", JAVASCRIPT_DEBUGGING_DRILLS],
-  ["javascript-data-structures-lab.tsx", JAVASCRIPT_DATA_STRUCTURE_EXERCISES],
-  ["javascript-dom-lab.tsx", JAVASCRIPT_DOM_EXERCISES],
-  ["javascript-functions-scope-lab.tsx", JAVASCRIPT_FUNCTION_EXERCISES],
-  ["javascript-recursion-lab.tsx", JAVASCRIPT_RECURSION_EXERCISES],
-  ["javascript-search-sort-lab.tsx", JAVASCRIPT_SEARCH_SORT_EXERCISES],
-  ["javascript-stacks-queues-lab.tsx", JAVASCRIPT_STACKS_QUEUES_EXERCISES],
-  ["javascript-linked-list-lab.tsx", JAVASCRIPT_LINKED_LIST_EXERCISES],
-  ["javascript-algorithm-patterns-lab.tsx", JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES],
-  ["javascript-trees-graphs-lab.tsx", JAVASCRIPT_TREES_GRAPHS_EXERCISES],
+  [
+    "javascript-foundations-warmup.tsx",
+    JAVASCRIPT_FOUNDATION_EXERCISES,
+    "source: code",
+    "foundations-code",
+  ],
+  [
+    "debugging-lab.tsx",
+    JAVASCRIPT_DEBUGGING_DRILLS,
+    "message: result.message, source",
+    "debugging-source",
+  ],
+  [
+    "javascript-data-structures-lab.tsx",
+    JAVASCRIPT_DATA_STRUCTURE_EXERCISES,
+    "source: code",
+    "data-lab-code",
+  ],
+  [
+    "javascript-dom-lab.tsx",
+    JAVASCRIPT_DOM_EXERCISES,
+    "source: code",
+    "dom-lab-code",
+  ],
+  [
+    "javascript-functions-scope-lab.tsx",
+    JAVASCRIPT_FUNCTION_EXERCISES,
+    "source: code",
+    "function-lab-code",
+  ],
+  [
+    "javascript-recursion-lab.tsx",
+    JAVASCRIPT_RECURSION_EXERCISES,
+    "source: code",
+    "recursion-lab-code",
+  ],
+  [
+    "javascript-search-sort-lab.tsx",
+    JAVASCRIPT_SEARCH_SORT_EXERCISES,
+    "source: code",
+    "search-sort-lab-code",
+  ],
+  [
+    "javascript-stacks-queues-lab.tsx",
+    JAVASCRIPT_STACKS_QUEUES_EXERCISES,
+    "source: code",
+    "stacks-queues-lab-code",
+  ],
+  [
+    "javascript-linked-list-lab.tsx",
+    JAVASCRIPT_LINKED_LIST_EXERCISES,
+    "source: code",
+    "linked-list-lab-code",
+  ],
+  [
+    "javascript-algorithm-patterns-lab.tsx",
+    JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES,
+    "source: code",
+    "algorithm-patterns-code",
+  ],
+  [
+    "javascript-trees-graphs-lab.tsx",
+    JAVASCRIPT_TREES_GRAPHS_EXERCISES,
+    "source: code",
+    "trees-graphs-lab-code",
+  ],
 ] as const;
 
 const labRoutes = [
@@ -87,6 +142,27 @@ describe("guided JavaScript browser recovery coverage", () => {
       expect(source).toContain("useGuidedLabExecutionShortcut");
       expect(source).toContain("GUIDED_LAB_EXECUTION_HINT_ID");
       expect(source).toContain("<GuidedLabExecutionHint />");
+    }
+  });
+
+  it("connects current runtime failures to every guided editor", () => {
+    expect(
+      codeLabs.reduce((total, [, exercises]) => total + exercises.length, 0),
+    ).toBe(42);
+
+    for (const [fileName, , runtimeSource, editorId] of codeLabs) {
+      const source = readFileSync(
+        join(process.cwd(), "components", fileName),
+        "utf8",
+      );
+
+      expect(source).toContain(
+        'import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";',
+      );
+      expect(source).toContain(runtimeSource);
+      expect(source).toContain("<GuidedRuntimeErrorNavigation");
+      expect(source).toContain(`editorId="${editorId}"`);
+      expect(source).toMatch(/(?:checkState|labState)\.kind === "error"/);
     }
   });
 });
