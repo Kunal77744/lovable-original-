@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { JAVASCRIPT_STACKS_QUEUES_EXERCISES } from "@/lib/javascript-stacks-queues";
 import { JavaScriptStacksQueuesLab } from "./javascript-stacks-queues-lab";
 
 const runCodingSolution = vi.fn();
@@ -89,6 +90,7 @@ describe("JavaScriptStacksQueuesLab", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run 3 checks" })).toBeEnabled();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Saved result walkthrough")).not.toBeInTheDocument();
   });
 
   it("shows code-free recovery only after a failed or stopped run", async () => {
@@ -106,6 +108,80 @@ describe("JavaScriptStacksQueuesLab", () => {
     expect(screen.getByText("0 of 3 checks passed.")).toBeInTheDocument();
     expect(screen.getByText(/Treat one end of the array/)).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+  });
+
+  it.each(JAVASCRIPT_STACKS_QUEUES_EXERCISES)(
+    "reveals the authored walkthrough for $slug only after the result saves",
+    async (exercise) => {
+      const exerciseIndex = JAVASCRIPT_STACKS_QUEUES_EXERCISES.indexOf(exercise);
+      const completedExerciseIds = JAVASCRIPT_STACKS_QUEUES_EXERCISES.slice(
+        0,
+        exerciseIndex,
+      ).map((item) => item.slug);
+      runCodingSolution.mockResolvedValue({
+        status: "finished",
+        outputs: exercise.tests.map((test) => test.expectedOutput),
+      });
+      render(
+        <JavaScriptStacksQueuesLab
+          completedExerciseIds={completedExerciseIds}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("heading", {
+          name: exercise.operationWalkthrough.title,
+        }),
+      ).not.toBeInTheDocument();
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+      });
+
+      expect(saveJavaScriptLabExercise).toHaveBeenCalledTimes(1);
+      expect(saveJavaScriptLabExercise).toHaveBeenCalledWith(
+        "stacks-queues",
+        exercise.slug,
+      );
+      expect(
+        screen.getByRole("heading", {
+          name: exercise.operationWalkthrough.title,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(`Step 1 of ${exercise.operationWalkthrough.steps.length}`),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(exercise.operationWalkthrough.steps[0].operation),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it("steps forward and backward through the saved operation sequence", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["red", "red", "two"],
+    });
+    render(<JavaScriptStacksQueuesLab />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    const previousButton = screen.getByRole("button", {
+      name: "Previous step",
+    });
+    const nextButton = screen.getByRole("button", { name: "Next step" });
+    expect(previousButton).toBeDisabled();
+    expect(nextButton).toBeEnabled();
+
+    fireEvent.click(nextButton);
+    expect(screen.getByText("Step 2 of 3")).toBeInTheDocument();
+    expect(screen.getByText('push("blue")')).toBeInTheDocument();
+    expect(previousButton).toBeEnabled();
+
+    fireEvent.click(previousButton);
+    expect(screen.getByText("Step 1 of 3")).toBeInTheDocument();
   });
 
   it("reveals teaching only after passing and advances in order", async () => {
