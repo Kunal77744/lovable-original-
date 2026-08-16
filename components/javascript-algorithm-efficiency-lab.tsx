@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AlgorithmComplexityGrowthExplorer } from "@/components/algorithm-complexity-growth-explorer";
 import { ALGORITHM_EFFICIENCY_EXERCISES } from "@/lib/javascript-algorithm-efficiency";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
@@ -160,16 +161,19 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
         ) : null}
 
         {resultState === "correct" && selectedApproach ? (
-          <div className="efficiency-feedback is-correct" role="status">
-            <div>
-              <span>Better growth</span>
-              <strong>{selectedApproach.growth}</strong>
+          <>
+            <div className="efficiency-feedback is-correct" role="status">
+              <div>
+                <span>Better growth</span>
+                <strong>{selectedApproach.growth}</strong>
+              </div>
+              <p>{exercise.explanation}</p>
+              <p className="efficiency-takeaway">
+                <span>Keep this:</span> {exercise.takeaway}
+              </p>
             </div>
-            <p>{exercise.explanation}</p>
-            <p className="efficiency-takeaway">
-              <span>Keep this:</span> {exercise.takeaway}
-            </p>
-          </div>
+            <AlgorithmComplexityGrowthExplorer />
+          </>
         ) : null}
 
         <div className="efficiency-action-row">
