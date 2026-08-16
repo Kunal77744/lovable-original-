@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
-import { JAVASCRIPT_LINKED_LIST_EXERCISES } from "@/lib/javascript-linked-lists";
+import {
+  JAVASCRIPT_LINKED_LIST_EXERCISES,
+  type JavaScriptLinkedListExercise,
+} from "@/lib/javascript-linked-lists";
 import {
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
@@ -24,6 +27,112 @@ const exerciseIds = JAVASCRIPT_LINKED_LIST_EXERCISES.map(
   (exercise) => exercise.slug,
 );
 
+function PointerWalkthrough({
+  exercise,
+  stepIndex,
+  onStepChange,
+}: {
+  exercise: JavaScriptLinkedListExercise;
+  stepIndex: number;
+  onStepChange: (nextStep: number) => void;
+}) {
+  const walkthrough = exercise.pointerWalkthrough;
+  const step = walkthrough.steps[stepIndex];
+  const displayTarget = (target: string | null) =>
+    target === null
+      ? "null"
+      : (step.nodes.find((node) => node.id === target)?.value ?? target);
+  const nodeState = step.nodes
+    .map((node) => `${node.value}.next is ${displayTarget(node.next)}`)
+    .join(", ");
+  const pointerState = step.pointers
+    .map(
+      (pointer) => `${pointer.name} points to ${displayTarget(pointer.target)}`,
+    )
+    .join(", ");
+
+  return (
+    <section
+      className="linked-list-walkthrough"
+      aria-labelledby={`${exercise.slug}-walkthrough-title`}
+    >
+      <header>
+        <div>
+          <span>Saved pointer walkthrough</span>
+          <h3 id={`${exercise.slug}-walkthrough-title`}>{walkthrough.title}</h3>
+        </div>
+        <strong>
+          Step {stepIndex + 1} of {walkthrough.steps.length}
+        </strong>
+      </header>
+
+      <div className="linked-list-walkthrough-grid">
+        <div
+          className="linked-list-pointer-canvas"
+          role="img"
+          aria-label={`Nodes: ${nodeState}. References: ${pointerState}.`}
+        >
+          <div className="linked-list-node-row" aria-hidden="true">
+            {step.nodes.map((node) => (
+              <div
+                className={`linked-list-node${
+                  node.state ? ` is-${node.state}` : ""
+                }`}
+                key={node.id}
+              >
+                <strong>{node.value}</strong>
+                <span>
+                  next <b>→ {displayTarget(node.next)}</b>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="linked-list-pointer-row" aria-hidden="true">
+            {step.pointers.map((pointer) => (
+              <span key={pointer.name}>
+                {pointer.name} <b>→ {displayTarget(pointer.target)}</b>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="linked-list-pointer-copy" aria-live="polite">
+          <span>Reference move {stepIndex + 1}</span>
+          <h4>{step.action}</h4>
+          <p>{step.explanation}</p>
+          <ul>
+            {step.facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div
+        className="linked-list-walkthrough-controls"
+        role="group"
+        aria-label="Pointer walkthrough controls"
+      >
+        <button
+          disabled={stepIndex === 0}
+          onClick={() => onStepChange(stepIndex - 1)}
+          type="button"
+        >
+          <span aria-hidden="true">←</span> Previous step
+        </button>
+        <button
+          disabled={stepIndex === walkthrough.steps.length - 1}
+          onClick={() => onStepChange(stepIndex + 1)}
+          type="button"
+        >
+          Next step <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function JavaScriptLinkedListLab({
   completedExerciseIds = [],
 }: {
@@ -43,6 +152,7 @@ export function JavaScriptLinkedListLab({
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -68,16 +178,21 @@ export function JavaScriptLinkedListLab({
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("linked-lists", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "linked-lists",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setWalkthroughStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -115,6 +230,7 @@ export function JavaScriptLinkedListLab({
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setWalkthroughStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -133,8 +249,8 @@ export function JavaScriptLinkedListLab({
             Follow the references before changing them.
           </h2>
           <p>
-            You connected nodes, traversed every value, reversed the links,
-            and chose a structure from the operation it needs to support.
+            You connected nodes, traversed every value, reversed the links, and
+            chose a structure from the operation it needs to support.
           </p>
           <Link className="primary-action" href="/practice/sum-two-numbers">
             Start judged practice <span aria-hidden="true">→</span>
@@ -229,7 +345,9 @@ export function JavaScriptLinkedListLab({
             <span>{exercise.slug}.js</span>
             <span>Browser-only</span>
           </div>
-          <label htmlFor="linked-list-lab-code">JavaScript linked-list code</label>
+          <label htmlFor="linked-list-lab-code">
+            JavaScript linked-list code
+          </label>
           <textarea
             id="linked-list-lab-code"
             value={code}
@@ -300,6 +418,14 @@ export function JavaScriptLinkedListLab({
               </p>
             ) : null}
           </div>
+
+          {checkState.kind === "passed" ? (
+            <PointerWalkthrough
+              exercise={exercise}
+              stepIndex={walkthroughStep}
+              onStepChange={setWalkthroughStep}
+            />
+          ) : null}
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save
