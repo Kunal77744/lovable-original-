@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
-import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
@@ -16,17 +20,30 @@ type CheckState =
 const readyMessage =
   "Finish the missing function logic, then run three private browser checks.";
 
-const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map((exercise) => exercise.slug);
+const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map(
+  (exercise) => exercise.slug,
+);
 
-export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
-  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
+export function JavaScriptFunctionsScopeLab({
+  completedExerciseIds = [],
+}: {
+  completedExerciseIds?: string[];
+}) {
+  const [exerciseIndex, setExerciseIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
+  );
   const exercise = JAVASCRIPT_FUNCTION_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode);
+  const [code, setCode] = useState(
+    exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode,
+  );
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
-  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [completedIds, setCompletedIds] = useState(
+    () => new Set(completedExerciseIds),
+  );
+  const [replayStep, setReplayStep] = useState(0);
   const completedCount = completedIds.size;
 
   async function runChecks() {
@@ -52,11 +69,15 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     }, 0);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("functions", exercise.slug);
+      const saveResponse = await saveJavaScriptLabExercise(
+        "functions",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -78,6 +99,7 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
   function restoreStarter() {
     if (!exercise) return;
     setCode(exercise.starterCode);
+    setReplayStep(0);
     setCheckState({
       kind: "idle",
       message: "Starter restored locally. No learner record was changed.",
@@ -99,6 +121,7 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
 
     setExerciseIndex(nextIndex);
     setCode(nextExercise.starterCode);
+    setReplayStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
   }
 
@@ -137,11 +160,15 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     (completedCount / JAVASCRIPT_FUNCTION_EXERCISES.length) * 100;
 
   return (
-    <section className="function-lab-workbench" aria-labelledby="function-lab-title">
+    <section
+      className="function-lab-workbench"
+      aria-labelledby="function-lab-title"
+    >
       <header className="function-lab-progress">
         <div>
           <span>
-            Function idea {exercise.number} of {JAVASCRIPT_FUNCTION_EXERCISES.length}
+            Function idea {exercise.number} of{" "}
+            {JAVASCRIPT_FUNCTION_EXERCISES.length}
           </span>
           <strong>{exercise.concept}</strong>
         </div>
@@ -208,12 +235,15 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
             <span>{exercise.slug}.js</span>
             <span>Browser-only</span>
           </div>
-          <label htmlFor="function-lab-code">JavaScript functions and scope code</label>
+          <label htmlFor="function-lab-code">
+            JavaScript functions and scope code
+          </label>
           <textarea
             id="function-lab-code"
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setReplayStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
@@ -249,7 +279,9 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
                 onClick={runChecks}
                 type="button"
               >
-                {checkState.kind === "running" ? "Running checks…" : "Run 3 checks"}
+                {checkState.kind === "running"
+                  ? "Running checks…"
+                  : "Run 3 checks"}
               </button>
             )}
           </div>
@@ -272,7 +304,9 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
               </span>
               <strong>{checkState.message}</strong>
             </div>
-            {checkState.kind === "failed" ? <p>{exercise.recoveryCue}</p> : null}
+            {checkState.kind === "failed" ? (
+              <p>{exercise.recoveryCue}</p>
+            ) : null}
             {checkState.kind === "passed" ? (
               <p className="function-lab-takeaway">
                 <span>Keep this:</span> {exercise.takeaway}
@@ -280,9 +314,97 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
             ) : null}
           </div>
 
+          {isPassed ? (
+            <section
+              className="function-call-replay"
+              aria-labelledby="function-call-replay-title"
+            >
+              <header>
+                <div>
+                  <span>Call-frame replay</span>
+                  <h3 id="function-call-replay-title">
+                    Follow where each value lives
+                  </h3>
+                </div>
+                <span aria-live="polite">
+                  Step {replayStep + 1} of{" "}
+                  {exercise.callFrameReplay.steps.length}
+                </span>
+              </header>
+
+              <div className="function-call-replay-input">
+                <span>Example input</span>
+                <code>{exercise.callFrameReplay.input}</code>
+              </div>
+
+              <ol
+                className="function-call-replay-path"
+                aria-label="Current JavaScript call path"
+              >
+                {exercise.callFrameReplay.steps[replayStep].callPath.map(
+                  (call, index) => (
+                    <li key={`${call}-${index}`}>
+                      <code>{call}</code>
+                    </li>
+                  ),
+                )}
+              </ol>
+
+              <div className="function-call-replay-stage">
+                <div className="function-call-replay-frame">
+                  <span>
+                    {exercise.callFrameReplay.steps[replayStep].frameLabel}
+                  </span>
+                  <dl>
+                    {exercise.callFrameReplay.steps[replayStep].bindings.map(
+                      (binding) => (
+                        <div key={binding.name}>
+                          <dt>{binding.name}</dt>
+                          <dd>
+                            <code>{binding.value}</code>
+                          </dd>
+                        </div>
+                      ),
+                    )}
+                  </dl>
+                </div>
+                <div className="function-call-replay-explanation">
+                  <strong>
+                    {exercise.callFrameReplay.steps[replayStep].title}
+                  </strong>
+                  <p>{exercise.callFrameReplay.steps[replayStep].detail}</p>
+                  {exercise.callFrameReplay.steps[replayStep].returnedValue ? (
+                    <p className="function-call-replay-return">
+                      {exercise.callFrameReplay.steps[replayStep].returnedValue}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="function-call-replay-controls">
+                <button
+                  disabled={replayStep === 0}
+                  onClick={() => setReplayStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous frame
+                </button>
+                <button
+                  disabled={
+                    replayStep === exercise.callFrameReplay.steps.length - 1
+                  }
+                  onClick={() => setReplayStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next frame
+                </button>
+              </div>
+            </section>
+          ) : null}
+
           <p className="function-lab-privacy">
-            Code, checks, answers, and progress stay in this browser tab. No
-            code stays in this browser; completed exercises save privately.
+            Code and check output stay in this browser tab. Only completed
+            exercise IDs save privately to your account.
           </p>
         </div>
       </div>
