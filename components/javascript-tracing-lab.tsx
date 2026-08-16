@@ -11,17 +11,23 @@ import {
 } from "@/lib/javascript-lab-progress";
 
 type ResultState = "idle" | "saving" | "save-error" | "wrong" | "correct";
+type PracticeState = "idle" | "wrong" | "correct";
 const exerciseIds = JAVASCRIPT_TRACE_EXERCISES.map((exercise) => exercise.id);
 
 export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
   const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
   const [selectedOutput, setSelectedOutput] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
+  const [practiceStepIndex, setPracticeStepIndex] = useState(0);
+  const [selectedPracticeValue, setSelectedPracticeValue] = useState("");
+  const [practiceState, setPracticeState] = useState<PracticeState>("idle");
+  const [practiceComplete, setPracticeComplete] = useState(false);
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
   const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
 
   const exercise = JAVASCRIPT_TRACE_EXERCISES[exerciseIndex] ?? null;
   const complete = exercise === null;
+  const practiceStep = exercise?.practiceSteps[practiceStepIndex] ?? null;
 
   async function checkPrediction() {
     if (!exercise || !selectedOutput) return;
@@ -65,6 +71,36 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
     setExerciseIndex(0);
     setSelectedOutput("");
     setResultState("idle");
+    resetTracePractice();
+  }
+
+  function resetTracePractice() {
+    setPracticeStepIndex(0);
+    setSelectedPracticeValue("");
+    setPracticeState("idle");
+    setPracticeComplete(false);
+  }
+
+  function checkPracticeStep() {
+    if (!practiceStep || !selectedPracticeValue) return;
+
+    setPracticeState(
+      selectedPracticeValue === practiceStep.correctValue ? "correct" : "wrong",
+    );
+  }
+
+  function continueTracePractice() {
+    if (!exercise || practiceState !== "correct") return;
+
+    const nextStepIndex = practiceStepIndex + 1;
+    if (nextStepIndex >= exercise.practiceSteps.length) {
+      setPracticeComplete(true);
+      return;
+    }
+
+    setPracticeStepIndex(nextStepIndex);
+    setSelectedPracticeValue("");
+    setPracticeState("idle");
   }
 
   if (complete) {
@@ -171,27 +207,114 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
           ) : null}
 
           {resultState === "correct" ? (
-            <div className="tracing-feedback is-correct" role="status">
-              <strong>Correct. Here is the exact trace.</strong>
-              <ol>
-                {exercise.traceSteps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-              <p>
-                <span>Keep this rule:</span> {exercise.takeaway}
-              </p>
+            <div className="tracing-feedback is-correct">
+              {practiceComplete ? (
+                <div role="status">
+                  <strong>Trace rebuilt. Here is the exact path.</strong>
+                  <ol>
+                    {exercise.traceSteps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                  <p>
+                    <span>Keep this rule:</span> {exercise.takeaway}
+                  </p>
+                </div>
+              ) : (
+                <div className="tracing-self-check">
+                  <div className="tracing-self-check-heading">
+                    <div>
+                      <span>Trace it yourself</span>
+                      <strong>
+                        Rebuild step {practiceStepIndex + 1} of {exercise.practiceSteps.length}
+                      </strong>
+                    </div>
+                    <div
+                      aria-label="Trace steps rebuilt"
+                      aria-valuemax={exercise.practiceSteps.length}
+                      aria-valuemin={0}
+                      aria-valuenow={
+                        practiceStepIndex + (practiceState === "correct" ? 1 : 0)
+                      }
+                      className="tracing-self-check-progress"
+                      role="progressbar"
+                    >
+                      {exercise.practiceSteps.map((_, index) => (
+                        <span
+                          className={
+                            index < practiceStepIndex ||
+                            (index === practiceStepIndex && practiceState === "correct")
+                              ? "is-complete"
+                              : undefined
+                          }
+                          key={index}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <fieldset>
+                    <legend>{practiceStep?.prompt}</legend>
+                    <div className="tracing-choices is-compact">
+                      {practiceStep?.choices.map((choice) => (
+                        <label key={choice}>
+                          <input
+                            checked={selectedPracticeValue === choice}
+                            name={`trace-practice-${exercise.id}-${practiceStepIndex}`}
+                            onChange={() => {
+                              setSelectedPracticeValue(choice);
+                              if (practiceState === "wrong") setPracticeState("idle");
+                            }}
+                            type="radio"
+                            value={choice}
+                          />
+                          <span>{choice}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  {practiceState === "wrong" ? (
+                    <p className="tracing-self-check-result is-wrong" role="status">
+                      Not yet. Read the active line, then update only the value it changes.
+                    </p>
+                  ) : null}
+
+                  {practiceState === "correct" ? (
+                    <p className="tracing-self-check-result is-correct" role="status">
+                      <span aria-hidden="true">✓</span> {exercise.traceSteps[practiceStepIndex]}
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
           ) : null}
 
           <div className="tracing-action-row">
-            {resultState === "correct" ? (
+            {resultState === "correct" && practiceComplete ? (
               <button onClick={continueTracing} type="button">
                 {exercise.number === JAVASCRIPT_TRACE_EXERCISES.length
                   ? "Finish the lab"
                   : "Next trace"}
                 <span aria-hidden="true">→</span>
               </button>
+            ) : resultState === "correct" ? (
+              practiceState === "correct" ? (
+                <button onClick={continueTracePractice} type="button">
+                  {practiceStepIndex + 1 === exercise.practiceSteps.length
+                    ? "Reveal exact trace"
+                    : "Next step"}
+                  <span aria-hidden="true">→</span>
+                </button>
+              ) : (
+                <button
+                  disabled={!selectedPracticeValue}
+                  onClick={checkPracticeStep}
+                  type="button"
+                >
+                  Check step
+                </button>
+              )
             ) : (
               <button
                 disabled={!selectedOutput || resultState === "saving"}
@@ -201,7 +324,11 @@ export function JavaScriptTracingLab({ completedExerciseIds = [] }: { completedE
                 {resultState === "saving" ? "Saving completion…" : "Check prediction"}
               </button>
             )}
-            <span>Your answer stays local. Completion saves privately.</span>
+            <span>
+              {resultState === "correct"
+                ? "Step checks stay in this browser. Completion is already saved."
+                : "Your answer stays local. Completion saves privately."}
+            </span>
           </div>
         </div>
       </div>
