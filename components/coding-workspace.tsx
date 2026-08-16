@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AcceptedSolutionDownload } from "@/components/accepted-solution-download";
+import { CodingRepairDrill } from "@/components/coding-repair-drill";
 import { PracticeFeedback } from "@/components/practice-feedback";
 import { PracticeSolutionNote } from "@/components/practice-solution-note";
 import {
@@ -33,6 +34,7 @@ import {
   capturePracticeProblemAccepted,
 } from "@/lib/product-analytics";
 import type { CodingProblemAttempt } from "@/db/coding-practice";
+import type { CodingRepairDrill as CodingRepairDrillModel } from "@/lib/coding-repair-drills";
 import type { SavedPracticeFeedback } from "@/lib/practice-feedback";
 import type { SavedPracticeSolutionNote } from "@/lib/practice-solution-note";
 
@@ -62,6 +64,7 @@ type CodingWorkspaceProps = {
     title: string;
     recoveryHint: string;
     recoveryHints: [string, string];
+    repairDrill: CodingRepairDrillModel;
     acceptedExplanation: {
       concept: string;
       whyItWorks: string;
@@ -2419,10 +2422,17 @@ export function CodingWorkspace({
                   : "Show final hint"}
               </button>
             ) : (
-              <p className="recovery-hint-complete">
-                All hints shown. Return to your code and try one change at a
-                time.
-              </p>
+              <>
+                <p className="recovery-hint-complete">
+                  All hints shown. Test the repair plan before changing your
+                  code.
+                </p>
+                <CodingRepairDrill
+                  drill={problem.repairDrill}
+                  problemSlug={problem.slug}
+                  onReturnToEditor={() => editorTextarea.current?.focus()}
+                />
+              </>
             )}
           </div>
         ) : null}

@@ -11101,6 +11101,175 @@ h1 {
   font-size: 11px;
 }
 
+.coding-repair-drill {
+  margin-top: 10px;
+  padding-top: 16px;
+  display: grid;
+  gap: 15px;
+  border-top: 1px solid rgba(131, 221, 168, 0.18);
+}
+
+.coding-repair-drill-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.coding-repair-drill-heading > span {
+  color: #83dda8;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.coding-repair-drill-heading h3 {
+  max-width: 34ch;
+  margin: 0;
+  color: #f1f5f2;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 500;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.wrong-answer-hint .coding-repair-drill-heading p {
+  color: #91a49a;
+  font-size: 10px;
+}
+
+.coding-repair-drill fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.coding-repair-drill legend {
+  max-width: 58ch;
+  margin-bottom: 10px;
+  padding: 0;
+  color: #dce9e1;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.coding-repair-drill-choices {
+  display: grid;
+  gap: 7px;
+}
+
+.coding-repair-drill-choices label {
+  min-height: 44px;
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #34483e;
+  border-radius: 7px;
+  background: rgba(12, 20, 16, 0.54);
+  color: #c9d5ce;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.coding-repair-drill-choices label:hover,
+.coding-repair-drill-choices label.is-selected {
+  border-color: rgba(131, 221, 168, 0.64);
+  background: rgba(131, 221, 168, 0.08);
+  color: #eef4f0;
+}
+
+.coding-repair-drill-choices input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #83dda8;
+}
+
+.coding-repair-drill-choices input:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.34);
+  outline-offset: 3px;
+}
+
+.coding-repair-drill-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+
+.coding-repair-drill-actions > button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #83dda8;
+  border-radius: 7px;
+  background: #83dda8;
+  color: #122019;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.coding-repair-drill-actions > button:disabled {
+  border-color: #44554c;
+  background: #2b3831;
+  color: #7f9087;
+  cursor: not-allowed;
+}
+
+.coding-repair-drill-actions > button:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.34);
+  outline-offset: 2px;
+}
+
+.coding-repair-drill-result {
+  min-height: 44px;
+  padding: 7px 0 0 12px;
+  border-left: 1px solid #34483e;
+}
+
+.coding-repair-drill-result strong {
+  display: block;
+  margin-bottom: 2px;
+  color: #dce9e1;
+  font-size: 11px;
+}
+
+.coding-repair-drill-result.is-correct strong {
+  color: #83dda8;
+}
+
+.coding-repair-drill-result.is-wrong strong {
+  color: #efaaa2;
+}
+
+.wrong-answer-hint .coding-repair-drill-result p {
+  color: #91a49a;
+  font-size: 10px;
+}
+
+@media (max-width: 560px) {
+  .coding-repair-drill-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .coding-repair-drill-actions > button {
+    width: 100%;
+  }
+
+  .coding-repair-drill-result {
+    padding: 10px 0 0;
+    border-top: 1px solid #34483e;
+    border-left: 0;
+  }
+}
+
 .practice-recovery-cue {
   margin-top: 16px;
   padding-top: 14px;
