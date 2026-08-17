@@ -1216,6 +1216,41 @@ h1 {
   line-height: 1.55;
 }
 
+.guided-source-change-baselines {
+  width: fit-content;
+  margin-bottom: 14px;
+  padding: 3px;
+  display: flex;
+  gap: 3px;
+  border: 1px solid #34443c;
+  border-radius: 8px;
+  background: #0d1612;
+}
+
+.guided-source-change-baselines button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #94a39b;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.guided-source-change-baselines button[aria-pressed="true"] {
+  background: #24372e;
+  color: #dce8df;
+  box-shadow: inset 0 0 0 1px #42604f;
+}
+
+.guided-source-change-baselines button:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 2px;
+}
+
 .guided-source-change-review-heading {
   margin-bottom: 12px;
   display: flex;
@@ -1315,6 +1350,14 @@ h1 {
   .guided-source-change-review-heading {
     display: grid;
     gap: 5px;
+  }
+
+  .guided-source-change-baselines {
+    width: 100%;
+  }
+
+  .guided-source-change-baselines button {
+    flex: 1;
   }
 }
 

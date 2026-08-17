@@ -192,6 +192,31 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     );
   });
 
+  it("reviews layout edits against the exact last saved check", () => {
+    const revisedCss = completedCss.replace("gap: 1rem", "gap: 1.5rem");
+
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={completedCss}
+        initialChecks={gradeResponsiveCss(completedCss)}
+        initiallySaved
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Responsive layout CSS"), {
+      target: { value: revisedCss },
+    });
+    fireEvent.click(screen.getByText("Review code changes"));
+
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("gap: 1.5rem");
+    expect(
+      screen.getByRole("button", { name: "Last saved check" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("reviews signed-in layout changes from the authored starter without saving", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

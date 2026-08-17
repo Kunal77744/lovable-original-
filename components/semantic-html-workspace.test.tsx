@@ -188,6 +188,35 @@ describe("SemanticHtmlWorkspace", () => {
     ).toBeInTheDocument();
   });
 
+  it("reviews edits against the exact last submitted HTML", () => {
+    const savedHtml = "<main><article>Saved version</article></main>";
+    const revisedHtml = "<main><article>Revised version</article></main>";
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml={savedHtml}
+        initialChecks={initialChecks}
+        initiallySaved
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: revisedHtml },
+    });
+    fireEvent.click(screen.getByText("Review code changes"));
+
+    expect(
+      screen.getByRole("button", { name: "Last saved check" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("Revised version");
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("Saved version");
+  });
+
   it("keeps newer edits visibly unsaved when an older submission finishes", async () => {
     const submittedHtml = "<main><article>Submitted draft</article></main>";
     const newerHtml = "<main><article>Newer unsaved draft</article></main>";
@@ -278,6 +307,13 @@ describe("SemanticHtmlWorkspace", () => {
         "Assignment complete. Your HTML and 5/5 result are saved.",
       ),
     ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Review code changes"));
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("Newer unsaved draft");
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("Submitted draft");
     expect(
       screen.queryByRole("button", { name: "Download saved .html" }),
     ).not.toBeInTheDocument();

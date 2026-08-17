@@ -45,6 +45,9 @@ export function CssBoxModelWorkspace({
   isSignedIn = true,
 }: CssBoxModelWorkspaceProps) {
   const [css, setCss] = useState(initialCss);
+  const [savedCss, setSavedCss] = useState<string | null>(
+    initiallySaved ? initialCss : null,
+  );
   const latestCss = useRef(initialCss);
   const [checks, setChecks] = useState(initialChecks);
   const [hasSubmitted, setHasSubmitted] = useState(initiallySaved);
@@ -117,6 +120,7 @@ export function CssBoxModelWorkspace({
 
       setChecks(payload.checks);
       setHasSubmitted(true);
+      setSavedCss(submittedCss);
 
       if (latestCss.current !== submittedCss) {
         setSaveState("unsaved");
@@ -239,6 +243,7 @@ export function CssBoxModelWorkspace({
               />
               <SourceChangeReview
                 currentSource={editorCss}
+                savedSource={savedCss ?? undefined}
                 starterSource={CSS_BOX_MODEL_STARTER}
               />
             </>

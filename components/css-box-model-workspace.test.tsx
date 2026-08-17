@@ -288,6 +288,32 @@ describe("CssBoxModelWorkspace", () => {
     );
   });
 
+  it("reviews CSS edits against the exact last saved check", () => {
+    const savedCss = ".learning-card { width: 280px; padding: 16px; }";
+    const revisedCss = ".learning-card { width: 280px; padding: 24px; }";
+
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={savedCss}
+        initialChecks={gradeCssBoxModel(savedCss)}
+        initiallySaved
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Card CSS"), {
+      target: { value: revisedCss },
+    });
+    fireEvent.click(screen.getByText("Review code changes"));
+
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("padding: 24px");
+    expect(
+      screen.getByRole("button", { name: "Last saved check" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("reviews signed-in CSS changes from the authored starter without saving", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

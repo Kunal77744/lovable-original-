@@ -45,6 +45,9 @@ export function SemanticHtmlWorkspace({
   isSignedIn = true,
 }: SemanticHtmlWorkspaceProps) {
   const [html, setHtml] = useState(initialHtml);
+  const [savedHtml, setSavedHtml] = useState<string | null>(
+    initiallySaved ? initialHtml : null,
+  );
   const htmlRef = useRef(initialHtml);
   const [checks, setChecks] = useState(initialChecks);
   const [hasSubmitted, setHasSubmitted] = useState(initiallySaved);
@@ -115,6 +118,7 @@ export function SemanticHtmlWorkspace({
 
       setChecks(payload.checks);
       setHasSubmitted(true);
+      setSavedHtml(submittedHtml);
 
       if (htmlRef.current !== submittedHtml) {
         setSaveState("unsaved");
@@ -233,6 +237,7 @@ export function SemanticHtmlWorkspace({
               />
               <SourceChangeReview
                 currentSource={editorHtml}
+                savedSource={savedHtml ?? undefined}
                 starterSource={SEMANTIC_HTML_STARTER}
               />
             </>
