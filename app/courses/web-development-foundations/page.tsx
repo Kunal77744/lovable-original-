@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CODING_PROBLEMS } from "@/lib/coding-problems";
+import { FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { SiteFooter, SiteNav, SkipLink } from "../../site-chrome";
 
 const javascriptProblemCount = CODING_PROBLEMS.length;
+const courseLessonCount = FIRST_COURSE_LESSONS.length;
+const courseMinutes = FIRST_COURSE_LESSONS.reduce(
+  (total, lesson) => total + lesson.estimatedMinutes,
+  0,
+);
 
 const courseDescription =
   `Follow one beginner coding path through semantic HTML, a reviewed field guide, ${javascriptProblemCount} JavaScript problems, and six CSS challenges.`;
 const courseShareImageAlt =
-  `Web Development Foundations: three practical lessons, a reviewed field guide, ${javascriptProblemCount} JavaScript problems, and six CSS challenges.`;
+  `Web Development Foundations: ${courseLessonCount} practical lessons, a reviewed field guide, ${javascriptProblemCount} JavaScript problems, and six CSS challenges.`;
 
 export const metadata: Metadata = {
   title: "Web Development Foundations | Lovable Original",
@@ -48,7 +54,7 @@ const courseSteps = [
     number: "01",
     label: "Lessons",
     title: "Build the structure, then style it.",
-    copy: "Read three public HTML and CSS lessons, save three practice builds, and pass four questions per lesson at 75%.",
+    copy: `Read ${courseLessonCount} public HTML and CSS lessons, save ${courseLessonCount} practice builds, and pass four questions per lesson at 75%.`,
     href: "/learn/web-development-foundations/semantic-html",
     linkLabel: "Open the first lesson",
   },
@@ -124,7 +130,7 @@ export default function WebDevelopmentFoundationsPage() {
               One beginner path from page structure to working code.
             </h1>
             <p className="course-overview-lede">
-              Read three practical lessons, build a reviewed semantic HTML field
+              Read {courseLessonCount} practical lessons, build a reviewed semantic HTML field
               guide, then keep practicing through {javascriptProblemCount}{" "}
               JavaScript problems and six CSS challenges. Your next unfinished
               step waits when you
@@ -138,7 +144,7 @@ export default function WebDevelopmentFoundationsPage() {
               <ArrowIcon />
             </Link>
             <p className="course-overview-note">
-              Three lessons · Six-check project · {javascriptProblemCount}{" "}
+              {courseLessonCount} lessons · Six-check project · {javascriptProblemCount}{" "}
               JavaScript + six CSS challenges
             </p>
           </div>
@@ -189,11 +195,11 @@ export default function WebDevelopmentFoundationsPage() {
 
         <section className="course-proof-strip" aria-label="Course facts">
           <div>
-            <strong>51 minutes</strong>
-            <span>Three focused lessons</span>
+            <strong>{courseMinutes} minutes</strong>
+            <span>{courseLessonCount} focused lessons</span>
           </div>
           <div>
-            <strong>3 saved builds</strong>
+            <strong>{courseLessonCount} saved builds</strong>
             <span>HTML and CSS practice</span>
           </div>
           <div>

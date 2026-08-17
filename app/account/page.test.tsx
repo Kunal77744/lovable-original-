@@ -52,11 +52,11 @@ describe("AccountPage", () => {
     expect(screen.getByText("Web Development Foundations")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Create your student account to complete this three-lesson course: 18 minutes of semantic HTML and 16 minutes of CSS selectors and the box model, then 17 minutes of responsive CSS Grid, with saved results.",
+        "Create your student account to complete this 4-lesson course in 69 minutes, from semantic HTML and CSS through responsive layouts and accessible forms, with saved results.",
       ),
     ).toBeInTheDocument();
     expect(metadata.description).toBe(
-      "Create your student account to complete the three-lesson Web Development Foundations course.",
+      "Create your student account to complete the 4-lesson Web Development Foundations course.",
     );
     expect(
       screen.getByText("Pass the four-question recall check at 75%"),

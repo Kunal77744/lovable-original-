@@ -204,7 +204,7 @@ export default async function DashboardPage() {
             </h2>
             <p>
               Choose your certificate name now. Your private course certificate
-              becomes available after you pass all three saved recall checks at
+              becomes available after you pass all four saved recall checks at
               75% or higher.
             </p>
           </div>

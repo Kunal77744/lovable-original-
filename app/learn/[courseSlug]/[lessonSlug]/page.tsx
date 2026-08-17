@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { CssBoxModelLessonContent } from "@/components/css-box-model-lesson-content";
 import { CssBoxModelWorkspace } from "@/components/css-box-model-workspace";
+import { AccessibleFormsLessonContent } from "@/components/accessible-forms-lesson-content";
+import { AccessibleFormsWorkspace } from "@/components/accessible-forms-workspace";
 import { ResponsiveCssLayoutLessonContent } from "@/components/responsive-css-layout-lesson-content";
 import { ResponsiveCssLayoutWorkspace } from "@/components/responsive-css-layout-workspace";
 import { LessonNotes } from "@/components/lesson-notes";
@@ -31,11 +33,17 @@ import {
   FIRST_COURSE_LESSONS,
   FIRST_LESSON,
   FIRST_LESSON_PASS_PERCENT,
+  FOURTH_LESSON,
   SECOND_LESSON,
   THIRD_LESSON,
   getFirstCourseLessonHref,
   getPublicLessonQuiz,
 } from "@/lib/first-course-content";
+import {
+  ACCESSIBLE_FORMS_STARTER,
+  gradeAccessibleForms,
+  type AccessibleFormsCheck,
+} from "@/lib/accessible-forms-practice";
 import {
   gradeResponsiveCss,
   RESPONSIVE_CSS_STARTER,
@@ -68,13 +76,15 @@ export async function generateMetadata({
   );
   const title = `${courseLesson?.title ?? "Lesson"} | Lovable Original`;
   const description = courseLesson?.description;
-  const isCssLesson =
-    lessonSlug === SECOND_LESSON.slug || lessonSlug === THIRD_LESSON.slug;
+  const hasShareMetadata =
+    lessonSlug === SECOND_LESSON.slug ||
+    lessonSlug === THIRD_LESSON.slug ||
+    lessonSlug === FOURTH_LESSON.slug;
 
   return {
     title,
     description,
-    ...(isCssLesson
+    ...(hasShareMetadata
       ? {
           openGraph: {
             type: "website" as const,
@@ -142,7 +152,9 @@ export default async function LessonPage({
   if (!studentLesson) notFound();
 
   const isSemanticLesson = studentLesson.lessonSlug === FIRST_LESSON.slug;
+  const isBoxModelLesson = studentLesson.lessonSlug === SECOND_LESSON.slug;
   const isResponsiveLesson = studentLesson.lessonSlug === THIRD_LESSON.slug;
+  const isAccessibleFormsLesson = studentLesson.lessonSlug === FOURTH_LESSON.slug;
   const [workspace, lessonNote, courseFeedback, readingProgress] = session
     ? await Promise.all([
         getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
@@ -166,7 +178,13 @@ export default async function LessonPage({
                 checks: gradeResponsiveCss(RESPONSIVE_CSS_STARTER),
                 saved: false,
               }
-            : {
+            : isAccessibleFormsLesson
+              ? {
+                  html: ACCESSIBLE_FORMS_STARTER,
+                  checks: gradeAccessibleForms(ACCESSIBLE_FORMS_STARTER),
+                  saved: false,
+                }
+              : {
                 html: CSS_BOX_MODEL_STARTER,
                 checks: gradeCssBoxModel(CSS_BOX_MODEL_STARTER),
                 saved: false,
@@ -235,6 +253,8 @@ export default async function LessonPage({
             <SemanticLessonContent />
           ) : isResponsiveLesson ? (
             <ResponsiveCssLayoutLessonContent />
+          ) : isAccessibleFormsLesson ? (
+            <AccessibleFormsLessonContent />
           ) : (
             <CssBoxModelLessonContent />
           )}
@@ -265,7 +285,15 @@ export default async function LessonPage({
               initiallySaved={workspace.saved}
               isSignedIn={Boolean(session)}
             />
-          ) : (
+          ) : isAccessibleFormsLesson ? (
+            <AccessibleFormsWorkspace
+              lessonSlug={studentLesson.lessonSlug}
+              initialHtml={workspace.html}
+              initialChecks={workspace.checks as AccessibleFormsCheck[]}
+              initiallySaved={workspace.saved}
+              isSignedIn={Boolean(session)}
+            />
+          ) : isBoxModelLesson ? (
             <>
               <CssBoxModelWorkspace
                 lessonSlug={studentLesson.lessonSlug}
@@ -288,7 +316,7 @@ export default async function LessonPage({
                 </Link>
               </div>
             </>
-          )}
+          ) : null}
 
           <LessonQuiz
             courseTitle={studentLesson.courseTitle}

@@ -80,6 +80,52 @@ export const WEB_FOUNDATIONS_REVIEW_ITEMS: WebFoundationsReviewItem[] = [
     recoveryCue:
       "Look for the box model rule that changes how the browser calculates the element's total width.",
   },
+  {
+    id: "responsive-grid-tracks",
+    lessonTitle: "Responsive CSS Grid",
+    concept: "Flexible tracks",
+    prompt:
+      "A resource grid should add columns when space allows without choosing a device list. Which track rule expresses that relationship?",
+    options: [
+      {
+        id: "auto-fit",
+        label: "repeat(auto-fit, minmax(14rem, 1fr))",
+      },
+      { id: "fixed", label: "grid-template-columns: 14rem 14rem 14rem" },
+      { id: "nowrap", label: "white-space: nowrap" },
+    ],
+    correctOptionId: "auto-fit",
+    takeaway:
+      "auto-fit and minmax() let the container choose how many readable tracks fit while each track can share spare space.",
+    recoveryCue:
+      "Look for the rule that combines a safe minimum with a flexible maximum and no fixed column count.",
+  },
+  {
+    id: "accessible-form-label",
+    lessonTitle: "Accessible forms",
+    concept: "Field labels",
+    prompt:
+      "An email field needs a visible name that remains available after someone begins typing. Which markup creates the dependable connection?",
+    options: [
+      {
+        id: "for-id",
+        label: "A label whose for value matches the input id",
+      },
+      {
+        id: "placeholder",
+        label: "A placeholder with no label",
+      },
+      {
+        id: "same-class",
+        label: "The label and input sharing one CSS class",
+      },
+    ],
+    correctOptionId: "for-id",
+    takeaway:
+      "Matching for and id gives the field a persistent accessible name and makes the visible label a useful click target.",
+    recoveryCue:
+      "Choose the native HTML relationship that names the control without relying on disappearing placeholder text.",
+  },
 ];
 
 export function isBoundedWebFoundationsReviewResult(result: {
@@ -117,10 +163,16 @@ export function getWebFoundationsReviewDueAt(
 }
 
 export function isWebFoundationsReviewDue(
-  result: { nextDueAt: string } | null,
+  result: { nextDueAt: string; totalCount?: number } | null,
   now = new Date(),
 ) {
   if (!result) return true;
+  if (
+    result.totalCount !== undefined &&
+    result.totalCount !== WEB_FOUNDATIONS_REVIEW_ITEMS.length
+  ) {
+    return true;
+  }
   const nextDueAt = Date.parse(result.nextDueAt);
   return !Number.isFinite(nextDueAt) || nextDueAt <= now.getTime();
 }

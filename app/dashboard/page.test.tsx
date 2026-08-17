@@ -121,7 +121,7 @@ describe("DashboardPage", () => {
       title: "Web Development Foundations",
       description: "Build and save a semantic HTML article.",
       completedLessons: 0,
-      totalLessons: 3,
+      totalLessons: 4,
       progressPercent: 0,
       courseCompleted: false,
       lessons: [
@@ -143,6 +143,13 @@ describe("DashboardPage", () => {
           slug: "responsive-css-grid",
           title: "Build a layout that adapts",
           estimatedMinutes: 17,
+          completed: false,
+          quizScore: null,
+        },
+        {
+          slug: "accessible-html-forms",
+          title: "Build a form everyone can use",
+          estimatedMinutes: 18,
           completed: false,
           quizScore: null,
         },
@@ -206,7 +213,7 @@ describe("DashboardPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("0/6")).toBeInTheDocument();
-    expect(screen.getByText("Start here · 51 minutes")).toBeInTheDocument();
+    expect(screen.getByText("Start here · 69 minutes")).toBeInTheDocument();
   });
 
   it("continues an HTML completer to the exact CSS lesson", async () => {
@@ -235,7 +242,7 @@ describe("DashboardPage", () => {
       "href",
       "/learn/web-development-foundations/css-selectors-box-model",
     );
-    expect(screen.getByText("1/3 lessons complete")).toBeInTheDocument();
+    expect(screen.getByText("1/4 lessons complete")).toBeInTheDocument();
   });
 
   it("continues a CSS foundations completer to responsive layout", async () => {
@@ -264,13 +271,42 @@ describe("DashboardPage", () => {
       "href",
       "/learn/web-development-foundations/responsive-css-grid",
     );
-    expect(screen.getByText("2/3 lessons complete")).toBeInTheDocument();
+    expect(screen.getByText("2/4 lessons complete")).toBeInTheDocument();
+  });
+
+  it("continues a responsive layout completer to accessible forms", async () => {
+    mocks.getCourse.mockResolvedValue({
+      ...(await mocks.getCourse()),
+      completedLessons: 3,
+      progressPercent: 75,
+      nextLesson: {
+        slug: "accessible-html-forms",
+        title: "Build a form everyone can use",
+        description: "Build a labelled workshop form.",
+        moduleTitle: "Accessible forms",
+        estimatedMinutes: 18,
+        completed: false,
+        quizScore: null,
+      },
+    });
+
+    render(await DashboardPage());
+
+    expect(
+      screen.getByRole("link", {
+        name: "Continue to Build a form everyone can use",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/accessible-html-forms",
+    );
+    expect(screen.getByText("3/4 lessons complete")).toBeInTheDocument();
   });
 
   it("resumes a saved field guide after course completion", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 3,
+      completedLessons: 4,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
@@ -303,7 +339,7 @@ describe("DashboardPage", () => {
   it("points a returning learner to the exact next unfinished problem", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 3,
+      completedLessons: 4,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
@@ -347,7 +383,7 @@ describe("DashboardPage", () => {
   it("resumes foundations before problem 01 after project completion", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 3,
+      completedLessons: 4,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
@@ -404,7 +440,7 @@ describe("DashboardPage", () => {
   it("continues a JavaScript completer into the exact next CSS challenge", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 3,
+      completedLessons: 4,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
@@ -454,7 +490,7 @@ describe("DashboardPage", () => {
   it("continues a main-path completer at the exact unfinished guided JavaScript exercise", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 3,
+      completedLessons: 4,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {
@@ -521,7 +557,7 @@ describe("DashboardPage", () => {
   it("opens the JavaScript capstone after all guided steps are saved", async () => {
     mocks.getCourse.mockResolvedValue({
       ...(await mocks.getCourse()),
-      completedLessons: 3,
+      completedLessons: 4,
       progressPercent: 100,
       courseCompleted: true,
       nextLesson: {

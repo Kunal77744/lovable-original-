@@ -39,48 +39,48 @@ describe("POST /api/courses/web-development-foundations/review", () => {
     >);
     getSavedResult.mockResolvedValue(null);
     saveResult.mockResolvedValue({
-      correctCount: 3,
-      totalCount: 4,
+      correctCount: 5,
+      totalCount: 6,
       completedAt: "2026-08-07T12:00:00.000Z",
       nextDueAt: "2026-08-14T12:00:00.000Z",
     });
   });
 
   it("saves only the bounded result for a completed-course learner", async () => {
-    const response = await POST(requestFor({ correctCount: 3, totalCount: 4 }));
+    const response = await POST(requestFor({ correctCount: 5, totalCount: 6 }));
 
     expect(response.status).toBe(200);
     expect(saveResult).toHaveBeenCalledWith("learner-a", {
-      correctCount: 3,
-      totalCount: 4,
+      correctCount: 5,
+      totalCount: 6,
     });
     expect(JSON.stringify(saveResult.mock.calls[0])).not.toContain("answer");
   });
 
   it("rejects signed-out, incomplete-course, malformed, and early results", async () => {
     getSession.mockResolvedValue(null);
-    expect((await POST(requestFor({ correctCount: 3, totalCount: 4 }))).status).toBe(401);
+    expect((await POST(requestFor({ correctCount: 5, totalCount: 6 }))).status).toBe(401);
 
     getSession.mockResolvedValue({ user: { id: "learner-a" } } as Awaited<
       ReturnType<typeof auth.api.getSession>
     >);
-    expect((await POST(requestFor({ correctCount: 5, totalCount: 4 }))).status).toBe(400);
+    expect((await POST(requestFor({ correctCount: 7, totalCount: 6 }))).status).toBe(400);
 
     getCourse.mockResolvedValue({ courseCompleted: false } as Awaited<
       ReturnType<typeof getOrCreateFirstCourseAssignment>
     >);
-    expect((await POST(requestFor({ correctCount: 3, totalCount: 4 }))).status).toBe(403);
+    expect((await POST(requestFor({ correctCount: 5, totalCount: 6 }))).status).toBe(403);
 
     getCourse.mockResolvedValue({ courseCompleted: true } as Awaited<
       ReturnType<typeof getOrCreateFirstCourseAssignment>
     >);
     getSavedResult.mockResolvedValue({
-      correctCount: 3,
-      totalCount: 4,
+      correctCount: 5,
+      totalCount: 6,
       completedAt: "2026-08-07T12:00:00.000Z",
       nextDueAt: "2126-08-14T12:00:00.000Z",
     });
-    expect((await POST(requestFor({ correctCount: 3, totalCount: 4 }))).status).toBe(409);
+    expect((await POST(requestFor({ correctCount: 5, totalCount: 6 }))).status).toBe(409);
     expect(saveResult).not.toHaveBeenCalled();
   });
 });

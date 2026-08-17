@@ -30,9 +30,9 @@ describe("public product promise", () => {
     expect(
       screen.getByText(/take a short lesson, build and check real work/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Course preview · 3 lessons")).toBeInTheDocument();
+    expect(screen.getByText("Course preview · 4 lessons")).toBeInTheDocument();
     expect(
-      screen.getByText("Read 3 complete lessons · 51 min"),
+      screen.getByText("Read 4 complete lessons · 69 min"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/build and check a guided project/i),
@@ -96,7 +96,7 @@ describe("public product promise", () => {
 
     expect(publicMetadata).toContain("Learn coding by doing");
     expect(rootMetadata.description).toContain(
-      "3 Web Foundations lessons totaling 51 minutes",
+      "4 Web Foundations lessons totaling 69 minutes",
     );
     expect(publicMetadata).not.toMatch(
       /real projects|interview practice|flashcards|certificates|AI tutor/i,
@@ -107,18 +107,18 @@ describe("public product promise", () => {
     expect(courseMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
-        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, 12 JavaScript problems, and six CSS challenges.",
+        alt: "Web Development Foundations: 4 practical lessons, a reviewed field guide, 12 JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(courseMetadata.twitter?.images).toEqual([
       expect.objectContaining({
         url: "/opengraph-image",
-        alt: "Web Development Foundations: three practical lessons, a reviewed field guide, 12 JavaScript problems, and six CSS challenges.",
+        alt: "Web Development Foundations: 4 practical lessons, a reviewed field guide, 12 JavaScript problems, and six CSS challenges.",
       }),
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
-        alt: "Lovable Original: learn coding through 3 Web Foundations lessons, saved project work, and 12 JavaScript problems.",
+        alt: "Lovable Original: learn coding through 4 Web Foundations lessons, saved project work, and 12 JavaScript problems.",
       }),
     ]);
   });
@@ -140,7 +140,7 @@ describe("public product promise", () => {
     expect(
       screen.getByText(/12 JavaScript problems and six CSS challenges/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("3 saved builds")).toBeInTheDocument();
+    expect(screen.getByText("4 saved builds")).toBeInTheDocument();
     expect(screen.getByText("HTML and CSS practice")).toBeInTheDocument();
     expect(screen.getByText("6 + 12 + 6")).toBeInTheDocument();
     expect(

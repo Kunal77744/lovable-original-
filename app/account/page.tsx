@@ -7,10 +7,9 @@ import { auth } from "@/lib/auth";
 import { getSafeAccountDestination } from "@/lib/account-destination";
 import {
   FIRST_COURSE,
+  FIRST_COURSE_LESSONS,
   FIRST_LESSON,
   FIRST_LESSON_PASS_PERCENT,
-  SECOND_LESSON,
-  THIRD_LESSON,
 } from "@/lib/first-course-content";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
@@ -19,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Create your student account | Lovable Original",
   description:
-    "Create your student account to complete the three-lesson Web Development Foundations course.",
+    `Create your student account to complete the ${FIRST_COURSE_LESSONS.length}-lesson Web Development Foundations course.`,
   robots: {
     index: false,
     follow: false,
@@ -55,11 +54,12 @@ export default async function AccountPage(
           <p className="eyebrow">{FIRST_COURSE.title}</p>
           <h1 id="account-title">{FIRST_LESSON.title}.</h1>
           <p>
-            Create your student account to complete this three-lesson course:{" "}
-            {FIRST_LESSON.estimatedMinutes} minutes of semantic HTML and{" "}
-            {SECOND_LESSON.estimatedMinutes} minutes of CSS selectors and the
-            box model, then {THIRD_LESSON.estimatedMinutes} minutes of
-            responsive CSS Grid, with saved results.
+            Create your student account to complete this {FIRST_COURSE_LESSONS.length}-lesson course in{" "}
+            {FIRST_COURSE_LESSONS.reduce(
+              (total, lesson) => total + lesson.estimatedMinutes,
+              0,
+            )} minutes, from semantic HTML and CSS through responsive layouts
+            and accessible forms, with saved results.
           </p>
           <p>
             Sign back in anytime and your saved course work, JavaScript code,
@@ -74,6 +74,7 @@ export default async function AccountPage(
             <li>
               Build a responsive resource grid that adapts to available space
             </li>
+            <li>Build a labelled form with connected instructions and choices</li>
             <li>Complete the course and keep your best quiz scores saved</li>
           </ul>
         </div>
