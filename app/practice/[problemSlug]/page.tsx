@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { createHash } from "node:crypto";
 import { CodingWorkspace } from "@/components/coding-workspace";
+import { CodingInputInspector } from "@/components/coding-input-inspector";
 import { ProblemBookmarkButton } from "@/components/problem-bookmark-button";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
 import {
@@ -24,6 +25,7 @@ import {
   getCodingProblem,
   getCodingProblemPreview,
 } from "@/lib/coding-problems";
+import { getCodingRepairDrill } from "@/lib/coding-repair-drills";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -71,8 +73,9 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
     resolvedSearchParams?.entry_source,
   );
   const problem = getCodingProblem(problemSlug);
+  const repairDrill = getCodingRepairDrill(problemSlug);
 
-  if (!problem) notFound();
+  if (!problem || !repairDrill) notFound();
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -229,6 +232,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
                   </div>
                 ))}
               </div>
+              <CodingInputInspector input={problem.examples[0].input} />
             </section>
           </article>
 
@@ -269,6 +273,7 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               title: problem.title,
               recoveryHint: problem.recoveryHint,
               recoveryHints: problem.recoveryHints,
+              repairDrill,
               acceptedExplanation: problem.acceptedExplanation,
               workedTrace: problem.workedTrace,
               starterCode: problem.starterCode,
