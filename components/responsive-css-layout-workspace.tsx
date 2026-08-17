@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SourceChangeReview } from "@/components/guided-source-change-review";
+import { LessonWorkspaceRepairGuide } from "@/components/lesson-workspace-repair-guide";
 import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
@@ -77,6 +78,9 @@ export function ResponsiveCssLayoutWorkspace({
     [editorCss],
   );
   const passedCount = checks.filter((check) => check.passed).length;
+  const firstFailedCheck = hasSubmitted
+    ? checks.find((check) => !check.passed)
+    : undefined;
 
   useEffect(() => {
     latestCss.current = editorCss;
@@ -279,6 +283,14 @@ export function ResponsiveCssLayoutWorkspace({
               </div>
             ))}
           </div>
+          {isSignedIn && firstFailedCheck ? (
+            <LessonWorkspaceRepairGuide
+              checkId={firstFailedCheck.id}
+              checkLabel={firstFailedCheck.label}
+              editorId="responsive-css-editor"
+              editorLabel="layout.css"
+            />
+          ) : null}
         </div>
         <div className="workspace-save">
           <div className="workspace-save-actions">

@@ -140,7 +140,52 @@ describe("SemanticHtmlWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Download saved .html" }),
     ).toBeInTheDocument();
+    expect(screen.queryByText("First check to repair")).not.toBeInTheDocument();
     expect(window.localStorage).toHaveLength(0);
+  });
+
+  it("shows the first failed repair after an unsuccessful submission saves", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        html: "<main><article>Keep revising</article></main>",
+        checks: initialChecks,
+        saved: true,
+        updatedAt: "2026-08-17T00:00:00.000Z",
+        submission: {
+          status: "in_progress",
+          passedChecks: 2,
+          totalChecks: 5,
+          submittedAt: "2026-08-17T00:00:00.000Z",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main></main>"
+        initialChecks={initialChecks}
+        initiallySaved={false}
+      />,
+    );
+
+    expect(screen.queryByText("First check to repair")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: "<main><article>Keep revising</article></main>" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Submit assignment" }));
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Put the article inside one main landmark",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("2/5")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Submission saved. 2 of 5 rubric checks pass/),
+    ).toBeInTheDocument();
   });
 
   it("keeps newer edits visibly unsaved when an older submission finishes", async () => {
@@ -261,6 +306,17 @@ describe("SemanticHtmlWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Download saved .html" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Put the article inside one main landmark",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Main content and article boundaries")).toBeInTheDocument();
+    expect(screen.getByText("Inspect first")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Return to index.html/ })).toHaveAttribute(
+      "href",
+      "#semantic-html-editor",
+    );
   });
 
   it("restores the authored lesson starter without changing the saved result", () => {
@@ -306,6 +362,7 @@ describe("SemanticHtmlWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .html" }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText("First check to repair")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -378,6 +435,7 @@ describe("SemanticHtmlWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .html" }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText("First check to repair")).not.toBeInTheDocument();
   });
 
   it("recovers a local draft after sign-in and keeps it visibly unsaved", async () => {

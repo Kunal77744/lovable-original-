@@ -4516,6 +4516,112 @@ h1 {
   line-height: 1.45;
 }
 
+.lesson-workspace-repair {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid #bed1c1;
+  border-radius: 12px;
+  background: #f0f6ef;
+}
+
+.lesson-workspace-repair header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.lesson-workspace-repair header .quiz-kicker {
+  margin-bottom: 5px;
+}
+
+.lesson-workspace-repair h3 {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 19px;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.lesson-workspace-repair header > span {
+  flex: none;
+  padding: 5px 8px;
+  color: #335445;
+  border: 1px solid #b4cbb9;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.lesson-workspace-repair dl {
+  margin: 16px 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+  gap: 12px;
+}
+
+.lesson-workspace-repair dl > div {
+  min-width: 0;
+  padding-top: 11px;
+  border-top: 1px solid rgba(58, 91, 70, 0.2);
+}
+
+.lesson-workspace-repair dt,
+.lesson-workspace-repair > p strong {
+  display: block;
+  color: #456052;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lesson-workspace-repair dd,
+.lesson-workspace-repair > p {
+  margin: 4px 0 0;
+  max-width: 64ch;
+  color: #3f5047;
+  font-size: 11px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.lesson-workspace-repair dl > div:first-child dd {
+  color: var(--ink);
+  font-weight: 750;
+}
+
+.lesson-workspace-repair > p {
+  margin-top: 14px;
+}
+
+.lesson-workspace-repair > a {
+  width: fit-content;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.lesson-workspace-repair > a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lesson-workspace-repair > a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.2);
+  outline-offset: 3px;
+}
+
 .workspace-save {
   width: 206px;
 }
@@ -17000,6 +17106,20 @@ footer {
   .workspace-review,
   .workspace-checks {
     grid-template-columns: 1fr;
+  }
+
+  .lesson-workspace-repair header,
+  .lesson-workspace-repair dl {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-workspace-repair header {
+    display: grid;
+    gap: 10px;
+  }
+
+  .lesson-workspace-repair header > span {
+    width: fit-content;
   }
 
   .workspace-save {
