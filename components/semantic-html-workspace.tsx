@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SourceChangeReview } from "@/components/guided-source-change-review";
 import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
@@ -211,20 +212,26 @@ export function SemanticHtmlWorkspace({
             spellCheck={false}
           />
           {isSignedIn ? (
-            <LessonStarterRestore
-              disabled={saveState === "saving"}
-              isStarterLoaded={editorHtml === SEMANTIC_HTML_STARTER}
-              onRestore={() => {
-                htmlRef.current = SEMANTIC_HTML_STARTER;
-                setHtml(SEMANTIC_HTML_STARTER);
-                dismissRecoveredDraft();
-                preserveDraft(SEMANTIC_HTML_STARTER);
-                setSaveState("unsaved");
-                setMessage(
-                  "Lesson starter restored in the editor. Your saved result and checks have not changed.",
-                );
-              }}
-            />
+            <>
+              <LessonStarterRestore
+                disabled={saveState === "saving"}
+                isStarterLoaded={editorHtml === SEMANTIC_HTML_STARTER}
+                onRestore={() => {
+                  htmlRef.current = SEMANTIC_HTML_STARTER;
+                  setHtml(SEMANTIC_HTML_STARTER);
+                  dismissRecoveredDraft();
+                  preserveDraft(SEMANTIC_HTML_STARTER);
+                  setSaveState("unsaved");
+                  setMessage(
+                    "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+                  );
+                }}
+              />
+              <SourceChangeReview
+                currentSource={editorHtml}
+                starterSource={SEMANTIC_HTML_STARTER}
+              />
+            </>
           ) : null}
         </div>
 

@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { getSourceChangeReview } from "@/lib/source-change-review";
 
-export function GuidedSourceChangeReview({
+export function SourceChangeReview({
   currentSource,
   starterSource,
 }: {
@@ -70,3 +70,5 @@ export function GuidedSourceChangeReview({
     </details>
   );
 }
+
+export const GuidedSourceChangeReview = SourceChangeReview;

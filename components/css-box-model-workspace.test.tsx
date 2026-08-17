@@ -48,6 +48,9 @@ describe("CssBoxModelWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Review changes from starter"),
+    ).not.toBeInTheDocument();
   });
 
   it("recovers the exact local CSS after sign-in", async () => {
@@ -257,6 +260,31 @@ describe("CssBoxModelWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reviews signed-in CSS changes from the authored starter without saving", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Card CSS"), {
+      target: { value: `${CSS_BOX_MODEL_STARTER}\n/* explain the width */` },
+    });
+    fireEvent.click(screen.getByText("Review changes from starter"));
+
+    expect(screen.getByText("1 added")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Changes from the authored starter" }),
+    ).toHaveTextContent("/* explain the width */");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
