@@ -386,6 +386,12 @@ describe("PracticePage progress", () => {
       screen.getByRole("heading", { name: "Search patterns" }),
     ).toBeInTheDocument();
     expect(
+      screen.getAllByText("Stage progress · 1 of 3 Accepted"),
+    ).toHaveLength(2);
+    expect(
+      screen.getAllByText("Stage progress · 0 of 3 Accepted"),
+    ).toHaveLength(2);
+    expect(
       screen.getByRole("link", { name: "All 12" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
@@ -514,6 +520,9 @@ describe("PracticePage progress", () => {
     expect(
       document.querySelector('[href="/practice/even-or-odd"]'),
     ).not.toHaveClass("problem-row");
+    expect(
+      screen.getAllByText("Stage progress · 1 of 3 Accepted"),
+    ).toHaveLength(2);
     expect(
       screen.getByRole("link", { name: "Continue at step 2 of 12" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
@@ -673,6 +682,7 @@ describe("PracticePage progress", () => {
       screen.queryByRole("heading", { name: "Choose the skill you need next." }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Accepted 0 of 12")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Stage progress/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start step 1 of 12" }),
     ).toHaveAttribute("href", "/practice/sum-two-numbers");

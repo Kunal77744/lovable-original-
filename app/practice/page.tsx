@@ -342,18 +342,28 @@ export default async function PracticePage({
       href: "/practice?status=accepted",
     },
   ];
-  const visibleProblemGroups = CODING_PROBLEM_GROUPS.map((group) => ({
-    ...group,
-    problems: CODING_PROBLEMS.filter(
+  const visibleProblemGroups = CODING_PROBLEM_GROUPS.map((group) => {
+    const stageProblems = CODING_PROBLEMS.filter(
       (problem) =>
         problem.number >= group.firstProblem &&
-        problem.number <= group.lastProblem &&
-        (catalogStatus === "all" ||
+        problem.number <= group.lastProblem,
+    );
+
+    return {
+      ...group,
+      acceptedCount: stageProblems.filter((problem) =>
+        completedSlugs.has(problem.slug),
+      ).length,
+      totalCount: stageProblems.length,
+      problems: stageProblems.filter(
+        (problem) =>
+          catalogStatus === "all" ||
           (catalogStatus === "accepted"
             ? completedSlugs.has(problem.slug)
-            : !completedSlugs.has(problem.slug))),
-    ),
-  })).filter((group) => group.problems.length > 0);
+            : !completedSlugs.has(problem.slug)),
+      ),
+    };
+  }).filter((group) => group.problems.length > 0);
   const visibleProblemCount = visibleProblemGroups.reduce(
     (count, group) => count + group.problems.length,
     0,
@@ -559,10 +569,18 @@ export default async function PracticePage({
                         <h3 id={`problem-group-${group.key}`}>{group.label}</h3>
                         <p>{group.description}</p>
                       </div>
-                      <span>
-                        {String(group.firstProblem).padStart(2, "0")}–
-                        {String(group.lastProblem).padStart(2, "0")}
-                      </span>
+                      <div className="problem-group-meta">
+                        <span>
+                          {String(group.firstProblem).padStart(2, "0")}–
+                          {String(group.lastProblem).padStart(2, "0")}
+                        </span>
+                        {session ? (
+                          <span className="problem-group-progress">
+                            Stage progress · {group.acceptedCount} of{" "}
+                            {group.totalCount} Accepted
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="problem-table" role="list">
                       {group.problems.map((problem) => {
