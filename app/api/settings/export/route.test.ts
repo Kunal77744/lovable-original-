@@ -89,6 +89,7 @@ describe("GET /api/settings/export", () => {
         feedback: [],
         guidedExerciseProgress: [],
         guidedExerciseDrafts: [],
+        guidedExerciseAttemptNotes: [],
         readinessResults: [],
         mixedReviews: [],
       },

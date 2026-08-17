@@ -426,7 +426,15 @@ export function JavaScriptFunctionsScopeLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
-            <GuidedCheckResults results={checkResults} />
+            <GuidedCheckResults
+              results={checkResults}
+              attemptNote={{
+                labSlug: "functions",
+                exerciseId: exercise.slug,
+                showEmpty:
+                  checkState.kind === "failed" || checkState.kind === "error",
+              }}
+            />
             <GuidedRuntimeErrorNavigation
               currentSource={code}
               editorId="function-lab-code"

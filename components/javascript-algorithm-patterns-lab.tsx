@@ -427,7 +427,15 @@ export function JavaScriptAlgorithmPatternsLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
-            <GuidedCheckResults results={checkResults} />
+            <GuidedCheckResults
+              results={checkResults}
+              attemptNote={{
+                labSlug: "algorithm-patterns",
+                exerciseId: exercise.slug,
+                showEmpty:
+                  checkState.kind === "failed" || checkState.kind === "error",
+              }}
+            />
             <GuidedRuntimeErrorNavigation
               currentSource={code}
               editorId="algorithm-patterns-code"

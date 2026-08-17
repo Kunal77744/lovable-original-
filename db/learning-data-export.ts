@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { getDatabase } from "./index";
 import {
   codingLabExerciseDraft,
+  codingLabExerciseNote,
   codingLabExerciseProgress,
   codingPracticeGoal,
   codingProblemBookmark,
@@ -70,6 +71,7 @@ export async function getLearningDataExportForStudent(userId: string) {
     practiceFeedbackRows,
     guidedExerciseProgress,
     guidedExerciseDrafts,
+    guidedExerciseAttemptNotes,
     readinessResults,
     mixedReviewResults,
     cssProgress,
@@ -164,6 +166,10 @@ export async function getLearningDataExportForStudent(userId: string) {
       .where(eq(codingLabExerciseDraft.userId, userId)),
     database
       .select()
+      .from(codingLabExerciseNote)
+      .where(eq(codingLabExerciseNote.userId, userId)),
+    database
+      .select()
       .from(javascriptReadinessResult)
       .where(eq(javascriptReadinessResult.userId, userId)),
     database
@@ -218,6 +224,9 @@ export async function getLearningDataExportForStudent(userId: string) {
       feedback: withoutAccountScope(practiceFeedbackRows),
       guidedExerciseProgress: withoutAccountScope(guidedExerciseProgress),
       guidedExerciseDrafts: withoutAccountScope(guidedExerciseDrafts),
+      guidedExerciseAttemptNotes: withoutAccountScope(
+        guidedExerciseAttemptNotes,
+      ),
       readinessResults: withoutAccountScope(readinessResults),
       mixedReviews: withoutAccountScope(mixedReviewResults),
     },

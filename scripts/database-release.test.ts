@@ -36,7 +36,7 @@ describe("database release contract", () => {
       entries: Array<{ idx: number; tag: string }>;
     };
 
-    expect(journal.entries.slice(-7)).toEqual([
+    expect(journal.entries.slice(-8)).toEqual([
       expect.objectContaining({
         idx: 29,
         tag: "0029_timed-coding-challenge-results",
@@ -58,6 +58,10 @@ describe("database release contract", () => {
       expect.objectContaining({
         idx: 35,
         tag: "0035_css-spaced-review",
+      }),
+      expect.objectContaining({
+        idx: 36,
+        tag: "0036_guided-javascript-attempt-notes",
       }),
     ]);
     expect(timedMigration).toContain(
@@ -119,6 +123,32 @@ describe("database release contract", () => {
     );
     expect(exportSource).toMatch(
       /guidedExerciseDrafts:\s*withoutAccountScope\(guidedExerciseDrafts\)/,
+    );
+    expect(exportSource).toMatch(
+      /guidedExerciseAttemptNotes:\s*withoutAccountScope\(\s*guidedExerciseAttemptNotes,?\s*\)/,
+    );
+  });
+
+  it("adds and verifies private guided JavaScript attempt notes", async () => {
+    const [migration, releaseScript] = await Promise.all([
+      readFile(
+        path.join(root, "drizzle/0036_guided-javascript-attempt-notes.sql"),
+        "utf8",
+      ),
+      readFile(path.join(root, "scripts/database-release.mjs"), "utf8"),
+    ]);
+
+    expect(migration).toContain(
+      'CREATE TABLE IF NOT EXISTS "coding_lab_exercise_note"',
+    );
+    expect(migration).toContain(
+      'CREATE UNIQUE INDEX IF NOT EXISTS "coding_lab_note_user_lab_exercise_unique"',
+    );
+    expect(releaseScript).toMatch(
+      /coding_lab_exercise_note:\s*\[[\s\S]*?"lab_slug",[\s\S]*?"exercise_id",[\s\S]*?"content"/,
+    );
+    expect(releaseScript).toMatch(
+      /table_name in \([\s\S]*?'coding_lab_exercise_note'[\s\S]*?\)/,
     );
   });
 
