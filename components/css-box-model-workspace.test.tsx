@@ -1,6 +1,15 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CSS_BOX_MODEL_STARTER, gradeCssBoxModel } from "@/lib/css-box-model-practice";
+import {
+  CSS_BOX_MODEL_STARTER,
+  gradeCssBoxModel,
+} from "@/lib/css-box-model-practice";
 import { CssBoxModelWorkspace } from "./css-box-model-workspace";
 
 beforeEach(() => window.localStorage.clear());
@@ -30,7 +39,9 @@ describe("CssBoxModelWorkspace", () => {
     expect(
       screen.getByText(/create a free account to check and save this CSS/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: "Create account" }),
+    ).toHaveAttribute(
       "href",
       "/account?next=%2Flearn%2Fweb-development-foundations%2Fcss-selectors-box-model",
     );
@@ -66,7 +77,9 @@ describe("CssBoxModelWorkspace", () => {
     );
 
     expect(await screen.findByLabelText("Card CSS")).toHaveValue(localCss);
-    expect(screen.getByText(/browser draft restored after sign-in/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/browser draft restored after sign-in/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
@@ -111,7 +124,9 @@ describe("CssBoxModelWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Check and save CSS" }));
 
     await waitFor(() =>
-      expect(screen.getByText(/CSS and 4\/4 result are saved/i)).toBeInTheDocument(),
+      expect(
+        screen.getByText(/CSS and 4\/4 result are saved/i),
+      ).toBeInTheDocument(),
     );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lessons/css-selectors-box-model/workspace",
@@ -209,5 +224,39 @@ describe("CssBoxModelWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("restores the authored lesson starter without changing saved CSS checks", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss=".learning-card { padding: 32px; border: 1px solid; }"
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore lesson starter" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Restore starter" }));
+
+    expect(screen.getByLabelText("Card CSS")).toHaveValue(
+      CSS_BOX_MODEL_STARTER,
+    );
+    expect(
+      screen.getByText(
+        "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Changes not saved")).toBeInTheDocument();
+    expect(screen.getByText("Previous result")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

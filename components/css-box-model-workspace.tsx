@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
 import {
   buildCssBoxModelPreview,
+  CSS_BOX_MODEL_STARTER,
   MAX_CSS_PRACTICE_LENGTH,
   type CssPracticeCheck,
 } from "@/lib/css-box-model-practice";
@@ -55,17 +57,13 @@ export function CssBoxModelWorkspace({
         : "Saved practice restored. Revise the open checks and save again."
       : "Starter CSS is ready. Save when the card feels predictable.",
   );
-  const {
-    recoveredSource,
-    dismissRecoveredDraft,
-    preserveDraft,
-    clearDraft,
-  } = useLessonWorkspaceBrowserDraft({
-    lessonSlug,
-    initialSource: initialCss,
-    initiallySaved,
-    maxLength: MAX_CSS_PRACTICE_LENGTH,
-  });
+  const { recoveredSource, dismissRecoveredDraft, preserveDraft, clearDraft } =
+    useLessonWorkspaceBrowserDraft({
+      lessonSlug,
+      initialSource: initialCss,
+      initiallySaved,
+      maxLength: MAX_CSS_PRACTICE_LENGTH,
+    });
   const editorCss = recoveredSource ?? css;
   const recoveredBrowserDraft = recoveredSource !== null;
   const visibleMessage = recoveredBrowserDraft
@@ -134,14 +132,19 @@ export function CssBoxModelWorkspace({
       );
     } catch {
       setSaveState("error");
-      setMessage("The CSS could not be saved. Check your connection and try again.");
+      setMessage(
+        "The CSS could not be saved. Check your connection and try again.",
+      );
     } finally {
       setIsSaving(false);
     }
   }
 
   return (
-    <section className="lesson-workspace css-practice-workspace" id="css-practice">
+    <section
+      className="lesson-workspace css-practice-workspace"
+      id="css-practice"
+    >
       <header className="workspace-heading">
         <div>
           <p className="quiz-kicker">Saved practice · CSS box model</p>
@@ -153,8 +156,8 @@ export function CssBoxModelWorkspace({
           <div className="assignment-outcome">
             <span>Expected outcome</span>
             <strong>
-              One 280px learning card that passes all four selector and box-model
-              checks.
+              One 280px learning card that passes all four selector and
+              box-model checks.
             </strong>
           </div>
         </div>
@@ -213,6 +216,22 @@ export function CssBoxModelWorkspace({
             maxLength={MAX_CSS_PRACTICE_LENGTH}
             spellCheck={false}
           />
+          {isSignedIn ? (
+            <LessonStarterRestore
+              disabled={isSaving}
+              isStarterLoaded={editorCss === CSS_BOX_MODEL_STARTER}
+              onRestore={() => {
+                latestCss.current = CSS_BOX_MODEL_STARTER;
+                setCss(CSS_BOX_MODEL_STARTER);
+                dismissRecoveredDraft();
+                preserveDraft(CSS_BOX_MODEL_STARTER);
+                setSaveState("unsaved");
+                setMessage(
+                  "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+                );
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="workspace-preview">
@@ -278,10 +297,14 @@ export function CssBoxModelWorkspace({
               />
             ) : null}
           </div>
-          <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
+          <p
+            className={saveState === "error" ? "is-error" : ""}
+            aria-live="polite"
+          >
             {visibleMessage}
             {!isSignedIn &&
-            (recoveredBrowserDraft || message.startsWith("Create a free account")) ? (
+            (recoveredBrowserDraft ||
+              message.startsWith("Create a free account")) ? (
               <>
                 {" "}
                 <Link

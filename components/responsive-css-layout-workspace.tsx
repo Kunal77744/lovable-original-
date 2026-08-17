@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
 import {
   buildResponsiveCssPreview,
   MAX_RESPONSIVE_CSS_LENGTH,
+  RESPONSIVE_CSS_STARTER,
   type ResponsiveCssCheck,
 } from "@/lib/responsive-css-practice";
 
@@ -55,17 +57,13 @@ export function ResponsiveCssLayoutWorkspace({
         : "Saved practice restored. Revise the open checks and save again."
       : "Starter CSS is ready. Save when the cards adapt cleanly.",
   );
-  const {
-    recoveredSource,
-    dismissRecoveredDraft,
-    preserveDraft,
-    clearDraft,
-  } = useLessonWorkspaceBrowserDraft({
-    lessonSlug,
-    initialSource: initialCss,
-    initiallySaved,
-    maxLength: MAX_RESPONSIVE_CSS_LENGTH,
-  });
+  const { recoveredSource, dismissRecoveredDraft, preserveDraft, clearDraft } =
+    useLessonWorkspaceBrowserDraft({
+      lessonSlug,
+      initialSource: initialCss,
+      initiallySaved,
+      maxLength: MAX_RESPONSIVE_CSS_LENGTH,
+    });
   const editorCss = recoveredSource ?? css;
   const recoveredBrowserDraft = recoveredSource !== null;
   const visibleMessage = recoveredBrowserDraft
@@ -217,6 +215,22 @@ export function ResponsiveCssLayoutWorkspace({
             maxLength={MAX_RESPONSIVE_CSS_LENGTH}
             spellCheck={false}
           />
+          {isSignedIn ? (
+            <LessonStarterRestore
+              disabled={isSaving}
+              isStarterLoaded={editorCss === RESPONSIVE_CSS_STARTER}
+              onRestore={() => {
+                latestCss.current = RESPONSIVE_CSS_STARTER;
+                setCss(RESPONSIVE_CSS_STARTER);
+                dismissRecoveredDraft();
+                preserveDraft(RESPONSIVE_CSS_STARTER);
+                setSaveState("unsaved");
+                setMessage(
+                  "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+                );
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="workspace-preview">
@@ -288,7 +302,8 @@ export function ResponsiveCssLayoutWorkspace({
           >
             {visibleMessage}
             {!isSignedIn &&
-            (recoveredBrowserDraft || message.startsWith("Create a free account")) ? (
+            (recoveredBrowserDraft ||
+              message.startsWith("Create a free account")) ? (
               <>
                 {" "}
                 <Link

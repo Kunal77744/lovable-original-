@@ -121,10 +121,46 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     expect(await screen.findByLabelText("Responsive layout CSS")).toHaveValue(
       completedCss,
     );
-    expect(screen.getByText(/browser draft restored after sign-in/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/browser draft restored after sign-in/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Draft")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("restores the authored lesson starter without changing saved layout checks", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={completedCss}
+        initialChecks={gradeResponsiveCss(completedCss)}
+        initiallySaved
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore lesson starter" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Restore starter" }));
+
+    expect(screen.getByLabelText("Responsive layout CSS")).toHaveValue(
+      RESPONSIVE_CSS_STARTER,
+    );
+    expect(
+      screen.getByText(
+        "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Changes not saved")).toBeInTheDocument();
+    expect(screen.getByText("Previous result")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .css" }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
