@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SourceChangeReview } from "@/components/guided-source-change-review";
 import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
@@ -216,20 +217,26 @@ export function ResponsiveCssLayoutWorkspace({
             spellCheck={false}
           />
           {isSignedIn ? (
-            <LessonStarterRestore
-              disabled={isSaving}
-              isStarterLoaded={editorCss === RESPONSIVE_CSS_STARTER}
-              onRestore={() => {
-                latestCss.current = RESPONSIVE_CSS_STARTER;
-                setCss(RESPONSIVE_CSS_STARTER);
-                dismissRecoveredDraft();
-                preserveDraft(RESPONSIVE_CSS_STARTER);
-                setSaveState("unsaved");
-                setMessage(
-                  "Lesson starter restored in the editor. Your saved result and checks have not changed.",
-                );
-              }}
-            />
+            <>
+              <LessonStarterRestore
+                disabled={isSaving}
+                isStarterLoaded={editorCss === RESPONSIVE_CSS_STARTER}
+                onRestore={() => {
+                  latestCss.current = RESPONSIVE_CSS_STARTER;
+                  setCss(RESPONSIVE_CSS_STARTER);
+                  dismissRecoveredDraft();
+                  preserveDraft(RESPONSIVE_CSS_STARTER);
+                  setSaveState("unsaved");
+                  setMessage(
+                    "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+                  );
+                }}
+              />
+              <SourceChangeReview
+                currentSource={editorCss}
+                starterSource={RESPONSIVE_CSS_STARTER}
+              />
+            </>
           ) : null}
         </div>
 

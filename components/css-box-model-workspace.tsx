@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SourceChangeReview } from "@/components/guided-source-change-review";
 import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
@@ -217,20 +218,26 @@ export function CssBoxModelWorkspace({
             spellCheck={false}
           />
           {isSignedIn ? (
-            <LessonStarterRestore
-              disabled={isSaving}
-              isStarterLoaded={editorCss === CSS_BOX_MODEL_STARTER}
-              onRestore={() => {
-                latestCss.current = CSS_BOX_MODEL_STARTER;
-                setCss(CSS_BOX_MODEL_STARTER);
-                dismissRecoveredDraft();
-                preserveDraft(CSS_BOX_MODEL_STARTER);
-                setSaveState("unsaved");
-                setMessage(
-                  "Lesson starter restored in the editor. Your saved result and checks have not changed.",
-                );
-              }}
-            />
+            <>
+              <LessonStarterRestore
+                disabled={isSaving}
+                isStarterLoaded={editorCss === CSS_BOX_MODEL_STARTER}
+                onRestore={() => {
+                  latestCss.current = CSS_BOX_MODEL_STARTER;
+                  setCss(CSS_BOX_MODEL_STARTER);
+                  dismissRecoveredDraft();
+                  preserveDraft(CSS_BOX_MODEL_STARTER);
+                  setSaveState("unsaved");
+                  setMessage(
+                    "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+                  );
+                }}
+              />
+              <SourceChangeReview
+                currentSource={editorCss}
+                starterSource={CSS_BOX_MODEL_STARTER}
+              />
+            </>
           ) : null}
         </div>
 

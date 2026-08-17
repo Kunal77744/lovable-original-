@@ -48,6 +48,9 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Review changes from starter"),
+    ).not.toBeInTheDocument();
   });
 
   it("saves the exact responsive CSS and restores 4/4", async () => {
@@ -161,6 +164,31 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     expect(
       screen.queryByRole("button", { name: "Download saved .css" }),
     ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reviews signed-in layout changes from the authored starter without saving", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={RESPONSIVE_CSS_STARTER}
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Responsive layout CSS"), {
+      target: { value: `${RESPONSIVE_CSS_STARTER}\n/* test the next width */` },
+    });
+    fireEvent.click(screen.getByText("Review changes from starter"));
+
+    expect(screen.getByText("1 added")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Changes from the authored starter" }),
+    ).toHaveTextContent("/* test the next width */");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

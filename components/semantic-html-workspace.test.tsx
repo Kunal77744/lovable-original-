@@ -309,6 +309,35 @@ describe("SemanticHtmlWorkspace", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("reviews signed-in changes from the authored starter without submitting", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml={SEMANTIC_HTML_STARTER}
+        initialChecks={initialChecks}
+        initiallySaved={false}
+      />,
+    );
+
+    expect(
+      screen.queryByText("Review changes from starter"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Semantic HTML"), {
+      target: { value: `${SEMANTIC_HTML_STARTER}\n<footer>Practice</footer>` },
+    });
+    fireEvent.click(screen.getByText("Review changes from starter"));
+
+    expect(screen.getByText("1 added")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Changes from the authored starter" }),
+    ).toHaveTextContent("<footer>Practice</footer>");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("keeps signed-out code local until the learner tries to submit", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -331,6 +360,9 @@ describe("SemanticHtmlWorkspace", () => {
     fireEvent.change(screen.getByLabelText("Semantic HTML"), {
       target: { value: "<main><article>Local work</article></main>" },
     });
+    expect(
+      screen.queryByText("Review changes from starter"),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Submit assignment" }));
 
     expect(fetchMock).not.toHaveBeenCalled();
