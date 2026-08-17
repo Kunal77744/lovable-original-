@@ -17,6 +17,16 @@ export type JavaScriptAlgorithmPatternExercise = {
   }[];
   recoveryCue: string;
   takeaway: string;
+  walkthrough: {
+    input: string;
+    steps: {
+      title: string;
+      detail: string;
+      stateLabel: string;
+      state: string[];
+      result?: string;
+    }[];
+  };
 };
 
 export const JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES: JavaScriptAlgorithmPatternExercise[] = [
@@ -53,8 +63,44 @@ function solve(input) {
     ],
     recoveryCue:
       "For each value, read its current count or start at zero, then store that count plus one. The query should only read the finished map.",
-    takeaway:
-      "A frequency map pays for one full pass, then answers repeated count questions with a direct lookup.",
+   takeaway:
+     "A frequency map pays for one full pass, then answers repeated count questions with a direct lookup.",
+    walkthrough: {
+      input: "pear | apple, pear, plum, pear",
+      steps: [
+        {
+          title: "Start with an empty map",
+          detail: "No value has been counted yet.",
+          stateLabel: "Counts",
+          state: ["empty"],
+        },
+        {
+          title: "Read apple",
+          detail: "Apple has no saved count, so start at zero and add one.",
+          stateLabel: "Counts",
+          state: ["apple → 1"],
+        },
+        {
+          title: "Read pear",
+          detail: "Pear also starts at one on its first visit.",
+          stateLabel: "Counts",
+          state: ["apple → 1", "pear → 1"],
+        },
+        {
+          title: "Read plum",
+          detail: "Each distinct word owns one entry in the map.",
+          stateLabel: "Counts",
+          state: ["apple → 1", "pear → 1", "plum → 1"],
+        },
+        {
+          title: "Read pear again",
+          detail: "Reuse pear's saved count and increase it from one to two.",
+          stateLabel: "Counts",
+          state: ["apple → 1", "pear → 2", "plum → 1"],
+          result: "The direct lookup for pear returns 2.",
+        },
+      ],
+    },
   },
   {
     slug: "meet-with-two-pointers",
@@ -92,8 +138,40 @@ function solve(input) {
     ],
     recoveryCue:
       "The values are sorted. A sum below the target needs a larger left value; a sum above it needs a smaller right value. Keep the pointers distinct.",
-    takeaway:
-      "Two pointers exploit sorted order by discarding one impossible end after every comparison.",
+   takeaway:
+     "Two pointers exploit sorted order by discarding one impossible end after every comparison.",
+    walkthrough: {
+      input: "target 11 | 1, 3, 4, 7, 9",
+      steps: [
+        {
+          title: "Compare both ends",
+          detail:
+            "1 + 9 is 10. The sum is too small, so the left value cannot help.",
+          stateLabel: "Pointers",
+          state: ["left 1", "right 9", "sum 10"],
+        },
+        {
+          title: "Move left inward",
+          detail:
+            "3 + 9 is 12. The sum is now too large, so discard the right value.",
+          stateLabel: "Pointers",
+          state: ["left 3", "right 9", "sum 12"],
+        },
+        {
+          title: "Move right inward",
+          detail: "3 + 7 is 10. Increase the sum by moving left again.",
+          stateLabel: "Pointers",
+          state: ["left 3", "right 7", "sum 10"],
+        },
+        {
+          title: "The pointers find the pair",
+          detail: "4 + 7 reaches the target exactly.",
+          stateLabel: "Pointers",
+          state: ["left 4", "right 7", "sum 11"],
+          result: "The search returns Yes after four comparisons.",
+        },
+      ],
+    },
   },
   {
     slug: "slide-a-fixed-window",
@@ -131,8 +209,40 @@ function solve(input) {
     ],
     recoveryCue:
       "When right enters, the value at right minus the window size leaves. Update the running sum before comparing it with the best seen sum.",
-    takeaway:
-      "A fixed sliding window reuses almost all previous work, so each new range costs one addition and one subtraction.",
+   takeaway:
+     "A fixed sliding window reuses almost all previous work, so each new range costs one addition and one subtraction.",
+    walkthrough: {
+      input: "window 3 | 2, 1, 5, 1, 3, 2",
+      steps: [
+        {
+          title: "Build the first window",
+          detail: "Add 2, 1, and 5 once. This becomes the first best sum.",
+          stateLabel: "Window",
+          state: ["2", "1", "5", "sum 8", "best 8"],
+        },
+        {
+          title: "Slide one place",
+          detail:
+            "Remove 2 and add 1. Reuse the previous total instead of summing all three values again.",
+          stateLabel: "Window",
+          state: ["1", "5", "1", "sum 7", "best 8"],
+        },
+        {
+          title: "A stronger window arrives",
+          detail: "Remove 1 and add 3. The new sum of nine becomes the best.",
+          stateLabel: "Window",
+          state: ["5", "1", "3", "sum 9", "best 9"],
+        },
+        {
+          title: "Finish the final slide",
+          detail:
+            "Remove 5 and add 2. The last sum is six, so the best stays nine.",
+          stateLabel: "Window",
+          state: ["1", "3", "2", "sum 6", "best 9"],
+          result: "The largest three-value window sums to 9.",
+        },
+      ],
+    },
   },
   {
     slug: "answer-with-prefix-sums",
@@ -172,7 +282,45 @@ function solve(input) {
     ],
     recoveryCue:
       "Start the prefix array with zero. The total through right is stored one position later, while prefix[left] is exactly the total before the range.",
-    takeaway:
-      "Prefix sums spend one pass preparing cumulative totals, then answer each inclusive range sum with two lookups and one subtraction.",
+   takeaway:
+     "Prefix sums spend one pass preparing cumulative totals, then answer each inclusive range sum with two lookups and one subtraction.",
+    walkthrough: {
+      input: "range 1–3 | 4, 2, 7, 1, 5",
+      steps: [
+        {
+          title: "Keep a zero before the list",
+          detail: "The leading zero represents the total before any value.",
+          stateLabel: "Prefix totals",
+          state: ["0"],
+        },
+        {
+          title: "Add 4",
+          detail: "Append the previous total plus the current value.",
+          stateLabel: "Prefix totals",
+          state: ["0", "4"],
+        },
+        {
+          title: "Add 2",
+          detail: "The first two values now total six.",
+          stateLabel: "Prefix totals",
+          state: ["0", "4", "6"],
+        },
+        {
+          title: "Add 7 and 1",
+          detail:
+            "Keep extending the cumulative totals through the requested right edge.",
+          stateLabel: "Prefix totals",
+          state: ["0", "4", "6", "13", "14"],
+        },
+        {
+          title: "Subtract the total before left",
+          detail:
+            "prefix[4] is 14 and prefix[1] is 4. Their difference isolates positions 1 through 3.",
+          stateLabel: "Range lookup",
+          state: ["14 through right", "− 4 before left", "= 10"],
+          result: "The inclusive range sum is 10.",
+        },
+      ],
+    },
   },
 ];

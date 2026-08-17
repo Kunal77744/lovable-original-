@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -6,7 +7,14 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getCodingRepairDrill } from "@/lib/coding-repair-drills";
 import type { CodingTestCase } from "@/lib/coding-test-cases";
+import {
+  getCodingDraftRecoveryKey,
+  parseCodingDraftRecovery,
+  serializeCodingDraftRecovery,
+} from "@/lib/coding-draft-recovery";
+import { MAX_CODING_SOLUTION_LENGTH } from "@/lib/coding-problems";
 import { CodingWorkspace } from "./coding-workspace";
 
 const runCodingSolution = vi.fn();
@@ -27,6 +35,12 @@ vi.mock("@/lib/product-analytics", () => ({
     capturePracticeFeedbackSubmitted(...args),
 }));
 
+const repairDrill = getCodingRepairDrill("sum-two-numbers");
+
+if (!repairDrill) {
+  throw new Error("Expected a repair drill for sum-two-numbers.");
+}
+
 const problem = {
   slug: "sum-two-numbers",
   title: "Sum two numbers",
@@ -36,32 +50,75 @@ const problem = {
     "Inspect the two input tokens before you add them. If either still behaves like text, arithmetic will not produce the intended total.",
     "Use one negative case and the zero case from your private tests. The same conversion and return path should handle both without a special branch.",
   ] as [string, string],
+  repairDrill,
   acceptedExplanation: {
     concept: "Parse text before arithmetic",
     whyItWorks:
       "Browser input arrives as text. Converting both tokens to numbers makes addition work for positive values, negatives, and zero.",
     commonMistake:
       'Adding the raw tokens joins strings, so "4" and "9" become "49" instead of 13.',
+    efficiency: {
+      time: "O(1)",
+      space: "O(1)",
+      explanation:
+        "A direct solution converts and adds exactly two values, so the amount of work and working memory stay constant.",
+    },
+  },
+  workedTrace: {
+    steps: [
+      "Split the input into the two text values 4 and 9.",
+      "Treat both values as numbers, then add them to get 13.",
+      "Return 13 so the result matches the expected output exactly.",
+    ] as [string, string, string],
   },
   starterCode: `function solve(input) {
   // Read the problem, use input, and return the exact output.
   return "";
 }`,
-  tests: [{ input: "4 9" }, { input: "-8 3" }, { input: "0 0" }, { input: "120 880" }],
-  example: {
-    input: "4 9",
-    expectedOutput: "13",
-  },
+  tests: [
+    { label: "Positive values", input: "4 9" },
+    { label: "Negative result", input: "-8 3" },
+    { label: "Zero values", input: "0 0" },
+    { label: "Larger total", input: "120 880" },
+  ],
+  examples: [
+    {
+      input: "4 9",
+      expectedOutput: "13",
+    },
+    {
+      input: "-8 3",
+      expectedOutput: "-5",
+    },
+  ],
 };
 
 function renderWorkspace({
+  attempts = [],
+  bestVerdict = null,
+  initialAcceptedCode = null,
+  initialCode = "function solve(input) { return input; }",
   initialCustomTestCases = [],
   initialPracticeFeedback = null,
+  hasSavedCode = false,
   isSignedIn = true,
   isPracticeFeedbackEligible = false,
   isReviewSession = false,
+  isCleanPractice = false,
   dailyChallengeDate = null,
+  browserRecoveryScope = "learner-a",
 }: {
+  attempts?: {
+    id: string;
+    verdict: string;
+    passedTests: number;
+    totalTests: number;
+    createdAt: string;
+    hasSource: boolean;
+  }[];
+  bestVerdict?: string | null;
+  initialAcceptedCode?: string | null;
+  initialCode?: string;
   initialCustomTestCases?: CodingTestCase[];
   initialPracticeFeedback?: {
     problemSlug: string;
@@ -69,21 +126,28 @@ function renderWorkspace({
     comment: string;
     updatedAt: string;
   } | null;
+  hasSavedCode?: boolean;
   isSignedIn?: boolean;
   isPracticeFeedbackEligible?: boolean;
   isReviewSession?: boolean;
+  isCleanPractice?: boolean;
   dailyChallengeDate?: string | null;
+  browserRecoveryScope?: string | null;
 } = {}) {
   return render(
     <CodingWorkspace
-      attempts={[]}
-      bestVerdict={null}
-      initialCode="function solve(input) { return input; }"
+      attempts={attempts}
+      bestVerdict={bestVerdict}
+      browserRecoveryScope={browserRecoveryScope}
+      initialCode={initialCode}
+      initialAcceptedCode={initialAcceptedCode}
       initialCustomTestCases={initialCustomTestCases}
       initialPracticeFeedback={initialPracticeFeedback}
+      hasSavedCode={hasSavedCode}
       isSignedIn={isSignedIn}
       isPracticeFeedbackEligible={isPracticeFeedbackEligible}
       isReviewSession={isReviewSession}
+      isCleanPractice={isCleanPractice}
       dailyChallengeDate={dailyChallengeDate}
       problem={problem}
     />,
@@ -109,13 +173,29 @@ function submissionResponse(
       isFirstAcceptedResult: verdict === "Accepted",
       dailyChallengeCompleted: false,
       dailyChallengeDate: null,
+      checks: problem.tests.map((test, index) => ({
+        label: test.label,
+        passed: index < passedTests,
+      })),
     }),
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
 }
 
+function createJavaScriptFile(name: string, source: string) {
+  const file = new File([source], name, { type: "text/javascript" });
+  Object.defineProperty(file, "text", {
+    configurable: true,
+    value: vi.fn().mockResolvedValue(source),
+  });
+  return file;
+}
+
 describe("CodingWorkspace", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    window.localStorage.clear();
+  });
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -123,6 +203,266 @@ describe("CodingWorkspace", () => {
     captureJavaScriptPracticeCompleted.mockReset();
     capturePracticeProblemAccepted.mockReset();
     capturePracticeFeedbackSubmitted.mockReset();
+    window.localStorage.clear();
+  });
+
+  it("labels a restored account draft as saved before the first submission", () => {
+    renderWorkspace({ hasSavedCode: true });
+
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved")).not.toBeInTheDocument();
+  });
+
+  it("keeps readable editor view preferences in this browser", async () => {
+    window.localStorage.setItem(
+      "lovable-original:judged-editor-view",
+      JSON.stringify({ fontSize: 17, wrapLines: false }),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByLabelText("JavaScript solution");
+    await waitFor(() => {
+      expect(editor).toHaveStyle({ fontSize: "17px", whiteSpace: "pre" });
+    });
+    expect(editor).toHaveAttribute("wrap", "off");
+    expect(screen.getByLabelText("Editor text size")).toHaveValue("17");
+    expect(screen.getByLabelText("Wrap lines")).not.toBeChecked();
+
+    fireEvent.change(screen.getByLabelText("Editor text size"), {
+      target: { value: "15" },
+    });
+    fireEvent.click(screen.getByLabelText("Wrap lines"));
+
+    expect(editor).toHaveStyle({ fontSize: "15px", whiteSpace: "pre-wrap" });
+    expect(editor).toHaveAttribute("wrap", "soft");
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          "lovable-original:judged-editor-view",
+        ) ?? "{}",
+      ),
+    ).toEqual({ fontSize: 15, wrapLines: true });
+  });
+
+  it("ignores malformed browser editor preferences", async () => {
+    window.localStorage.setItem(
+      "lovable-original:judged-editor-view",
+      JSON.stringify({ fontSize: 99, wrapLines: "sometimes" }),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+    await waitFor(() => {
+      expect(editor).toHaveStyle({ fontSize: "13px", whiteSpace: "pre-wrap" });
+    });
+    expect(editor).toHaveAttribute("wrap", "soft");
+  });
+
+  it("imports one local JavaScript file as normal unsaved editor work", async () => {
+    vi.useFakeTimers();
+    const importedCode = `function solve(input) {
+  return input.trim();
+}`;
+    const file = createJavaScriptFile("trim-input.js", importedCode);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(null, { status: 200 }),
+    );
+    renderWorkspace();
+
+    fireEvent.change(
+      screen.getByLabelText("Choose JavaScript file to import"),
+      { target: { files: [file] } },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(
+      screen.getByText("Import trim-input.js?"),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+
+    expect(editor).toHaveValue(importedCode);
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(0);
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "trim-input.js imported locally as editor work. Normal private autosave applies.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(
+      parseCodingDraftRecovery(
+        window.localStorage.getItem(
+          getCodingDraftRecoveryKey("learner-a", problem.slug),
+        ),
+      )?.code,
+    ).toBe(importedCode);
+    expect(runCodingSolution).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(700);
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `/api/practice/${problem.slug}`,
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: importedCode }),
+      }),
+    );
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("keeps the current editor untouched when a local import is cancelled", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    const initialCode = "function solve(input) { return input; }";
+
+    fireEvent.change(
+      screen.getByLabelText("Choose JavaScript file to import"),
+      {
+        target: {
+          files: [
+            createJavaScriptFile(
+              "replacement.js",
+              "function solve() { return 'replacement'; }",
+            ),
+          ],
+        },
+      },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(editor).toHaveValue(initialCode);
+    fireEvent.click(screen.getByRole("button", { name: "Keep editor" }));
+
+    expect(editor).toHaveValue(initialCode);
+    expect(
+      screen.getByText("Import cancelled. Your editor was not changed."),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+  });
+
+  it("rejects multiple, non-JavaScript, oversized, and empty file imports", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const input = screen.getByLabelText("Choose JavaScript file to import");
+    const editor = screen.getByLabelText("JavaScript solution");
+    const initialCode = "function solve(input) { return input; }";
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createJavaScriptFile("one.js", "return 1;"),
+          createJavaScriptFile("two.js", "return 2;"),
+        ],
+      },
+    });
+    expect(
+      screen.getByText("Choose one JavaScript file at a time."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createJavaScriptFile("notes.txt", "return 1;")] },
+    });
+    expect(screen.getByText("Choose a file ending in .js.")).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          createJavaScriptFile(
+            "too-large.js",
+            "x".repeat(MAX_CODING_SOLUTION_LENGTH + 1),
+          ),
+        ],
+      },
+    });
+    expect(
+      screen.getByText(
+        `Keep imported files to ${MAX_CODING_SOLUTION_LENGTH.toLocaleString()} bytes or fewer.`,
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.change(input, {
+      target: { files: [createJavaScriptFile("empty.js", "")] },
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByText(
+        "That file is empty. Choose a .js file with source code.",
+      ),
+    ).toBeInTheDocument();
+
+    expect(editor).toHaveValue(initialCode);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+  });
+
+  it("keeps imported clean-practice source local until deliberate submission", async () => {
+    vi.useFakeTimers();
+    const importedCode = "function solve() { return 'practice'; }";
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({ isCleanPractice: true });
+
+    fireEvent.change(
+      screen.getByLabelText("Choose JavaScript file to import"),
+      {
+        target: {
+          files: [createJavaScriptFile("clean-practice.js", importedCode)],
+        },
+      },
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Import file" }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(800);
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      importedCode,
+    );
+    expect(
+      screen.getByText(
+        "clean-practice.js imported as unsaved work. It stays local until you submit.",
+      ),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("keeps local file import unavailable while signed out", () => {
+    renderWorkspace({ isSignedIn: false });
+
+    expect(
+      screen.queryByRole("button", { name: "Import .js" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Choose JavaScript file to import"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the fresh scaffold without offering a destructive restore", () => {
@@ -144,6 +484,31 @@ describe("CodingWorkspace", () => {
     expect(
       screen.getByRole("button", { name: "Clean starter loaded" }),
     ).toBeDisabled();
+  });
+
+  it("keeps visible line numbers aligned with the learner editor", () => {
+    const { container } = renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    expect(editor).toHaveAttribute("wrap", "soft");
+
+    fireEvent.change(editor, {
+      target: { value: "const first = 1;\nconst second = 2;\nreturn first + second;" },
+    });
+
+    const gutter = container.querySelector(".code-editor-line-numbers");
+    expect(gutter).not.toBeNull();
+    expect(
+      Array.from(gutter?.querySelectorAll("span") ?? []).map(
+        (line) => line.textContent,
+      ),
+    ).toEqual(["1", "2", "3"]);
+
+    Object.defineProperty(editor, "scrollTop", {
+      configurable: true,
+      value: 44,
+    });
+    fireEvent.scroll(editor);
+    expect(gutter).toHaveStyle({ transform: "translateY(-44px)" });
   });
 
   it("opens the private source snapshot behind a saved verdict", () => {
@@ -220,6 +585,227 @@ describe("CodingWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("indents and outdents selected JavaScript without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    editor.setSelectionRange(0, 42);
+    fireEvent.keyDown(editor, { key: "Tab" });
+
+    expect(editor).toHaveValue("  function solve(input) { return input; }");
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint coding-editor-indentation-hint",
+    );
+    expect(
+      screen.getByText(
+        "Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds · Esc then Tab exits",
+      ),
+    ).toBeInTheDocument();
+
+    editor.setSelectionRange(2, 44);
+    fireEvent.keyDown(editor, { key: "Tab", shiftKey: true });
+
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("comments and uncomments selected JavaScript without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({ initialCode: "const input = 1;\nreturn input;" });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", ctrlKey: true });
+
+    expect(editor).toHaveValue("// const input = 1;\n// return input;");
+    expect(editor.selectionStart).toBe(3);
+    expect(editor.selectionEnd).toBe(36);
+
+    editor.setSelectionRange(0, editor.value.length);
+    fireEvent.keyDown(editor, { key: "/", metaKey: true });
+
+    expect(editor).toHaveValue("const input = 1;\nreturn input;");
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("applies smart pairs and indentation without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({ initialCode: "  return input;" });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    editor.setSelectionRange(9, 14);
+    fireEvent.keyDown(editor, { key: "(" });
+
+    expect(editor).toHaveValue("  return (input);");
+    expect(editor.selectionStart).toBe(10);
+    expect(editor.selectionEnd).toBe(15);
+
+    editor.setSelectionRange(17, 17);
+    fireEvent.keyDown(editor, { key: "{" });
+    expect(editor).toHaveValue("  return (input);{}");
+    expect(editor.selectionStart).toBe(18);
+
+    fireEvent.keyDown(editor, { key: "Backspace" });
+    expect(editor).toHaveValue("  return (input);");
+    expect(editor.selectionStart).toBe(17);
+
+    editor.setSelectionRange(15, 15);
+    fireEvent.keyDown(editor, { key: ")" });
+    expect(editor).toHaveValue("  return (input);");
+    expect(editor.selectionStart).toBe(16);
+
+    editor.setSelectionRange(10, 10);
+    fireEvent.keyDown(editor, { key: "Enter" });
+    expect(editor).toHaveValue("  return (\n  input);");
+    expect(editor.selectionStart).toBe(13);
+    expect(editor.selectionEnd).toBe(13);
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("leaves smart editing to the native textarea during composition or modifiers", () => {
+    renderWorkspace({ initialCode: "return input;" });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.setSelectionRange(7, 7);
+    expect(
+      fireEvent.keyDown(editor, {
+        key: "(",
+        ctrlKey: true,
+      }),
+    ).toBe(true);
+    expect(
+      fireEvent.keyDown(editor, {
+        key: "(",
+        isComposing: true,
+      }),
+    ).toBe(true);
+    expect(editor).toHaveValue("return input;");
+  });
+
+  it("finds repeated source text from the editor without running or submitting", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({
+      initialCode:
+        "function solve(input) {\n  const value = input.trim();\n  return value;\n}",
+    });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    editor.focus();
+    expect(
+      fireEvent.keyDown(editor, { key: "f", ctrlKey: true }),
+    ).toBe(false);
+
+    const findInput = screen.getByLabelText("Find");
+    expect(findInput).toHaveFocus();
+    fireEvent.change(findInput, { target: { value: "value" } });
+
+    expect(screen.getByText("1 of 2 matches")).toBeInTheDocument();
+    expect(editor.selectionStart).toBe(32);
+    expect(editor.selectionEnd).toBe(37);
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(63);
+    expect(editor.selectionEnd).toBe(68);
+    expect(screen.getByText("2 of 2 matches")).toBeInTheDocument();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("replaces one selected match as normal unsaved editor work", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace({
+      initialCode:
+        "function solve(input) {\n  const value = input.trim();\n  return value;\n}",
+    });
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Find" }),
+    );
+    fireEvent.change(screen.getByLabelText("Find"), {
+      target: { value: "value" },
+    });
+    fireEvent.change(screen.getByLabelText("Replace with"), {
+      target: { value: "answer" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replace match" }),
+    );
+
+    expect(editor).toHaveValue(
+      "function solve(input) {\n  const answer = input.trim();\n  return value;\n}",
+    );
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(32);
+    expect(editor.selectionEnd).toBe(38);
+    expect(screen.getByText("1 of 1 match")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("lets keyboard learners leave the editor after Escape", () => {
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+
+    editor.focus();
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
+    fireEvent.keyDown(editor, { key: "Escape" });
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(true);
+    expect(fireEvent.keyDown(editor, { key: "Tab" })).toBe(false);
+  });
+
+  it("opens a temporary focus view and exits it with Escape without changing learner work", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    const focusButton = screen.getByRole("button", { name: "Focus" });
+    const editorShell = editor.closest(".code-editor");
+
+    fireEvent.click(focusButton);
+
+    expect(editorShell).toHaveClass("is-focused");
+    expect(document.body).toHaveClass("editor-focus-active");
+    expect(
+      screen.getByRole("button", { name: "Exit focus" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByText(
+        "Focus view · Escape exits · Tab/Shift+Tab indent · Ctrl/⌘ / comments · Ctrl/⌘ F finds",
+      ),
+    ).toBeInTheDocument();
+    expect(editor).toHaveValue("function solve(input) { return input; }");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(editorShell).not.toHaveClass("is-focused");
+    expect(document.body).not.toHaveClass("editor-focus-active");
+    expect(screen.getByRole("button", { name: "Focus" })).toHaveFocus();
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("restores only the editor without saving a draft or adding an attempt", async () => {
     vi.useFakeTimers();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
@@ -261,6 +847,118 @@ describe("CodingWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("keeps a clean retry local and hides the saved answer until deliberate submission", async () => {
+    vi.useFakeTimers();
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn(() => true);
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const savedAcceptedCode =
+      "function solve(input) { return input.split(' ').map(Number).reduce((sum, value) => sum + value, 0); }";
+    const retryCode =
+      "function solve(input) { const [a, b] = input.split(' ').map(Number); return a + b; }";
+
+    try {
+      renderWorkspace({
+        attempts: [
+          {
+            id: "accepted-source",
+            verdict: "Accepted",
+            passedTests: 4,
+            totalTests: 4,
+            createdAt: "2026-08-09T10:00:00.000Z",
+            hasSource: true,
+          },
+        ],
+        bestVerdict: "Accepted",
+        initialAcceptedCode: savedAcceptedCode,
+        initialCode: problem.starterCode,
+        isCleanPractice: true,
+      });
+
+      const editor = screen.getByLabelText("JavaScript solution");
+      expect(editor).toHaveValue(problem.starterCode);
+      expect(editor).not.toHaveValue(savedAcceptedCode);
+      expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+      expect(screen.getByText("Practice copy")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Return to saved solution" }),
+      ).toHaveAttribute("href", "/practice/sum-two-numbers");
+      expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+      expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: "Review source for attempt 1" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", {
+          name: "Plan the behavior before the syntax.",
+        }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.change(editor, { target: { value: retryCode } });
+      fireEvent.blur(editor);
+      fireEvent(window, new Event("pagehide"));
+      await vi.advanceTimersByTimeAsync(800);
+
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(screen.getByText("Practice copy")).toBeInTheDocument();
+
+      vi.useRealTimers();
+      runCodingSolution.mockResolvedValue({
+        status: "finished",
+        outputs: ["13", "-5", "0", "1000"],
+        debugOutput: [],
+      });
+      fetchSpy.mockResolvedValue(submissionResponse("Accepted", 4));
+      fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+      await screen.findByText("Examples passed");
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"mode":"submit"'),
+        }),
+      );
+      expect(await screen.findByText("Private code review")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Review source for attempt 2" }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps a recovered browser draft out of clean retry mode", () => {
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      "function solve(input) { return 'anonymous'; }",
+    );
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isCleanPractice: true,
+      hasSavedCode: false,
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      problem.starterCode,
+    );
+    expect(screen.getByText("Clean practice copy")).toBeInTheDocument();
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
   it("opens the structured private planning stage before submission", () => {
     renderWorkspace();
 
@@ -277,24 +975,31 @@ describe("CodingWorkspace", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("runs a public example in the browser without saving", async () => {
+  it("runs every visible example in the browser without saving", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     runCodingSolution.mockResolvedValue({
       status: "finished",
-      outputs: ["13"],
+      outputs: ["13", "-5"],
       debugOutput: ["input 4 9", "numbers [4,9]"],
     });
 
     renderWorkspace({ isSignedIn: false });
 
-    const runButton = screen.getByRole("button", { name: "Run example" });
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const runButton = screen.getByRole("button", { name: "Run 2 examples" });
 
     expect(
-      screen.getByText("Keyboard: Tab to Run, then Enter"),
+      screen.getByText("Keyboard: Ctrl/⌘ + Enter to run"),
     ).toBeInTheDocument();
+    expect(editor).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint coding-editor-indentation-hint",
+    );
     expect(runButton).toHaveAttribute(
       "aria-describedby",
-      "run-example-keyboard-hint",
+      "coding-editor-keyboard-hint",
     );
     expect(
       screen.getByText(
@@ -302,15 +1007,25 @@ describe("CodingWorkspace", () => {
       ),
     ).toBeInTheDocument();
 
-    runButton.focus();
-    fireEvent.click(runButton);
+    editor.focus();
+    fireEvent.keyDown(editor, { key: "Enter", ctrlKey: true });
 
     const status = screen.getByRole("status");
-    expect(await screen.findByText("Example passed")).toBeInTheDocument();
+    expect(await screen.findByText("Examples passed")).toBeInTheDocument();
     expect(status).toHaveAttribute("aria-live", "polite");
     expect(status).toHaveAttribute("aria-atomic", "true");
     expect(status).toHaveTextContent(
-      "Example passedExample passed. Submit when you’re ready for all four checks.",
+      "Examples passed2 of 2 visible examples passed. Submit when you’re ready for all four checks.",
+    );
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      ["4 9", "-8 3"],
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 1Input4 9Your output13Expected13Matched",
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 2Input-8 3Your output-5Expected-5Matched",
     );
     expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
     expect(screen.getByText(/input 4 9\s+numbers \[4,9\]/)).toBeInTheDocument();
@@ -318,6 +1033,98 @@ describe("CodingWorkspace", () => {
     expect(screen.getByRole("link", { name: "Sign in to submit" })).toHaveAttribute(
       "href",
       expect.stringContaining("/account?mode=signin"),
+    );
+  });
+
+  it("submits from the editor with Command, Shift, and Enter", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      submissionResponse("Accepted", 4),
+    );
+
+    renderWorkspace();
+
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const submitButton = screen.getByRole("button", {
+      name: "Submit solution",
+    });
+
+    expect(
+      screen.getByText(
+        "Keyboard: Ctrl/⌘ + Enter to run · add Shift to submit",
+      ),
+    ).toBeInTheDocument();
+    expect(submitButton).toHaveAttribute(
+      "aria-describedby",
+      "coding-editor-keyboard-hint",
+    );
+
+    fireEvent.keyDown(editor, {
+      key: "Enter",
+      metaKey: true,
+      shiftKey: true,
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Accepted"),
+    );
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      "function solve(input) { return input; }",
+      problem.tests.map((test) => test.input),
+    );
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"mode":"submit"'),
+        }),
+      ),
+    );
+  });
+
+  it("keeps plain Enter and signed-out submit shortcuts inside the editor", () => {
+    renderWorkspace({ isSignedIn: false });
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+
+    fireEvent.keyDown(editor, { key: "Enter" });
+    fireEvent.keyDown(editor, {
+      key: "Enter",
+      ctrlKey: true,
+      shiftKey: true,
+    });
+
+    expect(runCodingSolution).not.toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Sign in to submit" })).toBeVisible();
+  });
+
+  it("shows which visible example differs before submission", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-4"],
+      debugOutput: [],
+    });
+
+    renderWorkspace({ isSignedIn: false });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+
+    expect(await screen.findByText("Examples differ")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 of 2 visible examples passed. Compare the differing output before you submit.",
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 1Input4 9Your output13Expected13Matched",
+    );
+    expect(screen.getByRole("list", { name: "Visible example results" })).toHaveTextContent(
+      "Example 2Input-8 3Your output-4Expected-5Mismatch",
     );
   });
 
@@ -334,14 +1141,339 @@ describe("CodingWorkspace", () => {
     fireEvent.change(editor, { target: { value: latestCode } });
     fireEvent.blur(editor);
 
-    expect(fetchSpy).toHaveBeenCalledWith(
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ mode: "draft", code: latestCode }),
+        }),
+      ),
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets a signed-in learner save an edited draft immediately", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ savedAt: "now" })));
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const latestCode = "function solve(input) { return input.trim(); }";
+
+    expect(
+      screen.queryByRole("button", { name: "Save now" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(editor, { target: { value: latestCode } });
+    const saveButton = screen.getByRole("button", { name: "Save now" });
+    fireEvent.blur(editor, { relatedTarget: saveButton });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fireEvent.click(saveButton);
+
+    await waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "/api/practice/sum-two-numbers",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ mode: "draft", code: latestCode }),
+        }),
+      ),
+    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(
+      screen.queryByRole("button", { name: "Save now" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("retries a failed draft save with the exact edited source", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ savedAt: "later" }), { status: 200 }),
+      );
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const latestCode = "function solve(input) { return Number(input); }";
+
+    fireEvent.change(editor, { target: { value: latestCode } });
+    fireEvent.blur(editor);
+
+    expect(
+      await screen.findByRole("button", { name: "Retry save" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry save" }));
+
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenLastCalledWith(
       "/api/practice/sum-two-numbers",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ mode: "draft", code: latestCode }),
       }),
     );
+  });
+
+  it("keeps manual draft saving private to signed-in learners", () => {
+    renderWorkspace({ isSignedIn: false });
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "JavaScript solution" }),
+      { target: { value: "function solve(input) { return input.trim(); }" } },
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /save now|retry save/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Local only")).toBeInTheDocument();
+  });
+
+  it("saves drafts in order before judging the exact submitted source", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["13", "-5", "0", "1000"],
+    });
+    let finishOlderDraft: ((response: Response) => void) | undefined;
+    const olderDraft = new Promise<Response>((resolve) => {
+      finishOlderDraft = resolve;
+    });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementationOnce(() => olderDraft)
+      .mockResolvedValueOnce(new Response(JSON.stringify({ savedAt: "later" })))
+      .mockResolvedValueOnce(submissionResponse("Accepted", 4));
+    renderWorkspace();
+    const editor = screen.getByRole("textbox", {
+      name: "JavaScript solution",
+    });
+    const olderCode = "function solve(input) { return 'older'; }";
+    const submittedCode = "function solve(input) { return 'newer'; }";
+
+    fireEvent.change(editor, { target: { value: olderCode } });
+    fireEvent.blur(editor);
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(editor, { target: { value: submittedCode } });
+    fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
+
+    expect(editor).toBeDisabled();
+    expect(runCodingSolution).not.toHaveBeenCalled();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    finishOlderDraft?.(new Response(JSON.stringify({ savedAt: "earlier" })));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(3));
+    expect(runCodingSolution).toHaveBeenCalledWith(
+      submittedCode,
+      problem.tests.map((test) => test.input),
+    );
+    expect(fetchSpy.mock.calls.map(([, options]) => options?.body)).toEqual([
+      JSON.stringify({ mode: "draft", code: olderCode }),
+      JSON.stringify({ mode: "draft", code: submittedCode }),
+      JSON.stringify({
+        mode: "submit",
+        code: submittedCode,
+        outputs: ["13", "-5", "0", "1000"],
+        dailyChallengeDate: null,
+      }),
+    ]);
+    await waitFor(() => expect(editor).not.toBeDisabled());
+  });
+
+  it("offers a newer account-scoped browser copy without replacing the private draft", async () => {
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    const recoveredCode =
+      "function solve(input) { return input.trim().toUpperCase(); }";
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCodingDraftRecovery(
+        recoveredCode,
+        "2026-08-12T18:00:00.000Z",
+      ),
+    );
+
+    renderWorkspace();
+
+    expect(
+      await screen.findByText("Newer work is available on this browser."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+    expect(
+      screen.getByText(/private saved solution is still loaded/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore browser draft" }),
+    );
+
+    const editor = screen.getByLabelText(
+      "JavaScript solution",
+    ) as HTMLTextAreaElement;
+    expect(editor).toHaveValue(recoveredCode);
+    expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Browser draft restored as unsaved work.",
+    );
+    expect(
+      parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+    ).toEqual(expect.objectContaining({ code: recoveredCode }));
+
+    editor.setSelectionRange(0, recoveredCode.length);
+    fireEvent.keyDown(editor, { key: "Tab" });
+
+    const indentedRecoveredCode = `  ${recoveredCode}`;
+    expect(editor).toHaveValue(indentedRecoveredCode);
+    expect(
+      parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+    ).toEqual(expect.objectContaining({ code: indentedRecoveredCode }));
+  });
+
+  it("keeps the private draft and removes an ignored browser copy", async () => {
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    window.localStorage.setItem(
+      recoveryKey,
+      serializeCodingDraftRecovery("function solve() { return 'old'; }"),
+    );
+
+    renderWorkspace();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep saved editor" }),
+    );
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+    expect(window.localStorage.getItem(recoveryKey)).toBeNull();
+    expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+  });
+
+  it("never reveals another account's browser recovery copy", async () => {
+    window.localStorage.setItem(
+      getCodingDraftRecoveryKey("learner-b", problem.slug),
+      serializeCodingDraftRecovery(
+        "function solve(input) { return 'other account'; }",
+      ),
+    );
+
+    renderWorkspace({ browserRecoveryScope: "learner-a" });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Browser recovery")).not.toBeInTheDocument();
+    });
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(
+      "function solve(input) { return input; }",
+    );
+  });
+
+  it("keeps a newer browser copy when an older private save returns late", async () => {
+    let resolveOlderSave: (response: Response) => void = () => undefined;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveOlderSave = resolve;
+        }),
+    );
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    renderWorkspace();
+    const editor = screen.getByLabelText("JavaScript solution");
+    const olderCode = "function solve(input) { return input.trim(); }";
+    const newerCode =
+      "function solve(input) { return input.trim().toUpperCase(); }";
+
+    fireEvent.change(editor, { target: { value: olderCode } });
+    fireEvent.blur(editor);
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    fireEvent.change(editor, { target: { value: newerCode } });
+
+    expect(
+      parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+    ).toEqual(expect.objectContaining({ code: newerCode }));
+
+    resolveOlderSave(new Response(JSON.stringify({ savedAt: "now" })));
+
+    await waitFor(() => {
+      expect(
+        parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+      ).toEqual(expect.objectContaining({ code: newerCode }));
+    });
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+  });
+
+  it("does not race a newer exit draft against an older private save", async () => {
+    const originalSendBeacon = navigator.sendBeacon;
+    const sendBeacon = vi.fn((url: string | URL, data?: BodyInit | null) => {
+      void url;
+      void data;
+      return true;
+    });
+    Object.defineProperty(navigator, "sendBeacon", {
+      configurable: true,
+      value: sendBeacon,
+    });
+    let resolveOlderSave: (response: Response) => void = () => undefined;
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveOlderSave = resolve;
+        }),
+    );
+    const recoveryKey = getCodingDraftRecoveryKey(
+      "learner-a",
+      problem.slug,
+    );
+    const olderCode = "function solve(input) { return input.trim(); }";
+    const newerCode =
+      "function solve(input) { return input.trim().toUpperCase(); }";
+
+    try {
+      renderWorkspace();
+      const editor = screen.getByLabelText("JavaScript solution");
+
+      fireEvent.change(editor, { target: { value: olderCode } });
+      fireEvent.blur(editor);
+      await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+
+      fireEvent.change(editor, { target: { value: newerCode } });
+      fireEvent(window, new Event("pagehide"));
+
+      expect(sendBeacon).not.toHaveBeenCalled();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(
+        parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+      ).toEqual(expect.objectContaining({ code: newerCode }));
+
+      resolveOlderSave(new Response(JSON.stringify({ savedAt: "now" })));
+
+      await waitFor(() =>
+        expect(screen.getByText("Unsaved")).toBeInTheDocument(),
+      );
+      expect(
+        parseCodingDraftRecovery(window.localStorage.getItem(recoveryKey)),
+      ).toEqual(expect.objectContaining({ code: newerCode }));
+    } finally {
+      Object.defineProperty(navigator, "sendBeacon", {
+        configurable: true,
+        value: originalSendBeacon,
+      });
+    }
   });
 
   it("queues the exact pending draft when the learner leaves immediately", async () => {
@@ -414,6 +1546,17 @@ describe("CodingWorkspace", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
       expect(sendBeacon).not.toHaveBeenCalled();
       expect(screen.getByText("Local only")).toBeInTheDocument();
+      expect(
+        window.localStorage.getItem(
+          "lovable-original:practice-draft:v1:sum-two-numbers",
+        ),
+      ).toBe("function solve(input) { return input.trim(); }");
+      expect(
+        screen.getByRole("link", { name: "Sign in to submit" }),
+      ).toHaveAttribute(
+        "href",
+        "/account?mode=signin&next=%2Fpractice%2Fsum-two-numbers",
+      );
     } finally {
       Object.defineProperty(navigator, "sendBeacon", {
         configurable: true,
@@ -422,10 +1565,87 @@ describe("CodingWorkspace", () => {
     }
   });
 
+  it("recovers a signed-out draft after sign-in without saving it automatically", async () => {
+    const localDraft =
+      "function solve(input) { return input.split(' ').map(Number).reduce((a, b) => a + b, 0); }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      localDraft,
+    );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isSignedIn: true,
+      hasSavedCode: false,
+    });
+
+    expect(await screen.findByLabelText("JavaScript solution")).toHaveValue(
+      localDraft,
+    );
+    expect(screen.getByText("Local draft recovered")).toBeInTheDocument();
+    expect(screen.getByText("Not saved to your account yet")).toBeInTheDocument();
+    expect(screen.getByText("Unsaved")).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("saves an explicitly recovered draft and removes the browser copy", async () => {
+    const localDraft = "function solve(input) { return '13'; }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      localDraft,
+    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ savedAt: "now" })));
+
+    renderWorkspace({
+      initialCode: problem.starterCode,
+      isSignedIn: true,
+      hasSavedCode: false,
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Save recovered draft" }),
+    );
+
+    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/practice/sum-two-numbers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ mode: "draft", code: localDraft }),
+      }),
+    );
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:practice-draft:v1:sum-two-numbers",
+      ),
+    ).toBeNull();
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
+  it("keeps account-owned code ahead of an anonymous browser draft", () => {
+    const accountCode = "function solve(input) { return Number(input); }";
+    window.localStorage.setItem(
+      "lovable-original:practice-draft:v1:sum-two-numbers",
+      "function solve(input) { return 'anonymous'; }",
+    );
+
+    renderWorkspace({
+      initialCode: accountCode,
+      isSignedIn: true,
+      hasSavedCode: true,
+    });
+
+    expect(screen.getByLabelText("JavaScript solution")).toHaveValue(accountCode);
+    expect(screen.queryByText("Local draft recovered")).not.toBeInTheDocument();
+  });
+
   it("runs editable custom input without saving an attempt", async () => {
     runCodingSolution.mockResolvedValue({
       status: "finished",
       outputs: ["42"],
+      debugOutput: ["tokens 19 23", "sum 42"],
     });
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
@@ -439,6 +1659,8 @@ describe("CodingWorkspace", () => {
 
     expect(await screen.findByText("Custom run")).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
+    expect(screen.getByText("Debug console · local only")).toBeInTheDocument();
+    expect(screen.getByText(/tokens 19 23\s+sum 42/)).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Custom input finished. Review the output before you submit.",
     );
@@ -447,9 +1669,146 @@ describe("CodingWorkspace", () => {
       ["19 23"],
     );
     expect(fetchSpy).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+    expect(capturePracticeFeedbackSubmitted).not.toHaveBeenCalled();
     expect(
       screen.getByText("No saved submissions yet. Your first verdict will appear here."),
     ).toBeInTheDocument();
+  });
+
+  it("keeps custom-input debug output visible after a runtime error", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "missingValue is not defined",
+      debugOutput: ["tokens 19 23", "before missing value"],
+    });
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Custom input"), {
+      target: { value: "19 23" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Run custom input" }));
+
+    expect(await screen.findByText("Runner stopped")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "missingValue is not defined",
+    );
+    expect(
+      screen.getByText(/tokens 19 23\s+before missing value/),
+    ).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(capturePracticeProblemAccepted).not.toHaveBeenCalled();
+    expect(captureJavaScriptPracticeCompleted).not.toHaveBeenCalled();
+    expect(capturePracticeFeedbackSubmitted).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("No saved submissions yet. Your first verdict will appear here."),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the exact editor location from a runtime error", async () => {
+    const source = [
+      "function solve(input) {",
+      "  const value = Number(input);",
+      "  return missingValue + value;",
+      "}",
+    ].join("\n");
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "Line 3, column 10: missingValue is not defined",
+      debugOutput: [],
+    });
+
+    renderWorkspace({ initialCode: source });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+    const openLine = await screen.findByRole("button", {
+      name: "Open line 3, column 10 in the editor",
+    });
+    fireEvent.click(openLine);
+
+    const editor = screen.getByLabelText<HTMLTextAreaElement>(
+      "JavaScript solution",
+    );
+    expect(editor).toHaveFocus();
+    expect(editor.selectionStart).toBe(source.indexOf("missingValue"));
+    expect(editor.selectionEnd).toBe(source.indexOf("missingValue"));
+  });
+
+  it("hides runtime navigation after the learner edits the failed source", async () => {
+    const source = [
+      "function solve(input) {",
+      "  return missingValue;",
+      "}",
+    ].join("\n");
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "Line 2, column 10: missingValue is not defined",
+      debugOutput: [],
+    });
+
+    renderWorkspace({ initialCode: source });
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+    expect(
+      await screen.findByRole("button", {
+        name: "Open line 2, column 10 in the editor",
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("JavaScript solution"), {
+      target: { value: `${source}\n` },
+    });
+
+    expect(
+      screen.queryByRole("button", { name: /Open line/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not offer editor navigation for a generic runner error", async () => {
+    runCodingSolution.mockResolvedValue({
+      status: "error",
+      message: "missingValue is not defined",
+      debugOutput: [],
+    });
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByRole("button", { name: "Run 2 examples" }));
+
+    expect(await screen.findByText("Runner stopped")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Open line/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps custom-input debug output within the visible runner bounds", async () => {
+    const oversizedLine = "x".repeat(520);
+    runCodingSolution.mockResolvedValue({
+      status: "finished",
+      outputs: ["42"],
+      debugOutput: [
+        oversizedLine,
+        ...Array.from({ length: 80 }, (_, index) => `line ${index + 2}`),
+      ],
+    });
+
+    renderWorkspace();
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.click(screen.getByRole("button", { name: "Run custom input" }));
+
+    const debugConsole = await screen.findByText("Debug console · local only");
+    const debugOutput = debugConsole.nextElementSibling;
+    const visibleLines = debugOutput?.textContent?.split("\n") ?? [];
+
+    expect(visibleLines).toHaveLength(80);
+    expect(visibleLines[0]).toBe(`${"x".repeat(500)}…`);
+    expect(visibleLines.at(-1)).toBe("line 80");
+    expect(screen.queryByText("line 81")).not.toBeInTheDocument();
   });
 
   it("restores private test cases without changing attempts or analytics", () => {
@@ -653,6 +2012,90 @@ describe("CodingWorkspace", () => {
     expect(screen.getByText("No saved cases yet. Try an input above, then save it here.")).toBeInTheDocument();
   });
 
+  it("keeps newer private test case edits unsaved when an older save finishes", async () => {
+    let finishFirstSave!: (response: Response) => void;
+    const firstSave = new Promise<Response>((resolve) => {
+      finishFirstSave = resolve;
+    });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(firstSave)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              cases: [{ input: "34 8", expectedOutput: "99" }],
+              updatedAt: "2026-08-04T10:01:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    renderWorkspace({
+      initialCustomTestCases: [{ input: "19 23", expectedOutput: "42" }],
+    });
+
+    fireEvent.click(screen.getByText("Try your own input"));
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
+      target: { value: "21 21" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText("Test case 1 input"), {
+      target: { value: "34 8" },
+    });
+    fireEvent.change(screen.getByLabelText("Expected output"), {
+      target: { value: "99" },
+    });
+
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("34 8");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("99");
+    const savingButtons = screen.getAllByRole("button", { name: "Saving…" });
+    expect(savingButtons).toHaveLength(2);
+    savingButtons.forEach((button) => expect(button).toBeDisabled());
+    expect(
+      screen.getByText(
+        "Saving your earlier test cases. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      finishFirstSave(
+        new Response(
+          JSON.stringify({
+            testCases: {
+              cases: [{ input: "21 21", expectedOutput: "42" }],
+              updatedAt: "2026-08-04T10:00:00.000Z",
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    });
+
+    expect(screen.getByLabelText("Test case 1 input")).toHaveValue("34 8");
+    expect(screen.getByLabelText("Expected output")).toHaveValue("99");
+    expect(
+      await screen.findByText(
+        "Your earlier test cases are saved. Your newer changes are still unsaved.",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByText("1 private test case saved.")).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "/api/practice/sum-two-numbers/test-cases",
+      expect.objectContaining({
+        body: JSON.stringify({
+          cases: [{ input: "34 8", expectedOutput: "99" }],
+        }),
+      }),
+    );
+  });
+
   it("keeps signed-out custom runs local and hides private saving controls", () => {
     renderWorkspace({ isSignedIn: false });
 
@@ -690,6 +2133,11 @@ describe("CodingWorkspace", () => {
       }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
     expect(screen.getByText("Practice progress · 1/12 accepted")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "What passed, and what needs work" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Positive values")).toBeInTheDocument();
+    expect(screen.getAllByText("Passed")).toHaveLength(4);
     expect(screen.getByText("Concept unlocked")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -697,8 +2145,27 @@ describe("CodingWorkspace", () => {
       }),
     ).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.whyItWorks);
+    expect(screen.getByText("Worked trace")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Follow the first example" }),
+    ).toBeInTheDocument();
+    for (const step of problem.workedTrace.steps) {
+      expect(status).toHaveTextContent(step);
+    }
+    expect(status).toHaveTextContent(
+      "This follows the public example above. It does not analyze your source or reveal a solution.",
+    );
     expect(screen.getByText("Common mistake")).toBeInTheDocument();
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Efficiency target")).toBeInTheDocument();
+    expect(screen.getByText("Time")).toBeInTheDocument();
+    expect(screen.getByText("Extra space")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      problem.acceptedExplanation.efficiency.explanation,
+    );
+    expect(status).toHaveTextContent(
+      "This is the target for a direct approach, not an analysis of your exact source.",
+    );
     expect(screen.getByText("Private code review")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -709,6 +2176,25 @@ describe("CodingWorkspace", () => {
     expect(screen.getByText("Checks proved")).toBeInTheDocument();
     expect(screen.getByText("Keep testing")).toBeInTheDocument();
     expect(screen.getByText("Only you")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open private problem debrief" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers/debrief");
+    expect(
+      screen.getByRole("heading", {
+        name: "Take your Accepted source with you",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download Accepted .js" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Experiment with an Accepted copy in the playground",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/playground?accepted_from=sum-two-numbers",
+    );
     expect(
       screen.getByRole("heading", {
         name: "Compare your plan with what passed.",
@@ -894,7 +2380,20 @@ describe("CodingWorkspace", () => {
     expect(status).toHaveClass("is-accepted");
     expect(status).toHaveTextContent("Accepted");
     expect(status).toHaveTextContent(problem.acceptedExplanation.commonMistake);
+    expect(screen.getByText("Efficiency target")).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      problem.acceptedExplanation.efficiency.explanation,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Follow the first example" }),
+    ).toBeInTheDocument();
+    for (const step of problem.workedTrace.steps) {
+      expect(status).toHaveTextContent(step);
+    }
     expect(screen.getByText("Private code review")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open private problem debrief" }),
+    ).toHaveAttribute("href", "/practice/sum-two-numbers/debrief");
     expect(status).toHaveTextContent(
       "Your source explicitly turns input text into numbers before adding the two values.",
     );
@@ -918,6 +2417,18 @@ describe("CodingWorkspace", () => {
     );
 
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+    expect(screen.queryByText("Worked trace")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open private problem debrief" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download Accepted .js" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: "Experiment with an Accepted copy in the playground",
+      }),
+    ).not.toBeInTheDocument();
     signedInView.unmount();
 
     render(
@@ -934,6 +2445,14 @@ describe("CodingWorkspace", () => {
     );
 
     expect(screen.queryByText("Private code review")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download Accepted .js" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: "Experiment with an Accepted copy in the playground",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("returns a learner who completes all 12 problems to the catalog", async () => {
@@ -1035,6 +2554,11 @@ describe("CodingWorkspace", () => {
       ),
     );
     expect(screen.getByText("Try this next")).toBeInTheDocument();
+    expect(screen.getByText("Positive values")).toBeInTheDocument();
+    expect(screen.getAllByText("Passed")).toHaveLength(3);
+    expect(screen.getByText("Needs work")).toBeInTheDocument();
+    expect(status).not.toHaveTextContent("4 9");
+    expect(status).not.toHaveTextContent("13");
     expect(
       screen.queryByRole("link", { name: "Return to refreshed review" }),
     ).not.toBeInTheDocument();
@@ -1056,8 +2580,36 @@ describe("CodingWorkspace", () => {
       screen.queryByRole("button", { name: /show .*hint/i }),
     ).not.toBeInTheDocument();
     expect(status).toHaveTextContent(
-      "All hints shown. Return to your code and try one change at a time.",
+      "All hints shown. Test the repair plan before changing your code.",
     );
+    expect(
+      screen.getByRole("heading", {
+        name: "Choose the behavior before editing the syntax.",
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: "Join the tokens into one piece of text",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(status).toHaveTextContent(
+      "Not yet.Focus on the type of each token, not their order.",
+    );
+
+    fireEvent.click(
+      screen.getByRole("radio", {
+        name: "Convert both tokens into numbers",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check repair" }));
+    expect(status).toHaveTextContent(
+      "Repair plan ready.Converting both tokens makes + perform arithmetic for positive, negative, and zero values.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Return to editor" }));
+    expect(screen.getByLabelText("JavaScript solution")).toHaveFocus();
 
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
@@ -1068,6 +2620,11 @@ describe("CodingWorkspace", () => {
     );
     expect(screen.queryByText(problem.recoveryHints[0])).not.toBeInTheDocument();
     expect(screen.queryByText(problem.recoveryHints[1])).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Choose the behavior before editing the syntax.",
+      }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Concept unlocked")).not.toBeInTheDocument();
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
@@ -1143,7 +2700,7 @@ describe("CodingWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit solution" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "JudgingRunning four deterministic checks in your browser…",
+      "JudgingRunning 4 deterministic checks in your browser…",
     );
     expect(screen.getByRole("button", { name: "Running checks…" })).toBeDisabled();
 

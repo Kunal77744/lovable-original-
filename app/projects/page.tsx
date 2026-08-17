@@ -7,7 +7,9 @@ import { getFirstCourseProgressSummary } from "@/db/course";
 import { getGuidedProjectSummary } from "@/db/guided-project";
 import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
 import { buildProjectPortfolio } from "@/lib/project-portfolio";
 import { SiteFooter, SiteNav } from "../site-chrome";
@@ -30,13 +32,21 @@ export default async function ProjectsPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects"));
   }
 
-  const [course, cssPractice, semanticHtml, javascript, htmlCss] =
+  const [
+    course,
+    cssPractice,
+    javascriptLabs,
+    semanticHtml,
+    javascript,
+    htmlCss,
+  ] =
     await Promise.all([
       getFirstCourseProgressSummary(session.user.id),
       getCssPracticeCatalogProgress(session.user.id),
+      getJavaScriptLabCatalogProgress(session.user.id),
       getGuidedProjectSummary(session.user.id, GUIDED_PROJECT_SLUG),
       getJavaScriptCapstoneSummary(session.user.id),
       getHtmlCssCapstoneSummary(session.user.id),
@@ -54,6 +64,13 @@ export default async function ProjectsPage() {
     cssCompletedCount: cssPractice.completedCount,
     cssTotalCount: cssPractice.totalCount,
     cssNextHref,
+    javascriptLabCompletedCount: javascriptLabs.completedCount,
+    javascriptLabTotalCount: javascriptLabs.totalCount,
+    javascriptLabNextHref: javascriptLabs.nextHref,
+    javascriptLabNextTitle:
+      javascriptLabs.nextLabTitle ?? "Guided JavaScript complete",
+    javascriptLabNextExerciseNumber:
+      javascriptLabs.nextExerciseNumber ?? 1,
     semanticHtml: semanticHtml ?? {
       state: "not-started",
       passedChecks: 0,

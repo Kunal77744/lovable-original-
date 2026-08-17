@@ -210,6 +210,21 @@ export default function WebDevelopmentFoundationsPage() {
               Every stage has one clear outcome. Start with the lesson, then use
               the quieter links to understand what comes next.
             </p>
+            <nav
+              className="course-answer-guides"
+              aria-label="Beginner concept answers"
+            >
+              <span>Start with a quick answer</span>
+              <Link href="/learn/why-use-semantic-html">
+                Why use semantic HTML?
+              </Link>
+              <Link href="/learn/what-is-the-css-box-model">
+                What is the CSS box model?
+              </Link>
+              <Link href="/learn/how-to-practice-javascript">
+                How should a beginner practice JavaScript?
+              </Link>
+            </nav>
           </div>
 
           <ol className="course-journey-steps">

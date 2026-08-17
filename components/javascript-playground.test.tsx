@@ -17,6 +17,23 @@ vi.mock("@/lib/coding-runner", () => ({
   runPlaygroundChecks: (...args: unknown[]) => runPlaygroundChecks(...args),
 }));
 
+function playgroundFiles(
+  code: string,
+  quickChecks = "",
+  updatedAt: string | null = null,
+) {
+  return [
+    {
+      id: "file-1",
+      name: "playground.js",
+      code,
+      quickChecks,
+      updatedAt,
+      isActive: true,
+    },
+  ];
+}
+
 describe("JavaScriptPlayground", () => {
   afterEach(cleanup);
 
@@ -37,9 +54,8 @@ describe("JavaScriptPlayground", () => {
     );
     render(
       <JavaScriptPlayground
-        initialCode="console.log('answer', 42);"
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles("console.log('answer', 42);")}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -69,9 +85,8 @@ describe("JavaScriptPlayground", () => {
   it("shows the existing keyboard shortcut beside the Run control", () => {
     render(
       <JavaScriptPlayground
-        initialCode="console.log('shortcut');"
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles("console.log('shortcut');")}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -81,6 +96,252 @@ describe("JavaScriptPlayground", () => {
     expect(actions).not.toBeNull();
     expect(actions).toContainElement(
       screen.getByRole("button", { name: "Run code" }),
+    );
+  });
+
+  it("creates the first private file without leaving a duplicate starter tab", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          file: {
+            id: "file-1",
+            name: "arrays.js",
+            code: "const topic = \"semantic HTML\";",
+            quickChecks: "",
+            updatedAt: "2026-08-13T03:30:00.000Z",
+            isActive: true,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    render(
+      <JavaScriptPlayground
+        initialFiles={[
+          {
+            ...playgroundFiles("const topic = \"semantic HTML\";")[0],
+            id: null,
+          },
+        ]}
+        initialActiveFileId={null}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "New file" }), {
+      target: { value: "arrays" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create file" }));
+
+    expect(await screen.findByRole("tab", { name: "arrays.js" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getAllByRole("tab")).toHaveLength(1);
+    expect(screen.getByText("1 of 6")).toBeInTheDocument();
+  });
+
+  it("switches, renames, and deletes an exact account-backed file", async () => {
+    const firstFile = playgroundFiles(
+      "console.log('first');",
+      "",
+      "2026-08-13T03:20:00.000Z",
+    )[0];
+    const secondFile = {
+      ...firstFile,
+      id: "file-2",
+      name: "arrays.js",
+      code: "console.log('arrays');",
+      isActive: false,
+    };
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ file: { ...secondFile, isActive: true } }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            file: { ...secondFile, name: "loops.js", isActive: true },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            deletedFileId: "file-2",
+            activeFile: { ...firstFile, isActive: true },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    render(
+      <JavaScriptPlayground
+        initialFiles={[firstFile, secondFile]}
+        initialActiveFileId="file-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "arrays.js" }));
+    expect(
+      await screen.findByDisplayValue("console.log('arrays');"),
+    ).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Current filename" }),
+      { target: { value: "loops" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Rename" }));
+    expect(await screen.findByRole("tab", { name: "loops.js" })).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete current file" }),
+    );
+    expect(
+      await screen.findByDisplayValue("console.log('first');"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "loops.js" })).not.toBeInTheDocument();
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      1,
+      "/api/playground",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ action: "activate", fileId: "file-2" }),
+      }),
+    );
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
+      3,
+      "/api/playground",
+      expect.objectContaining({
+        method: "DELETE",
+        body: JSON.stringify({ fileId: "file-2" }),
+      }),
+    );
+  });
+
+  it("loads an Accepted copy only after confirmation and keeps it unsaved", () => {
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('current playground');",
+          "currentCheck() === true",
+          "2026-08-13T01:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        acceptedTransfer={{
+          problemSlug: "even-or-odd",
+          problemTitle: "Even or odd",
+          source:
+            "function solve(input) { return Number(input) % 2 === 0 ? 'Even' : 'Odd'; }",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('current playground');",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("currentCheck() === true");
+    expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replace editor with copy" }),
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "function solve(input) { return Number(input) % 2 === 0 ? 'Even' : 'Odd'; }",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("");
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByText(/Loaded from Even or odd\./)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Return to problem" })).toHaveAttribute(
+      "href",
+      "/practice/even-or-odd",
+    );
+  });
+
+  it("keeps the current playground file when the Accepted copy is declined", () => {
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('keep me');",
+          "true",
+          "2026-08-13T01:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        acceptedTransfer={{
+          problemSlug: "sum-two-numbers",
+          problemTitle: "Sum two numbers",
+          source: "function solve(input) { return input; }",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep current file" }));
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "console.log('keep me');",
+    );
+    expect(screen.queryByText("Experiment beyond the judge")).not.toBeInTheDocument();
+    expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+  });
+
+  it("saves only the confirmed Accepted copy and cleared checks", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          file: {
+            ...playgroundFiles("function solve() {}", "", "2026-08-13T01:10:00.000Z")[0],
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+    const transferredSource =
+      "function solve(input) { return String(Number(input) * 2); }";
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('old');",
+          "oldCheck()",
+          "2026-08-13T01:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        acceptedTransfer={{
+          problemSlug: "double-a-number",
+          problemTitle: "Double a number",
+          source: transferredSource,
+        }}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replace editor with copy" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save file" }));
+
+    await waitFor(() =>
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/playground",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            fileId: "file-1",
+            code: transferredSource,
+            quickChecks: "",
+          }),
+        }),
+      ),
     );
   });
 
@@ -94,9 +355,10 @@ describe("JavaScriptPlayground", () => {
     });
     render(
       <JavaScriptPlayground
-        initialCode="const double = (value) => value * 2;"
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles(
+          "const double = (value) => value * 2;",
+        )}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -131,9 +393,10 @@ describe("JavaScriptPlayground", () => {
     });
     render(
       <JavaScriptPlayground
-        initialCode="const double = (value) => value * 2;"
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles(
+          "const double = (value) => value * 2;",
+        )}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -174,9 +437,8 @@ describe("JavaScriptPlayground", () => {
     runPlaygroundCode.mockResolvedValue(result);
     render(
       <JavaScriptPlayground
-        initialCode="while (true) {}"
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles("while (true) {}")}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -197,9 +459,11 @@ describe("JavaScriptPlayground", () => {
     );
     render(
       <JavaScriptPlayground
-        initialCode={exactCode}
-        initialQuickChecks={'double(4) === 8\ndouble(0) === 0'}
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles(
+          exactCode,
+          "double(4) === 8\ndouble(0) === 0",
+        )}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -217,6 +481,7 @@ describe("JavaScriptPlayground", () => {
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({
+            fileId: "file-1",
             code: exactCode,
             quickChecks: "double(4) === 8\ndouble(0) === 0",
           }),
@@ -229,9 +494,12 @@ describe("JavaScriptPlayground", () => {
         new Response(
           JSON.stringify({
             file: {
+              id: "file-1",
+              name: "playground.js",
               code: exactCode,
               quickChecks: "double(4) === 8\ndouble(0) === 0",
               updatedAt: "2026-07-27T03:02:00.000Z",
+              isActive: true,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
@@ -254,8 +522,12 @@ describe("JavaScriptPlayground", () => {
       new Response(
         JSON.stringify({
           file: {
+            id: "file-1",
+            name: "playground.js",
             code: newerVersion,
+            quickChecks: "",
             updatedAt: "2026-08-06T16:30:00.000Z",
+            isActive: true,
           },
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
@@ -263,9 +535,8 @@ describe("JavaScriptPlayground", () => {
     );
     render(
       <JavaScriptPlayground
-        initialCode={savedVersion}
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles(savedVersion)}
+        initialActiveFileId="file-1"
       />,
     );
 
@@ -282,8 +553,12 @@ describe("JavaScriptPlayground", () => {
         new Response(
           JSON.stringify({
             file: {
+              id: "file-1",
+              name: "playground.js",
               code: savedVersion,
+              quickChecks: "",
               updatedAt: "2026-08-06T16:29:00.000Z",
+              isActive: true,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
@@ -301,7 +576,11 @@ describe("JavaScriptPlayground", () => {
         "/api/playground",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ code: newerVersion, quickChecks: "" }),
+          body: JSON.stringify({
+            fileId: "file-1",
+            code: newerVersion,
+            quickChecks: "",
+          }),
         }),
       ),
     );
@@ -330,9 +609,8 @@ describe("JavaScriptPlayground", () => {
     save();
     render(
       <JavaScriptPlayground
-        initialCode="console.log('keep this exact code');"
-        initialQuickChecks=""
-        initialUpdatedAt={null}
+        initialFiles={playgroundFiles("console.log('keep this exact code');")}
+        initialActiveFileId="file-1"
       />,
     );
 

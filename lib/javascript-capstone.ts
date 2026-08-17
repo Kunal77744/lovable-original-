@@ -1,4 +1,5 @@
 import { normalizeCodingOutput } from "@/lib/coding-problems";
+import type { JavaScriptLabCatalogProgress } from "@/lib/javascript-lab-progress";
 
 export const JAVASCRIPT_CAPSTONE_SLUG = "javascript-expense-report";
 export const JAVASCRIPT_CAPSTONE_TITLE = "Expense report builder";
@@ -48,6 +49,25 @@ export type JavaScriptCapstoneRecord = {
   hasUnreviewedChanges: boolean;
   submission: JavaScriptCapstoneSubmission | null;
 };
+
+export type JavaScriptCapstoneSummary = {
+  state: "not-started" | "in-progress" | "completed";
+  passedChecks: number;
+};
+
+export function getJavaScriptCapstoneAccess(
+  summary: JavaScriptCapstoneSummary,
+  labProgress: JavaScriptLabCatalogProgress,
+) {
+  const guidedPathCompleted =
+    labProgress.completedCount >= labProgress.totalCount;
+  const existingProject = summary.state !== "not-started";
+
+  return {
+    available: existingProject || guidedPathCompleted,
+    continuationHref: labProgress.nextHref,
+  };
+}
 
 export const JAVASCRIPT_CAPSTONE_SAMPLE = {
   input: `Food | Lunch | 12.50

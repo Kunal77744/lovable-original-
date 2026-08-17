@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { PrintProjectDebriefButton } from "@/components/print-project-debrief-button";
 import { getJavaScriptCapstoneForStudent } from "@/db/javascript-capstone";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { JAVASCRIPT_CAPSTONE_TITLE } from "@/lib/javascript-capstone";
 import { SiteFooter, SiteNav } from "../../../site-chrome";
 
@@ -75,7 +76,7 @@ export default async function JavaScriptExpenseReportDebriefPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects/javascript-expense-report/debrief"));
   }
 
   const project = await getJavaScriptCapstoneForStudent(session.user.id);

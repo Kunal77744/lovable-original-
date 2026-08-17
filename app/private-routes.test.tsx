@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import sitemap from "./sitemap";
 import { metadata as certificateMetadata } from "./certificate/page";
+import { metadata as learningHistoryMetadata } from "./learning-history/page";
 import { metadata as activityMetadata } from "./practice/activity/page";
+import { metadata as bookmarksMetadata } from "./practice/bookmarks/page";
 import { metadata as challengeMetadata } from "./practice/challenge/page";
+import { metadata as javascriptCompletionRecordMetadata } from "./practice/completion-record/page";
 import { metadata as dataStructuresMetadata } from "./practice/data-structures/page";
 import { metadata as debuggingMetadata } from "./practice/debugging/page";
 import { metadata as domLabMetadata } from "./practice/dom/page";
@@ -56,6 +59,10 @@ describe("private learner routes", () => {
       index: false,
       follow: false,
     });
+    expect(learningHistoryMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
     expect(submissionsMetadata.robots).toEqual({
       index: false,
       follow: false,
@@ -86,7 +93,9 @@ describe("private learner routes", () => {
     });
     const privatePracticeMetadata = [
       activityMetadata,
+      bookmarksMetadata,
       challengeMetadata,
+      javascriptCompletionRecordMetadata,
       debuggingMetadata,
       foundationsMetadata,
       tracingMetadata,
@@ -123,6 +132,9 @@ describe("private learner routes", () => {
       "https://lovable-original-eight.vercel.app/certificate",
     );
     expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/learning-history",
+    );
+    expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/submissions",
     );
     expect(urls).not.toContain(
@@ -142,7 +154,9 @@ describe("private learner routes", () => {
     );
     const privatePracticePaths = [
       "activity",
+      "bookmarks",
       "challenge",
+      "completion-record",
       "debugging",
       "foundations",
       "tracing",

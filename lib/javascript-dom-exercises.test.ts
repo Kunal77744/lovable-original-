@@ -32,4 +32,21 @@ describe("JavaScript DOM exercises", () => {
       expect(exercise.takeaway).not.toContain("function ");
     }
   });
+
+  it("defines a complete DOM replay for every successful move", () => {
+    expect(
+      JAVASCRIPT_DOM_EXERCISES.map((exercise) => exercise.walkthrough.steps.length),
+    ).toEqual([3, 3, 3, 4]);
+
+    for (const exercise of JAVASCRIPT_DOM_EXERCISES) {
+      expect(exercise.walkthrough.title.length).toBeGreaterThan(20);
+      for (const step of exercise.walkthrough.steps) {
+        expect(step.label).toBeTruthy();
+        expect(step.command).toBeTruthy();
+        expect(step.pageMarkup).toContain("<");
+        expect(step.browserState).toBeTruthy();
+        expect(step.explanation.length).toBeGreaterThan(30);
+      }
+    }
+  });
 });

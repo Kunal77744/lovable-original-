@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getGuidedProjectStructure,
   gradeGuidedProject,
   GUIDED_PROJECT_STARTER,
   hasValidGuidedProjectHtml,
@@ -85,5 +86,39 @@ describe("guided project validation", () => {
     expect(hasValidGuidedProjectHtml(GUIDED_PROJECT_STARTER)).toBe(true);
     expect(hasValidGuidedProjectHtml("")).toBe(false);
     expect(hasValidGuidedProjectHtml("x".repeat(50_001))).toBe(false);
+  });
+});
+
+describe("getGuidedProjectStructure", () => {
+  it("turns the current landmarks and headings into a nested source-order outline", () => {
+    const structure = getGuidedProjectStructure(passingProject);
+
+    expect(structure.landmarkCount).toBe(7);
+    expect(structure.headingCount).toBe(3);
+    expect(structure.truncated).toBe(false);
+    expect(structure.items.map(({ tag, depth, label }) => ({ tag, depth, label }))).toEqual([
+      { tag: "header", depth: 0, label: null },
+      { tag: "main", depth: 0, label: null },
+      { tag: "article", depth: 1, label: null },
+      { tag: "h1", depth: 2, label: "How I structure an article" },
+      { tag: "section", depth: 2, label: null },
+      { tag: "h2", depth: 3, label: "Start with the outline" },
+      { tag: "section", depth: 2, label: null },
+      { tag: "h2", depth: 3, label: "Add supporting detail" },
+      { tag: "aside", depth: 2, label: null },
+      { tag: "footer", depth: 0, label: null },
+    ]);
+  });
+
+  it("keeps large or unfinished documents bounded and readable", () => {
+    const structure = getGuidedProjectStructure(
+      `<main><article><h1></h1>${"<section><h2>Long heading text that should remain bounded for the preview panel</h2></section>".repeat(20)}</article></main>`,
+    );
+
+    expect(structure.landmarkCount).toBe(22);
+    expect(structure.headingCount).toBe(21);
+    expect(structure.items).toHaveLength(24);
+    expect(structure.truncated).toBe(true);
+    expect(structure.items[2]?.label).toBe("Untitled heading");
   });
 });

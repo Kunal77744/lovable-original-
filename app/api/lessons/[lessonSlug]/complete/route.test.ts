@@ -70,9 +70,14 @@ describe("POST /api/lessons/[lessonSlug]/complete", () => {
     expect(saveResult).toHaveBeenCalledWith(
       "learner-a",
       "semantic-html",
-      75,
-      true,
+      {
+        score: 75,
+        correctCount: 3,
+        totalCount: 4,
+        passed: true,
+      },
     );
+    expect(JSON.stringify(saveResult.mock.calls)).not.toContain("incorrect");
     expect(JSON.stringify(payload)).not.toContain("correctChoiceId");
     expect(JSON.stringify(payload)).not.toContain("incorrect");
   });

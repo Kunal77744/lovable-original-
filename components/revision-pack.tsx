@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { FIRST_LESSON_REVISION } from "@/lib/first-course-content";
+import {
+  FIRST_LESSON,
+  FIRST_LESSON_REVISION,
+  getLessonRevision,
+} from "@/lib/first-course-content";
 
 type RevisionPackProps = {
   lessonSlug: string;
@@ -22,8 +26,9 @@ export function RevisionPack({
   lessonSlug,
   practiceHref,
 }: RevisionPackProps) {
-  const cards = FIRST_LESSON_REVISION.flashcards;
-  const mindMap = FIRST_LESSON_REVISION.mindMap;
+  const revision = getLessonRevision(lessonSlug) ?? FIRST_LESSON_REVISION;
+  const cards = revision.flashcards;
+  const mindMap = revision.mindMap;
   const [cardIndex, setCardIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [checkedCardIds, setCheckedCardIds] = useState<string[]>([]);
@@ -117,11 +122,11 @@ export function RevisionPack({
       <header className="revision-heading">
         <div>
           <p className="quiz-kicker">Revision pack</p>
-          <h3 id="revision-pack-title">{FIRST_LESSON_REVISION.title}</h3>
+          <h3 id="revision-pack-title">{revision.title}</h3>
         </div>
         <span>{cards.length} self-check cards</span>
       </header>
-      <p className="revision-intro">{FIRST_LESSON_REVISION.introduction}</p>
+      <p className="revision-intro">{revision.introduction}</p>
 
       <section
         className="revision-mind-map"
@@ -159,12 +164,10 @@ export function RevisionPack({
           <div className="mind-map-outline-heading">
             <div>
               <p className="quiz-kicker">Keyboard-readable outline</p>
-              <h5 id="mind-map-outline-title">
-                Trace the page from structure to self-check.
-              </h5>
+              <h5 id="mind-map-outline-title">{revision.outlineTitle}</h5>
             </div>
-            <a href="#semantic-workspace">
-              Return to your article
+            <a href={revision.workspaceLink.href}>
+              {revision.workspaceLink.label}
               <span aria-hidden="true">↑</span>
             </a>
           </div>
@@ -194,7 +197,7 @@ export function RevisionPack({
       </section>
 
       <ol className="revision-summary" aria-label="Lesson summary">
-        {FIRST_LESSON_REVISION.summary.map((item, index) => (
+        {revision.summary.map((item, index) => (
           <li key={item.label}>
             <span>{String(index + 1).padStart(2, "0")}</span>
             <div>
@@ -271,41 +274,46 @@ export function RevisionPack({
         </div>
       </div>
 
-      <div className="revision-project-bridge">
-        <div>
-          <p className="quiz-kicker">Guided project</p>
-          <h4>Turn the lesson into a complete field guide.</h4>
-          <p>
-            Build a longer semantic article, save the exact HTML to your
-            account, and revise it against a six-check review.
-          </p>
-        </div>
-        <nav
-          className="revision-project-actions"
-          aria-label="Continue after Web Development Foundations"
-        >
-          <Link
-            className="revision-project-primary"
-            href="/projects/semantic-html-article"
+      {lessonSlug === FIRST_LESSON.slug ? (
+        <div className="revision-project-bridge">
+          <div>
+            <p className="quiz-kicker">Guided project</p>
+            <h4>Turn the lesson into a complete field guide.</h4>
+            <p>
+              Build a longer semantic article, save the exact HTML to your
+              account, and revise it against a six-check review.
+            </p>
+          </div>
+          <nav
+            className="revision-project-actions"
+            aria-label="Continue after Web Development Foundations"
           >
-            Build the semantic HTML field guide
-            <span aria-hidden="true">→</span>
-          </Link>
-          {practiceHref ? (
-            <Link className="revision-practice-secondary" href={practiceHref}>
-              Continue to JavaScript practice
+            <Link
+              className="revision-project-primary"
+              href="/projects/semantic-html-article"
+            >
+              Build the semantic HTML field guide
               <span aria-hidden="true">→</span>
             </Link>
-          ) : null}
-          <Link
-            className="revision-practice-secondary"
-            href="/interview/javascript-fundamentals"
-          >
-            Practice JavaScript interview questions
-            <span aria-hidden="true">→</span>
-          </Link>
-        </nav>
-      </div>
+            {practiceHref ? (
+              <Link
+                className="revision-practice-secondary"
+                href={practiceHref}
+              >
+                Continue to JavaScript practice
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
+            <Link
+              className="revision-practice-secondary"
+              href="/interview/javascript-fundamentals"
+            >
+              Practice JavaScript interview questions
+              <span aria-hidden="true">→</span>
+            </Link>
+          </nav>
+        </div>
+      ) : null}
     </section>
   );
 }

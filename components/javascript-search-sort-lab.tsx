@@ -2,10 +2,30 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { runCodingSolution } from "@/lib/coding-runner";
 import {
-  JAVASCRIPT_SEARCH_SORT_EXERCISES,
-} from "@/lib/javascript-search-sort";
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
+import { runCodingSolution } from "@/lib/coding-runner";
+import { JAVASCRIPT_SEARCH_SORT_EXERCISES } from "@/lib/javascript-search-sort";
 import {
   getFirstIncompleteExerciseIndex,
   getNextIncompleteExerciseIndex,
@@ -17,7 +37,7 @@ type CheckState =
   | { kind: "running"; message: string }
   | { kind: "passed"; message: string }
   | { kind: "failed"; message: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; source?: string };
 
 const readyMessage =
   "Finish the search or sort step, then run three private browser checks.";
@@ -28,24 +48,50 @@ const exerciseIds = JAVASCRIPT_SEARCH_SORT_EXERCISES.map(
 
 export function JavaScriptSearchSortLab({
   completedExerciseIds = [],
+  initialDrafts = {},
+  browserRecoveryScope = null,
 }: {
   completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
 }) {
   const [exerciseIndex, setExerciseIndex] = useState(() =>
     getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
   );
   const exercise = JAVASCRIPT_SEARCH_SORT_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(
-    exercise?.starterCode ?? JAVASCRIPT_SEARCH_SORT_EXERCISES[0].starterCode,
-  );
+  const {
+    source: code,
+    state: draftState,
+    savedSource,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+    browserRecovery,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "search-sort",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_SEARCH_SORT_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_SEARCH_SORT_EXERCISES[0].starterCode,
+    initialDrafts,
+    browserRecoveryScope,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
   const [completedIds, setCompletedIds] = useState(
     () => new Set(completedExerciseIds),
   );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -54,27 +100,42 @@ export function JavaScriptSearchSortLab({
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
     );
 
     if (result.status !== "finished") {
-      setCheckState({ kind: "error", message: result.message });
+      setCheckState({ kind: "error", message: result.message, source: code });
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("search-sort", exercise.slug);
+      if (completedIds.has(exercise.slug)) {
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+
+      const saveResponse = await saveJavaScriptLabExercise(
+        "search-sort",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
@@ -95,10 +156,12 @@ export function JavaScriptSearchSortLab({
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
+    setCheckResults([]);
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -107,6 +170,7 @@ export function JavaScriptSearchSortLab({
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_SEARCH_SORT_EXERCISES[nextIndex];
 
@@ -116,8 +180,19 @@ export function JavaScriptSearchSortLab({
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
+    setCheckResults([]);
     setCheckState({ kind: "idle", message: readyMessage });
+  }
+
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_SEARCH_SORT_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
   }
 
   if (!exercise) {
@@ -130,7 +205,11 @@ export function JavaScriptSearchSortLab({
           4/4
         </div>
         <div>
-          <p className="eyebrow">Searching and sorting complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Searching and sorting review complete"
+              : "Searching and sorting complete"}
+          </p>
           <h2 id="search-sort-lab-complete-title">
             Find the right value without guessing the tool.
           </h2>
@@ -144,6 +223,10 @@ export function JavaScriptSearchSortLab({
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );
@@ -232,33 +315,62 @@ export function JavaScriptSearchSortLab({
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
+          <GuidedJavaScriptFileImport
+            key={`import-${exercise.slug}`}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckResults([]);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
           <label htmlFor="search-sort-lab-code">
             JavaScript searching and sorting code
           </label>
-          <textarea
+        <GuidedCodeEditor
             id="search-sort-lab-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
+          />
+
+          <GuidedStarterRestore
+            key={`restore-${exercise.slug}`}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
+          />
+          <GuidedLabExecutionHint />
 
           <div className="function-lab-actions">
-            <button
-              className="function-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="function-lab-run"
@@ -306,7 +418,23 @@ export function JavaScriptSearchSortLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
+            <GuidedRuntimeErrorNavigation
+              currentSource={code}
+              editorId="search-sort-lab-code"
+              failedSource={
+                checkState.kind === "error" ? checkState.source : undefined
+              }
+              message={checkState.message}
+            />
           </div>
+
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
 
           <p className="function-lab-privacy">
             Code and check output stay in this browser. Completed exercises save

@@ -51,6 +51,29 @@ describe("JavaScriptAlgorithmEfficiencyLab", () => {
     expect(screen.getByRole("button", { name: "Next decision" })).toBeInTheDocument();
   });
 
+  it("reveals browser-only growth comparison after the correct result saves", async () => {
+    render(<JavaScriptAlgorithmEfficiencyLab />);
+
+    expect(screen.queryByText("Watch the work separate.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: /Use the id key/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Check this approach" }));
+
+    expect(await screen.findByText("Watch the work separate.")).toBeInTheDocument();
+    expect(screen.getByLabelText("O(n²): 100 operations")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "10,000" }));
+
+    expect(screen.getByLabelText("O(log n): 14 operations")).toBeInTheDocument();
+    expect(screen.getByLabelText("O(n): 10,000 operations")).toBeInTheDocument();
+    expect(screen.getByLabelText("O(n²): 100,000,000 operations")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "10,000" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(saveJavaScriptLabExercise).toHaveBeenCalledTimes(1);
+  });
+
   it("completes all four decisions and offers judged practice next", async () => {
     render(<JavaScriptAlgorithmEfficiencyLab />);
 
@@ -93,6 +116,7 @@ describe("JavaScriptAlgorithmEfficiencyLab", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
     expect(screen.queryByText("Better growth")).not.toBeInTheDocument();
+    expect(screen.queryByText("Watch the work separate.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Check this approach" })).toBeEnabled();
   });
 });

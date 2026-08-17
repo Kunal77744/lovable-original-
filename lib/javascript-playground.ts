@@ -1,5 +1,7 @@
 export const MAX_PLAYGROUND_CODE_LENGTH = 20_000;
 export const MAX_PLAYGROUND_CHECKS = 6;
+export const MAX_PLAYGROUND_FILES = 6;
+export const MAX_PLAYGROUND_FILE_NAME_LENGTH = 32;
 export const MAX_PLAYGROUND_CHECK_LENGTH = 300;
 export const MAX_PLAYGROUND_CHECK_SOURCE_LENGTH =
   MAX_PLAYGROUND_CHECKS * MAX_PLAYGROUND_CHECK_LENGTH +
@@ -59,7 +61,65 @@ export function validatePlaygroundFile(payload: unknown) {
     }
   }
 
-  return { valid: true as const, code: codeResult.code, quickChecks };
+  const fileId =
+    typeof payload === "object" &&
+    payload !== null &&
+    "fileId" in payload &&
+    typeof payload.fileId === "string" &&
+    payload.fileId.length > 0
+      ? payload.fileId
+      : null;
+
+  return {
+    valid: true as const,
+    fileId,
+    code: codeResult.code,
+    quickChecks,
+  };
+}
+
+export function validatePlaygroundFileName(payload: unknown) {
+  const rawName =
+    typeof payload === "object" &&
+    payload !== null &&
+    "name" in payload &&
+    typeof payload.name === "string"
+      ? payload.name.trim().toLowerCase()
+      : "";
+  const name = rawName.endsWith(".js") ? rawName : `${rawName}.js`;
+
+  if (
+    name.length < 4 ||
+    name.length > MAX_PLAYGROUND_FILE_NAME_LENGTH ||
+    !/^[a-z][a-z0-9_-]*\.js$/.test(name)
+  ) {
+    return {
+      valid: false as const,
+      error:
+        "Use 1–29 lowercase letters, numbers, hyphens, or underscores, followed by .js.",
+    };
+  }
+
+  return { valid: true as const, name };
+}
+
+export function validatePlaygroundFileId(payload: unknown) {
+  const fileId =
+    typeof payload === "object" &&
+    payload !== null &&
+    "fileId" in payload &&
+    typeof payload.fileId === "string"
+      ? payload.fileId
+      : "";
+
+  if (fileId.length < 1 || fileId.length > 100) {
+    return {
+      valid: false as const,
+      error: "Choose a private JavaScript file and try again.",
+    };
+  }
+
+  return { valid: true as const, fileId };
 }
 
 export function validatePlaygroundChecks(input: string) {

@@ -42,6 +42,7 @@ describe("LessonQuiz analytics", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -70,6 +71,104 @@ describe("LessonQuiz analytics", () => {
     );
   });
 
+  it("restores exact unfinished choices for the signed-in learner", async () => {
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        version: 1,
+        questionSignature: JSON.stringify(
+          questions.map((question) => ({
+            id: question.id,
+            choiceIds: question.choices.map((choice) => choice.id),
+          })),
+        ),
+        answers: { q1: "b" },
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Second answer")).toBeChecked(),
+    );
+    expect(screen.getByLabelText("Third answer")).not.toBeChecked();
+    expect(
+      screen.getByText(
+        "Recovered your unfinished quiz choices in this browser.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "a stale question set",
+      {
+        version: 1,
+        questionSignature: "old-question-set",
+        answers: { q1: "a" },
+      },
+    ],
+    [
+      "a malformed choice",
+      {
+        version: 1,
+        questionSignature: JSON.stringify(
+          questions.map((question) => ({
+            id: question.id,
+            choiceIds: question.choices.map((choice) => choice.id),
+          })),
+        ),
+        answers: { q1: "not-an-authored-choice" },
+      },
+    ],
+  ])("rejects %s from browser recovery", async (_label, storedProgress) => {
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    window.localStorage.setItem(storageKey, JSON.stringify(storedProgress));
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).toBeNull(),
+    );
+    expect(screen.getByLabelText("First answer")).not.toBeChecked();
+    expect(
+      screen.queryByText(
+        "Recovered your unfinished quiz choices in this browser.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it("captures quiz completion after the result is saved without quiz content", async () => {
     render(
       <LessonQuiz
@@ -83,6 +182,7 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        studentScope="student-1"
       />,
     );
 
@@ -128,6 +228,12 @@ describe("LessonQuiz analytics", () => {
       screen.getByRole("link", { name: "Start revision" }),
     ).toHaveAttribute("href", "#revision-pack");
     expect(
+      screen.getByRole("link", { name: "Review quiz attempts" }),
+    ).toHaveAttribute(
+      "href",
+      "/courses/web-development-foundations/quiz-history",
+    );
+    expect(
       screen.getByRole("heading", { name: "Semantic HTML, compressed" }),
     ).toBeInTheDocument();
     expect(
@@ -138,6 +244,51 @@ describe("LessonQuiz analytics", () => {
         name: "Continue to JavaScript practice",
       }),
     ).toHaveAttribute("href", "/practice");
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html",
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps unfinished choices recoverable when grading does not save", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "The result could not be saved." }),
+      }),
+    );
+
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse={false}
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted={false}
+        initialScore={null}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).not.toBeNull(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(
+      await screen.findByText("The result could not be saved."),
+    ).toBeInTheDocument();
+    expect(window.localStorage.getItem(storageKey)).not.toBeNull();
   });
 
   it("shows the concept map when a saved completion is restored", () => {
@@ -172,6 +323,160 @@ describe("LessonQuiz analytics", () => {
         name: "Continue to JavaScript practice",
       }),
     ).toHaveAttribute("href", "/practice");
+  });
+
+  it("lets a completed learner retake the quiz without changing saved completion analytics", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          score: 50,
+          correctCount: 1,
+          totalCount: 2,
+          passed: false,
+          completed: true,
+          savedScore: 100,
+          review: [
+            {
+              questionId: "q1",
+              correct: true,
+              explanation: "The first concept is working.",
+            },
+            {
+              questionId: "q2",
+              correct: false,
+              explanation: "Revisit the second concept before retrying.",
+            },
+          ],
+        }),
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+        completedLessonsAfterPass={3}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Retake the quiz from memory." }),
+    ).toHaveFocus();
+    expect(
+      screen.getByText(/completed lesson and best score are safe/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Saved best:")).toHaveTextContent("Saved best: 100%");
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    fireEvent.click(screen.getByLabelText("Third answer"));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answers" }));
+
+    expect(
+      await screen.findByText(/this round was/i),
+    ).toHaveTextContent(
+      "This round was 50%. Your best score remains 100%, and your completed lesson stays complete.",
+    );
+    expect(screen.getByText("Revisit")).toBeInTheDocument();
+    expect(captureLearnerEventOnce).not.toHaveBeenCalled();
+    expect(captureLessonCompleted).not.toHaveBeenCalled();
+  });
+
+  it("keeps a completed retake separate from stale unfinished recovery", async () => {
+    const storageKey =
+      "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html";
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        version: 1,
+        questionSignature: JSON.stringify(
+          questions.map((question) => ({
+            id: question.id,
+            choiceIds: question.choices.map((choice) => choice.id),
+          })),
+        ),
+        answers: { q1: "b" },
+      }),
+    );
+
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+        studentScope="student-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).toBeNull(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    );
+
+    expect(screen.getByLabelText("Second answer")).not.toBeChecked();
+    expect(
+      screen.queryByText(
+        "Recovered your unfinished quiz choices in this browser.",
+      ),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("First answer"));
+    await waitFor(() =>
+      expect(window.localStorage.getItem(storageKey)).toContain('"q1":"a"'),
+    );
+  });
+
+  it("lets a completed learner leave a retake before grading", () => {
+    render(
+      <LessonQuiz
+        courseTitle="Web Development Foundations"
+        courseLessonCount={3}
+        completesCourse
+        courseSlug="web-development-foundations"
+        lessonSlug="semantic-html"
+        questions={questions}
+        passPercent={75}
+        initialCompleted
+        initialScore={100}
+        initialFeedback={null}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Back to saved result" }));
+
+    expect(
+      screen.getByRole("heading", {
+        name: "You completed Web Development Foundations.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retake quiz from memory" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps practice hidden when another course lesson remains", async () => {
@@ -303,6 +608,7 @@ describe("LessonQuiz analytics", () => {
         initialCompleted={false}
         initialScore={null}
         initialFeedback={null}
+        studentScope="student-1"
       />,
     );
 
@@ -321,6 +627,19 @@ describe("LessonQuiz analytics", () => {
       screen.getByText("Revisit the second concept before retrying."),
     ).toBeInTheDocument();
     expect(screen.getByText(/50% is saved/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Review quiz attempts" }),
+    ).toHaveAttribute(
+      "href",
+      "/courses/web-development-foundations/quiz-history",
+    );
+    expect(screen.getByLabelText("First answer")).toBeChecked();
+    expect(screen.getByLabelText("Third answer")).toBeChecked();
+    expect(
+      window.localStorage.getItem(
+        "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html",
+      ),
+    ).toBeNull();
 
     fireEvent.click(screen.getByLabelText("Fourth answer"));
 
@@ -332,5 +651,12 @@ describe("LessonQuiz analytics", () => {
     expect(
       screen.getByRole("button", { name: "Check my answers" }),
     ).toBeEnabled();
+    await waitFor(() =>
+      expect(
+        window.localStorage.getItem(
+          "lovable-original:private-lesson-quiz:v1:student-1:web-development-foundations:semantic-html",
+        ),
+      ).not.toBeNull(),
+    );
   });
 });

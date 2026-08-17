@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { createHash } from "node:crypto";
 import { CodingWorkspace } from "@/components/coding-workspace";
+import { CodingInputInspector } from "@/components/coding-input-inspector";
 import { ProblemBookmarkButton } from "@/components/problem-bookmark-button";
 import { PracticeProblemStartTracker } from "@/components/practice-problem-start-tracker";
 import {
@@ -12,6 +14,7 @@ import {
   getPracticeFeedbackForStudent,
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { parseLearnerEntrySource } from "@/lib/learner-entry-source";
 import {
   formatDailyCodingChallengeDate,
   isCurrentDailyCodingChallenge,
@@ -22,6 +25,7 @@ import {
   getCodingProblem,
   getCodingProblemPreview,
 } from "@/lib/coding-problems";
+import { getCodingRepairDrill } from "@/lib/coding-repair-drills";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +36,8 @@ type ProblemPageProps = {
     review?: string | string[];
     submission?: string | string[];
     daily?: string | string[];
+    mode?: string | string[];
+    entry_source?: string | string[];
   }>;
 };
 
@@ -62,9 +68,14 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
     typeof submissionParam === "string" ? submissionParam : null;
   const reviewParam = resolvedSearchParams?.review;
   const dailyParam = resolvedSearchParams?.daily;
+  const modeParam = resolvedSearchParams?.mode;
+  const entrySource = parseLearnerEntrySource(
+    resolvedSearchParams?.entry_source,
+  );
   const problem = getCodingProblem(problemSlug);
+  const repairDrill = getCodingRepairDrill(problemSlug);
 
-  if (!problem) notFound();
+  if (!problem || !repairDrill) notFound();
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -98,6 +109,9 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
       ? dailyParam
       : null;
   const isDailyChallenge = Boolean(dailyChallengeDate);
+  const browserRecoveryScope = session
+    ? createHash("sha256").update(session.user.id).digest("hex").slice(0, 24)
+    : null;
 
   const previousProblem = CODING_PROBLEMS[problem.number - 2] ?? null;
   const nextProblem = CODING_PROBLEMS[problem.number] ?? null;
@@ -113,11 +127,19 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
           totalTests: requestedSubmission.totalTests,
         }
       : null;
+  const isCleanPractice =
+    Boolean(session) &&
+    modeParam === "clean" &&
+    studentState.bestVerdict === "Accepted" &&
+    loadedSubmission === null;
 
   return (
     <main>
       {problem.number === 1 ? (
-        <PracticeProblemStartTracker problemSlug={problem.slug} />
+        <PracticeProblemStartTracker
+          problemSlug={problem.slug}
+          entrySource={entrySource}
+        />
       ) : null}
       <SiteNav currentPage="practice" studentSession={Boolean(session)} />
       <div
@@ -186,6 +208,14 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               <p>{problem.outputFormat}</p>
             </section>
             <section>
+              <h2>Constraints</h2>
+              <ul className="problem-constraints">
+                {problem.constraints.map((constraint) => (
+                  <li key={constraint}>{constraint}</li>
+                ))}
+              </ul>
+            </section>
+            <section>
               <h2>Examples</h2>
               <div className="problem-examples">
                 {problem.examples.map((example, index) => (
@@ -202,27 +232,40 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
                   </div>
                 ))}
               </div>
+              <CodingInputInspector input={problem.examples[0].input} />
             </section>
           </article>
 
           <CodingWorkspace
-            key={loadedSubmission?.id ?? "current-editor"}
+            key={
+              loadedSubmission?.id ??
+              (isCleanPractice ? "clean-practice" : "current-editor")
+            }
             attempts={studentState.attempts}
             bestVerdict={studentState.bestVerdict}
-            initialCode={loadedSubmission?.code ?? studentState.code}
+            browserRecoveryScope={browserRecoveryScope}
+            initialCode={
+              isCleanPractice
+                ? problem.starterCode
+                : loadedSubmission?.code ?? studentState.code
+            }
             initialAcceptedCode={
-              loadedSubmission
-                ? loadedSubmission.verdict === "Accepted"
-                  ? loadedSubmission.code
-                  : null
-                : studentState.latestAcceptedCode
+              isCleanPractice
+                ? null
+                : loadedSubmission
+                  ? loadedSubmission.verdict === "Accepted"
+                    ? loadedSubmission.code
+                    : null
+                  : studentState.latestAcceptedCode
             }
             initialCustomTestCases={studentState.customTestCases}
             initialPracticeFeedback={practiceFeedbackState.feedback}
             initialSolutionNote={studentState.solutionNote}
             isSignedIn={Boolean(session)}
+            hasSavedCode={studentState.hasSavedCode}
             isPracticeFeedbackEligible={practiceFeedbackState.isEligible}
             isReviewSession={isReviewSession}
+            isCleanPractice={isCleanPractice}
             dailyChallengeDate={dailyChallengeDate}
             loadedSubmission={loadedSubmission}
             problem={{
@@ -230,13 +273,18 @@ export default async function ProblemPage({ params, searchParams }: ProblemPageP
               title: problem.title,
               recoveryHint: problem.recoveryHint,
               recoveryHints: problem.recoveryHints,
+              repairDrill,
               acceptedExplanation: problem.acceptedExplanation,
+              workedTrace: problem.workedTrace,
               starterCode: problem.starterCode,
-              tests: problem.tests.map((test) => ({ input: test.input })),
-              example: {
-                input: problem.examples[0].input,
-                expectedOutput: problem.examples[0].output,
-              },
+              tests: problem.tests.map((test) => ({
+                label: test.label,
+                input: test.input,
+              })),
+              examples: problem.examples.map((example) => ({
+                input: example.input,
+                expectedOutput: example.output,
+              })),
             }}
           />
         </div>

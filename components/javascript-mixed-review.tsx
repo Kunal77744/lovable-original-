@@ -5,26 +5,43 @@ import { useState } from "react";
 import type { SavedJavaScriptMixedReviewResult } from "@/db/javascript-mixed-review";
 import type { JavaScriptMixedReviewItem } from "@/lib/javascript-mixed-review";
 import { formatJavaScriptMixedReviewDueDate } from "@/lib/javascript-mixed-review";
+import { useBrowserReviewProgress } from "./use-browser-review-progress";
 
 export function JavaScriptMixedReview({
   items,
   initialResult,
   nextHref,
   nextLabel,
+  studentScope,
 }: {
   items: JavaScriptMixedReviewItem[];
   initialResult: SavedJavaScriptMixedReviewResult | null;
   nextHref: string;
   nextLabel: string;
+  studentScope: string;
 }) {
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [checkedOptionId, setCheckedOptionId] = useState<string | null>(null);
-  const [correctCount, setCorrectCount] = useState(0);
   const [savedResult, setSavedResult] =
     useState<SavedJavaScriptMixedReviewResult | null>(initialResult);
+  const [isPracticeRound, setIsPracticeRound] = useState(false);
+  const [practiceResult, setPracticeResult] = useState<number | null>(null);
   const [saveStatus, setSaveStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const {
+    checkedOptionId,
+    correctCount,
+    questionIndex,
+    recovered,
+    selectedOptionId,
+    setCheckedOptionId,
+    setCorrectCount,
+    setQuestionIndex,
+    setSelectedOptionId,
+  } = useBrowserReviewProgress({
+    completed: Boolean(savedResult),
+    items,
+    reviewId: "javascript-mixed",
+    studentScope,
+  });
 
   const question = items[questionIndex];
   const isCorrect = checkedOptionId === question.correctOptionId;
@@ -37,9 +54,25 @@ export function JavaScriptMixedReview({
     }
   }
 
+  function startPracticeRound() {
+    setQuestionIndex(0);
+    setSelectedOptionId(null);
+    setCheckedOptionId(null);
+    setCorrectCount(0);
+    setPracticeResult(null);
+    setSaveStatus("");
+    setIsPracticeRound(true);
+  }
+
   async function continueReview() {
     if (!checkedOptionId) return;
     if (questionIndex === items.length - 1) {
+      if (isPracticeRound) {
+        setPracticeResult(correctCount);
+        setIsPracticeRound(false);
+        return;
+      }
+
       setSaving(true);
       setSaveStatus("Saving your private review result.");
       try {
@@ -76,30 +109,45 @@ export function JavaScriptMixedReview({
     setCheckedOptionId(null);
   }
 
-  if (savedResult) {
+  if (savedResult && !isPracticeRound) {
+    const practiceRoundComplete = practiceResult !== null;
+
     return (
       <section className="mixed-review-complete" aria-labelledby="mixed-review-complete-title">
         <div
           className="mixed-review-score"
-          aria-label={`${savedResult.correctCount} of ${savedResult.totalCount} concepts recalled`}
+          aria-label={`${practiceRoundComplete ? practiceResult : savedResult.correctCount} of ${savedResult.totalCount} concepts recalled`}
         >
-          <strong>{savedResult.correctCount}</strong>
+          <strong>
+            {practiceRoundComplete ? practiceResult : savedResult.correctCount}
+          </strong>
           <span>of {savedResult.totalCount}</span>
         </div>
         <div>
-          <p className="eyebrow">Private review saved</p>
+          <p className="eyebrow">
+            {practiceRoundComplete
+              ? "Browser-only practice complete"
+              : "Private review saved"}
+          </p>
           <h2 id="mixed-review-complete-title">
-            Your next mixed review is set for{" "}
-            {formatJavaScriptMixedReviewDueDate(savedResult.nextDueAt)}.
+            {practiceRoundComplete
+              ? `You recalled ${practiceResult} of ${savedResult.totalCount} concepts in this practice round.`
+              : `Your next mixed review is set for ${formatJavaScriptMixedReviewDueDate(savedResult.nextDueAt)}.`}
           </h2>
           <p>
-            Only this bounded result and next review date belong to your account.
-            Your answers stayed in this browser, and judged mastery did not change.
+            {practiceRoundComplete
+              ? `Your saved ${savedResult.correctCount} of ${savedResult.totalCount} result and ${formatJavaScriptMixedReviewDueDate(savedResult.nextDueAt)} review date did not change. This round stayed in this browser.`
+              : "Only this bounded result and next review date belong to your account. Your answers stayed in this browser, and judged mastery did not change."}
           </p>
           <div className="mixed-review-complete-actions">
             <Link className="primary-action" href={nextHref}>
               {nextLabel} <span aria-hidden="true">→</span>
             </Link>
+            <button type="button" onClick={startPracticeRound}>
+              {practiceRoundComplete
+                ? "Practice these prompts again"
+                : "Practice these prompts now"}
+            </button>
             <Link className="mixed-review-record-link" href="/practice/progress">
               View saved lab progress
             </Link>
@@ -127,6 +175,11 @@ export function JavaScriptMixedReview({
           />
         </div>
       </div>
+      {recovered ? (
+        <p className="mixed-review-recovery-status" role="status">
+          Recovered your unfinished review in this browser.
+        </p>
+      ) : null}
 
       <div className="mixed-review-question-heading">
         <p className="eyebrow">
@@ -180,9 +233,11 @@ export function JavaScriptMixedReview({
               ? questionIndex === items.length - 1
                 ? saving
                   ? "Saving result"
-                  : saveStatus
-                    ? "Retry saving result"
-                    : "Finish and save"
+                  : isPracticeRound
+                    ? "Finish practice"
+                    : saveStatus
+                      ? "Retry saving result"
+                      : "Finish and save"
                 : "Next concept"
               : "Check my recall"}
             <span aria-hidden="true">→</span>

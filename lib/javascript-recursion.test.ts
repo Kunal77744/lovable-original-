@@ -18,6 +18,12 @@ describe("JAVASCRIPT_RECURSION_EXERCISES", () => {
       expect(exercise.tests).toHaveLength(3);
       expect(exercise.recoveryCue.length).toBeGreaterThan(70);
       expect(exercise.takeaway.length).toBeGreaterThan(80);
+      expect(exercise.stackTrace.steps.length).toBeGreaterThanOrEqual(5);
+      expect(exercise.stackTrace.steps[0].phase).toBe("Call");
+      expect(exercise.stackTrace.steps.at(-1)?.phase).toBe("Return");
+      expect(
+        exercise.stackTrace.steps.some((step) => step.phase === "Base case"),
+      ).toBe(true);
     }
   });
 

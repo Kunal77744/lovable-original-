@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
+import { AlgorithmComplexityGrowthExplorer } from "@/components/algorithm-complexity-growth-explorer";
 import { ALGORITHM_EFFICIENCY_EXERCISES } from "@/lib/javascript-algorithm-efficiency";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
@@ -13,12 +15,18 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
   const [selectedApproachId, setSelectedApproachId] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
   const exercise = ALGORITHM_EFFICIENCY_EXERCISES[exerciseIndex] ?? null;
 
   async function checkApproach() {
     if (!exercise || !selectedApproachId) return;
 
     if (selectedApproachId === exercise.correctApproachId) {
+      if (completedIds.has(exercise.id)) {
+        setResultState("correct");
+        return;
+      }
+
       setResultState("saving");
       const saveResponse = await saveJavaScriptLabExercise("efficiency", exercise.id);
       if (!saveResponse?.ok) {
@@ -35,7 +43,21 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
   }
 
   function continueLab() {
-    setExerciseIndex(getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], exerciseIndex));
+    setExerciseIndex(
+      getNextIncompleteExerciseIndex(
+        exerciseIds,
+        [...completedIds],
+        exerciseIndex,
+        reviewingCompletedLab,
+      ),
+    );
+    setSelectedApproachId("");
+    setResultState("idle");
+  }
+
+  function reviewExercises() {
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
     setSelectedApproachId("");
     setResultState("idle");
   }
@@ -50,7 +72,11 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
           4/4
         </span>
         <div>
-          <p className="eyebrow">Algorithm efficiency lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Algorithm efficiency review complete"
+              : "Algorithm efficiency lab complete"}
+          </p>
           <h2 id="efficiency-complete-title">
             You can compare approaches before the input gets large.
           </h2>
@@ -64,6 +90,10 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
           <Link className="efficiency-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );
@@ -160,16 +190,19 @@ export function JavaScriptAlgorithmEfficiencyLab({ completedExerciseIds = [] }: 
         ) : null}
 
         {resultState === "correct" && selectedApproach ? (
-          <div className="efficiency-feedback is-correct" role="status">
-            <div>
-              <span>Better growth</span>
-              <strong>{selectedApproach.growth}</strong>
+          <>
+            <div className="efficiency-feedback is-correct" role="status">
+              <div>
+                <span>Better growth</span>
+                <strong>{selectedApproach.growth}</strong>
+              </div>
+              <p>{exercise.explanation}</p>
+              <p className="efficiency-takeaway">
+                <span>Keep this:</span> {exercise.takeaway}
+              </p>
             </div>
-            <p>{exercise.explanation}</p>
-            <p className="efficiency-takeaway">
-              <span>Keep this:</span> {exercise.takeaway}
-            </p>
-          </div>
+            <AlgorithmComplexityGrowthExplorer />
+          </>
         ) : null}
 
         <div className="efficiency-action-row">

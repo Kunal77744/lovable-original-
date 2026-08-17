@@ -4,8 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptAlgorithmPatternsLab } from "@/components/javascript-algorithm-patterns-lab";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +30,10 @@ export default async function JavaScriptAlgorithmPatternsPage() {
     redirect("/account?mode=signin&next=/practice/algorithm-patterns");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(
-    session.user.id,
-    "algorithm-patterns",
-  );
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "algorithm-patterns"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "algorithm-patterns"),
+  ]);
 
   return (
     <main className="function-lab-page">
@@ -53,21 +57,21 @@ export default async function JavaScriptAlgorithmPatternsPage() {
               window, and answer ranges from prepared totals.
             </p>
             <p>
-              You will implement each pattern here. The separate efficiency
-              lab asks you to compare how approaches scale.
+              You will implement each pattern here. The separate efficiency lab
+              asks you to compare how approaches scale.
             </p>
           </div>
           <aside aria-label="Algorithm patterns lab format">
             <strong>4 reusable patterns</strong>
             <span>12 local checks</span>
-            <p>
-              Code stays local. Completed exercises save as private practice.
-            </p>
+            <p>Drafts and completed exercises save as private practice.</p>
           </aside>
         </header>
 
         <JavaScriptAlgorithmPatternsLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
         />
       </div>
       <SiteFooter />

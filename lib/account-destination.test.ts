@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getAccountHref,
   getSafeAccountDestination,
   getSignInHref,
 } from "./account-destination";
@@ -11,6 +12,13 @@ describe("account destination", () => {
     );
     expect(getSignInHref("/projects/semantic-html-article")).toBe(
       "/account?mode=signin&next=%2Fprojects%2Fsemantic-html-article",
+    );
+    expect(
+      getAccountHref(
+        "/learn/web-development-foundations/css-selectors-box-model",
+      ),
+    ).toBe(
+      "/account?next=%2Flearn%2Fweb-development-foundations%2Fcss-selectors-box-model",
     );
   });
 

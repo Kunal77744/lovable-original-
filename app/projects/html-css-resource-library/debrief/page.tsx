@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { PrintProjectDebriefButton } from "@/components/print-project-debrief-button";
 import { getHtmlCssCapstoneForStudent } from "@/db/html-css-capstone";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import {
   HTML_CSS_CAPSTONE_TITLE,
   HTML_CSS_CAPSTONE_TOTAL_CHECKS,
@@ -78,7 +79,7 @@ export default async function HtmlCssResourceLibraryDebriefPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/projects/html-css-resource-library/debrief"));
   }
 
   const project = await getHtmlCssCapstoneForStudent(session.user.id);

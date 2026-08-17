@@ -71,6 +71,97 @@ describe("AccountForm analytics", () => {
     expect(mocks.push).toHaveBeenCalledWith("/playground");
   });
 
+  it("keeps a pending sign-in in the same mode and restores retry after a thrown failure", async () => {
+    let rejectSignIn: (error: Error) => void = () => {};
+    mocks.search = "mode=signin";
+    mocks.signIn.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectSignIn = reject;
+        }),
+    );
+    render(<AccountForm />);
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "learner@example.test" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password/), {
+      target: { value: "a-safe-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    const createTab = screen.getByRole("tab", { name: "Create account" });
+    const signInTab = screen.getByRole("tab", { name: "Sign in" });
+    expect(createTab).toBeDisabled();
+    expect(signInTab).toBeDisabled();
+    fireEvent.click(createTab);
+    expect(signInTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByLabelText("Name")).not.toBeInTheDocument();
+
+    rejectSignIn(new Error("Network unavailable"));
+
+    expect(
+      await screen.findByText(
+        "Something went wrong. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+    expect(createTab).toBeEnabled();
+    expect(signInTab).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await waitFor(() => expect(mocks.signIn).toHaveBeenCalledTimes(2));
+    expect(mocks.push).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("keeps pending account creation in the same mode and restores retry after a thrown failure", async () => {
+    let rejectSignUp: (error: Error) => void = () => {};
+    mocks.signUp.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectSignUp = reject;
+        }),
+    );
+    render(<AccountForm />);
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Preview Learner" },
+    });
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "learner@example.test" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Password/), {
+      target: { value: "a-safe-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create my account" }));
+
+    const signInTab = screen.getByRole("tab", { name: "Sign in" });
+    expect(signInTab).toBeDisabled();
+    fireEvent.click(signInTab);
+    expect(screen.getByRole("tab", { name: "Create account" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByLabelText("Name")).toHaveValue("Preview Learner");
+
+    rejectSignUp(new Error("Network unavailable"));
+
+    expect(
+      await screen.findByText(
+        "Something went wrong. Check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create my account" }),
+    ).toBeEnabled();
+    expect(signInTab).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Create my account" }));
+    await waitFor(() => expect(mocks.signUp).toHaveBeenCalledTimes(2));
+    expect(mocks.captureAccountCreated).toHaveBeenCalledOnce();
+    expect(mocks.push).toHaveBeenCalledWith("/dashboard");
+  });
+
   it("captures account_created only after account creation succeeds", async () => {
     render(<AccountForm />);
 

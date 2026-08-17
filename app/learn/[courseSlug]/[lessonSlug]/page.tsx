@@ -33,6 +33,7 @@ import {
   FIRST_LESSON_PASS_PERCENT,
   SECOND_LESSON,
   THIRD_LESSON,
+  getFirstCourseLessonHref,
   getPublicLessonQuiz,
 } from "@/lib/first-course-content";
 import {
@@ -77,7 +78,7 @@ export async function generateMetadata({
       ? {
           openGraph: {
             type: "website" as const,
-            url: `/learn/${FIRST_COURSE.slug}/${lessonSlug}`,
+            url: getFirstCourseLessonHref(lessonSlug),
             title,
             description,
             images: ["/opengraph-image"],
@@ -145,9 +146,7 @@ export default async function LessonPage({
   const [workspace, lessonNote, courseFeedback, readingProgress] = session
     ? await Promise.all([
         getFirstLessonArtifact(session.user.id, studentLesson.lessonSlug),
-        isSemanticLesson
-          ? getFirstLessonNote(session.user.id, studentLesson.lessonSlug)
-          : Promise.resolve({ note: null }),
+        getFirstLessonNote(session.user.id, studentLesson.lessonSlug),
         getCourseFeedbackForStudent(session.user.id, courseSlug),
         getLessonReadingProgressForStudent(
           session.user.id,
@@ -240,14 +239,16 @@ export default async function LessonPage({
             <CssBoxModelLessonContent />
           )}
 
+          {isSemanticLesson ? <SemanticHtmlTutor /> : null}
+
+          <LessonNotes
+            lessonSlug={studentLesson.lessonSlug}
+            initialNote={lessonNote.note}
+            isSignedIn={Boolean(session)}
+          />
+
           {isSemanticLesson ? (
             <>
-              <SemanticHtmlTutor />
-              <LessonNotes
-                lessonSlug={studentLesson.lessonSlug}
-                initialNote={lessonNote.note}
-                isSignedIn={Boolean(session)}
-              />
               <SemanticHtmlWorkspace
                 lessonSlug={studentLesson.lessonSlug}
                 initialHtml={workspace.html}
@@ -301,6 +302,7 @@ export default async function LessonPage({
             initialScore={studentLesson.quizScore}
             initialFeedback={courseFeedback?.feedback ?? null}
             isSignedIn={Boolean(session)}
+            studentScope={session?.user.id ?? null}
             completedLessonsAfterPass={Math.min(
               studentLesson.completedLessons +
                 (studentLesson.completed ? 0 : 1),
@@ -314,7 +316,7 @@ export default async function LessonPage({
                   }
                 : null
             }
-            showRevisionPack={isSemanticLesson}
+            showRevisionPack
           />
         </article>
       </div>
