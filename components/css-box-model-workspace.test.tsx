@@ -263,6 +263,31 @@ describe("CssBoxModelWorkspace", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("turns the first failed saved check into one code-free repair", () => {
+    render(
+      <CssBoxModelWorkspace
+        lessonSlug="css-selectors-box-model"
+        initialCss={CSS_BOX_MODEL_STARTER}
+        initialChecks={gradeCssBoxModel(CSS_BOX_MODEL_STARTER)}
+        initiallySaved
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Keep padding inside the declared width",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("The sizing model")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Compare the declared card width with the rendered width/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Return to card.css/ })).toHaveAttribute(
+      "href",
+      "#css-box-model-editor",
+    );
+  });
+
   it("reviews signed-in CSS changes from the authored starter without saving", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

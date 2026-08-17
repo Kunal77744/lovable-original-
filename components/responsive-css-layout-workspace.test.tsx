@@ -167,6 +167,31 @@ describe("ResponsiveCssLayoutWorkspace", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("turns the first failed saved check into one responsive repair", () => {
+    render(
+      <ResponsiveCssLayoutWorkspace
+        lessonSlug="responsive-css-grid"
+        initialCss={RESPONSIVE_CSS_STARTER}
+        initialChecks={gradeResponsiveCss(RESPONSIVE_CSS_STARTER)}
+        initiallySaved
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Let columns respond to available space",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fluid grid tracks")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Read the column rule as three decisions/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Return to layout.css/ })).toHaveAttribute(
+      "href",
+      "#responsive-css-editor",
+    );
+  });
+
   it("reviews signed-in layout changes from the authored starter without saving", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
