@@ -378,6 +378,8 @@ export default async function PracticePage({
                   <div className="problem-table" role="list">
                     {group.problems.map((problem) => {
                       const completed = completedSlugs.has(problem.slug);
+                      const [minimumMinutes, maximumMinutes] =
+                        problem.estimatedMinutes;
 
                       return (
                         <Link
@@ -393,7 +395,13 @@ export default async function PracticePage({
                           </span>
                           <span className="problem-row-copy">
                             <strong>{problem.title}</strong>
-                            <small>{problem.skill}</small>
+                            <span className="problem-row-meta">
+                              <small>Concept: {problem.skill}</small>
+                              <span aria-hidden="true">·</span>
+                              <small>
+                                {minimumMinutes}–{maximumMinutes} min
+                              </small>
+                            </span>
                           </span>
                           <span className="problem-difficulty">
                             {problem.difficulty}

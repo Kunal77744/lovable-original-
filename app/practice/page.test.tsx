@@ -97,6 +97,14 @@ describe("PracticePage progress", () => {
     render(await PracticePage());
 
     expect(screen.getByText("Accepted 0 of 12")).toBeInTheDocument();
+    for (const problem of CODING_PROBLEMS) {
+      const [minimumMinutes, maximumMinutes] = problem.estimatedMinutes;
+
+      expect(screen.getByText(`Concept: ${problem.skill}`)).toBeInTheDocument();
+      expect(
+        screen.getAllByText(`${minimumMinutes}–${maximumMinutes} min`).length,
+      ).toBeGreaterThan(0);
+    }
     expect(
       screen.getByRole("link", { name: "Start JavaScript foundations" }),
     ).toHaveAttribute("href", "/practice/judge-basics");

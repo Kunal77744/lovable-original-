@@ -8648,6 +8648,18 @@ h1 {
   gap: 5px;
 }
 
+.problem-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--muted);
+}
+
+.problem-row-meta > span {
+  color: #a7b0ab;
+}
+
 .problem-row-copy strong {
   font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   font-size: 22px;
