@@ -4,9 +4,17 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { WebFoundationsReview } from "@/components/web-foundations-review";
+import { getCodingCatalogProgress } from "@/db/coding-practice";
 import { getOrCreateFirstCourseAssignment } from "@/db/course";
+import { getCssPracticeCatalogProgress } from "@/db/css-practice";
+import { getGuidedProjectSummary } from "@/db/guided-project";
+import { getHtmlCssCapstoneSummary } from "@/db/html-css-capstone";
+import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
+import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getWebFoundationsReviewResultForStudent } from "@/db/web-foundations-review";
 import { auth } from "@/lib/auth";
+import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
+import { buildLearnerProfile } from "@/lib/learner-profile";
 import {
   formatWebFoundationsReviewDueDate,
   isWebFoundationsReviewDue,
@@ -45,6 +53,9 @@ export default async function WebFoundationsReviewPage() {
   const nextLessonLabel = course.nextLesson
     ? `Continue ${course.nextLesson.title}`
     : "Return to the course";
+  const continuation = course.courseCompleted
+    ? await getReviewContinuation(session.user.id, course)
+    : null;
 
   return (
     <main>
@@ -92,9 +103,11 @@ export default async function WebFoundationsReviewPage() {
           </aside>
         </header>
 
-        {course.courseCompleted ? (
+        {course.courseCompleted && continuation ? (
           <WebFoundationsReview
+            continuation={continuation}
             initialResult={reviewDue ? null : savedResult}
+            studentScope={session.user.id}
           />
         ) : (
           <section
@@ -118,4 +131,36 @@ export default async function WebFoundationsReviewPage() {
       <SiteFooter />
     </main>
   );
+}
+
+async function getReviewContinuation(
+  userId: string,
+  course: Awaited<ReturnType<typeof getOrCreateFirstCourseAssignment>>,
+) {
+  const [
+    practice,
+    cssPractice,
+    labPractice,
+    project,
+    htmlCssCapstone,
+    javascriptCapstone,
+  ] = await Promise.all([
+    getCodingCatalogProgress(userId),
+    getCssPracticeCatalogProgress(userId),
+    getJavaScriptLabCatalogProgress(userId),
+    getGuidedProjectSummary(userId, GUIDED_PROJECT_SLUG),
+    getHtmlCssCapstoneSummary(userId),
+    getJavaScriptCapstoneSummary(userId),
+  ]);
+
+  return buildLearnerProfile({
+    course,
+    practice,
+    cssPractice,
+    labPractice,
+    attempts: [],
+    projectCompleted: project?.state === "completed",
+    htmlCssCapstone,
+    javascriptCapstone,
+  }).nextAction;
 }

@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptDomLab } from "@/components/javascript-dom-lab";
 import { auth } from "@/lib/auth";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +32,10 @@ export default async function JavaScriptDomPage() {
     redirect("/account?mode=signin&next=/practice/dom");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(session.user.id, "dom");
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "dom"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "dom"),
+  ]);
 
   return (
     <main className="dom-lab-page">
@@ -45,19 +52,23 @@ export default async function JavaScriptDomPage() {
             <p className="eyebrow">Four private browser exercises</p>
             <h1>Make JavaScript change the page.</h1>
             <p>
-              Move from finding one element to responding to a click. Finish
-              one small DOM function at a time, then prove it with three local
+              Move from finding one element to responding to a click. Finish one
+              small DOM function at a time, then prove it with three local
               checks.
             </p>
           </div>
           <aside aria-label="DOM lab format">
             <strong>4 DOM moves</strong>
             <span>12 local checks</span>
-            <p>Code stays local. Completed exercises save privately.</p>
+            <p>Drafts and completed exercises save privately.</p>
           </aside>
         </header>
 
-        <JavaScriptDomLab completedExerciseIds={completedExerciseIds} />
+        <JavaScriptDomLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
+          completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
+        />
       </div>
       <SiteFooter />
     </main>

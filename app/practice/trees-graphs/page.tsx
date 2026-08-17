@@ -4,8 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptTreesGraphsLab } from "@/components/javascript-trees-graphs-lab";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +30,10 @@ export default async function JavaScriptTreesGraphsPage() {
     redirect("/account?mode=signin&next=/practice/trees-graphs");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(
-    session.user.id,
-    "trees-graphs",
-  );
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "trees-graphs"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "trees-graphs"),
+  ]);
 
   return (
     <main className="function-lab-page">
@@ -56,14 +60,14 @@ export default async function JavaScriptTreesGraphsPage() {
           <aside aria-label="Trees and graphs lab format">
             <strong>4 traversal decisions</strong>
             <span>12 local checks</span>
-            <p>
-              Code stays local. Completed exercises save as private practice.
-            </p>
+            <p>Drafts and completed exercises save as private practice.</p>
           </aside>
         </header>
 
         <JavaScriptTreesGraphsLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
         />
       </div>
       <SiteFooter />

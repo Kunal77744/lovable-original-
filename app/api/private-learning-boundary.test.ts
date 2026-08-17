@@ -6,6 +6,8 @@ import * as labProgressDb from "@/db/javascript-lab-progress";
 import * as readinessDb from "@/db/javascript-readiness";
 import * as mixedReviewDb from "@/db/javascript-mixed-review";
 import * as foundationsReviewDb from "@/db/web-foundations-review";
+import * as learningDataExportDb from "@/db/learning-data-export";
+import * as cssSpacedReviewDb from "@/db/css-spaced-review";
 import { auth } from "@/lib/auth";
 import { GET as getCertificate } from "./certificate/route";
 import {
@@ -25,6 +27,7 @@ import {
   GET as getSettings,
   POST as saveSettings,
 } from "./settings/route";
+import { GET as exportLearningData } from "./settings/export/route";
 import {
   GET as getProjectFeedback,
   POST as saveProjectFeedback,
@@ -37,6 +40,7 @@ import { POST as saveLabProgress } from "./practice/labs/[labSlug]/progress/rout
 import { POST as saveReadiness } from "./practice/readiness/route";
 import { POST as saveMixedReview } from "./practice/mixed-review/route";
 import { POST as saveFoundationsReview } from "./courses/web-development-foundations/review/route";
+import { POST as saveCssSpacedReview } from "./practice/css/spaced-review/route";
 
 vi.mock("next/headers", () => ({
   headers: vi.fn().mockResolvedValue(new Headers()),
@@ -76,6 +80,17 @@ vi.mock("@/db/javascript-mixed-review", () => ({
 vi.mock("@/db/web-foundations-review", () => ({
   getWebFoundationsReviewResultForStudent: vi.fn(),
   saveWebFoundationsReviewResultForStudent: vi.fn(),
+}));
+vi.mock("@/db/css-spaced-review", () => ({
+  getCssSpacedReviewResultForStudent: vi.fn(),
+  saveCssSpacedReviewResultForStudent: vi.fn(),
+}));
+vi.mock("@/db/css-practice", () => ({
+  getCssPracticeCatalogProgress: vi.fn(),
+}));
+
+vi.mock("@/db/learning-data-export", () => ({
+  getLearningDataExportForStudent: vi.fn(),
 }));
 
 vi.mock("@/db/coding-practice", () => ({
@@ -134,10 +149,12 @@ describe("signed-out private learning boundary", () => {
       saveReadiness(request.clone()),
       saveMixedReview(request.clone()),
       saveFoundationsReview(request.clone()),
+      exportLearningData(),
+      saveCssSpacedReview(request.clone()),
     ]);
 
     expect(responses.map((response) => response.status)).toEqual(
-      Array(18).fill(401),
+      Array(20).fill(401),
     );
     expect(courseDb.getFirstLessonNote).not.toHaveBeenCalled();
     expect(courseDb.saveFirstLessonNote).not.toHaveBeenCalled();
@@ -163,5 +180,10 @@ describe("signed-out private learning boundary", () => {
     expect(mixedReviewDb.saveJavaScriptMixedReviewResultForStudent).not.toHaveBeenCalled();
     expect(foundationsReviewDb.getWebFoundationsReviewResultForStudent).not.toHaveBeenCalled();
     expect(foundationsReviewDb.saveWebFoundationsReviewResultForStudent).not.toHaveBeenCalled();
+    expect(
+      learningDataExportDb.getLearningDataExportForStudent,
+    ).not.toHaveBeenCalled();
+    expect(cssSpacedReviewDb.getCssSpacedReviewResultForStudent).not.toHaveBeenCalled();
+    expect(cssSpacedReviewDb.saveCssSpacedReviewResultForStudent).not.toHaveBeenCalled();
   });
 });

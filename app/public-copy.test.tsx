@@ -30,7 +30,10 @@ describe("public product promise", () => {
     expect(
       screen.getByText(/take a short lesson, build and check real work/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Path preview · step 1 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Course preview · 3 lessons")).toBeInTheDocument();
+    expect(
+      screen.getByText("Read 3 complete lessons · 51 min"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/build and check a guided project/i),
     ).toBeInTheDocument();
@@ -92,7 +95,9 @@ describe("public product promise", () => {
     });
 
     expect(publicMetadata).toContain("Learn coding by doing");
-    expect(publicMetadata).toContain("18-minute semantic HTML lesson");
+    expect(rootMetadata.description).toContain(
+      "3 Web Foundations lessons totaling 51 minutes",
+    );
     expect(publicMetadata).not.toMatch(
       /real projects|interview practice|flashcards|certificates|AI tutor/i,
     );
@@ -113,7 +118,7 @@ describe("public product promise", () => {
     ]);
     expect(rootMetadata.openGraph?.images).toEqual([
       expect.objectContaining({
-        alt: "Lovable Original: learn coding through a short lesson, saved semantic HTML work, and 12 JavaScript problems.",
+        alt: "Lovable Original: learn coding through 3 Web Foundations lessons, saved project work, and 12 JavaScript problems.",
       }),
     ]);
   });
@@ -156,6 +161,20 @@ describe("public product promise", () => {
     expect(
       screen.getByRole("link", { name: /see the CSS path/i }),
     ).toHaveAttribute("href", "/practice/css");
+    expect(
+      screen.getByRole("navigation", { name: /beginner concept answers/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /why use semantic HTML/i }),
+    ).toHaveAttribute("href", "/learn/why-use-semantic-html");
+    expect(
+      screen.getByRole("link", { name: /what is the CSS box model/i }),
+    ).toHaveAttribute("href", "/learn/what-is-the-css-box-model");
+    expect(
+      screen.getByRole("link", {
+        name: /how should a beginner practice JavaScript/i,
+      }),
+    ).toHaveAttribute("href", "/learn/how-to-practice-javascript");
     expect(document.querySelectorAll(".primary-action")).toHaveLength(1);
     expect(screen.queryByText(/AI tutor|certificate/i)).not.toBeInTheDocument();
   });

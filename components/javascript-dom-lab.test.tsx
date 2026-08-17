@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JavaScriptDomLab } from "./javascript-dom-lab";
 
@@ -85,18 +85,23 @@ describe("JavaScriptDomLab", () => {
   it("shows one code-free recovery cue only after a failed run", async () => {
     runDomLabCode.mockResolvedValue({
       status: "finished",
-      checks: [false, false, false],
+      checks: [true, false, true],
     });
     render(<JavaScriptDomLab />);
 
     fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
 
-    expect(await screen.findByText("0 of 3 checks passed.")).toBeInTheDocument();
+    expect(await screen.findByText("2 of 3 checks passed.")).toBeInTheDocument();
     expect(
       screen.getByText(
         'Ask document for the selector "#lesson-title", then return the element it gives you.',
       ),
     ).toBeInTheDocument();
+    const details = screen.getByRole("region", { name: "Check details" });
+    expect(within(details).getByText("Scenario 01")).toBeInTheDocument();
+    expect(within(details).getByText("Scenario 02")).toBeInTheDocument();
+    expect(within(details).getAllByText("Matched")).toHaveLength(2);
+    expect(within(details).getByText("Revisit")).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
   });
 
@@ -118,6 +123,32 @@ describe("JavaScriptDomLab", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("DOM move 2 of 4")).toBeInTheDocument();
     expect(screen.queryByText("Keep this:")).not.toBeInTheDocument();
+  });
+
+  it("reveals an interactive DOM replay only after a correct result saves", async () => {
+    runDomLabCode.mockResolvedValue({
+      status: "finished",
+      checks: [true, true, true],
+    });
+    render(<JavaScriptDomLab />);
+
+    expect(screen.queryByText("DOM replay")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Run 3 checks" }));
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Watch the selector find its match" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 3")).toBeInTheDocument();
+    expect(screen.getByText("No element selected")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next DOM state" }));
+
+    expect(screen.getByText("Step 2 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Checking id: lesson-title")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Previous state" })).toBeEnabled();
   });
 
   it("keeps runtime failures in one polite status region", async () => {

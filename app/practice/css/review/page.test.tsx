@@ -48,7 +48,7 @@ describe("CssReviewPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(CssReviewPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fpractice%2Fcss%2Freview",
     );
     expect(mocks.getReviewSession).not.toHaveBeenCalled();
     expect(mocks.getProgress).not.toHaveBeenCalled();

@@ -130,10 +130,18 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", {
         name: /Build an expense report from raw data/,
       }),
-    ).toHaveAttribute("href", "/projects/javascript-expense-report");
+    ).toHaveAttribute("href", "/practice/judge-basics");
+    expect(screen.getByText("Guided path first")).toBeInTheDocument();
+    expect(screen.getByText("0/55 steps saved")).toBeInTheDocument();
+    expect(document.querySelector(".practice-capstone-entry")).toHaveClass(
+      "is-locked",
+    );
     expect(
       screen.getByRole("link", { name: "Check review status" }),
     ).toHaveAttribute("href", "/practice/review");
+    expect(
+      screen.getByRole("link", { name: "View saved collection" }),
+    ).toHaveAttribute("href", "/practice/bookmarks");
     expect(screen.getByText("Nothing saved yet. Use Save for later on any problem.")).toBeInTheDocument();
     expect(screen.getByText("No concepts waiting. A saved Wrong Answer adds one here; an Accepted retry clears it.")).toBeInTheDocument();
   });
@@ -284,6 +292,9 @@ describe("PracticePage progress", () => {
       screen.getByRole("link", { name: "Open review session" }),
     ).toHaveAttribute("href", "/practice/review");
     expect(
+      screen.getByRole("link", { name: "View saved collection" }),
+    ).toHaveAttribute("href", "/practice/bookmarks");
+    expect(
       document.querySelector(".practice-review-entry"),
     ).toHaveTextContent("2 problems");
     expect(document.querySelector(".mistake-review")).not.toHaveTextContent(
@@ -292,6 +303,40 @@ describe("PracticePage progress", () => {
     expect(getLabProgress).toHaveBeenCalledWith("returning-learner");
     expect(screen.getByText("4/6 outcomes")).toBeInTheDocument();
     expect(screen.getByText("Continue project")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: /Build an expense report from raw data/,
+      }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report");
+  });
+
+  it("unlocks a new capstone after all guided JavaScript steps", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "guided-path-complete" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 12,
+      completedSlugs: [],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 55,
+      totalCount: 55,
+      nextLabSlug: null,
+      nextLabTitle: null,
+      nextHref: "/practice",
+      nextExerciseNumber: null,
+      labs: [],
+    });
+
+    render(await PracticePage());
+
+    expect(
+      screen.getByRole("link", {
+        name: /Build an expense report from raw data/,
+      }),
+    ).toHaveAttribute("href", "/projects/javascript-expense-report");
+    expect(screen.getByText("Start project")).toBeInTheDocument();
   });
 
   it("resumes the saved foundations unit before problem 01", async () => {
@@ -472,6 +517,9 @@ describe("PracticePage progress", () => {
     expect(screen.queryByText("Saved for later")).not.toBeInTheDocument();
     expect(screen.queryByText("Mistakes to revisit")).not.toBeInTheDocument();
     expect(screen.queryByText("Private review session")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "View saved collection" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows one completed 12-step outcome without inventing another step", async () => {

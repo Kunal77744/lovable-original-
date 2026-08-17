@@ -16,13 +16,12 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/db/javascript-lab-progress", () => ({
   getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]),
+  getJavaScriptLabExerciseDrafts: vi.fn().mockResolvedValue({}),
 }));
 
 const getSession = vi.mocked(auth.api.getSession);
 const redirectMock = vi.mocked(redirect);
-const getCompletedExerciseIds = vi.mocked(
-  getCompletedJavaScriptLabExerciseIds,
-);
+const getCompletedExerciseIds = vi.mocked(getCompletedJavaScriptLabExerciseIds);
 
 describe("JavaScriptTreesGraphsPage", () => {
   beforeEach(() => vi.clearAllMocks());

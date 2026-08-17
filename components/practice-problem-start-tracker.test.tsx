@@ -15,6 +15,21 @@ describe("PracticeProblemStartTracker", () => {
     expect(analyticsMocks.capturePracticeProblemStarted).toHaveBeenCalledOnce();
     expect(analyticsMocks.capturePracticeProblemStarted).toHaveBeenCalledWith({
       problemSlug: "sum-two-numbers",
+      entrySource: undefined,
+    });
+  });
+
+  it("carries an allowlisted direct-entry source into the first start", () => {
+    render(
+      <PracticeProblemStartTracker
+        problemSlug="sum-two-numbers"
+        entrySource="community"
+      />,
+    );
+
+    expect(analyticsMocks.capturePracticeProblemStarted).toHaveBeenCalledWith({
+      problemSlug: "sum-two-numbers",
+      entrySource: "community",
     });
   });
 });

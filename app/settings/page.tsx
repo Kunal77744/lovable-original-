@@ -9,6 +9,8 @@ import {
 import { auth } from "@/lib/auth";
 import { getSignInHref } from "@/lib/account-destination";
 import { LearnerSettingsForm } from "@/components/learner-settings-form";
+import { LearnerDataExport } from "@/components/learner-data-export";
+import { LearnerPasswordForm } from "@/components/learner-password-form";
 import { SiteFooter, SiteNav } from "../site-chrome";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Private learner settings | Lovable Original",
   description:
-    "Choose the private display name used on your Web Development Foundations certificate.",
+    "Manage your private learner account and Web Development Foundations certificate name.",
   robots: {
     index: false,
     follow: false,
@@ -47,10 +49,10 @@ export default async function SettingsPage() {
       >
         <div className="settings-heading">
           <p className="eyebrow">Private learner settings</p>
-          <h1 id="settings-title">Make the result yours.</h1>
+          <h1 id="settings-title">Keep your learning account yours.</h1>
           <p>
-            Set the name that appears on your course certificate. This setting
-            stays with your signed-in account.
+            Manage the certificate name and password that stay with your
+            signed-in learning account.
           </p>
         </div>
 
@@ -63,6 +65,33 @@ export default async function SettingsPage() {
             <span>Account only</span>
           </div>
           <LearnerSettingsForm initialSettings={settings} />
+        </article>
+
+        <article className="settings-panel settings-export-panel">
+          <div className="settings-panel-heading">
+            <div>
+              <p className="course-kicker">Your learning data</p>
+              <h2>Take your work with you.</h2>
+            </div>
+            <span>Private JSON</span>
+          </div>
+          <p className="settings-export-copy">
+            Download the course work, projects, code, attempts, notes, feedback,
+            and practice records saved to this account. Passwords, sessions, and
+            sign-in details are never included.
+          </p>
+          <LearnerDataExport />
+        </article>
+
+        <article className="settings-panel settings-secondary-panel">
+          <div className="settings-panel-heading">
+            <div>
+              <p className="course-kicker">Account password</p>
+              <h2>Change it without losing your place.</h2>
+            </div>
+            <span>Account security</span>
+          </div>
+          <LearnerPasswordForm />
         </article>
 
         <div className="settings-footer-actions">

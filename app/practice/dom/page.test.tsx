@@ -19,7 +19,10 @@ vi.mock("@/lib/auth", () => ({
     },
   },
 }));
-vi.mock("@/db/javascript-lab-progress", () => ({ getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]) }));
+vi.mock("@/db/javascript-lab-progress", () => ({
+  getCompletedJavaScriptLabExerciseIds: vi.fn().mockResolvedValue([]),
+  getJavaScriptLabExerciseDrafts: vi.fn().mockResolvedValue({}),
+}));
 
 const getSession = vi.mocked(auth.api.getSession);
 const redirectMock = vi.mocked(redirect);
@@ -52,7 +55,9 @@ describe("JavaScriptDomPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("DOM move 1 of 4")).toBeInTheDocument();
     expect(
-      screen.getByText(/Code stays local. Completed exercises save privately\./),
+      screen.getByText(
+        /Drafts and completed exercises save privately\./,
+      ),
     ).toBeInTheDocument();
   });
 

@@ -45,7 +45,7 @@ describe("SubmissionsPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(SubmissionsPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fsubmissions",
     );
     expect(mocks.getHistory).not.toHaveBeenCalled();
   });
@@ -62,5 +62,38 @@ describe("SubmissionsPage", () => {
       screen.getByRole("heading", { name: "See the code behind every result." }),
     ).toBeInTheDocument();
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
+  });
+
+  it("passes only single bounded filter values into the private history view", async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: "learner-1", name: "Learner", email: "private@example.com" },
+    });
+    mocks.getHistory.mockResolvedValue([
+      {
+        id: "submission-1",
+        problemSlug: "sum-two-numbers",
+        problemNumber: 1,
+        problemTitle: "Sum two numbers",
+        verdict: "Accepted",
+        passedTests: 4,
+        totalTests: 4,
+        createdAt: "2026-08-10T10:00:00.000Z",
+        hasSource: true,
+      },
+    ]);
+
+    render(
+      await SubmissionsPage({
+        searchParams: Promise.resolve({
+          problem: "sum-two-numbers",
+          verdict: "accepted",
+        }),
+      }),
+    );
+
+    expect(screen.getByLabelText("Problem")).toHaveValue("sum-two-numbers");
+    expect(screen.getByLabelText("Verdict")).toHaveValue("accepted");
+    const summary = screen.getByRole("region", { name: "History summary" });
+    expect(summary).toHaveTextContent("of 1 saved attempt");
   });
 });

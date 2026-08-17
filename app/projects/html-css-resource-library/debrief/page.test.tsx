@@ -68,7 +68,7 @@ describe("HtmlCssResourceLibraryDebriefPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(HtmlCssResourceLibraryDebriefPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fprojects%2Fhtml-css-resource-library%2Fdebrief",
     );
     expect(mocks.getProject).not.toHaveBeenCalled();
   });

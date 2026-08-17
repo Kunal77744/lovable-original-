@@ -9,6 +9,11 @@ export type JavaScriptTraceExercise = {
   correctOutput: string;
   recoveryCue: string;
   traceSteps: string[];
+  practiceSteps: Array<{
+    prompt: string;
+    choices: string[];
+    correctValue: string;
+  }>;
   takeaway: string;
 };
 
@@ -31,6 +36,23 @@ console.log(total);`,
       "total starts at 4.",
       "total += 3 replaces it with 7.",
       "total *= 2 replaces 7 with 14.",
+    ],
+    practiceSteps: [
+      {
+        prompt: "After the first line, what value is stored in total?",
+        choices: ["3", "4", "7"],
+        correctValue: "4",
+      },
+      {
+        prompt: "After total += 3, what value is stored in total?",
+        choices: ["7", "11", "14"],
+        correctValue: "7",
+      },
+      {
+        prompt: "After total *= 2, what value is stored in total?",
+        choices: ["7", "14", "21"],
+        correctValue: "14",
+      },
     ],
     takeaway:
       "A compound assignment reads the current value, applies the operator, then stores the new value.",
@@ -60,6 +82,23 @@ console.log(message);`,
       "7 >= 8 is false, so the if block is skipped.",
       "The else block changes message to keep going.",
     ],
+    practiceSteps: [
+      {
+        prompt: "Before the condition runs, what text is stored in message?",
+        choices: ["ready", "strong", "keep going"],
+        correctValue: "ready",
+      },
+      {
+        prompt: "What does score >= 8 evaluate to?",
+        choices: ["true", "false", "undefined"],
+        correctValue: "false",
+      },
+      {
+        prompt: "After the active branch runs, what text is stored in message?",
+        choices: ["ready", "strong", "keep going"],
+        correctValue: "keep going",
+      },
+    ],
     takeaway:
       "An if/else runs exactly one branch, so trace the condition before reading either assignment as active.",
   },
@@ -85,6 +124,23 @@ console.log(sum);`,
       "The three iterations make sum 1, then 3, then 6.",
       "i becomes 4, the condition fails, and the loop stops.",
     ],
+    practiceSteps: [
+      {
+        prompt: "After the i = 1 iteration, what value is stored in sum?",
+        choices: ["0", "1", "3"],
+        correctValue: "1",
+      },
+      {
+        prompt: "After the i = 2 iteration, what value is stored in sum?",
+        choices: ["2", "3", "6"],
+        correctValue: "3",
+      },
+      {
+        prompt: "After the i = 3 iteration, what value is stored in sum?",
+        choices: ["3", "5", "6"],
+        correctValue: "6",
+      },
+    ],
     takeaway:
       "For an accumulator, record its value after every iteration instead of trying to solve the whole loop at once.",
   },
@@ -108,6 +164,23 @@ console.log(result);`,
       "double receives 3 as value.",
       "The function returns 3 * 2, so double(3) becomes 6.",
       "The remaining expression is 6 + 1, which produces 7.",
+    ],
+    practiceSteps: [
+      {
+        prompt: "When double(3) starts, what value does its parameter receive?",
+        choices: ["1", "2", "3"],
+        correctValue: "3",
+      },
+      {
+        prompt: "What value does double(3) return?",
+        choices: ["3", "6", "7"],
+        correctValue: "6",
+      },
+      {
+        prompt: "After adding 1, what value is stored in result?",
+        choices: ["6", "7", "8"],
+        correctValue: "7",
+      },
     ],
     takeaway:
       "When tracing a function, evaluate its return value first, then substitute that value back into the calling expression.",

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import { JAVASCRIPT_TEST_DESIGN_EXERCISES } from "@/lib/javascript-test-design";
 import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
 
@@ -13,6 +14,7 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
   const [selectedInput, setSelectedInput] = useState("");
   const [resultState, setResultState] = useState<ResultState>("idle");
   const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
 
   const exercise = JAVASCRIPT_TEST_DESIGN_EXERCISES[exerciseIndex] ?? null;
 
@@ -20,6 +22,11 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
     if (!exercise || !selectedInput) return;
 
     if (selectedInput === exercise.correctInput) {
+      if (completedIds.has(exercise.id)) {
+        setResultState("correct");
+        return;
+      }
+
       setResultState("saving");
       const saveResponse = await saveJavaScriptLabExercise("test-design", exercise.id);
       if (!saveResponse?.ok) {
@@ -36,7 +43,21 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
   }
 
   function continueLab() {
-    setExerciseIndex(getNextIncompleteExerciseIndex(exerciseIds, [...completedIds], exerciseIndex));
+    setExerciseIndex(
+      getNextIncompleteExerciseIndex(
+        exerciseIds,
+        [...completedIds],
+        exerciseIndex,
+        reviewingCompletedLab,
+      ),
+    );
+    setSelectedInput("");
+    setResultState("idle");
+  }
+
+  function reviewExercises() {
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
     setSelectedInput("");
     setResultState("idle");
   }
@@ -51,7 +72,11 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
           4/4
         </div>
         <div>
-          <p className="eyebrow">Test-design lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Test-design review complete"
+              : "Test-design lab complete"}
+          </p>
           <h2 id="test-design-complete-title">
             You found the cases the happy path missed.
           </h2>
@@ -66,6 +91,10 @@ export function JavaScriptTestDesignLab({ completedExerciseIds = [] }: { complet
           <Link className="test-design-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );

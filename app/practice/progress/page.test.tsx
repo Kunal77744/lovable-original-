@@ -70,7 +70,7 @@ describe("PracticeProgressPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(PracticeProgressPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fpractice%2Fprogress",
     );
     expect(mocks.getRecord).not.toHaveBeenCalled();
     expect(mocks.getLabProgress).not.toHaveBeenCalled();
@@ -91,6 +91,9 @@ describe("PracticeProgressPage", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText("private@example.com")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open saved workspaces" }),
+    ).toHaveAttribute("href", "/practice/workspaces");
     expect(
       screen.getByRole("heading", { name: "Your saved practice record" }),
     ).toBeInTheDocument();

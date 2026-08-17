@@ -21,6 +21,13 @@ describe("JavaScript trees and graphs practice", () => {
       expect(exercise.recoveryCue.length).toBeGreaterThan(50);
       expect(exercise.takeaway.length).toBeGreaterThan(50);
       expect(exercise.recoveryCue).not.toContain("return ");
+      expect(exercise.walkthrough.steps.length).toBeGreaterThanOrEqual(3);
+      expect(exercise.walkthrough.steps.length).toBeLessThanOrEqual(5);
+      expect(
+        exercise.walkthrough.steps.every(
+          (step) => step.visited.length > 0 && step.focusValue.length > 0,
+        ),
+      ).toBe(true);
     }
   });
 

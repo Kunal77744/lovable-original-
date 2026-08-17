@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   getJavaScriptLabProgress: vi.fn(),
   getJavaScriptCapstone: vi.fn(),
   getFoundationsReview: vi.fn(),
+  getJavaScriptReview: vi.fn(),
+  getDailyChallengeCompletion: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({
@@ -59,6 +61,15 @@ vi.mock("@/db/web-foundations-review", () => ({
   getWebFoundationsReviewResultForStudent: mocks.getFoundationsReview,
 }));
 
+vi.mock("@/db/javascript-mixed-review", () => ({
+  getJavaScriptMixedReviewResultForStudent: mocks.getJavaScriptReview,
+}));
+
+vi.mock("@/db/daily-coding-challenge", () => ({
+  getDailyCodingChallengeCompletionForStudent:
+    mocks.getDailyChallengeCompletion,
+}));
+
 vi.mock("@/components/sign-out-button", () => ({
   SignOutButton: () => <button type="button">Sign out</button>,
 }));
@@ -103,6 +114,8 @@ describe("DashboardPage", () => {
       passedChecks: 0,
     });
     mocks.getFoundationsReview.mockResolvedValue(null);
+    mocks.getJavaScriptReview.mockResolvedValue(null);
+    mocks.getDailyChallengeCompletion.mockResolvedValue(null);
     mocks.getCourse.mockResolvedValue({
       slug: "web-development-foundations",
       title: "Web Development Foundations",
@@ -163,6 +176,15 @@ describe("DashboardPage", () => {
   it("gives a fresh learner one primary start action and previews the full path", async () => {
     render(await DashboardPage());
 
+    expect(
+      screen.getByRole("link", { name: "Today's plan: Start the course" }),
+    ).toHaveAttribute(
+      "href",
+      "/learn/web-development-foundations/semantic-html",
+    );
+    expect(
+      screen.getByRole("heading", { name: "Build a page the browser understands" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Start the first lesson" }),
     ).toHaveAttribute(
@@ -274,7 +296,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Saved draft ready")).toBeInTheDocument();
     expect(screen.getByText("1/6")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Review due concepts" }),
+      screen.getByRole("link", { name: "Open Web Foundations review" }),
     ).toHaveAttribute("href", "/courses/web-development-foundations/review");
   });
 
@@ -373,7 +395,7 @@ describe("DashboardPage", () => {
         name: "Continue foundations · step 3 of 4",
       }),
     ).toHaveAttribute("href", "/practice/foundations");
-    expect(screen.getByText("2/4 foundations steps saved")).toBeInTheDocument();
+    expect(screen.getAllByText("2/4 foundations steps saved")).toHaveLength(2);
     expect(
       screen.queryByRole("link", { name: "Start problem 01" }),
     ).not.toBeInTheDocument();

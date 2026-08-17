@@ -4,8 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SiteFooter, SiteNav } from "@/app/site-chrome";
 import { JavaScriptSearchSortLab } from "@/components/javascript-search-sort-lab";
-import { getCompletedJavaScriptLabExerciseIds } from "@/db/javascript-lab-progress";
+import {
+  getCompletedJavaScriptLabExerciseIds,
+  getJavaScriptLabExerciseDrafts,
+} from "@/db/javascript-lab-progress";
 import { auth } from "@/lib/auth";
+import { createBrowserRecoveryScope } from "@/lib/browser-recovery-scope";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +30,10 @@ export default async function JavaScriptSearchSortPage() {
     redirect("/account?mode=signin&next=/practice/search-sort");
     return null;
   }
-  const completedExerciseIds = await getCompletedJavaScriptLabExerciseIds(
-    session.user.id,
-    "search-sort",
-  );
+  const [completedExerciseIds, initialDrafts] = await Promise.all([
+    getCompletedJavaScriptLabExerciseIds(session.user.id, "search-sort"),
+    getJavaScriptLabExerciseDrafts(session.user.id, "search-sort"),
+  ]);
 
   return (
     <main className="function-lab-page">
@@ -56,14 +60,14 @@ export default async function JavaScriptSearchSortPage() {
           <aside aria-label="Searching and sorting lab format">
             <strong>4 search and sort ideas</strong>
             <span>12 local checks</span>
-            <p>
-              Code stays local. Completed exercises save as private practice.
-            </p>
+            <p>Drafts and completed exercises save as private practice.</p>
           </aside>
         </header>
 
         <JavaScriptSearchSortLab
+          browserRecoveryScope={createBrowserRecoveryScope(session.user.id)}
           completedExerciseIds={completedExerciseIds}
+          initialDrafts={initialDrafts}
         />
       </div>
       <SiteFooter />

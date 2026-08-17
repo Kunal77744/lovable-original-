@@ -86,7 +86,34 @@ type HtmlNode = {
   nodeName?: string;
   tagName?: string;
   childNodes?: HtmlNode[];
+  value?: string;
 };
+
+export type GuidedProjectStructureItem = {
+  tag: string;
+  kind: "landmark" | "heading";
+  description: string;
+  label: string | null;
+  depth: number;
+};
+
+export type GuidedProjectStructure = {
+  items: GuidedProjectStructureItem[];
+  landmarkCount: number;
+  headingCount: number;
+  truncated: boolean;
+};
+
+const STRUCTURE_LANDMARKS = new Map([
+  ["header", "Page header"],
+  ["nav", "Navigation"],
+  ["main", "Main content"],
+  ["article", "Article"],
+  ["section", "Section"],
+  ["aside", "Supporting note"],
+  ["footer", "Page footer"],
+]);
+const STRUCTURE_ITEM_LIMIT = 24;
 
 function descendants(node: HtmlNode): HtmlNode[] {
   const nodes: HtmlNode[] = [];
@@ -106,6 +133,74 @@ function hasDirectContent(node: HtmlNode | undefined, tagName: string) {
   return elementsWithin(node).some(
     (child) => child.tagName?.toLowerCase() === tagName,
   );
+}
+
+function textContent(node: HtmlNode): string {
+  return [node.value ?? "", ...(node.childNodes ?? []).map(textContent)]
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function getGuidedProjectStructure(
+  html: string,
+): GuidedProjectStructure {
+  const document = parse(html) as HtmlNode;
+  const elements = elementsWithin(document);
+  const body = elements.find((node) => node.tagName === "body") ?? document;
+  const items: GuidedProjectStructureItem[] = [];
+  let landmarkCount = 0;
+  let headingCount = 0;
+
+  function visit(node: HtmlNode, depth: number) {
+    const tag = node.tagName?.toLowerCase();
+    const landmarkDescription = tag ? STRUCTURE_LANDMARKS.get(tag) : undefined;
+    const headingMatch = tag?.match(/^h([1-6])$/);
+    const isStructureItem = Boolean(landmarkDescription || headingMatch);
+
+    if (landmarkDescription && tag) {
+      landmarkCount += 1;
+      if (items.length < STRUCTURE_ITEM_LIMIT) {
+        items.push({
+          tag,
+          kind: "landmark",
+          description: landmarkDescription,
+          label: null,
+          depth,
+        });
+      }
+    } else if (headingMatch && tag) {
+      headingCount += 1;
+      if (items.length < STRUCTURE_ITEM_LIMIT) {
+        const headingText = textContent(node);
+        items.push({
+          tag,
+          kind: "heading",
+          description: `Heading level ${headingMatch[1]}`,
+          label:
+            headingText.length > 70
+              ? `${headingText.slice(0, 67).trimEnd()}…`
+              : headingText || "Untitled heading",
+          depth,
+        });
+      }
+    }
+
+    for (const child of node.childNodes ?? []) {
+      visit(child, isStructureItem ? depth + 1 : depth);
+    }
+  }
+
+  for (const child of body.childNodes ?? []) {
+    visit(child, 0);
+  }
+
+  return {
+    items,
+    landmarkCount,
+    headingCount,
+    truncated: landmarkCount + headingCount > STRUCTURE_ITEM_LIMIT,
+  };
 }
 
 export function getEmptyGuidedProjectChecks(): GuidedProjectCheck[] {

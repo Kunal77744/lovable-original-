@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import { CODING_PROBLEMS } from "./coding-problems";
 import {
   areTimedCodingChallengeSetsInAuthoredOrder,
+  formatTimedCodingChallengeElapsedTime,
   getNextTimedCodingChallengeProblem,
   getRecommendedTimedCodingChallengeSet,
   getTimedCodingChallengeSet,
+  isTimedCodingChallengeElapsedSeconds,
+  isTimedCodingChallengeSetId,
   TIMED_CODING_CHALLENGE_MINUTES,
   TIMED_CODING_CHALLENGE_PROBLEMS,
   TIMED_CODING_CHALLENGE_SETS,
@@ -64,5 +67,15 @@ describe("timed coding challenge", () => {
         "fizz-buzz",
       ]),
     ).toBeNull();
+  });
+
+  it("validates and formats only bounded result fields", () => {
+    expect(isTimedCodingChallengeSetId("collections")).toBe(true);
+    expect(isTimedCodingChallengeSetId("unknown-set")).toBe(false);
+    expect(isTimedCodingChallengeElapsedSeconds(0)).toBe(true);
+    expect(isTimedCodingChallengeElapsedSeconds(1_800)).toBe(true);
+    expect(isTimedCodingChallengeElapsedSeconds(1_801)).toBe(false);
+    expect(isTimedCodingChallengeElapsedSeconds(1.5)).toBe(false);
+    expect(formatTimedCodingChallengeElapsedTime(754)).toBe("12m 34s");
   });
 });

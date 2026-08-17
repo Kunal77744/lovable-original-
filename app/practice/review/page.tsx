@@ -8,6 +8,7 @@ import {
   getCodingProblemBookmarksForStudent,
 } from "@/db/coding-practice";
 import { auth } from "@/lib/auth";
+import { getSignInHref } from "@/lib/account-destination";
 import { buildCodingReviewSession } from "@/lib/coding-review-session";
 import { SiteFooter, SiteNav } from "../../site-chrome";
 
@@ -29,7 +30,7 @@ export default async function PracticeReviewPage() {
   });
 
   if (!session) {
-    redirect("/account?mode=signin");
+    redirect(getSignInHref("/practice/review"));
   }
 
   const [mistakes, bookmarks, progress] = await Promise.all([

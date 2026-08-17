@@ -55,7 +55,7 @@ describe("PracticeReviewPage", () => {
     mocks.getSession.mockResolvedValue(null);
 
     await expect(PracticeReviewPage()).rejects.toThrow(
-      "REDIRECT:/account?mode=signin",
+      "REDIRECT:/account?mode=signin&next=%2Fpractice%2Freview",
     );
     expect(mocks.getMistakes).not.toHaveBeenCalled();
     expect(mocks.getBookmarks).not.toHaveBeenCalled();

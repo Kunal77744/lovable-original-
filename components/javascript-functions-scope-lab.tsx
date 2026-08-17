@@ -2,32 +2,97 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  GUIDED_LAB_EXECUTION_HINT_ID,
+  GuidedLabExecutionHint,
+  useGuidedLabExecutionShortcut,
+} from "@/components/guided-lab-execution-shortcut";
+import { GuidedCodeEditor } from "@/components/guided-code-editor";
+import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
+import { GuidedSourceChangeReview } from "./guided-source-change-review";
+import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
+import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
+import {
+  PRIVATE_LAB_DRAFT_MAX_LENGTH,
+  PrivateJavaScriptLabDraftStatus,
+  usePrivateJavaScriptLabDraft,
+} from "@/components/private-javascript-lab-draft";
+import {
+  buildGuidedCheckResults,
+  GuidedCheckResults,
+  type GuidedCheckResult,
+} from "./guided-check-results";
+import { GuidedStarterRestore } from "@/components/guided-starter-restore";
+import { GuidedJavaScriptCustomRun } from "@/components/guided-javascript-custom-run";
 import { runCodingSolution } from "@/lib/coding-runner";
 import { JAVASCRIPT_FUNCTION_EXERCISES } from "@/lib/javascript-functions-scope";
-import { getFirstIncompleteExerciseIndex, getNextIncompleteExerciseIndex, saveJavaScriptLabExercise } from "@/lib/javascript-lab-progress";
+import {
+  getFirstIncompleteExerciseIndex,
+  getNextIncompleteExerciseIndex,
+  saveJavaScriptLabExercise,
+} from "@/lib/javascript-lab-progress";
 
 type CheckState =
   | { kind: "idle"; message: string }
   | { kind: "running"; message: string }
   | { kind: "passed"; message: string }
   | { kind: "failed"; message: string }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string; source?: string };
 
 const readyMessage =
   "Finish the missing function logic, then run three private browser checks.";
 
-const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map((exercise) => exercise.slug);
+const exerciseIds = JAVASCRIPT_FUNCTION_EXERCISES.map(
+  (exercise) => exercise.slug,
+);
 
-export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { completedExerciseIds?: string[] }) {
-  const [exerciseIndex, setExerciseIndex] = useState(() => getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds));
+export function JavaScriptFunctionsScopeLab({
+  completedExerciseIds = [],
+  initialDrafts = {},
+  browserRecoveryScope = null,
+}: {
+  completedExerciseIds?: string[];
+  initialDrafts?: Record<string, string>;
+  browserRecoveryScope?: string | null;
+}) {
+  const [exerciseIndex, setExerciseIndex] = useState(() =>
+    getFirstIncompleteExerciseIndex(exerciseIds, completedExerciseIds),
+  );
   const exercise = JAVASCRIPT_FUNCTION_EXERCISES[exerciseIndex] ?? null;
-  const [code, setCode] = useState(exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode);
+  const {
+    source: code,
+    state: draftState,
+    savedSource,
+    updateSource: setCode,
+    restoreStarter: restorePrivateStarter,
+    retrySave,
+    browserRecovery,
+  } = usePrivateJavaScriptLabDraft({
+    labSlug: "functions",
+    exerciseId: exercise?.slug ?? JAVASCRIPT_FUNCTION_EXERCISES[0].slug,
+    starterCode:
+      exercise?.starterCode ?? JAVASCRIPT_FUNCTION_EXERCISES[0].starterCode,
+    initialDrafts,
+    browserRecoveryScope,
+  });
   const [checkState, setCheckState] = useState<CheckState>({
     kind: "idle",
     message: readyMessage,
   });
-  const [completedIds, setCompletedIds] = useState(() => new Set(completedExerciseIds));
+  const [completedIds, setCompletedIds] = useState(
+    () => new Set(completedExerciseIds),
+  );
+  const [reviewingCompletedLab, setReviewingCompletedLab] = useState(false);
+  const [checkResults, setCheckResults] = useState<GuidedCheckResult[]>([]);
+  const [replayStep, setReplayStep] = useState(0);
   const completedCount = completedIds.size;
+  const handleEditorKeyDown = useGuidedLabExecutionShortcut({
+    disabled:
+      !exercise ||
+      checkState.kind === "running" ||
+      checkState.kind === "passed",
+    onRun: runChecks,
+  });
 
   async function runChecks() {
     if (!exercise) return;
@@ -36,32 +101,48 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
       kind: "running",
       message: "Running three checks in the isolated browser worker…",
     });
+    setCheckResults([]);
     const result = await runCodingSolution(
       code,
       exercise.tests.map((test) => test.input),
     );
 
     if (result.status !== "finished") {
-      setCheckState({ kind: "error", message: result.message });
+      setCheckState({ kind: "error", message: result.message, source: code });
       return;
     }
 
-    const passedChecks = exercise.tests.reduce((count, test, index) => {
-      const actual = result.outputs[index] ?? "";
-      return actual.trim() === test.expectedOutput.trim() ? count + 1 : count;
-    }, 0);
+    const nextCheckResults = buildGuidedCheckResults(
+      exercise.tests,
+      result.outputs,
+    );
+    const passedChecks = nextCheckResults.filter((check) => check.passed).length;
+    setCheckResults(nextCheckResults);
 
     if (passedChecks === exercise.tests.length) {
-      const saveResponse = await saveJavaScriptLabExercise("functions", exercise.slug);
+      if (completedIds.has(exercise.slug)) {
+        setReplayStep(0);
+        setCheckState({
+          kind: "passed",
+          message: `Passed ${passedChecks} of ${exercise.tests.length} checks. Saved completion stayed unchanged.`,
+        });
+        return;
+      }
+      const saveResponse = await saveJavaScriptLabExercise(
+        "functions",
+        exercise.slug,
+      );
       if (!saveResponse?.ok) {
         setCheckState({
           kind: "error",
-          message: "The checks passed, but completion could not be saved. Run them again to retry.",
+          message:
+            "The checks passed, but completion could not be saved. Run them again to retry.",
         });
         return;
       }
 
       setCompletedIds((current) => new Set(current).add(exercise.slug));
+      setReplayStep(0);
       setCheckState({
         kind: "passed",
         message: `Passed ${passedChecks} of ${exercise.tests.length} checks.`,
@@ -77,10 +158,13 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
 
   function restoreStarter() {
     if (!exercise) return;
-    setCode(exercise.starterCode);
+    restorePrivateStarter();
+    setCheckResults([]);
+    setReplayStep(0);
     setCheckState({
       kind: "idle",
-      message: "Starter restored locally. No learner record was changed.",
+      message:
+        "Starter restored. This version will save as your private draft.",
     });
   }
 
@@ -89,6 +173,7 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
       exerciseIds,
       [...completedIds],
       exerciseIndex,
+      reviewingCompletedLab,
     );
     const nextExercise = JAVASCRIPT_FUNCTION_EXERCISES[nextIndex];
 
@@ -98,8 +183,22 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     }
 
     setExerciseIndex(nextIndex);
-    setCode(nextExercise.starterCode);
+    setCheckResults([]);
+    setReplayStep(0);
     setCheckState({ kind: "idle", message: readyMessage });
+  }
+
+  function reviewExercises() {
+    const firstExercise = JAVASCRIPT_FUNCTION_EXERCISES[0];
+    setReviewingCompletedLab(true);
+    setExerciseIndex(0);
+    setCode(firstExercise.starterCode);
+    setCheckResults([]);
+    setReplayStep(0);
+    setCheckState({
+      kind: "idle",
+      message: "Review mode. Run the checks without changing saved completion.",
+    });
   }
 
   if (!exercise) {
@@ -112,7 +211,11 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
           4/4
         </div>
         <div>
-          <p className="eyebrow">Functions and scope lab complete</p>
+          <p className="eyebrow">
+            {reviewingCompletedLab
+              ? "Functions and scope review complete"
+              : "Functions and scope lab complete"}
+          </p>
           <h2 id="function-lab-complete-title">
             One function can do a precise job and stay reusable.
           </h2>
@@ -127,6 +230,10 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
           <Link className="function-lab-return-link" href="/practice">
             Return to the practice arena
           </Link>
+          <CompletedLabReviewButton
+            label={reviewingCompletedLab ? "Review exercises again" : undefined}
+            onReview={reviewExercises}
+          />
         </div>
       </section>
     );
@@ -137,11 +244,15 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
     (completedCount / JAVASCRIPT_FUNCTION_EXERCISES.length) * 100;
 
   return (
-    <section className="function-lab-workbench" aria-labelledby="function-lab-title">
+    <section
+      className="function-lab-workbench"
+      aria-labelledby="function-lab-title"
+    >
       <header className="function-lab-progress">
         <div>
           <span>
-            Function idea {exercise.number} of {JAVASCRIPT_FUNCTION_EXERCISES.length}
+            Function idea {exercise.number} of{" "}
+            {JAVASCRIPT_FUNCTION_EXERCISES.length}
           </span>
           <strong>{exercise.concept}</strong>
         </div>
@@ -206,31 +317,64 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
         <div className="function-lab-editor">
           <div className="function-lab-editor-bar">
             <span>{exercise.slug}.js</span>
-            <span>Browser-only</span>
+            <span>Draft saves privately</span>
           </div>
-          <label htmlFor="function-lab-code">JavaScript functions and scope code</label>
-          <textarea
+          <GuidedJavaScriptFileImport
+            key={`import-${exercise.slug}`}
+            destinationName={`${exercise.slug}.js`}
+            disabled={checkState.kind === "running"}
+            onImport={(nextCode) => {
+              setCode(nextCode);
+              setCheckResults([]);
+              setReplayStep(0);
+              setCheckState({
+                kind: "idle",
+                message: "Imported code is local. Run the three checks when it is ready.",
+              });
+            }}
+          />
+          <label htmlFor="function-lab-code">
+            JavaScript functions and scope code
+          </label>
+          <GuidedCodeEditor
             id="function-lab-code"
+            aria-describedby={GUIDED_LAB_EXECUTION_HINT_ID}
             value={code}
             onChange={(event) => {
               setCode(event.target.value);
+              setCheckResults([]);
+              setReplayStep(0);
               setCheckState({
                 kind: "idle",
                 message: "Code changed. Run the three checks when it is ready.",
               });
             }}
+            maxLength={PRIVATE_LAB_DRAFT_MAX_LENGTH}
+            onKeyDown={handleEditorKeyDown}
             spellCheck={false}
           />
+          <PrivateJavaScriptLabDraftStatus
+            state={draftState}
+            onRetry={retrySave}
+            browserRecovery={browserRecovery}
+            savedSource={savedSource}
+            fileName={`${exercise.slug}.js`}
+          />
+
+          <GuidedStarterRestore
+            key={`restore-${exercise.slug}`}
+            disabled={checkState.kind === "running"}
+            isStarterLoaded={code === exercise.starterCode}
+            onRestore={restoreStarter}
+          />
+
+          <GuidedSourceChangeReview
+            currentSource={code}
+            starterSource={exercise.starterCode}
+          />
+          <GuidedLabExecutionHint />
 
           <div className="function-lab-actions">
-            <button
-              className="function-lab-reset"
-              disabled={checkState.kind === "running"}
-              onClick={restoreStarter}
-              type="button"
-            >
-              Restore starter
-            </button>
             {isPassed ? (
               <button
                 className="function-lab-run"
@@ -249,7 +393,9 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
                 onClick={runChecks}
                 type="button"
               >
-                {checkState.kind === "running" ? "Running checks…" : "Run 3 checks"}
+                {checkState.kind === "running"
+                  ? "Running checks…"
+                  : "Run 3 checks"}
               </button>
             )}
           </div>
@@ -272,17 +418,123 @@ export function JavaScriptFunctionsScopeLab({ completedExerciseIds = [] }: { com
               </span>
               <strong>{checkState.message}</strong>
             </div>
-            {checkState.kind === "failed" ? <p>{exercise.recoveryCue}</p> : null}
+            {checkState.kind === "failed" ? (
+              <p>{exercise.recoveryCue}</p>
+            ) : null}
             {checkState.kind === "passed" ? (
               <p className="function-lab-takeaway">
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
+            <GuidedCheckResults results={checkResults} />
+            <GuidedRuntimeErrorNavigation
+              currentSource={code}
+              editorId="function-lab-code"
+              failedSource={
+                checkState.kind === "error" ? checkState.source : undefined
+              }
+              message={checkState.message}
+            />
           </div>
 
+          <GuidedJavaScriptCustomRun
+            key={exercise.slug}
+            code={code}
+            inputDescription={exercise.inputFormat}
+            sampleInput={exercise.example.input}
+          />
+
+          {isPassed ? (
+            <section
+              className="function-call-replay"
+              aria-labelledby="function-call-replay-title"
+            >
+              <header>
+                <div>
+                  <span>Call-frame replay</span>
+                  <h3 id="function-call-replay-title">
+                    Follow where each value lives
+                  </h3>
+                </div>
+                <span aria-live="polite">
+                  Step {replayStep + 1} of{" "}
+                  {exercise.callFrameReplay.steps.length}
+                </span>
+              </header>
+
+              <div className="function-call-replay-input">
+                <span>Example input</span>
+                <code>{exercise.callFrameReplay.input}</code>
+              </div>
+
+              <ol
+                className="function-call-replay-path"
+                aria-label="Current JavaScript call path"
+              >
+                {exercise.callFrameReplay.steps[replayStep].callPath.map(
+                  (call, index) => (
+                    <li key={`${call}-${index}`}>
+                      <code>{call}</code>
+                    </li>
+                  ),
+                )}
+              </ol>
+
+              <div className="function-call-replay-stage">
+                <div className="function-call-replay-frame">
+                  <span>
+                    {exercise.callFrameReplay.steps[replayStep].frameLabel}
+                  </span>
+                  <dl>
+                    {exercise.callFrameReplay.steps[replayStep].bindings.map(
+                      (binding) => (
+                        <div key={binding.name}>
+                          <dt>{binding.name}</dt>
+                          <dd>
+                            <code>{binding.value}</code>
+                          </dd>
+                        </div>
+                      ),
+                    )}
+                  </dl>
+                </div>
+                <div className="function-call-replay-explanation">
+                  <strong>
+                    {exercise.callFrameReplay.steps[replayStep].title}
+                  </strong>
+                  <p>{exercise.callFrameReplay.steps[replayStep].detail}</p>
+                  {exercise.callFrameReplay.steps[replayStep].returnedValue ? (
+                    <p className="function-call-replay-return">
+                      {exercise.callFrameReplay.steps[replayStep].returnedValue}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="function-call-replay-controls">
+                <button
+                  disabled={replayStep === 0}
+                  onClick={() => setReplayStep((step) => step - 1)}
+                  type="button"
+                >
+                  Previous frame
+                </button>
+                <button
+                  disabled={
+                    replayStep === exercise.callFrameReplay.steps.length - 1
+                  }
+                  onClick={() => setReplayStep((step) => step + 1)}
+                  type="button"
+                >
+                  Next frame
+                </button>
+              </div>
+            </section>
+          ) : null}
+
           <p className="function-lab-privacy">
-            Code, checks, answers, and progress stay in this browser tab. No
-            code stays in this browser; completed exercises save privately.
+            Your draft and completion save privately to your account. Check
+            output stays in this browser.
           </p>
         </div>
       </div>
