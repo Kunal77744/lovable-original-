@@ -247,6 +247,87 @@ describe("PracticePage progress", () => {
     ).toHaveAttribute("aria-valuenow", "1");
   });
 
+  it("filters guided labs by account-backed completion without changing saved progress", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "filtering-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 12,
+      completedSlugs: [],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 5,
+      totalCount: 55,
+      nextLabSlug: "debugging",
+      nextLabTitle: "Debugging",
+      nextHref: "/practice/debugging?exercise=2",
+      nextExerciseNumber: 2,
+      labs: [
+        {
+          slug: "tracing",
+          title: "Code tracing",
+          href: "/practice/tracing",
+          completedCount: 4,
+          totalCount: 4,
+          nextExerciseNumber: null,
+          state: "complete",
+        },
+        {
+          slug: "debugging",
+          title: "Debugging",
+          href: "/practice/debugging?exercise=2",
+          completedCount: 1,
+          totalCount: 3,
+          nextExerciseNumber: 2,
+          state: "in-progress",
+        },
+      ],
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({ labs: "completed" }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Completed 1" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("link", {
+        name: "Review Trace values. 4 of 4 saved · complete.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Repair defects")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Take the 30-minute challenge"),
+    ).not.toBeInTheDocument();
+    expect(getLabProgress).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an empty completed-lab filter truthful", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "fresh-filtering-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 12,
+      completedSlugs: [],
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({ labs: "completed" }),
+      }),
+    );
+
+    expect(screen.getByText("No completed guided labs yet.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Show all 13 labs" }),
+    ).toHaveAttribute("href", "/practice#guided-labs");
+  });
+
   it("restores a returning learner's saved Accepted total", async () => {
     getSession.mockResolvedValue({
       user: { id: "returning-learner" },
