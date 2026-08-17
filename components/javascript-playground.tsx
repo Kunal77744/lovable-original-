@@ -14,6 +14,11 @@ import {
   validatePlaygroundChecks,
 } from "@/lib/javascript-playground";
 import type { PlaygroundWorkspaceFile } from "@/db/javascript-playground";
+import {
+  GUIDED_PLAYGROUND_TRANSFER_STORAGE_KEY,
+  parseGuidedPlaygroundTransfer,
+  type GuidedPlaygroundTransfer,
+} from "@/lib/guided-playground-transfer";
 
 type JavaScriptPlaygroundProps = {
   initialFiles: PlaygroundWorkspaceFile[];
@@ -23,6 +28,7 @@ type JavaScriptPlaygroundProps = {
     problemTitle: string;
     source: string;
   } | null;
+  guidedCopyRequested?: boolean;
 };
 
 type RunState =
@@ -41,6 +47,7 @@ export function JavaScriptPlayground({
   initialFiles,
   initialActiveFileId,
   acceptedTransfer = null,
+  guidedCopyRequested = false,
 }: JavaScriptPlaygroundProps) {
   const initialActiveFile =
     initialFiles.find((file) => file.id === initialActiveFileId) ?? initialFiles[0];
@@ -76,6 +83,11 @@ export function JavaScriptPlayground({
   const [transferState, setTransferState] = useState<
     "offered" | "loaded" | "dismissed"
   >(acceptedTransfer ? "offered" : "dismissed");
+  const [guidedTransfer, setGuidedTransfer] =
+    useState<GuidedPlaygroundTransfer | null>(null);
+  const [guidedTransferState, setGuidedTransferState] = useState<
+    "offered" | "loaded" | "dismissed" | "unavailable"
+  >(guidedCopyRequested ? "offered" : "dismissed");
 
   async function runCode() {
     setRunState({
@@ -185,6 +197,7 @@ export function JavaScriptPlayground({
       message: "Add one expression per line. Each check should return true.",
     });
     setTransferState(acceptedTransfer ? "offered" : "dismissed");
+    setGuidedTransferState("dismissed");
   }
 
   function confirmDiscard(action: string) {
@@ -428,6 +441,60 @@ export function JavaScriptPlayground({
     setTransferState("loaded");
   }
 
+  function clearGuidedTransfer() {
+    try {
+      window.sessionStorage.removeItem(
+        GUIDED_PLAYGROUND_TRANSFER_STORAGE_KEY,
+      );
+    } catch {
+      // The one-time query keeps stale browser data from appearing later.
+    }
+  }
+
+  function keepCurrentFileFromGuidedTransfer() {
+    clearGuidedTransfer();
+    setGuidedTransferState("dismissed");
+  }
+
+  function loadGuidedCopy() {
+    let transfer: GuidedPlaygroundTransfer | null = null;
+
+    try {
+      transfer = parseGuidedPlaygroundTransfer(
+        window.sessionStorage.getItem(
+          GUIDED_PLAYGROUND_TRANSFER_STORAGE_KEY,
+        ),
+      );
+    } catch {
+      // The saved playground remains available when browser storage is blocked.
+    }
+
+    if (!transfer) {
+      clearGuidedTransfer();
+      setGuidedTransferState("unavailable");
+      return;
+    }
+    if (!confirmDiscard("load the guided exercise copy")) return;
+
+    latestDraft.current = { code: transfer.source, quickChecks: "" };
+    setCode(transfer.source);
+    setCheckSource("");
+    setSaveState("unsaved");
+    setRunState({
+      kind: "ready",
+      output: [],
+      message: "Run the guided copy to see console output here.",
+    });
+    setCheckState({
+      kind: "ready",
+      checks: [],
+      message: "Add one expression per line. Each check should return true.",
+    });
+    setGuidedTransfer(transfer);
+    clearGuidedTransfer();
+    setGuidedTransferState("loaded");
+  }
+
   return (
     <section className="playground-workbench" aria-labelledby="playground-editor-title">
       <section className="playground-files" aria-labelledby="playground-files-title">
@@ -554,6 +621,44 @@ export function JavaScriptPlayground({
           <Link href={`/practice/${acceptedTransfer.problemSlug}`}>
             Return to problem
           </Link>
+        </div>
+      ) : null}
+      {guidedTransferState === "offered" ? (
+        <aside className="playground-transfer" aria-label="Guided exercise copy">
+          <div>
+            <span>Passed guided exercise</span>
+            <strong>Experiment beyond the lesson</strong>
+          </div>
+          <p>
+            Replace the open editor with the passed guided exercise copy from
+            this tab. Your guided draft, saved completion, and other playground
+            files stay unchanged. This copy stays unsaved until you choose Save
+            file.
+          </p>
+          <div className="playground-transfer-actions">
+            <button type="button" onClick={keepCurrentFileFromGuidedTransfer}>
+              Keep current file
+            </button>
+            <button type="button" onClick={loadGuidedCopy}>
+              Replace editor with copy
+            </button>
+          </div>
+        </aside>
+      ) : null}
+      {guidedTransferState === "unavailable" ? (
+        <div className="playground-transfer-loaded" role="status">
+          <span>Guided copy unavailable</span>
+          <p>Return to the passed exercise and open a new playground copy.</p>
+        </div>
+      ) : null}
+      {guidedTransfer && guidedTransferState === "loaded" ? (
+        <div className="playground-transfer-loaded" role="status">
+          <span>Unsaved guided copy</span>
+          <p>
+            Loaded from {guidedTransfer.labTitle}: {guidedTransfer.exerciseTitle}.
+            Your saved guided work is still untouched.
+          </p>
+          <Link href={guidedTransfer.returnHref}>Return to guided lab</Link>
         </div>
       ) : null}
       <header className="playground-filebar">

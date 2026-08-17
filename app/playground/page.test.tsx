@@ -42,12 +42,14 @@ vi.mock("@/components/javascript-playground", () => ({
   JavaScriptPlayground: ({
     initialFiles,
     acceptedTransfer,
+    guidedCopyRequested,
   }: {
     initialFiles: Array<{ code: string; quickChecks: string }>;
     acceptedTransfer?: {
       problemTitle: string;
       source: string;
     } | null;
+    guidedCopyRequested?: boolean;
   }) => (
     <section aria-label="JavaScript playground editor">
       <pre>{initialFiles[0].code}</pre>
@@ -58,6 +60,7 @@ vi.mock("@/components/javascript-playground", () => ({
           <pre>{acceptedTransfer.source}</pre>
         </div>
       ) : null}
+      {guidedCopyRequested ? <span>Guided copy requested</span> : null}
     </section>
   ),
 }));
@@ -144,5 +147,16 @@ describe("PlaygroundPage", () => {
     );
 
     expect(getCodingProblemForStudent).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes the bounded guided-copy request without reading judged practice", async () => {
+    render(
+      await PlaygroundPage({
+        searchParams: Promise.resolve({ guided_copy: "1" }),
+      }),
+    );
+
+    expect(screen.getByText("Guided copy requested")).toBeInTheDocument();
+    expect(getCodingProblemForStudent).not.toHaveBeenCalled();
   });
 });

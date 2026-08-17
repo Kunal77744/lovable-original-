@@ -9,6 +9,7 @@ import {
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
+import { GuidedPlaygroundTransfer } from "@/components/guided-playground-transfer";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
 import {
@@ -398,6 +399,13 @@ export function JavaScriptFoundationsWarmup({
             <p>
               <span>Keep this:</span> {exercise.takeaway}
             </p>
+          ) : null}
+          {checkState.kind === "passed" ? (
+            <GuidedPlaygroundTransfer
+              labSlug="foundations"
+              exerciseId={exercise.slug}
+              source={code}
+            />
           ) : null}
           <GuidedCheckResults results={checkResults} />
           <GuidedRuntimeErrorNavigation

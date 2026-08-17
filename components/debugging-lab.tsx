@@ -9,6 +9,7 @@ import {
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
+import { GuidedPlaygroundTransfer } from "@/components/guided-playground-transfer";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -353,6 +354,13 @@ export function DebuggingLab({
               </button>
             )}
           </div>
+        ) : null}
+        {labState.kind === "passed" ? (
+          <GuidedPlaygroundTransfer
+            labSlug="debugging"
+            exerciseId={drill.slug}
+            source={source}
+          />
         ) : null}
         <GuidedCheckResults results={checkResults} />
         <GuidedRuntimeErrorNavigation

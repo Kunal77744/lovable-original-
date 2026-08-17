@@ -23,17 +23,24 @@ export const metadata: Metadata = {
 };
 
 type PlaygroundPageProps = {
-  searchParams?: Promise<{ accepted_from?: string | string[] }>;
+  searchParams?: Promise<{
+    accepted_from?: string | string[];
+    guided_copy?: string | string[];
+  }>;
 };
 
 export default async function PlaygroundPage({ searchParams }: PlaygroundPageProps = {}) {
-  const requestedProblemSlug = (await searchParams)?.accepted_from;
+  const requestedParams = await searchParams;
+  const requestedProblemSlug = requestedParams?.accepted_from;
+  const guidedCopyRequested = requestedParams?.guided_copy === "1";
   const problemSlug =
     typeof requestedProblemSlug === "string" ? requestedProblemSlug : null;
   const requestedProblem = problemSlug ? getCodingProblem(problemSlug) : null;
   const returnDestination = requestedProblem
     ? `/playground?accepted_from=${encodeURIComponent(requestedProblem.slug)}`
-    : "/playground";
+    : guidedCopyRequested
+      ? "/playground?guided_copy=1"
+      : "/playground";
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -88,6 +95,7 @@ export default async function PlaygroundPage({ searchParams }: PlaygroundPagePro
           initialFiles={workspace.files}
           initialActiveFileId={workspace.activeFileId}
           acceptedTransfer={acceptedTransfer}
+          guidedCopyRequested={guidedCopyRequested}
         />
 
         <aside className="playground-boundary" aria-label="Playground boundaries">
