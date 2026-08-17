@@ -764,6 +764,90 @@ export async function getFirstLessonNote(userId: string, lessonSlug: string) {
   };
 }
 
+export async function getFirstCourseNotesForStudent(userId: string) {
+  const database = getDatabase();
+  await ensureFirstCourseAssignment(userId);
+
+  const rows = await database
+    .select({
+      courseSlug: course.slug,
+      courseTitle: course.title,
+      lessonId: lesson.id,
+      lessonSlug: lesson.slug,
+      lessonTitle: lesson.title,
+      lessonDescription: lesson.description,
+      lessonModuleTitle: lesson.moduleTitle,
+      lessonPosition: lesson.position,
+      estimatedMinutes: lesson.estimatedMinutes,
+      progressStatus: lessonProgress.status,
+      quizScore: lessonProgress.quizScore,
+      noteContent: lessonNote.content,
+      noteUpdatedAt: lessonNote.updatedAt,
+    })
+    .from(courseAssignment)
+    .innerJoin(course, eq(courseAssignment.courseId, course.id))
+    .innerJoin(lesson, eq(lesson.courseId, course.id))
+    .leftJoin(
+      lessonProgress,
+      and(
+        eq(lessonProgress.lessonId, lesson.id),
+        eq(lessonProgress.userId, userId),
+      ),
+    )
+    .leftJoin(
+      lessonNote,
+      and(eq(lessonNote.lessonId, lesson.id), eq(lessonNote.userId, userId)),
+    )
+    .where(
+      and(
+        eq(courseAssignment.userId, userId),
+        eq(courseAssignment.courseId, FIRST_COURSE.id),
+      ),
+    )
+    .orderBy(asc(lesson.position));
+
+  const firstRow = rows[0];
+
+  if (!firstRow) {
+    return null;
+  }
+
+  const progress = buildCourseProgress(
+    rows.map((row) => ({
+      id: row.lessonId,
+      slug: row.lessonSlug,
+      title: row.lessonTitle,
+      description: row.lessonDescription,
+      moduleTitle: row.lessonModuleTitle,
+      position: row.lessonPosition,
+      estimatedMinutes: row.estimatedMinutes,
+      progressStatus: row.progressStatus,
+      quizScore: row.quizScore,
+    })),
+  );
+  const noteByLessonId = new Map(
+    rows.map((row) => [
+      row.lessonId,
+      row.noteContent !== null && row.noteUpdatedAt !== null
+        ? {
+            content: row.noteContent,
+            updatedAt: row.noteUpdatedAt.toISOString(),
+          }
+        : null,
+    ]),
+  );
+
+  return {
+    slug: firstRow.courseSlug,
+    title: firstRow.courseTitle,
+    ...progress,
+    lessons: progress.lessons.map((courseLesson) => ({
+      ...courseLesson,
+      note: noteByLessonId.get(courseLesson.id) ?? null,
+    })),
+  };
+}
+
 export async function saveFirstLessonNote(
   userId: string,
   lessonSlug: string,

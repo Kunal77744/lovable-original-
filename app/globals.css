@@ -4088,7 +4088,13 @@ h1 {
   line-height: 1.65;
 }
 
-.lesson-notes-heading > span {
+.lesson-notes-tools {
+  display: grid;
+  justify-items: end;
+  gap: 12px;
+}
+
+.lesson-notes-tools > span {
   padding: 8px 10px;
   flex: none;
   color: var(--accent-deep);
@@ -4099,6 +4105,19 @@ h1 {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.lesson-notes-tools > a {
+  color: var(--accent-deep);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration-color: rgba(40, 118, 82, 0.42);
+  text-underline-offset: 5px;
+}
+
+.lesson-notes-tools > a:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.3);
+  outline-offset: 4px;
 }
 
 .lesson-notes-field {
@@ -16826,7 +16845,11 @@ footer {
     grid-template-columns: 1fr;
   }
 
-  .lesson-notes-heading > span {
+  .lesson-notes-tools {
+    justify-items: start;
+  }
+
+  .lesson-notes-tools > span {
     width: fit-content;
   }
 

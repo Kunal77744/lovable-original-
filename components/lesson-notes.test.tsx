@@ -31,6 +31,10 @@ describe("LessonNotes", () => {
       <LessonNotes lessonSlug="responsive-css-grid" initialNote={null} />,
     );
 
+    expect(
+      screen.getByRole("link", { name: "Review all course notes" }),
+    ).toHaveAttribute("href", "/courses/web-development-foundations/notes");
+
     fireEvent.change(screen.getByLabelText("What do you want to remember?"), {
       target: { value: "  Landmarks explain each region.\n" },
     });
@@ -168,6 +172,9 @@ describe("LessonNotes", () => {
 
     expect(
       screen.queryByRole("link", { name: "Create account" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Review all course notes" }),
     ).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("What do you want to remember?"), {

@@ -106,7 +106,14 @@ export function LessonNotes({
             before you start the practice.
           </p>
         </div>
-        <span>{hasSavedNote ? "Saved note" : "Your space"}</span>
+        <div className="lesson-notes-tools">
+          <span>{hasSavedNote ? "Saved note" : "Your space"}</span>
+          {isSignedIn ? (
+            <Link href="/courses/web-development-foundations/notes">
+              Review all course notes
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <label className="lesson-notes-field">
