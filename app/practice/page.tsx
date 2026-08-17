@@ -176,16 +176,22 @@ const CODING_PROBLEM_GROUPS = [
 ] as const;
 
 type CatalogStatus = "all" | "unfinished" | "accepted";
+type LabCatalogStatus = "all" | "unfinished" | "completed";
 type PracticeLabProgress = JavaScriptLabCatalogProgress["labs"][number];
 
 type PracticePageProps = {
   searchParams?: Promise<{
+    labs?: string | string[];
     status?: string | string[];
   }>;
 };
 
 function normalizeCatalogStatus(status: string | string[] | undefined) {
   return status === "unfinished" || status === "accepted" ? status : "all";
+}
+
+function normalizeLabCatalogStatus(status: string | string[] | undefined) {
+  return status === "unfinished" || status === "completed" ? status : "all";
 }
 
 function getPracticeLabCardCopy(progress: PracticeLabProgress) {
@@ -215,8 +221,12 @@ export default async function PracticePage({
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+  const resolvedSearchParams = await searchParams;
   const requestedCatalogStatus = normalizeCatalogStatus(
-    (await searchParams)?.status,
+    resolvedSearchParams?.status,
+  );
+  const requestedLabCatalogStatus = normalizeLabCatalogStatus(
+    resolvedSearchParams?.labs,
   );
   const [
     progress,
@@ -245,10 +255,61 @@ export default async function PracticePage({
   const catalogStatus: CatalogStatus = session
     ? requestedCatalogStatus
     : "all";
+  const labCatalogStatus: LabCatalogStatus = session
+    ? requestedLabCatalogStatus
+    : "all";
   const unfinishedCount = progress.totalCount - progress.completedCount;
   const labProgressBySlug = new Map<JavaScriptLabSlug, PracticeLabProgress>(
     labProgress?.labs.map((lab) => [lab.slug, lab]) ?? [],
   );
+  const catalogLabSlugs = PRACTICE_LAB_GROUPS.flatMap((group) =>
+    group.labs.flatMap((lab) => (lab.slug ? [lab.slug] : [])),
+  );
+  const completedLabCount = catalogLabSlugs.filter(
+    (slug) => labProgressBySlug.get(slug)?.state === "complete",
+  ).length;
+  const unfinishedLabCount = catalogLabSlugs.length - completedLabCount;
+  const labCatalogFilters: Array<{
+    status: LabCatalogStatus;
+    label: string;
+    count: number;
+    href: string;
+  }> = [
+    {
+      status: "all",
+      label: "All labs",
+      count: catalogLabSlugs.length,
+      href: "/practice#guided-labs",
+    },
+    {
+      status: "unfinished",
+      label: "To do",
+      count: unfinishedLabCount,
+      href: "/practice?labs=unfinished#guided-labs",
+    },
+    {
+      status: "completed",
+      label: "Completed",
+      count: completedLabCount,
+      href: "/practice?labs=completed#guided-labs",
+    },
+  ];
+  const visibleLabGroups = PRACTICE_LAB_GROUPS.map((group) => ({
+    ...group,
+    labs: group.labs.filter((lab) => {
+      if (!lab.slug) {
+        return labCatalogStatus === "all";
+      }
+
+      const labState = labProgressBySlug.get(lab.slug)?.state;
+      return (
+        labCatalogStatus === "all" ||
+        (labCatalogStatus === "completed"
+          ? labState === "complete"
+          : labState !== "complete")
+      );
+    }),
+  })).filter((group) => group.labs.length > 0);
   const catalogFilters: Array<{
     status: CatalogStatus;
     label: string;
@@ -710,8 +771,30 @@ export default async function PracticePage({
                 </aside>
               ) : null}
 
-              <div className="practice-learning-groups">
-                {PRACTICE_LAB_GROUPS.map((group) => (
+              <nav
+                className="practice-lab-filters"
+                aria-label="Filter guided labs"
+                id="guided-labs"
+              >
+                {labCatalogFilters.map((filter) => (
+                  <Link
+                    aria-current={
+                      labCatalogStatus === filter.status ? "page" : undefined
+                    }
+                    className={
+                      labCatalogStatus === filter.status ? "is-active" : undefined
+                    }
+                    href={filter.href}
+                    key={filter.status}
+                  >
+                    {filter.label} <span>{filter.count}</span>
+                  </Link>
+                ))}
+              </nav>
+
+              {visibleLabGroups.length > 0 ? (
+                <div className="practice-learning-groups">
+                  {visibleLabGroups.map((group) => (
                   <section className="practice-learning-group" key={group.label}>
                     <div>
                       <h3>{group.label}</h3>
@@ -772,8 +855,15 @@ export default async function PracticePage({
                       })}
                     </div>
                   </section>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="practice-lab-filter-empty">
+                  <strong>No completed guided labs yet.</strong>
+                  <p>Your first finished lab will appear here automatically.</p>
+                  <Link href="/practice#guided-labs">Show all 13 labs</Link>
+                </div>
+              )}
 
               <Link
                 className={`practice-capstone-entry ${

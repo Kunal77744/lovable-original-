@@ -20240,6 +20240,81 @@ footer {
   gap: 16px;
 }
 
+.practice-lab-filters {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.practice-lab-filters a {
+  min-height: 44px;
+  padding: 9px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 160ms ease-out, color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.practice-lab-filters a:hover,
+.practice-lab-filters a:focus-visible {
+  border-color: rgba(40, 118, 82, 0.48);
+  color: var(--accent-deep);
+}
+
+.practice-lab-filters a.is-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.practice-lab-filters a span {
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(23, 35, 30, 0.08);
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.practice-lab-filters a.is-active span {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.practice-lab-filter-empty {
+  margin-top: 16px;
+  padding: 24px;
+  border: 1px dashed rgba(23, 35, 30, 0.18);
+  border-radius: 14px 14px 5px 14px;
+  background: rgba(246, 247, 242, 0.72);
+}
+
+.practice-lab-filter-empty strong {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 20px;
+}
+
+.practice-lab-filter-empty p {
+  margin: 6px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.practice-lab-filter-empty a {
+  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .practice-learning-group {
   min-width: 0;
   padding: 24px;
