@@ -6653,6 +6653,119 @@ h1 {
   box-shadow: 0 20px 48px rgba(23, 35, 30, 0.08);
 }
 
+.practice-catalog-search {
+  margin: -2px 0 20px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(23, 35, 30, 0.14);
+  border-radius: 15px 15px 5px 15px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.practice-catalog-search-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.practice-catalog-search-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.practice-catalog-search-heading label {
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.practice-catalog-search-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.practice-catalog-search-heading > p {
+  max-width: 320px;
+  text-align: right;
+}
+
+.practice-catalog-search-field {
+  min-height: 48px;
+  padding: 0 12px 0 15px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(23, 35, 30, 0.2);
+  border-radius: 10px;
+  background: var(--surface);
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.practice-catalog-search-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(40, 118, 82, 0.14);
+}
+
+.practice-catalog-search-field > svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: var(--accent-deep);
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.practice-catalog-search-field input {
+  min-width: 0;
+  min-height: 46px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.practice-catalog-search-field input::placeholder {
+  color: rgba(83, 96, 89, 0.76);
+}
+
+.practice-catalog-search-field input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.practice-catalog-search-field button {
+  min-height: 36px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(40, 118, 82, 0.1);
+  color: var(--accent-deep);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.practice-catalog-search-field button:hover {
+  background: rgba(40, 118, 82, 0.16);
+}
+
+.practice-catalog-search-field button:focus-visible {
+  outline: 3px solid rgba(40, 118, 82, 0.27);
+  outline-offset: 2px;
+}
+
 .problem-catalog-filters {
   margin: -4px 0 32px;
   display: flex;
@@ -12480,6 +12593,21 @@ footer {
   .problem-catalog-filters {
     margin-top: 2px;
     margin-bottom: 28px;
+  }
+
+  .practice-catalog-search {
+    padding: 16px;
+  }
+
+  .practice-catalog-search-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .practice-catalog-search-heading > p {
+    max-width: none;
+    text-align: left;
   }
 
   .problem-group-heading {
