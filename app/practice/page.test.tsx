@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getCodingCatalogProgress,
@@ -517,6 +517,69 @@ describe("PracticePage progress", () => {
     expect(
       screen.getByRole("link", { name: "Continue at step 2 of 12" }),
     ).toHaveAttribute("href", "/practice/even-or-odd");
+  });
+
+  it("searches inside the active problem and guided-lab filters without changing continuation", async () => {
+    const binarySearchProblem = CODING_PROBLEMS.find(
+      (problem) => problem.acceptedExplanation.concept === "Discard half of a sorted range",
+    );
+    expect(binarySearchProblem).toBeDefined();
+    getSession.mockResolvedValue({
+      user: { id: "catalog-search-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 1,
+      totalCount: 12,
+      completedSlugs: [binarySearchProblem!.slug],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 4,
+      totalCount: 55,
+      nextLabSlug: "foundations",
+      nextLabTitle: "JavaScript foundations",
+      nextHref: "/practice/judge-basics",
+      nextExerciseNumber: 1,
+      labs: [
+        {
+          slug: "search-sort",
+          title: "Searching and sorting",
+          href: "/practice/search-sort",
+          completedCount: 4,
+          totalCount: 4,
+          nextExerciseNumber: null,
+          state: "complete",
+        },
+      ],
+    });
+
+    render(
+      await PracticePage({
+        searchParams: Promise.resolve({
+          labs: "completed",
+          status: "accepted",
+        }),
+      }),
+    );
+
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Find a practice activity" }),
+      { target: { value: "binary search" } },
+    );
+
+    expect(
+      screen.getByText("1 judged problem and 1 guided lab match."),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector(`[href="/practice/${binarySearchProblem!.slug}"]`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Review Search and sort values. 4 of 4 saved · complete.",
+      }),
+    ).toHaveAttribute("href", "/practice/search-sort");
+    expect(
+      screen.queryByRole("link", { name: /Sum two numbers/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows a truthful empty Unfinished view after all problems are Accepted", async () => {

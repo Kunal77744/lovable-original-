@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import {
+  PracticeCatalogSearchControl,
+  PracticeCatalogSearchGroup,
+  PracticeCatalogSearchItem,
+  PracticeCatalogSearchProvider,
+} from "@/components/practice-catalog-search";
+import {
   getCodingCatalogProgress,
   getCodingMistakeReviewQueueForStudent,
   getCodingProblemBookmarksForStudent,
@@ -11,6 +17,7 @@ import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
 import {
+  getJavaScriptLabCatalogSearchText,
   getJavaScriptFoundationsEntry,
   type JavaScriptLabCatalogProgress,
   type JavaScriptLabSlug,
@@ -351,6 +358,19 @@ export default async function PracticePage({
     (count, group) => count + group.problems.length,
     0,
   );
+  const visibleProblemSearchTexts = visibleProblemGroups.flatMap((group) =>
+    group.problems.map(
+      (problem) =>
+        `${problem.title} ${problem.skill} ${problem.acceptedExplanation.concept}`,
+    ),
+  );
+  const visibleLabSearchTexts = visibleLabGroups.flatMap((group) =>
+    group.labs.flatMap((lab) =>
+      lab.slug
+        ? [`${lab.title} ${getJavaScriptLabCatalogSearchText(lab.slug)}`]
+        : [],
+    ),
+  );
   const reviewSession = buildCodingReviewSession({
     mistakes: reviewQueue,
     bookmarks: savedProblems,
@@ -465,7 +485,8 @@ export default async function PracticePage({
           </aside>
         </section>
 
-        <section className="problem-catalog" aria-labelledby="catalog-title">
+        <PracticeCatalogSearchProvider>
+          <section className="problem-catalog" aria-labelledby="catalog-title">
           <div className="problem-catalog-heading">
             <div>
               <p className="eyebrow">12-problem path · JavaScript</p>
@@ -494,6 +515,13 @@ export default async function PracticePage({
           </div>
 
           {session ? (
+            <PracticeCatalogSearchControl
+              labSearchTexts={visibleLabSearchTexts}
+              problemSearchTexts={visibleProblemSearchTexts}
+            />
+          ) : null}
+
+          {session ? (
             <nav className="problem-catalog-filters" aria-label="Filter problems">
               {catalogFilters.map((filter) => (
                 <Link
@@ -515,55 +543,69 @@ export default async function PracticePage({
           {visibleProblemCount > 0 ? (
             <div className="problem-groups">
               {visibleProblemGroups.map((group) => (
-                <section
-                  className="problem-group"
-                  aria-labelledby={`problem-group-${group.key}`}
+                <PracticeCatalogSearchGroup
                   key={group.key}
+                  searchTexts={group.problems.map(
+                    (problem) =>
+                      `${problem.title} ${problem.skill} ${problem.acceptedExplanation.concept}`,
+                  )}
                 >
-                  <div className="problem-group-heading">
-                    <div>
-                      <h3 id={`problem-group-${group.key}`}>{group.label}</h3>
-                      <p>{group.description}</p>
+                  <section
+                    className="problem-group"
+                    aria-labelledby={`problem-group-${group.key}`}
+                  >
+                    <div className="problem-group-heading">
+                      <div>
+                        <h3 id={`problem-group-${group.key}`}>{group.label}</h3>
+                        <p>{group.description}</p>
+                      </div>
+                      <span>
+                        {String(group.firstProblem).padStart(2, "0")}–
+                        {String(group.lastProblem).padStart(2, "0")}
+                      </span>
                     </div>
-                    <span>
-                      {String(group.firstProblem).padStart(2, "0")}–
-                      {String(group.lastProblem).padStart(2, "0")}
-                    </span>
-                  </div>
-                  <div className="problem-table" role="list">
-                    {group.problems.map((problem) => {
-                      const completed = completedSlugs.has(problem.slug);
+                    <div className="problem-table" role="list">
+                      {group.problems.map((problem) => {
+                        const completed = completedSlugs.has(problem.slug);
+                        const searchText = `${problem.title} ${problem.skill} ${problem.acceptedExplanation.concept}`;
 
-                      return (
-                        <Link
-                          className={
-                            completed ? "problem-row is-complete" : "problem-row"
-                          }
-                          href={`/practice/${problem.slug}`}
-                          key={problem.slug}
-                          role="listitem"
-                        >
-                          <span className="problem-number">
-                            {String(problem.number).padStart(2, "0")}
-                          </span>
-                          <span className="problem-row-copy">
-                            <strong>{problem.title}</strong>
-                            <small>{problem.skill}</small>
-                          </span>
-                          <span className="problem-difficulty">
-                            {problem.difficulty}
-                          </span>
-                          <span className="problem-state">
-                            {completed ? "Accepted" : "Open"}
-                          </span>
-                          <span className="problem-arrow" aria-hidden="true">
-                            →
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </section>
+                        return (
+                          <PracticeCatalogSearchItem
+                            key={problem.slug}
+                            searchText={searchText}
+                          >
+                            <Link
+                              className={
+                                completed
+                                  ? "problem-row is-complete"
+                                  : "problem-row"
+                              }
+                              href={`/practice/${problem.slug}`}
+                              role="listitem"
+                            >
+                              <span className="problem-number">
+                                {String(problem.number).padStart(2, "0")}
+                              </span>
+                              <span className="problem-row-copy">
+                                <strong>{problem.title}</strong>
+                                <small>{problem.skill}</small>
+                              </span>
+                              <span className="problem-difficulty">
+                                {problem.difficulty}
+                              </span>
+                              <span className="problem-state">
+                                {completed ? "Accepted" : "Open"}
+                              </span>
+                              <span className="problem-arrow" aria-hidden="true">
+                                →
+                              </span>
+                            </Link>
+                          </PracticeCatalogSearchItem>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </PracticeCatalogSearchGroup>
               ))}
             </div>
           ) : (
@@ -795,66 +837,86 @@ export default async function PracticePage({
               {visibleLabGroups.length > 0 ? (
                 <div className="practice-learning-groups">
                   {visibleLabGroups.map((group) => (
-                  <section className="practice-learning-group" key={group.label}>
-                    <div>
-                      <h3>{group.label}</h3>
-                      <p>{group.description}</p>
-                    </div>
-                    <div className="practice-learning-links">
-                      {group.labs.map((lab) => {
-                        const savedProgress = lab.slug
-                          ? labProgressBySlug.get(lab.slug)
-                          : null;
-                        const cardCopy = savedProgress
-                          ? getPracticeLabCardCopy(savedProgress)
-                          : null;
-                        const progressPercent = savedProgress
-                          ? Math.round(
-                              (savedProgress.completedCount /
-                                savedProgress.totalCount) * 100,
-                            )
-                          : 0;
+                    <PracticeCatalogSearchGroup
+                      key={group.label}
+                      searchTexts={group.labs.flatMap((lab) =>
+                        lab.slug
+                          ? [
+                              `${lab.title} ${getJavaScriptLabCatalogSearchText(lab.slug)}`,
+                            ]
+                          : [],
+                      )}
+                    >
+                      <section className="practice-learning-group">
+                        <div>
+                          <h3>{group.label}</h3>
+                          <p>{group.description}</p>
+                        </div>
+                        <div className="practice-learning-links">
+                          {group.labs.map((lab) => {
+                            const savedProgress = lab.slug
+                              ? labProgressBySlug.get(lab.slug)
+                              : null;
+                            const cardCopy = savedProgress
+                              ? getPracticeLabCardCopy(savedProgress)
+                              : null;
+                            const progressPercent = savedProgress
+                              ? Math.round(
+                                  (savedProgress.completedCount /
+                                    savedProgress.totalCount) * 100,
+                                )
+                              : 0;
+                            const searchText = lab.slug
+                              ? `${lab.title} ${getJavaScriptLabCatalogSearchText(lab.slug)}`
+                              : "";
 
-                        return (
-                          <Link
-                            aria-label={
-                              savedProgress && cardCopy
-                                ? `${cardCopy.action} ${lab.title}. ${cardCopy.status}.`
-                                : undefined
-                            }
-                            className={
-                              savedProgress
-                                ? `is-${savedProgress.state}`
-                                : undefined
-                            }
-                            href={savedProgress?.href ?? lab.href}
-                            key={lab.href}
-                          >
-                            <span className="practice-learning-lab-copy">
-                              <strong>{lab.title}</strong>
-                              <small>{cardCopy?.status ?? lab.meta}</small>
-                              {savedProgress ? (
-                                <span
-                                  aria-label={`${lab.title}: ${savedProgress.completedCount} of ${savedProgress.totalCount} saved`}
-                                  aria-valuemax={savedProgress.totalCount}
-                                  aria-valuemin={0}
-                                  aria-valuenow={savedProgress.completedCount}
-                                  className="practice-learning-lab-track"
-                                  role="progressbar"
+                            return (
+                              <PracticeCatalogSearchItem
+                                key={lab.href}
+                                searchText={searchText}
+                              >
+                                <Link
+                                  aria-label={
+                                    savedProgress && cardCopy
+                                      ? `${cardCopy.action} ${lab.title}. ${cardCopy.status}.`
+                                      : undefined
+                                  }
+                                  className={
+                                    savedProgress
+                                      ? `is-${savedProgress.state}`
+                                      : undefined
+                                  }
+                                  href={savedProgress?.href ?? lab.href}
                                 >
-                                  <span style={{ width: `${progressPercent}%` }} />
-                                </span>
-                              ) : null}
-                            </span>
-                            <span className="practice-learning-lab-action">
-                              {cardCopy?.action ?? "Open"}{" "}
-                              <span aria-hidden="true">→</span>
-                            </span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </section>
+                                  <span className="practice-learning-lab-copy">
+                                    <strong>{lab.title}</strong>
+                                    <small>{cardCopy?.status ?? lab.meta}</small>
+                                    {savedProgress ? (
+                                      <span
+                                        aria-label={`${lab.title}: ${savedProgress.completedCount} of ${savedProgress.totalCount} saved`}
+                                        aria-valuemax={savedProgress.totalCount}
+                                        aria-valuemin={0}
+                                        aria-valuenow={savedProgress.completedCount}
+                                        className="practice-learning-lab-track"
+                                        role="progressbar"
+                                      >
+                                        <span
+                                          style={{ width: `${progressPercent}%` }}
+                                        />
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                  <span className="practice-learning-lab-action">
+                                    {cardCopy?.action ?? "Open"}{" "}
+                                    <span aria-hidden="true">→</span>
+                                  </span>
+                                </Link>
+                              </PracticeCatalogSearchItem>
+                            );
+                          })}
+                        </div>
+                      </section>
+                    </PracticeCatalogSearchGroup>
                   ))}
                 </div>
               ) : (
@@ -913,7 +975,8 @@ export default async function PracticePage({
               </div>
             </section>
           ) : null}
-        </section>
+          </section>
+        </PracticeCatalogSearchProvider>
       </div>
       <SiteFooter />
     </main>

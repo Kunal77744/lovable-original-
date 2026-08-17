@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildJavaScriptLabCatalogProgress,
   getFirstIncompleteExerciseIndex,
+  getJavaScriptLabCatalogSearchText,
   getJavaScriptFoundationsEntry,
   getNextIncompleteExerciseIndex,
   isJavaScriptLabExercise,
@@ -9,6 +10,18 @@ import {
 } from "./javascript-lab-progress";
 
 describe("JavaScript lab progress catalog", () => {
+  it("builds catalog search text from every authored lab concept", () => {
+    expect(getJavaScriptLabCatalogSearchText("search-sort")).toContain(
+      "Binary search",
+    );
+    expect(getJavaScriptLabCatalogSearchText("algorithm-patterns")).toContain(
+      "Sliding window",
+    );
+    expect(getJavaScriptLabCatalogSearchText("functions")).toContain(
+      "Closures",
+    );
+  });
+
   it("keeps a zero-Accepted learner on the exact unfinished foundations step", () => {
     const progress = buildJavaScriptLabCatalogProgress([
       { labSlug: "foundations", exerciseId: "understand-the-judge" },

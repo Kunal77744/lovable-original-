@@ -113,6 +113,70 @@ export const JAVASCRIPT_LABS = [
 
 export type JavaScriptLabSlug = (typeof JAVASCRIPT_LABS)[number]["slug"];
 
+const JAVASCRIPT_LAB_CATALOG_CONCEPTS = {
+  foundations: JAVASCRIPT_FOUNDATIONS_UNIT_STEPS.flatMap((step) => [
+    step.title,
+    step.concept,
+  ]),
+  tracing: JAVASCRIPT_TRACE_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  debugging: JAVASCRIPT_DEBUGGING_DRILLS.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "test-design": JAVASCRIPT_TEST_DESIGN_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "data-structures": JAVASCRIPT_DATA_STRUCTURE_EXERCISES.flatMap(
+    (exercise) => [exercise.title, exercise.structure],
+  ),
+  functions: JAVASCRIPT_FUNCTION_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  recursion: JAVASCRIPT_RECURSION_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "search-sort": JAVASCRIPT_SEARCH_SORT_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "stacks-queues": JAVASCRIPT_STACKS_QUEUES_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "linked-lists": JAVASCRIPT_LINKED_LIST_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "trees-graphs": JAVASCRIPT_TREES_GRAPHS_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  dom: JAVASCRIPT_DOM_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  efficiency: ALGORITHM_EFFICIENCY_EXERCISES.flatMap((exercise) => [
+    exercise.title,
+    exercise.concept,
+  ]),
+  "algorithm-patterns": JAVASCRIPT_ALGORITHM_PATTERN_EXERCISES.flatMap(
+    (exercise) => [exercise.title, exercise.concept],
+  ),
+} satisfies Record<JavaScriptLabSlug, readonly string[]>;
+
+export function getJavaScriptLabCatalogSearchText(labSlug: JavaScriptLabSlug) {
+  const lab = JAVASCRIPT_LABS.find((item) => item.slug === labSlug);
+  return [lab?.title, ...JAVASCRIPT_LAB_CATALOG_CONCEPTS[labSlug]]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export type JavaScriptLabProgressState =
   | "complete"
   | "in-progress"
