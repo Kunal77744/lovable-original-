@@ -354,7 +354,15 @@ export function DebuggingLab({
             )}
           </div>
         ) : null}
-        <GuidedCheckResults results={checkResults} />
+        <GuidedCheckResults
+          results={checkResults}
+          attemptNote={{
+            labSlug: "debugging",
+            exerciseId: drill.slug,
+            showEmpty:
+              labState.kind === "failed" || labState.kind === "error",
+          }}
+        />
         <GuidedRuntimeErrorNavigation
           currentSource={source}
           editorId="debugging-source"

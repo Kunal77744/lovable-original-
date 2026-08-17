@@ -456,7 +456,15 @@ export function JavaScriptDomLab({
                 </section>
               </>
             ) : null}
-            <GuidedCheckResults results={checkResults} />
+            <GuidedCheckResults
+              results={checkResults}
+              attemptNote={{
+                labSlug: "dom",
+                exerciseId: exercise.slug,
+                showEmpty:
+                  checkState.kind === "failed" || checkState.kind === "error",
+              }}
+            />
             <GuidedRuntimeErrorNavigation
               currentSource={code}
               editorId="dom-lab-code"

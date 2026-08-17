@@ -862,6 +862,33 @@ export const codingLabExerciseDraft = pgTable(
   ],
 );
 
+export const codingLabExerciseNote = pgTable(
+  "coding_lab_exercise_note",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    labSlug: text("lab_slug").notNull(),
+    exerciseId: text("exercise_id").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("coding_lab_note_user_lab_exercise_unique").on(
+      table.userId,
+      table.labSlug,
+      table.exerciseId,
+    ),
+    index("coding_lab_note_user_id_idx").on(table.userId),
+  ],
+);
+
 export const javascriptReadinessResult = pgTable(
   "javascript_readiness_result",
   {

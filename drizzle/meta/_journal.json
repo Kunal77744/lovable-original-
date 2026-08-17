@@ -253,6 +253,13 @@
       "when": 1786759200000,
       "tag": "0035_css-spaced-review",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1786960800000,
+      "tag": "0036_guided-javascript-attempt-notes",
+      "breakpoints": true
     }
   ]
 }

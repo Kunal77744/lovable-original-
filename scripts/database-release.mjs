@@ -18,6 +18,7 @@ const requiredTables = [
   "daily_coding_challenge_completion",
   "timed_coding_challenge_result",
   "coding_lab_exercise_draft",
+  "coding_lab_exercise_note",
   "coding_lab_exercise_progress",
   "coding_problem_progress",
   "coding_problem_test_case_set",
@@ -55,6 +56,15 @@ const requiredColumns = {
     "lab_slug",
     "exercise_id",
     "source",
+    "created_at",
+    "updated_at",
+  ],
+  coding_lab_exercise_note: [
+    "id",
+    "user_id",
+    "lab_slug",
+    "exercise_id",
+    "content",
     "created_at",
     "updated_at",
   ],
@@ -357,6 +367,7 @@ async function run() {
       where table_schema = 'public'
         and table_name in (
           'coding_lab_exercise_draft',
+          'coding_lab_exercise_note',
           'coding_lab_exercise_progress',
           'coding_practice_goal',
           'daily_coding_challenge_completion',

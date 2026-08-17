@@ -1,3 +1,5 @@
+import { GuidedJavaScriptAttemptNote } from "./guided-javascript-attempt-note";
+
 export type GuidedCheckResult = {
   label: string;
   passed: boolean;
@@ -40,53 +42,75 @@ export function buildGuidedCheckResults(
 
 export function GuidedCheckResults({
   results,
+  attemptNote,
 }: {
   results: readonly GuidedCheckResult[];
+  attemptNote?: {
+    labSlug: string;
+    exerciseId: string;
+    showEmpty: boolean;
+  };
 }) {
-  if (results.length === 0) return null;
+  const note = attemptNote ? (
+    <GuidedJavaScriptAttemptNote
+      key={`${attemptNote.labSlug}:${attemptNote.exerciseId}`}
+      {...attemptNote}
+    />
+  ) : null;
+
+  if (results.length === 0) return note;
 
   return (
-    <section className="guided-check-results" aria-label="Check details">
-      <header>
-        <strong>Check details</strong>
-        <span>Browser only · not saved</span>
-      </header>
-      <ol>
-        {results.map((result) => {
-          const hasOutputDetails =
-            result.input !== undefined ||
-            result.expectedOutput !== undefined ||
-            result.actualOutput !== undefined;
+    <>
+      <section className="guided-check-results" aria-label="Check details">
+        <header>
+          <strong>Check details</strong>
+          <span>Browser only · not saved</span>
+        </header>
+        <ol>
+          {results.map((result) => {
+            const hasOutputDetails =
+              result.input !== undefined ||
+              result.expectedOutput !== undefined ||
+              result.actualOutput !== undefined;
 
-          return (
-            <li
-              className={result.passed ? "is-matched" : "is-revisit"}
-              key={result.label}
-            >
-              <div className="guided-check-heading">
-                <span>{result.label}</span>
-                <strong>{result.passed ? "Matched" : "Revisit"}</strong>
-              </div>
-              {hasOutputDetails ? (
-                <dl>
-                  <div>
-                    <dt>Input</dt>
-                    <dd><code>{displayOutput(result.input)}</code></dd>
-                  </div>
-                  <div>
-                    <dt>Expected</dt>
-                    <dd><code>{displayOutput(result.expectedOutput)}</code></dd>
-                  </div>
-                  <div>
-                    <dt>Your result</dt>
-                    <dd><code>{displayOutput(result.actualOutput)}</code></dd>
-                  </div>
-                </dl>
-              ) : null}
-            </li>
-          );
-        })}
-      </ol>
-    </section>
+            return (
+              <li
+                className={result.passed ? "is-matched" : "is-revisit"}
+                key={result.label}
+              >
+                <div className="guided-check-heading">
+                  <span>{result.label}</span>
+                  <strong>{result.passed ? "Matched" : "Revisit"}</strong>
+                </div>
+                {hasOutputDetails ? (
+                  <dl>
+                    <div>
+                      <dt>Input</dt>
+                      <dd>
+                        <code>{displayOutput(result.input)}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Expected</dt>
+                      <dd>
+                        <code>{displayOutput(result.expectedOutput)}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Your result</dt>
+                      <dd>
+                        <code>{displayOutput(result.actualOutput)}</code>
+                      </dd>
+                    </div>
+                  </dl>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+      {note}
+    </>
   );
 }

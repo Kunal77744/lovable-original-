@@ -7,10 +7,73 @@ import {
   isJavaScriptCodeLabExercise,
   JAVASCRIPT_LABS,
 } from "@/lib/javascript-lab-progress";
+import type { SavedGuidedJavaScriptAttemptNote } from "@/lib/guided-javascript-attempt-notes";
 import { getDatabase } from "./index";
-import { codingLabExerciseDraft, codingLabExerciseProgress } from "./schema";
+import {
+  codingLabExerciseDraft,
+  codingLabExerciseNote,
+  codingLabExerciseProgress,
+} from "./schema";
 
 export const MAX_JAVASCRIPT_LAB_DRAFT_LENGTH = 20_000;
+
+export async function getJavaScriptLabExerciseAttemptNote(
+  userId: string,
+  labSlug: string,
+  exerciseId: string,
+): Promise<SavedGuidedJavaScriptAttemptNote | null> {
+  if (!isJavaScriptCodeLabExercise(labSlug, exerciseId)) return null;
+
+  const [note] = await getDatabase()
+    .select({
+      content: codingLabExerciseNote.content,
+      updatedAt: codingLabExerciseNote.updatedAt,
+    })
+    .from(codingLabExerciseNote)
+    .where(
+      and(
+        eq(codingLabExerciseNote.userId, userId),
+        eq(codingLabExerciseNote.labSlug, labSlug),
+        eq(codingLabExerciseNote.exerciseId, exerciseId),
+      ),
+    )
+    .limit(1);
+
+  return note
+    ? { content: note.content, updatedAt: note.updatedAt.toISOString() }
+    : null;
+}
+
+export async function saveJavaScriptLabExerciseAttemptNote(
+  userId: string,
+  labSlug: string,
+  exerciseId: string,
+  content: string,
+): Promise<SavedGuidedJavaScriptAttemptNote | null> {
+  if (!isJavaScriptCodeLabExercise(labSlug, exerciseId)) return null;
+
+  const now = new Date();
+  await getDatabase()
+    .insert(codingLabExerciseNote)
+    .values({
+      id: crypto.randomUUID(),
+      userId,
+      labSlug,
+      exerciseId,
+      content,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [
+        codingLabExerciseNote.userId,
+        codingLabExerciseNote.labSlug,
+        codingLabExerciseNote.exerciseId,
+      ],
+      set: { content, updatedAt: now },
+    });
+
+  return { content, updatedAt: now.toISOString() };
+}
 
 export async function getJavaScriptLabExerciseDrafts(
   userId: string,

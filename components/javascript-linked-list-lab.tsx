@@ -532,7 +532,15 @@ export function JavaScriptLinkedListLab({
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
             ) : null}
-            <GuidedCheckResults results={checkResults} />
+            <GuidedCheckResults
+              results={checkResults}
+              attemptNote={{
+                labSlug: "linked-lists",
+                exerciseId: exercise.slug,
+                showEmpty:
+                  checkState.kind === "failed" || checkState.kind === "error",
+              }}
+            />
             <GuidedRuntimeErrorNavigation
               currentSource={code}
               editorId="linked-list-lab-code"

@@ -399,7 +399,15 @@ export function JavaScriptFoundationsWarmup({
               <span>Keep this:</span> {exercise.takeaway}
             </p>
           ) : null}
-          <GuidedCheckResults results={checkResults} />
+          <GuidedCheckResults
+            results={checkResults}
+            attemptNote={{
+              labSlug: "foundations",
+              exerciseId: exercise.slug,
+              showEmpty:
+                checkState.kind === "failed" || checkState.kind === "error",
+            }}
+          />
           <GuidedRuntimeErrorNavigation
             currentSource={code}
             editorId="foundations-code"
