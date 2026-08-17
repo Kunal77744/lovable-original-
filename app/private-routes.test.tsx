@@ -15,6 +15,7 @@ import { metadata as functionsMetadata } from "./practice/functions/page";
 import { metadata as judgeBasicsMetadata } from "./practice/judge-basics/page";
 import { metadata as linkedListsMetadata } from "./practice/linked-lists/page";
 import { metadata as mixedReviewMetadata } from "./practice/mixed-review/page";
+import { metadata as courseNotesMetadata } from "./courses/web-development-foundations/notes/page";
 import { metadata as webFoundationsReviewMetadata } from "./courses/web-development-foundations/review/page";
 import { metadata as progressMetadata } from "./practice/progress/page";
 import { metadata as recursionMetadata } from "./practice/recursion/page";
@@ -91,6 +92,10 @@ describe("private learner routes", () => {
       index: false,
       follow: false,
     });
+    expect(courseNotesMetadata.robots).toEqual({
+      index: false,
+      follow: false,
+    });
     const privatePracticeMetadata = [
       activityMetadata,
       bookmarksMetadata,
@@ -151,6 +156,9 @@ describe("private learner routes", () => {
     );
     expect(urls).not.toContain(
       "https://lovable-original-eight.vercel.app/courses/web-development-foundations/review",
+    );
+    expect(urls).not.toContain(
+      "https://lovable-original-eight.vercel.app/courses/web-development-foundations/notes",
     );
     const privatePracticePaths = [
       "activity",

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CertificatePage from "./certificate/page";
 import CourseQuizHistoryPage from "./courses/web-development-foundations/quiz-history/page";
+import CourseNotesPage from "./courses/web-development-foundations/notes/page";
 import JavaScriptInterviewDrillPage from "./interview/javascript-fundamentals/page";
 import LearningHistoryPage from "./learning-history/page";
 import PlaygroundPage from "./playground/page";
@@ -57,6 +58,11 @@ describe("private route sign-in continuation", () => {
       "course quiz history",
       CourseQuizHistoryPage,
       "/courses/web-development-foundations/quiz-history",
+    ],
+    [
+      "course notes",
+      CourseNotesPage,
+      "/courses/web-development-foundations/notes",
     ],
     ["learning history", LearningHistoryPage, "/learning-history"],
     ["project", SemanticHtmlProjectPage, "/projects/semantic-html-article"],
