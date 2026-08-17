@@ -27,6 +27,10 @@ import {
   gradeResponsiveCss,
   RESPONSIVE_CSS_STARTER,
 } from "@/lib/responsive-css-practice";
+import {
+  ACCESSIBLE_FORMS_STARTER,
+  gradeAccessibleForms,
+} from "@/lib/accessible-forms-practice";
 
 async function ensureFirstCourse() {
   const database = getDatabase();
@@ -622,6 +626,15 @@ function getLessonPractice(lessonSlug: string, savedContent?: string) {
     return {
       html,
       checks: gradeResponsiveCss(html),
+    };
+  }
+
+  if (lessonSlug === "accessible-html-forms") {
+    const html = savedContent ?? ACCESSIBLE_FORMS_STARTER;
+
+    return {
+      html,
+      checks: gradeAccessibleForms(html),
     };
   }
 

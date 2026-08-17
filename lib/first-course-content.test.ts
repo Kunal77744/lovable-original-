@@ -4,6 +4,8 @@ import {
   FIRST_LESSON,
   FIRST_LESSON_QUIZ,
   FIRST_LESSON_REVISION,
+  FOURTH_LESSON,
+  FOURTH_LESSON_QUIZ,
   SECOND_LESSON,
   SECOND_LESSON_QUIZ,
   THIRD_LESSON,
@@ -32,13 +34,14 @@ describe("gradeFirstLessonQuiz", () => {
     ).toBe(true);
   });
 
-  it("defines three ordered, practical foundation lessons", () => {
+  it("defines four ordered, practical foundation lessons", () => {
     expect(FIRST_COURSE_LESSONS).toEqual([
       FIRST_LESSON,
       SECOND_LESSON,
       THIRD_LESSON,
+      FOURTH_LESSON,
     ]);
-    expect(FIRST_COURSE_LESSONS).toHaveLength(3);
+    expect(FIRST_COURSE_LESSONS).toHaveLength(4);
     expect(FIRST_LESSON).toMatchObject({
       slug: "semantic-html",
       estimatedMinutes: 18,
@@ -54,6 +57,11 @@ describe("gradeFirstLessonQuiz", () => {
       estimatedMinutes: 17,
     });
     expect(THIRD_LESSON_QUIZ).toHaveLength(4);
+    expect(FOURTH_LESSON).toMatchObject({
+      slug: "accessible-html-forms",
+      estimatedMinutes: 18,
+    });
+    expect(FOURTH_LESSON_QUIZ).toHaveLength(4);
   });
 
   it("passes an answer set at the 75 percent threshold", () => {
@@ -112,6 +120,9 @@ describe("gradeFirstLessonQuiz", () => {
     expect(getPublicLessonQuiz(THIRD_LESSON.slug)?.[0]).not.toHaveProperty(
       "correctChoiceId",
     );
+    expect(getPublicLessonQuiz(FOURTH_LESSON.slug)?.[0]).not.toHaveProperty(
+      "correctChoiceId",
+    );
   });
 
   it("grades responsive layout recall with the shared pass threshold", () => {
@@ -138,6 +149,21 @@ describe("gradeFirstLessonQuiz", () => {
     );
 
     expect(gradeLessonQuiz(SECOND_LESSON.slug, answers)).toMatchObject({
+      valid: true,
+      score: 75,
+      passed: true,
+    });
+  });
+
+  it("grades accessible form recall with the shared pass threshold", () => {
+    const answers = Object.fromEntries(
+      FOURTH_LESSON_QUIZ.map((question, index) => [
+        question.id,
+        index === 0 ? "incorrect" : question.correctChoiceId,
+      ]),
+    );
+
+    expect(gradeLessonQuiz(FOURTH_LESSON.slug, answers)).toMatchObject({
       valid: true,
       score: 75,
       passed: true,

@@ -10,6 +10,7 @@ describe("public sitemap", () => {
       `${productionUrl}/about`,
       `${productionUrl}/courses/web-development-foundations`,
       `${productionUrl}/learn/web-development-foundations/css-selectors-box-model`,
+      `${productionUrl}/learn/web-development-foundations/accessible-html-forms`,
       `${productionUrl}/practice`,
       `${productionUrl}/learn/semantic-html`,
       `${productionUrl}/learn/why-use-semantic-html`,

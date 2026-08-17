@@ -14,7 +14,7 @@ const learningLoop = [
   {
     number: "01",
     title: "Learn one idea clearly",
-    copy: `Start with ${courseLessonCount} public lessons covering semantic HTML, CSS, and responsive layout.`,
+    copy: `Start with ${courseLessonCount} public lessons covering semantic HTML, CSS, responsive layout, and accessible forms.`,
   },
   {
     number: "02",

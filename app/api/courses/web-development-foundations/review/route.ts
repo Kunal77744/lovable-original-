@@ -6,6 +6,7 @@ import {
   saveWebFoundationsReviewResultForStudent,
 } from "@/db/web-foundations-review";
 import { auth } from "@/lib/auth";
+import { FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import {
   isBoundedWebFoundationsReviewResult,
   isWebFoundationsReviewDue,
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
   ]);
   if (!course.courseCompleted) {
     return NextResponse.json(
-      { error: "Complete all three lessons before review" },
+      { error: `Complete all ${FIRST_COURSE_LESSONS.length} lessons before review` },
       { status: 403 },
     );
   }

@@ -43,8 +43,8 @@ const course = {
   title: "Web Development Foundations",
   description: "Learn HTML and CSS",
   status: "published",
-  completedLessons: 2,
-  totalLessons: 2,
+  completedLessons: 4,
+  totalLessons: 4,
   progressPercent: 100,
   courseCompleted: true,
   lessons: [],
@@ -104,7 +104,7 @@ describe("WebFoundationsReviewPage", () => {
     expect(getLabPractice).not.toHaveBeenCalled();
   });
 
-  it("shows the four-concept private review after course completion", async () => {
+  it("shows the six-concept private review after course completion", async () => {
     getSession.mockResolvedValue({ user: { id: "learner" } } as Awaited<
       ReturnType<typeof auth.api.getSession>
     >);
@@ -112,10 +112,10 @@ describe("WebFoundationsReviewPage", () => {
     render(await WebFoundationsReviewPage());
 
     expect(screen.getByRole("heading", {
-      name: "Bring HTML and CSS foundations back before you build.",
+      name: "Bring web foundations back before you build.",
     })).toBeInTheDocument();
-    expect(screen.getByText("4 lesson concepts")).toBeInTheDocument();
-    expect(screen.getByText("Concept 1 of 4")).toBeInTheDocument();
+    expect(screen.getByText("6 lesson concepts")).toBeInTheDocument();
+    expect(screen.getByText("Concept 1 of 6")).toBeInTheDocument();
   });
 
   it("continues a returning learner at the exact next unfinished activity", async () => {
@@ -139,8 +139,8 @@ describe("WebFoundationsReviewPage", () => {
       completedSlugs: ["sum-two-numbers", "even-or-odd"],
     });
     getReview.mockResolvedValue({
-      correctCount: 4,
-      totalCount: 4,
+      correctCount: 6,
+      totalCount: 6,
       completedAt: "2026-08-07T12:00:00.000Z",
       nextDueAt: "2126-08-14T12:00:00.000Z",
     });
@@ -161,8 +161,8 @@ describe("WebFoundationsReviewPage", () => {
     >);
     getCourse.mockResolvedValue(course);
     getReview.mockResolvedValue({
-      correctCount: 3,
-      totalCount: 4,
+      correctCount: 5,
+      totalCount: 6,
       completedAt: "2026-08-07T12:00:00.000Z",
       nextDueAt: "2126-08-14T12:00:00.000Z",
     });
@@ -171,7 +171,7 @@ describe("WebFoundationsReviewPage", () => {
     expect(screen.getByRole("heading", {
       name: "Your next foundations review is set for Aug 14.",
     })).toBeInTheDocument();
-    expect(screen.getByText("Last recall 3/4. Only the result and due date are saved.")).toBeInTheDocument();
+    expect(screen.getByText("Last recall 5/6. Only the result and due date are saved.")).toBeInTheDocument();
   });
 
   it("is private and excluded from indexing", () => {

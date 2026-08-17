@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import {
   FIRST_COURSE,
   FIRST_COURSE_LESSONS,
+  FOURTH_LESSON,
   SECOND_LESSON,
   THIRD_LESSON,
 } from "@/lib/first-course-content";
@@ -168,7 +169,37 @@ describe("public lesson access", () => {
     expect(getReadingProgress).not.toHaveBeenCalled();
   });
 
-  it.each([SECOND_LESSON, THIRD_LESSON])(
+  it("renders the complete accessible forms lesson without private reads", async () => {
+    render(
+      await LessonPage({
+        params: Promise.resolve({
+          courseSlug: "web-development-foundations",
+          lessonSlug: "accessible-html-forms",
+        }),
+      }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Build a form everyone can use" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "A label gives every field a name.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Build a workshop interest form." }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { name: "Check your mental model." }),
+    ).not.toHaveLength(0);
+    expect(getStudentLesson).not.toHaveBeenCalled();
+    expect(getArtifact).not.toHaveBeenCalled();
+    expect(getNote).not.toHaveBeenCalled();
+    expect(getReadingProgress).not.toHaveBeenCalled();
+  });
+
+  it.each([SECOND_LESSON, THIRD_LESSON, FOURTH_LESSON])(
     "restores the signed-in learner's private note in $title",
     async (lesson) => {
       getSession.mockResolvedValue({

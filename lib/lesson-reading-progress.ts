@@ -25,6 +25,11 @@ const SECTION_LABELS: Record<string, readonly [string, string, string]> = {
     "Flexible columns",
     "Grid spacing",
   ],
+  "accessible-html-forms": [
+    "Visible labels",
+    "Connected instructions",
+    "Grouped choices",
+  ],
 };
 
 export const LESSON_READING_SECTION_COUNT = SHARED_SECTION_IDS.length;

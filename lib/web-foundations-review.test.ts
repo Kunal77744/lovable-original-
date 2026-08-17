@@ -8,10 +8,15 @@ import {
 } from "./web-foundations-review";
 
 describe("Web Foundations review", () => {
-  it("uses four authored prompts across both lessons", () => {
-    expect(WEB_FOUNDATIONS_REVIEW_ITEMS).toHaveLength(4);
+  it("uses six authored prompts across all four lessons", () => {
+    expect(WEB_FOUNDATIONS_REVIEW_ITEMS).toHaveLength(6);
     expect(new Set(WEB_FOUNDATIONS_REVIEW_ITEMS.map((item) => item.lessonTitle))).toEqual(
-      new Set(["Semantic HTML", "Selectors and the box model"]),
+      new Set([
+        "Semantic HTML",
+        "Selectors and the box model",
+        "Responsive CSS Grid",
+        "Accessible forms",
+      ]),
     );
     expect(
       WEB_FOUNDATIONS_REVIEW_ITEMS.every((item) =>
@@ -21,20 +26,20 @@ describe("Web Foundations review", () => {
   });
 
   it("accepts only the fixed bounded result", () => {
-    expect(isBoundedWebFoundationsReviewResult({ correctCount: 3, totalCount: 4 })).toBe(true);
-    expect(isBoundedWebFoundationsReviewResult({ correctCount: 5, totalCount: 4 })).toBe(false);
-    expect(isBoundedWebFoundationsReviewResult({ correctCount: 2, totalCount: 3 })).toBe(false);
+    expect(isBoundedWebFoundationsReviewResult({ correctCount: 5, totalCount: 6 })).toBe(true);
+    expect(isBoundedWebFoundationsReviewResult({ correctCount: 7, totalCount: 6 })).toBe(false);
+    expect(isBoundedWebFoundationsReviewResult({ correctCount: 2, totalCount: 4 })).toBe(false);
   });
 
   it("schedules the next review after one, three, or seven days", () => {
-    expect(getWebFoundationsReviewIntervalDays({ correctCount: 1, totalCount: 4 })).toBe(1);
-    expect(getWebFoundationsReviewIntervalDays({ correctCount: 2, totalCount: 4 })).toBe(3);
-    expect(getWebFoundationsReviewIntervalDays({ correctCount: 3, totalCount: 4 })).toBe(7);
+    expect(getWebFoundationsReviewIntervalDays({ correctCount: 2, totalCount: 6 })).toBe(1);
+    expect(getWebFoundationsReviewIntervalDays({ correctCount: 4, totalCount: 6 })).toBe(3);
+    expect(getWebFoundationsReviewIntervalDays({ correctCount: 5, totalCount: 6 })).toBe(7);
 
     const completedAt = new Date("2026-08-07T12:00:00.000Z");
     expect(
       getWebFoundationsReviewDueAt(
-        { correctCount: 3, totalCount: 4 },
+        { correctCount: 5, totalCount: 6 },
         completedAt,
       ).toISOString(),
     ).toBe("2026-08-14T12:00:00.000Z");

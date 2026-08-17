@@ -19,8 +19,8 @@ describe("WebFoundationsReview", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
-          correctCount: 3,
-          totalCount: 4,
+          correctCount: 5,
+          totalCount: 6,
           completedAt: "2026-08-07T12:00:00.000Z",
           nextDueAt: "2026-08-14T12:00:00.000Z",
         }),
@@ -48,7 +48,10 @@ describe("WebFoundationsReview", () => {
       }
       fireEvent.click(
         screen.getByRole("button", {
-          name: index === 3 ? "Finish and save" : "Next concept",
+          name:
+            index === WEB_FOUNDATIONS_REVIEW_ITEMS.length - 1
+              ? "Finish and save"
+              : "Next concept",
         }),
       );
     }
@@ -65,7 +68,7 @@ describe("WebFoundationsReview", () => {
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ correctCount: 3, totalCount: 4 }),
+        body: JSON.stringify({ correctCount: 5, totalCount: 6 }),
       },
     );
     expect(fetchSpy.mock.calls[0]?.[1]?.body).not.toContain("option");
@@ -96,7 +99,10 @@ describe("WebFoundationsReview", () => {
       fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
       fireEvent.click(
         screen.getByRole("button", {
-          name: index === 3 ? "Finish and save" : "Next concept",
+          name:
+            index === WEB_FOUNDATIONS_REVIEW_ITEMS.length - 1
+              ? "Finish and save"
+              : "Next concept",
         }),
       );
     }
@@ -145,7 +151,7 @@ describe("WebFoundationsReview", () => {
     expect(
       await screen.findByText("Recovered your unfinished review in this browser."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Concept 2 of 4")).toBeInTheDocument();
+    expect(screen.getByText("Concept 2 of 6")).toBeInTheDocument();
     expect(screen.getByText("One more pass")).toBeInTheDocument();
     expect(screen.getByLabelText(secondWrongChoice.label)).toBeChecked();
   });
@@ -155,8 +161,8 @@ describe("WebFoundationsReview", () => {
     render(
       <WebFoundationsReview
         initialResult={{
-          correctCount: 3,
-          totalCount: 4,
+          correctCount: 5,
+          totalCount: 6,
           completedAt: "2026-08-07T12:00:00.000Z",
           nextDueAt: "2026-08-14T12:00:00.000Z",
         }}
@@ -181,19 +187,22 @@ describe("WebFoundationsReview", () => {
       fireEvent.click(screen.getByRole("button", { name: "Check my recall" }));
       fireEvent.click(
         screen.getByRole("button", {
-          name: index === 3 ? "Finish practice" : "Next concept",
+          name:
+            index === WEB_FOUNDATIONS_REVIEW_ITEMS.length - 1
+              ? "Finish practice"
+              : "Next concept",
         }),
       );
     }
 
     expect(
       screen.getByRole("heading", {
-        name: "You recalled 4 of 4 concepts in this practice round.",
+        name: "You recalled 6 of 6 concepts in this practice round.",
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Your saved 3 of 4 result and Aug 14 review date did not change. Course completion did not change, and this round stayed in this browser.",
+        "Your saved 5 of 6 result and Aug 14 review date did not change. Course completion did not change, and this round stayed in this browser.",
       ),
     ).toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();

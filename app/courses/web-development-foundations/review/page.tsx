@@ -14,6 +14,7 @@ import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getWebFoundationsReviewResultForStudent } from "@/db/web-foundations-review";
 import { auth } from "@/lib/auth";
 import { GUIDED_PROJECT_SLUG } from "@/lib/guided-project";
+import { FIRST_COURSE_LESSONS } from "@/lib/first-course-content";
 import { buildLearnerProfile } from "@/lib/learner-profile";
 import {
   formatWebFoundationsReviewDueDate,
@@ -26,7 +27,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Private Web Foundations review | Lovable Original",
   description:
-    "Recall semantic HTML, CSS selectors, and the box model in one private spaced-review session.",
+    "Recall semantic HTML, CSS, responsive layout, and accessible forms in one private spaced-review session.",
   robots: {
     index: false,
     follow: false,
@@ -79,9 +80,9 @@ export default async function WebFoundationsReviewPage() {
         <header className="mixed-review-hero foundations-review-hero">
           <div>
             <p className="eyebrow">Private spaced review · completed lessons</p>
-            <h1>Bring HTML and CSS foundations back before you build.</h1>
+            <h1>Bring web foundations back before you build.</h1>
             <p>
-              Recall four decisions from your completed course. Each answer
+              Recall {WEB_FOUNDATIONS_REVIEW_ITEMS.length} decisions from your completed course. Each answer
               returns one authored explanation, then your next review date
               adapts to the result.
             </p>
@@ -116,7 +117,7 @@ export default async function WebFoundationsReviewPage() {
           >
             <p className="eyebrow">Finish the lesson path first</p>
             <h2 id="foundations-review-locked-title">
-              Complete all three lessons to build your review set.
+              Complete all {FIRST_COURSE_LESSONS.length} lessons to build your review set.
             </h2>
             <p>
               This session recalls only concepts you have already completed.

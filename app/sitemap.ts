@@ -25,6 +25,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${productionUrl}/learn/web-development-foundations/accessible-html-forms`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${productionUrl}/practice`,
       changeFrequency: "weekly",
       priority: 0.9,

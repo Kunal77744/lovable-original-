@@ -40,10 +40,22 @@ export const THIRD_LESSON = {
   estimatedMinutes: 17,
 } as const;
 
+export const FOURTH_LESSON = {
+  id: "web-development-foundations-accessible-html-forms",
+  slug: "accessible-html-forms",
+  title: "Build a form everyone can use",
+  description:
+    "Connect labels, instructions, input types, and grouped choices so a workshop form stays understandable with a keyboard or screen reader.",
+  moduleTitle: "Module 4 · Accessible forms",
+  position: 4,
+  estimatedMinutes: 18,
+} as const;
+
 export const FIRST_COURSE_LESSONS = [
   FIRST_LESSON,
   SECOND_LESSON,
   THIRD_LESSON,
+  FOURTH_LESSON,
 ] as const;
 
 export function getFirstCourseLessonHref(lessonSlug: string) {
@@ -260,6 +272,93 @@ export const THIRD_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
     correctChoiceId: "container-rule",
     explanation:
       "gap belongs to the layout relationship, so it spaces tracks without per-card edge exceptions.",
+  },
+] as const;
+
+export const FOURTH_LESSON_QUIZ: readonly GradedQuizQuestion[] = [
+  {
+    id: "label-connection",
+    prompt: "How does a visible label connect to its email input?",
+    choices: [
+      {
+        id: "for-id",
+        label: "The label’s for value matches the input’s id",
+      },
+      {
+        id: "placeholder",
+        label: "The input uses the label text as a placeholder",
+      },
+      {
+        id: "same-class",
+        label: "Both elements share the same CSS class",
+      },
+    ],
+    correctChoiceId: "for-id",
+    explanation:
+      "Matching for and id creates a dependable programmatic connection and makes the label clickable.",
+  },
+  {
+    id: "email-type",
+    prompt: "Why use type=\"email\" for an email address field?",
+    choices: [
+      {
+        id: "native-help",
+        label: "Browsers can offer suitable keyboards and basic validation",
+      },
+      {
+        id: "send-email",
+        label: "The browser automatically sends a confirmation email",
+      },
+      {
+        id: "hide-address",
+        label: "The entered address becomes hidden like a password",
+      },
+    ],
+    correctChoiceId: "native-help",
+    explanation:
+      "A specific native input type gives the browser useful meaning without requiring custom JavaScript.",
+  },
+  {
+    id: "describedby-purpose",
+    prompt: "What does aria-describedby add to a form field?",
+    choices: [
+      {
+        id: "instructions",
+        label: "It connects the field to extra instructions or supporting text",
+      },
+      {
+        id: "visible-label",
+        label: "It replaces the need for a visible label",
+      },
+      {
+        id: "required",
+        label: "It makes the field required before submission",
+      },
+    ],
+    correctChoiceId: "instructions",
+    explanation:
+      "aria-describedby points to supporting text that assistive technology can announce with the field; the visible label is still required.",
+  },
+  {
+    id: "fieldset-purpose",
+    prompt: "Why wrap related radio buttons in fieldset with a legend?",
+    choices: [
+      {
+        id: "group-question",
+        label: "It gives the controls one shared question and group boundary",
+      },
+      {
+        id: "horizontal",
+        label: "It forces every radio button onto one horizontal row",
+      },
+      {
+        id: "multiple",
+        label: "It lets every radio button be selected at the same time",
+      },
+    ],
+    correctChoiceId: "group-question",
+    explanation:
+      "fieldset and legend communicate the relationship and shared prompt for a set of controls.",
   },
 ] as const;
 
@@ -637,6 +736,114 @@ export const THIRD_LESSON_REVISION = {
   ],
 } as const satisfies LessonRevision;
 
+export const FOURTH_LESSON_REVISION = {
+  title: "Accessible forms, compressed",
+  introduction:
+    "A dependable form names every field, connects its instructions, and groups related choices. Revisit the four relationships that remove guesswork.",
+  outlineTitle: "Trace the form from visible label to clear action.",
+  workspaceLink: {
+    href: "#accessible-forms-workspace",
+    label: "Return to your form",
+  },
+  mindMap: {
+    title: "How the form communicates",
+    introduction:
+      "Start with a visible name, then trace the native HTML connections that keep each control understandable.",
+    center: {
+      label: "Accessible form",
+      detail: "Every control has a name, purpose, and relationship",
+    },
+    branches: [
+      {
+        id: "visible-label",
+        label: "Visible label",
+        detail:
+          "Matching for and id gives a field a stable name and a larger click target.",
+        concepts: ["<label>", "for=\"email\"", "id=\"email\""],
+        selfCheck: "Can someone identify the field after they begin typing?",
+      },
+      {
+        id: "native-input",
+        label: "Native input",
+        detail:
+          "A specific input type communicates purpose to browsers before custom code runs.",
+        concepts: ["type=\"email\"", "Mobile keyboard", "Native validation"],
+        selfCheck: "Did you use the native control that matches the answer?",
+      },
+      {
+        id: "supporting-text",
+        label: "Supporting text",
+        detail:
+          "aria-describedby connects longer instructions to the field they explain.",
+        concepts: ["aria-describedby", "Help text id", "Label still visible"],
+        selfCheck: "Will the instruction be announced with the field?",
+      },
+      {
+        id: "choice-group",
+        label: "Choice group",
+        detail:
+          "fieldset and legend turn several controls into one named question.",
+        concepts: ["<fieldset>", "<legend>", "Shared radio name"],
+        selfCheck: "Do the choices expose one shared question?",
+      },
+    ],
+  },
+  summary: [
+    {
+      label: "Name",
+      detail:
+        "Keep a visible label and connect it to the input with matching for and id values.",
+    },
+    {
+      label: "Purpose",
+      detail:
+        "Choose the native input type that describes the answer, such as type=email.",
+    },
+    {
+      label: "Instructions",
+      detail:
+        "Use aria-describedby to connect supporting text without replacing the field label.",
+    },
+    {
+      label: "Group",
+      detail:
+        "Wrap related choices in fieldset, introduce them with legend, and share one radio name.",
+    },
+  ],
+  flashcards: [
+    {
+      id: "label-for-id",
+      prompt: "How does a label connect to an input?",
+      answer:
+        "The label’s for value matches the input’s id. That gives the input an accessible name and makes the label clickable.",
+    },
+    {
+      id: "placeholder-limit",
+      prompt: "Why is a placeholder not a replacement for a label?",
+      answer:
+        "Placeholder text disappears during entry and may not provide a dependable accessible name. A visible label stays available.",
+    },
+    {
+      id: "describedby",
+      prompt: "When should you use aria-describedby?",
+      answer:
+        "Use it to connect extra instructions, constraints, or help text to a field that already has a visible label.",
+    },
+    {
+      id: "fieldset-legend",
+      prompt: "What do fieldset and legend add to radio buttons?",
+      answer:
+        "They communicate that the controls answer one shared question and give that group a programmatic name.",
+    },
+    {
+      id: "button-type",
+      prompt: "Why write type=\"submit\" on a form button?",
+      answer:
+        "It makes the button’s purpose explicit and prevents its behavior from becoming ambiguous as the form changes.",
+    },
+  ],
+} as const satisfies LessonRevision;
+
 export function getLessonRevision(lessonSlug: string): LessonRevision | null {
   if (lessonSlug === FIRST_LESSON.slug) {
     return FIRST_LESSON_REVISION;
@@ -648,6 +855,10 @@ export function getLessonRevision(lessonSlug: string): LessonRevision | null {
 
   if (lessonSlug === THIRD_LESSON.slug) {
     return THIRD_LESSON_REVISION;
+  }
+
+  if (lessonSlug === FOURTH_LESSON.slug) {
+    return FOURTH_LESSON_REVISION;
   }
 
   return null;
@@ -672,6 +883,10 @@ function getGradedLessonQuiz(lessonSlug: string) {
 
   if (lessonSlug === THIRD_LESSON.slug) {
     return THIRD_LESSON_QUIZ;
+  }
+
+  if (lessonSlug === FOURTH_LESSON.slug) {
+    return FOURTH_LESSON_QUIZ;
   }
 
   return null;

@@ -13,6 +13,10 @@ import {
   hasValidResponsiveCssLength,
   MAX_RESPONSIVE_CSS_LENGTH,
 } from "@/lib/responsive-css-practice";
+import {
+  hasValidAccessibleFormsLength,
+  MAX_ACCESSIBLE_FORMS_LENGTH,
+} from "@/lib/accessible-forms-practice";
 import { auth } from "@/lib/auth";
 
 type RouteContext = {
@@ -79,12 +83,17 @@ export async function POST(request: Request, context: RouteContext) {
   const { lessonSlug } = await context.params;
   const isBoxModelLesson = lessonSlug === "css-selectors-box-model";
   const isResponsiveLesson = lessonSlug === "responsive-css-grid";
-  const maxLength = isResponsiveLesson
+  const isAccessibleFormsLesson = lessonSlug === "accessible-html-forms";
+  const maxLength = isAccessibleFormsLesson
+    ? MAX_ACCESSIBLE_FORMS_LENGTH
+    : isResponsiveLesson
     ? MAX_RESPONSIVE_CSS_LENGTH
     : isBoxModelLesson
       ? MAX_CSS_PRACTICE_LENGTH
       : MAX_SEMANTIC_HTML_LENGTH;
-  const hasValidLength = isResponsiveLesson
+  const hasValidLength = isAccessibleFormsLesson
+    ? hasValidAccessibleFormsLength(html)
+    : isResponsiveLesson
     ? hasValidResponsiveCssLength(html)
     : isBoxModelLesson
       ? hasValidCssPracticeLength(html)
