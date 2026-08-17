@@ -41,6 +41,38 @@ describe("GuidedSourceChangeReview", () => {
     ).toHaveTextContent("return input.trim();");
   });
 
+  it("compares a revised draft with either the last saved check or starter", () => {
+    render(
+      <GuidedSourceChangeReview
+        starterSource={'function solve(input) {\n  return "";\n}'}
+        savedSource={
+          "function solve(input) {\n  return input.trim();\n}"
+        }
+        currentSource={
+          "function solve(input) {\n  return input.trim().toUpperCase();\n}"
+        }
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Review code changes"));
+
+    expect(
+      screen.getByRole("button", { name: "Last saved check" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("list", { name: "Changes from the last saved check" }),
+    ).toHaveTextContent("return input.trim().toUpperCase();");
+
+    fireEvent.click(screen.getByRole("button", { name: "Authored starter" }));
+
+    expect(
+      screen.getByRole("button", { name: "Authored starter" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("list", { name: "Changes from the authored starter" }),
+    ).toHaveTextContent('return "";');
+  });
+
   it("keeps unusually long code out of the line renderer", () => {
     const starterSource = Array.from(
       { length: 241 },

@@ -45,6 +45,9 @@ export function ResponsiveCssLayoutWorkspace({
   isSignedIn = true,
 }: ResponsiveCssLayoutWorkspaceProps) {
   const [css, setCss] = useState(initialCss);
+  const [savedCss, setSavedCss] = useState<string | null>(
+    initiallySaved ? initialCss : null,
+  );
   const latestCss = useRef(initialCss);
   const [checks, setChecks] = useState(initialChecks);
   const [hasSubmitted, setHasSubmitted] = useState(initiallySaved);
@@ -116,6 +119,7 @@ export function ResponsiveCssLayoutWorkspace({
 
       setChecks(payload.checks);
       setHasSubmitted(true);
+      setSavedCss(submittedCss);
 
       if (latestCss.current !== submittedCss) {
         setSaveState("unsaved");
@@ -238,6 +242,7 @@ export function ResponsiveCssLayoutWorkspace({
               />
               <SourceChangeReview
                 currentSource={editorCss}
+                savedSource={savedCss ?? undefined}
                 starterSource={RESPONSIVE_CSS_STARTER}
               />
             </>

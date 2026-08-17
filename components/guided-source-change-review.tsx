@@ -1,29 +1,78 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getSourceChangeReview } from "@/lib/source-change-review";
 
 export function SourceChangeReview({
   currentSource,
+  savedSource,
   starterSource,
 }: {
   currentSource: string;
+  savedSource?: string;
   starterSource: string;
 }) {
+  const [comparisonBaseline, setComparisonBaseline] = useState<
+    "saved" | "starter"
+  >("saved");
+  const hasStarterChanges = currentSource !== starterSource;
+  const hasDistinctSavedBaseline =
+    savedSource !== undefined && savedSource !== starterSource;
+  const hasSavedChanges =
+    savedSource !== undefined && currentSource !== savedSource;
+  const canCompareWithSaved = hasDistinctSavedBaseline && hasSavedChanges;
+  const activeBaseline =
+    comparisonBaseline === "saved" && canCompareWithSaved ? "saved" : "starter";
+  const comparisonSource =
+    activeBaseline === "saved" ? (savedSource ?? starterSource) : starterSource;
   const review = useMemo(
-    () => getSourceChangeReview(starterSource, currentSource),
-    [currentSource, starterSource],
+    () => getSourceChangeReview(comparisonSource, currentSource),
+    [comparisonSource, currentSource],
   );
 
-  if (currentSource === starterSource) return null;
+  if (!hasStarterChanges && !hasSavedChanges) return null;
+
+  const showsBaselineChoices = canCompareWithSaved && hasStarterChanges;
+  const baselineLabel =
+    activeBaseline === "saved" ? "the last saved check" : "the authored starter";
 
   return (
     <details className="guided-source-change-review">
       <summary>
-        <span>Review changes from starter</span>
-        <small>Browser-only. Your code stays unchanged.</small>
+        <span>
+          {canCompareWithSaved
+            ? "Review code changes"
+            : "Review changes from starter"}
+        </span>
+        <small>
+          {canCompareWithSaved
+            ? "Compare this draft with your starter or last saved check."
+            : "Browser-only. Your code stays unchanged."}
+        </small>
       </summary>
       <div className="guided-source-change-review-body">
+        {showsBaselineChoices ? (
+          <div
+            className="guided-source-change-baselines"
+            role="group"
+            aria-label="Compare current code with"
+          >
+            <button
+              type="button"
+              aria-pressed={activeBaseline === "starter"}
+              onClick={() => setComparisonBaseline("starter")}
+            >
+              Authored starter
+            </button>
+            <button
+              type="button"
+              aria-pressed={activeBaseline === "saved"}
+              onClick={() => setComparisonBaseline("saved")}
+            >
+              Last saved check
+            </button>
+          </div>
+        ) : null}
         {review.tooLarge ? (
           <p>
             This solution is too long for the line review. Your editor and saved
@@ -38,11 +87,12 @@ export function SourceChangeReview({
                 <strong>{review.removals} removed</strong>
               </p>
               <p>
-                Can you explain why each change is needed before you run the
-                checks?
+                {activeBaseline === "saved"
+                  ? "These are the edits made since your last saved check."
+                  : "Can you explain why each change is needed before you run the checks?"}
               </p>
             </div>
-            <ol aria-label="Changes from the authored starter">
+            <ol aria-label={`Changes from ${baselineLabel}`}>
               {review.changes.map((change, index) => (
                 <li
                   className={
