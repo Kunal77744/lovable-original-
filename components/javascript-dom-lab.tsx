@@ -9,6 +9,7 @@ import {
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
+import { GuidedPlaygroundTransfer } from "@/components/guided-playground-transfer";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -455,6 +456,13 @@ export function JavaScriptDomLab({
                   </div>
                 </section>
               </>
+            ) : null}
+            {checkState.kind === "passed" ? (
+              <GuidedPlaygroundTransfer
+                labSlug="dom"
+                exerciseId={exercise.slug}
+                source={code}
+              />
             ) : null}
             <GuidedCheckResults results={checkResults} />
             <GuidedRuntimeErrorNavigation

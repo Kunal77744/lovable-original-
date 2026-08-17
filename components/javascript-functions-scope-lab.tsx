@@ -9,6 +9,7 @@ import {
 } from "@/components/guided-lab-execution-shortcut";
 import { GuidedCodeEditor } from "@/components/guided-code-editor";
 import { GuidedRuntimeErrorNavigation } from "@/components/guided-runtime-error-navigation";
+import { GuidedPlaygroundTransfer } from "@/components/guided-playground-transfer";
 import { GuidedSourceChangeReview } from "./guided-source-change-review";
 import { GuidedJavaScriptFileImport } from "@/components/guided-javascript-file-import";
 import { CompletedLabReviewButton } from "@/components/completed-lab-review-button";
@@ -425,6 +426,13 @@ export function JavaScriptFunctionsScopeLab({
               <p className="function-lab-takeaway">
                 <span>Keep this:</span> {exercise.takeaway}
               </p>
+            ) : null}
+            {checkState.kind === "passed" ? (
+              <GuidedPlaygroundTransfer
+                labSlug="functions"
+                exerciseId={exercise.slug}
+                source={code}
+              />
             ) : null}
             <GuidedCheckResults results={checkResults} />
             <GuidedRuntimeErrorNavigation

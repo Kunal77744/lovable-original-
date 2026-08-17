@@ -20188,6 +20188,96 @@ footer {
   color: #efaaa2;
 }
 
+.guided-playground-transfer {
+  margin-top: 18px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid rgba(145, 223, 174, 0.32);
+  border-radius: 10px;
+  background: #17231e;
+}
+
+.guided-playground-transfer > div {
+  display: grid;
+  gap: 5px;
+}
+
+.guided-playground-transfer > div > span {
+  color: #91dfae;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.guided-playground-transfer > div > strong {
+  color: #edf4ef;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.guided-playground-transfer > div > p {
+  max-width: 64ch;
+  margin: 0;
+  padding: 0;
+  color: #b7c6bd;
+  border: 0;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.guided-playground-transfer > a {
+  min-height: 42px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #bde7cb;
+  border-radius: 999px;
+  background: #e9f4ed;
+  color: #173f2d;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.guided-playground-transfer > a:hover {
+  border-color: #ffffff;
+  background: #ffffff;
+}
+
+.guided-playground-transfer > a:focus-visible {
+  outline: 3px solid rgba(131, 221, 168, 0.35);
+  outline-offset: 3px;
+}
+
+.guided-playground-transfer-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  color: #efaaa2;
+  border: 0;
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .guided-playground-transfer {
+    grid-template-columns: 1fr;
+  }
+
+  .guided-playground-transfer > a {
+    width: 100%;
+  }
+}
+
 .foundations-boundary {
   margin-top: 22px;
   display: grid;

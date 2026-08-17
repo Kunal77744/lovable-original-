@@ -7,6 +7,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  GUIDED_PLAYGROUND_TRANSFER_STORAGE_KEY,
+  serializeGuidedPlaygroundTransfer,
+} from "@/lib/guided-playground-transfer";
 import { JavaScriptPlayground } from "./javascript-playground";
 
 const runPlaygroundCode = vi.fn();
@@ -41,6 +45,7 @@ describe("JavaScriptPlayground", () => {
     vi.restoreAllMocks();
     runPlaygroundCode.mockReset();
     runPlaygroundChecks.mockReset();
+    window.sessionStorage.clear();
   });
 
   it("runs the exact editor source from the keyboard and announces the result", async () => {
@@ -291,6 +296,56 @@ describe("JavaScriptPlayground", () => {
     );
     expect(screen.queryByText("Experiment beyond the judge")).not.toBeInTheDocument();
     expect(screen.getByText("Saved to your account")).toBeInTheDocument();
+  });
+
+  it("loads a passed guided exercise as an unsaved copy without changing the lab", async () => {
+    window.sessionStorage.setItem(
+      GUIDED_PLAYGROUND_TRANSFER_STORAGE_KEY,
+      serializeGuidedPlaygroundTransfer({
+        labSlug: "functions",
+        exerciseId: "return-a-result",
+        source: "function applyDiscount(price) { return price * 0.9; }",
+      })!,
+    );
+    render(
+      <JavaScriptPlayground
+        initialFiles={playgroundFiles(
+          "console.log('current playground');",
+          "currentCheck() === true",
+          "2026-08-17T06:00:00.000Z",
+        )}
+        initialActiveFileId="file-1"
+        guidedCopyRequested
+      />,
+    );
+
+    expect(
+      await screen.findByText("Experiment beyond the lesson"),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replace editor with copy" }),
+    );
+
+    expect(screen.getByRole("textbox", { name: "JavaScript file" })).toHaveValue(
+      "function applyDiscount(price) { return price * 0.9; }",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Quick check expressions" }),
+    ).toHaveValue("");
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Loaded from Functions and scope: Send a result back to the caller\./,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Return to guided lab" }),
+    ).toHaveAttribute("href", "/practice/functions");
+    expect(
+      window.sessionStorage.getItem(
+        GUIDED_PLAYGROUND_TRANSFER_STORAGE_KEY,
+      ),
+    ).toBeNull();
   });
 
   it("saves only the confirmed Accepted copy and cleared checks", async () => {
