@@ -20271,7 +20271,7 @@ footer {
 }
 
 .practice-learning-links a {
-  min-height: 60px;
+  min-height: 68px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -20282,7 +20282,8 @@ footer {
   background: rgba(255, 255, 255, 0.74);
   color: var(--ink);
   text-decoration: none;
-  transition: border-color 160ms ease-out, color 160ms ease-out;
+  transition: border-color 160ms ease-out, color 160ms ease-out,
+    background-color 160ms ease-out;
 }
 
 .practice-learning-links a:hover {
@@ -20290,9 +20291,20 @@ footer {
   color: var(--accent-deep);
 }
 
-.practice-learning-links a > span:first-child {
+.practice-learning-links a.is-in-progress {
+  border-color: rgba(40, 118, 82, 0.28);
+  background: rgba(242, 247, 239, 0.94);
+}
+
+.practice-learning-links a.is-complete {
+  background: rgba(237, 245, 235, 0.8);
+}
+
+.practice-learning-lab-copy {
+  min-width: 0;
+  flex: 1;
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
 .practice-learning-links strong {
@@ -20305,8 +20317,32 @@ footer {
   font-size: 11px;
 }
 
-.practice-learning-links a > span:last-child {
+.practice-learning-lab-track {
+  width: min(124px, 100%);
+  height: 3px;
+  margin-top: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(23, 35, 30, 0.1);
+}
+
+.practice-learning-lab-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.practice-learning-lab-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--accent-deep);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .practice-learning-playground {
