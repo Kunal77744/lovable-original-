@@ -6854,12 +6854,27 @@ h1 {
   text-wrap: pretty;
 }
 
-.problem-group-heading > span {
+.problem-group-meta {
   flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.problem-group-meta > span:first-child {
   color: var(--muted);
   font-size: 11px;
   font-weight: 780;
   letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.problem-group-progress {
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.3;
   font-variant-numeric: tabular-nums;
 }
 
@@ -12614,7 +12629,8 @@ footer {
     align-items: flex-start;
   }
 
-  .problem-group-heading > span {
+  .problem-group-meta {
+    align-items: flex-end;
     padding-top: 4px;
   }
 
