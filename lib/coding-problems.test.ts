@@ -28,8 +28,27 @@ describe("coding problems", () => {
       "Binary search",
       "Sliding windows",
     ]);
+    expect(CODING_PROBLEMS.map((problem) => problem.estimatedMinutes)).toEqual([
+      [5, 10],
+      [5, 10],
+      [10, 15],
+      [10, 15],
+      [10, 15],
+      [15, 20],
+      [10, 15],
+      [15, 20],
+      [20, 30],
+      [20, 30],
+      [20, 30],
+      [20, 30],
+    ]);
 
     for (const problem of CODING_PROBLEMS) {
+      const [minimumMinutes, maximumMinutes] = problem.estimatedMinutes;
+
+      expect(minimumMinutes).toBeGreaterThan(0);
+      expect(maximumMinutes).toBeGreaterThan(minimumMinutes);
+      expect(maximumMinutes).toBeLessThanOrEqual(30);
       expect(problem.tests.length).toBeGreaterThanOrEqual(4);
       expect(new Set(problem.tests.map((test) => test.label)).size).toBe(
         problem.tests.length,

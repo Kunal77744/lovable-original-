@@ -33,6 +33,7 @@ export type CodingProblem = {
   title: string;
   skill: string;
   difficulty: CodingProblemDifficulty;
+  estimatedMinutes: [minimum: number, maximum: number];
   statement: string;
   inputFormat: string;
   outputFormat: string;
@@ -58,6 +59,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Sum two numbers",
     skill: "Input handling",
     difficulty: "Beginner",
+    estimatedMinutes: [5, 10],
     statement:
       "Read two whole numbers from one line and return their sum. The numbers may be positive, negative, or zero.",
     inputFormat: "One line containing two space-separated integers: a b.",
@@ -118,6 +120,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Even or odd",
     skill: "Conditions",
     difficulty: "Beginner",
+    estimatedMinutes: [5, 10],
     statement:
       'Read one whole number. Return "Even" when it is divisible by 2 and "Odd" otherwise.',
     inputFormat: "One integer n.",
@@ -178,6 +181,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Multiplication table",
     skill: "Loops",
     difficulty: "Beginner",
+    estimatedMinutes: [10, 15],
     statement:
       "Read one whole number and return its first ten multiples, from 1 × n through 10 × n.",
     inputFormat: "One integer n.",
@@ -233,6 +237,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Largest value",
     skill: "Arrays",
     difficulty: "Beginner",
+    estimatedMinutes: [10, 15],
     statement:
       "Read a list of whole numbers and return the largest value. The first input line tells you how many values follow.",
     inputFormat:
@@ -289,6 +294,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Reverse a word",
     skill: "Strings",
     difficulty: "Beginner",
+    estimatedMinutes: [10, 15],
     statement:
       "Read one lowercase word and return its characters in reverse order.",
     inputFormat: "One lowercase word with no spaces.",
@@ -349,6 +355,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "FizzBuzz sequence",
     skill: "Simple algorithms",
     difficulty: "Beginner",
+    estimatedMinutes: [15, 20],
     statement:
       'Return the numbers from 1 to n. Replace multiples of 3 with "Fizz", multiples of 5 with "Buzz", and multiples of both with "FizzBuzz".',
     inputFormat: "One positive integer n.",
@@ -414,6 +421,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Count vowels",
     skill: "String traversal",
     difficulty: "Beginner",
+    estimatedMinutes: [10, 15],
     statement:
       "Read one lowercase word and return how many characters are vowels. Treat a, e, i, o, and u as vowels.",
     inputFormat: "One lowercase word with no spaces.",
@@ -474,6 +482,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Keep unique values",
     skill: "Sets",
     difficulty: "Beginner",
+    estimatedMinutes: [15, 20],
     statement:
       "Read a list of whole numbers and return each value only the first time it appears, preserving the original order.",
     inputFormat:
@@ -530,6 +539,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Balanced brackets",
     skill: "Stacks",
     difficulty: "Intermediate",
+    estimatedMinutes: [20, 30],
     statement:
       'Read a string containing only (), [], and {}. Return "Balanced" when every opening bracket closes in the correct order, otherwise return "Not balanced".',
     inputFormat: "One non-empty string containing only bracket characters.",
@@ -591,6 +601,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "First unique character",
     skill: "Frequency maps",
     difficulty: "Intermediate",
+    estimatedMinutes: [20, 30],
     statement:
       'Read one lowercase word and return its first character that appears exactly once. Return "None" when every character repeats.',
     inputFormat: "One lowercase word with no spaces.",
@@ -651,6 +662,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Binary search index",
     skill: "Binary search",
     difficulty: "Intermediate",
+    estimatedMinutes: [20, 30],
     statement:
       "Read a sorted list of distinct whole numbers and a target. Return the zero-based index of the target, or -1 when it is absent.",
     inputFormat:
@@ -713,6 +725,7 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     title: "Maximum window sum",
     skill: "Sliding windows",
     difficulty: "Intermediate",
+    estimatedMinutes: [20, 30],
     statement:
       "Read a list of whole numbers and a window size k. Return the largest sum among all contiguous groups of exactly k values.",
     inputFormat:
