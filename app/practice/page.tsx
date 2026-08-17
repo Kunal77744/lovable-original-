@@ -10,7 +10,11 @@ import { getJavaScriptLabCatalogProgress } from "@/db/javascript-lab-progress";
 import { getJavaScriptCapstoneSummary } from "@/db/javascript-capstone";
 import { getJavaScriptMixedReviewResultForStudent } from "@/db/javascript-mixed-review";
 import { auth } from "@/lib/auth";
-import { getJavaScriptFoundationsEntry } from "@/lib/javascript-lab-progress";
+import {
+  getJavaScriptFoundationsEntry,
+  type JavaScriptLabCatalogProgress,
+  type JavaScriptLabSlug,
+} from "@/lib/javascript-lab-progress";
 import {
   CODING_PROBLEMS,
   getCodingProblem,
@@ -40,32 +44,102 @@ const PRACTICE_LAB_GROUPS = [
     label: "Reason about code",
     description: "Read, repair, and test small programs before you rely on a judge.",
     labs: [
-      { href: "/practice/tracing", title: "Trace values", meta: "4 predictions" },
-      { href: "/practice/debugging", title: "Repair defects", meta: "3 drills" },
-      { href: "/practice/test-design", title: "Find edge cases", meta: "4 decisions" },
+      {
+        slug: "tracing",
+        href: "/practice/tracing",
+        title: "Trace values",
+        meta: "4 predictions",
+      },
+      {
+        slug: "debugging",
+        href: "/practice/debugging",
+        title: "Repair defects",
+        meta: "3 drills",
+      },
+      {
+        slug: "test-design",
+        href: "/practice/test-design",
+        title: "Find edge cases",
+        meta: "4 decisions",
+      },
     ],
   },
   {
     label: "Build with JavaScript",
     description: "Strengthen the language and browser skills behind larger solutions.",
     labs: [
-      { href: "/practice/data-structures", title: "Use data structures", meta: "4 exercises" },
-      { href: "/practice/functions", title: "Practice functions and scope", meta: "4 exercises" },
-      { href: "/practice/recursion", title: "Practice recursion", meta: "4 exercises" },
-      { href: "/practice/search-sort", title: "Search and sort values", meta: "4 exercises" },
-      { href: "/practice/stacks-queues", title: "Use stacks and queues", meta: "4 exercises" },
-      { href: "/practice/linked-lists", title: "Follow linked lists", meta: "4 exercises" },
-      { href: "/practice/trees-graphs", title: "Traverse trees and graphs", meta: "4 exercises" },
-      { href: "/practice/dom", title: "Work with the DOM", meta: "4 exercises" },
+      {
+        slug: "data-structures",
+        href: "/practice/data-structures",
+        title: "Use data structures",
+        meta: "4 exercises",
+      },
+      {
+        slug: "functions",
+        href: "/practice/functions",
+        title: "Practice functions and scope",
+        meta: "4 exercises",
+      },
+      {
+        slug: "recursion",
+        href: "/practice/recursion",
+        title: "Practice recursion",
+        meta: "4 exercises",
+      },
+      {
+        slug: "search-sort",
+        href: "/practice/search-sort",
+        title: "Search and sort values",
+        meta: "4 exercises",
+      },
+      {
+        slug: "stacks-queues",
+        href: "/practice/stacks-queues",
+        title: "Use stacks and queues",
+        meta: "4 exercises",
+      },
+      {
+        slug: "linked-lists",
+        href: "/practice/linked-lists",
+        title: "Follow linked lists",
+        meta: "4 exercises",
+      },
+      {
+        slug: "trees-graphs",
+        href: "/practice/trees-graphs",
+        title: "Traverse trees and graphs",
+        meta: "4 exercises",
+      },
+      {
+        slug: "dom",
+        href: "/practice/dom",
+        title: "Work with the DOM",
+        meta: "4 exercises",
+      },
     ],
   },
   {
     label: "Solve with intent",
     description: "Choose a better approach, then bring it into a focused judged set.",
     labs: [
-      { href: "/practice/efficiency", title: "Compare efficiency", meta: "4 decisions" },
-      { href: "/practice/algorithm-patterns", title: "Implement algorithm patterns", meta: "4 exercises" },
-      { href: "/practice/challenge", title: "Take the 30-minute challenge", meta: "4 timed sets" },
+      {
+        slug: "efficiency",
+        href: "/practice/efficiency",
+        title: "Compare efficiency",
+        meta: "4 decisions",
+      },
+      {
+        slug: "algorithm-patterns",
+        href: "/practice/algorithm-patterns",
+        title: "Implement algorithm patterns",
+        meta: "4 exercises",
+      },
+      {
+        slug: null,
+        href: "/practice/challenge",
+        title: "Take the 30-minute challenge",
+        meta: "4 timed sets",
+      },
     ],
   },
 ] as const;
@@ -102,6 +176,7 @@ const CODING_PROBLEM_GROUPS = [
 ] as const;
 
 type CatalogStatus = "all" | "unfinished" | "accepted";
+type PracticeLabProgress = JavaScriptLabCatalogProgress["labs"][number];
 
 type PracticePageProps = {
   searchParams?: Promise<{
@@ -111,6 +186,27 @@ type PracticePageProps = {
 
 function normalizeCatalogStatus(status: string | string[] | undefined) {
   return status === "unfinished" || status === "accepted" ? status : "all";
+}
+
+function getPracticeLabCardCopy(progress: PracticeLabProgress) {
+  if (progress.state === "complete") {
+    return {
+      action: "Review",
+      status: `${progress.completedCount} of ${progress.totalCount} saved · complete`,
+    };
+  }
+
+  if (progress.state === "in-progress") {
+    return {
+      action: "Resume",
+      status: `${progress.completedCount} of ${progress.totalCount} saved · resume exercise ${progress.nextExerciseNumber}`,
+    };
+  }
+
+  return {
+    action: "Start",
+    status: `0 of ${progress.totalCount} saved · start exercise 1`,
+  };
 }
 
 export default async function PracticePage({
@@ -150,6 +246,9 @@ export default async function PracticePage({
     ? requestedCatalogStatus
     : "all";
   const unfinishedCount = progress.totalCount - progress.completedCount;
+  const labProgressBySlug = new Map<JavaScriptLabSlug, PracticeLabProgress>(
+    labProgress?.labs.map((lab) => [lab.slug, lab]) ?? [],
+  );
   const catalogFilters: Array<{
     status: CatalogStatus;
     label: string;
@@ -619,15 +718,58 @@ export default async function PracticePage({
                       <p>{group.description}</p>
                     </div>
                     <div className="practice-learning-links">
-                      {group.labs.map((lab) => (
-                        <Link href={lab.href} key={lab.href}>
-                          <span>
-                            <strong>{lab.title}</strong>
-                            <small>{lab.meta}</small>
-                          </span>
-                          <span aria-hidden="true">→</span>
-                        </Link>
-                      ))}
+                      {group.labs.map((lab) => {
+                        const savedProgress = lab.slug
+                          ? labProgressBySlug.get(lab.slug)
+                          : null;
+                        const cardCopy = savedProgress
+                          ? getPracticeLabCardCopy(savedProgress)
+                          : null;
+                        const progressPercent = savedProgress
+                          ? Math.round(
+                              (savedProgress.completedCount /
+                                savedProgress.totalCount) * 100,
+                            )
+                          : 0;
+
+                        return (
+                          <Link
+                            aria-label={
+                              savedProgress && cardCopy
+                                ? `${cardCopy.action} ${lab.title}. ${cardCopy.status}.`
+                                : undefined
+                            }
+                            className={
+                              savedProgress
+                                ? `is-${savedProgress.state}`
+                                : undefined
+                            }
+                            href={savedProgress?.href ?? lab.href}
+                            key={lab.href}
+                          >
+                            <span className="practice-learning-lab-copy">
+                              <strong>{lab.title}</strong>
+                              <small>{cardCopy?.status ?? lab.meta}</small>
+                              {savedProgress ? (
+                                <span
+                                  aria-label={`${lab.title}: ${savedProgress.completedCount} of ${savedProgress.totalCount} saved`}
+                                  aria-valuemax={savedProgress.totalCount}
+                                  aria-valuemin={0}
+                                  aria-valuenow={savedProgress.completedCount}
+                                  className="practice-learning-lab-track"
+                                  role="progressbar"
+                                >
+                                  <span style={{ width: `${progressPercent}%` }} />
+                                </span>
+                              ) : null}
+                            </span>
+                            <span className="practice-learning-lab-action">
+                              {cardCopy?.action ?? "Open"}{" "}
+                              <span aria-hidden="true">→</span>
+                            </span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </section>
                 ))}

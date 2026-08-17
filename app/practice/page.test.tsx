@@ -175,6 +175,78 @@ describe("PracticePage progress", () => {
     expect(screen.getByText(/without changing judged mastery/)).toBeInTheDocument();
   });
 
+  it("shows exact saved progress and resume links on each guided lab card", async () => {
+    getSession.mockResolvedValue({
+      user: { id: "multi-lab-learner" },
+    } as Awaited<ReturnType<typeof auth.api.getSession>>);
+    getProgress.mockResolvedValue({
+      completedCount: 0,
+      totalCount: 12,
+      completedSlugs: [],
+    });
+    getLabProgress.mockResolvedValue({
+      completedCount: 5,
+      totalCount: 55,
+      nextLabSlug: "debugging",
+      nextLabTitle: "Debugging",
+      nextHref: "/practice/debugging?exercise=2",
+      nextExerciseNumber: 2,
+      labs: [
+        {
+          slug: "tracing",
+          title: "Code tracing",
+          href: "/practice/tracing",
+          completedCount: 4,
+          totalCount: 4,
+          nextExerciseNumber: null,
+          state: "complete",
+        },
+        {
+          slug: "debugging",
+          title: "Debugging",
+          href: "/practice/debugging?exercise=2",
+          completedCount: 1,
+          totalCount: 3,
+          nextExerciseNumber: 2,
+          state: "in-progress",
+        },
+        {
+          slug: "test-design",
+          title: "Test design",
+          href: "/practice/test-design?exercise=1",
+          completedCount: 0,
+          totalCount: 4,
+          nextExerciseNumber: 1,
+          state: "not-started",
+        },
+      ],
+    });
+
+    render(await PracticePage());
+
+    expect(
+      screen.getByRole("link", {
+        name: "Review Trace values. 4 of 4 saved · complete.",
+      }),
+    ).toHaveAttribute("href", "/practice/tracing");
+    expect(
+      screen.getByRole("link", {
+        name: "Resume Repair defects. 1 of 3 saved · resume exercise 2.",
+      }),
+    ).toHaveAttribute("href", "/practice/debugging?exercise=2");
+    expect(
+      screen.getByRole("link", {
+        name: "Start Find edge cases. 0 of 4 saved · start exercise 1.",
+      }),
+    ).toHaveAttribute("href", "/practice/test-design?exercise=1");
+    expect(
+      screen.getByRole("progressbar", { name: "Trace values: 4 of 4 saved" }),
+    ).toHaveAttribute("aria-valuenow", "4");
+    expect(
+      screen.getByRole("progressbar", { name: "Repair defects: 1 of 3 saved" }),
+    ).toHaveAttribute("aria-valuenow", "1");
+  });
+
   it("restores a returning learner's saved Accepted total", async () => {
     getSession.mockResolvedValue({
       user: { id: "returning-learner" },
