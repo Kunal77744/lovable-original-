@@ -6,6 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SEMANTIC_HTML_STARTER } from "@/lib/semantic-html-workspace";
 import { SemanticHtmlWorkspace } from "./semantic-html-workspace";
 
 const initialChecks = [
@@ -80,7 +81,10 @@ describe("SemanticHtmlWorkspace", () => {
   });
 
   it("saves the exact draft and replaces checks with the server result", async () => {
-    const savedChecks = initialChecks.map((check) => ({ ...check, passed: true }));
+    const savedChecks = initialChecks.map((check) => ({
+      ...check,
+      passed: true,
+    }));
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -114,7 +118,9 @@ describe("SemanticHtmlWorkspace", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Assignment complete. Your HTML and 5/5 result are saved."),
+        screen.getByText(
+          "Assignment complete. Your HTML and 5/5 result are saved.",
+        ),
       ).toBeInTheDocument(),
     );
     expect(fetchMock).toHaveBeenCalledWith(
@@ -140,7 +146,10 @@ describe("SemanticHtmlWorkspace", () => {
   it("keeps newer edits visibly unsaved when an older submission finishes", async () => {
     const submittedHtml = "<main><article>Submitted draft</article></main>";
     const newerHtml = "<main><article>Newer unsaved draft</article></main>";
-    const savedChecks = initialChecks.map((check) => ({ ...check, passed: true }));
+    const savedChecks = initialChecks.map((check) => ({
+      ...check,
+      passed: true,
+    }));
     let resolveResponse!: (value: {
       ok: boolean;
       json: () => Promise<WorkspaceResponseFixture>;
@@ -220,7 +229,9 @@ describe("SemanticHtmlWorkspace", () => {
       screen.getByRole("button", { name: "Resubmit assignment" }),
     ).toBeEnabled();
     expect(
-      screen.queryByText("Assignment complete. Your HTML and 5/5 result are saved."),
+      screen.queryByText(
+        "Assignment complete. Your HTML and 5/5 result are saved.",
+      ),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Download saved .html" }),
@@ -252,6 +263,52 @@ describe("SemanticHtmlWorkspace", () => {
     ).toBeInTheDocument();
   });
 
+  it("restores the authored lesson starter without changing the saved result", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <SemanticHtmlWorkspace
+        lessonSlug="semantic-html"
+        initialHtml="<main><article>Saved learner work</article></main>"
+        initialChecks={initialChecks}
+        initiallySaved
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore lesson starter" }),
+    );
+    expect(
+      screen.getByText("Restore the authored lesson starter?"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByLabelText("Semantic HTML")).toHaveValue(
+      "<main><article>Saved learner work</article></main>",
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Restore lesson starter" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Restore starter" }));
+
+    expect(screen.getByLabelText("Semantic HTML")).toHaveValue(
+      SEMANTIC_HTML_STARTER,
+    );
+    expect(
+      screen.getByText(
+        "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Changes not submitted")).toBeInTheDocument();
+    expect(screen.getByText("Previous result")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Download saved .html" }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("keeps signed-out code local until the learner tries to submit", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -280,7 +337,9 @@ describe("SemanticHtmlWorkspace", () => {
     expect(
       screen.getByText(/your draft has not left this browser/i),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: "Create account" }),
+    ).toHaveAttribute(
       "href",
       "/account?next=%2Flearn%2Fweb-development-foundations%2Fsemantic-html",
     );
@@ -315,7 +374,9 @@ describe("SemanticHtmlWorkspace", () => {
       />,
     );
 
-    expect(await screen.findByLabelText("Semantic HTML")).toHaveValue(localHtml);
+    expect(await screen.findByLabelText("Semantic HTML")).toHaveValue(
+      localHtml,
+    );
     expect(
       screen.getByText(
         "Browser draft restored after sign-in. It is still unsaved. Submit when you’re ready.",
@@ -355,7 +416,9 @@ describe("SemanticHtmlWorkspace", () => {
     expect(await screen.findByLabelText("Semantic HTML")).toHaveValue(
       "<main>Account-owned source</main>",
     );
-    expect(screen.queryByText(/browser draft restored/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/browser draft restored/i),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Saved result")).toBeInTheDocument();
   });
 });

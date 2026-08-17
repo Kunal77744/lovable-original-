@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LessonStarterRestore } from "@/components/lesson-starter-restore";
 import { SavedWorkspaceDownload } from "@/components/saved-workspace-download";
 import { useLessonWorkspaceBrowserDraft } from "@/components/use-lesson-workspace-browser-draft";
 import { getAccountHref } from "@/lib/account-destination";
 import {
   buildSandboxedPreviewDocument,
   MAX_SEMANTIC_HTML_LENGTH,
+  SEMANTIC_HTML_STARTER,
   type SemanticHtmlCheck,
 } from "@/lib/semantic-html-workspace";
 
@@ -54,17 +56,13 @@ export function SemanticHtmlWorkspace({
         : "Saved submission restored. Revise the open rubric checks and resubmit."
       : "Starter code is ready. Submit when your article structure is complete.",
   );
-  const {
-    recoveredSource,
-    dismissRecoveredDraft,
-    preserveDraft,
-    clearDraft,
-  } = useLessonWorkspaceBrowserDraft({
-    lessonSlug,
-    initialSource: initialHtml,
-    initiallySaved,
-    maxLength: MAX_SEMANTIC_HTML_LENGTH,
-  });
+  const { recoveredSource, dismissRecoveredDraft, preserveDraft, clearDraft } =
+    useLessonWorkspaceBrowserDraft({
+      lessonSlug,
+      initialSource: initialHtml,
+      initiallySaved,
+      maxLength: MAX_SEMANTIC_HTML_LENGTH,
+    });
   const editorHtml = recoveredSource ?? html;
   const recoveredBrowserDraft = recoveredSource !== null;
   const visibleMessage = recoveredBrowserDraft
@@ -132,7 +130,9 @@ export function SemanticHtmlWorkspace({
       );
     } catch {
       setSaveState("error");
-      setMessage("The draft could not be saved. Check your connection and try again.");
+      setMessage(
+        "The draft could not be saved. Check your connection and try again.",
+      );
     }
   }
 
@@ -145,8 +145,8 @@ export function SemanticHtmlWorkspace({
           <p>
             Complete the starter file with the landmarks and headings taught in
             this lesson. Your finished page should explain its structure to
-            browsers, assistive technology, and readers without relying on visual
-            styling.
+            browsers, assistive technology, and readers without relying on
+            visual styling.
           </p>
           <div className="assignment-outcome">
             <span>Expected outcome</span>
@@ -173,10 +173,10 @@ export function SemanticHtmlWorkspace({
             {saveState === "unsaved" && hasSubmitted
               ? "Previous result"
               : hasSubmitted && passedCount === 5
-              ? "Assignment complete"
-              : hasSubmitted
-                ? "Needs revision"
-                : "rubric checks"}
+                ? "Assignment complete"
+                : hasSubmitted
+                  ? "Needs revision"
+                  : "rubric checks"}
           </small>
         </div>
       </header>
@@ -210,6 +210,22 @@ export function SemanticHtmlWorkspace({
             maxLength={MAX_SEMANTIC_HTML_LENGTH}
             spellCheck={false}
           />
+          {isSignedIn ? (
+            <LessonStarterRestore
+              disabled={saveState === "saving"}
+              isStarterLoaded={editorHtml === SEMANTIC_HTML_STARTER}
+              onRestore={() => {
+                htmlRef.current = SEMANTIC_HTML_STARTER;
+                setHtml(SEMANTIC_HTML_STARTER);
+                dismissRecoveredDraft();
+                preserveDraft(SEMANTIC_HTML_STARTER);
+                setSaveState("unsaved");
+                setMessage(
+                  "Lesson starter restored in the editor. Your saved result and checks have not changed.",
+                );
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="workspace-preview">
@@ -239,9 +255,7 @@ export function SemanticHtmlWorkspace({
             {checks.map((check) => (
               <div
                 className={
-                  check.passed
-                    ? "workspace-check is-passed"
-                    : "workspace-check"
+                  check.passed ? "workspace-check is-passed" : "workspace-check"
                 }
                 key={check.id}
               >
@@ -277,10 +291,14 @@ export function SemanticHtmlWorkspace({
               />
             ) : null}
           </div>
-          <p className={saveState === "error" ? "is-error" : ""} aria-live="polite">
+          <p
+            className={saveState === "error" ? "is-error" : ""}
+            aria-live="polite"
+          >
             {visibleMessage}
             {!isSignedIn &&
-            (recoveredBrowserDraft || message.startsWith("Create a free account")) ? (
+            (recoveredBrowserDraft ||
+              message.startsWith("Create a free account")) ? (
               <>
                 {" "}
                 <Link
